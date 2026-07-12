@@ -168,6 +168,7 @@ export class AuthService {
       throw new Error("accessTokenTtlSeconds must be positive");
     }
     this.lockoutPolicy = deps.lockoutPolicy;
+    this.providers = deps.providers;
     this.newId = deps.newId ?? newUuid;
   }
 
