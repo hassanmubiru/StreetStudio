@@ -95,7 +95,7 @@ function toColumnsAndValues(record: Record<string, unknown>): {
  * ------------------------------------------------------------------------ */
 
 /** Shared insert/mapping behavior for all repositories. */
-class BaseRepository<TRecord extends Record<string, unknown>> {
+class BaseRepository<TRecord extends object> {
   constructor(
     protected readonly client: SqlClient,
     protected readonly table: string,
@@ -103,7 +103,9 @@ class BaseRepository<TRecord extends Record<string, unknown>> {
 
   /** Insert a fully-populated record and return it unchanged. */
   async insert(record: TRecord): Promise<TRecord> {
-    const { columns, values } = toColumnsAndValues(record);
+    const { columns, values } = toColumnsAndValues(
+      record as Record<string, unknown>,
+    );
     const placeholders = columns.map((_, i) => `$${i + 1}`);
     await this.client.query(
       `INSERT INTO ${this.table} (${columns.join(", ")}) VALUES (${placeholders.join(
