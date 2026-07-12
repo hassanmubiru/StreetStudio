@@ -29,11 +29,17 @@
  *    `AUTHORIZATION_DENIED`, so a Member can never reach into an Organization
  *    they are not part of (R4.6).
  *
- * Administrative controls — settings updates, member removal, last-Administrator
- * retention, and Administrator-only gating — are layered on separately (task
- * 10.2). This service exposes the membership/role primitives (Administrator and
- * Member roles seeded at creation, org-scoped authorization) those controls
- * build on, and takes no dependency on them.
+ * Administrative controls build on those primitives (task 10.2):
+ *  - {@link OrgService.updateSettings} validates a settings patch atomically and
+ *    persists it, retaining the prior settings unchanged on failure (R26.1,
+ *    R26.5).
+ *  - {@link OrgService.removeMember} revokes a Member's access by removing their
+ *    Membership so subsequent RBAC checks deny by default (R26.2), while
+ *    refusing to remove the only remaining Administrator (R26.6).
+ *  - Both actions are gated on the Administrator role's role-management
+ *    permission, so a non-Administrator is denied with no state change (R26.4),
+ *    and each successful action is recorded in the Audit Log through an
+ *    injectable {@link AdminAuditRecorder} seam (R26.7).
  *
  * Persistence is reached only through the narrow {@link OrgStore} port, which
  * keeps the service decoupled from the concrete database layer and trivially
