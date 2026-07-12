@@ -21,7 +21,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Reject imports resolving to StreetJS internals, filesystem paths inside the StreetJS repo, another package's internal module, or a specific AI/billing vendor implementation in core; emit a named error (`DISALLOWED_STREETJS_IMPORT`, `DISALLOWED_INTERNAL_IMPORT`, `DISALLOWED_AI_VENDOR`) and fail the build
     - _Requirements: 1.3, 1.6, 2.4, 2.6, 22.6_
 
-  - [ ]* 1.3 Write property test for the import-boundary analyzer
+  - [ ] 1.3 Write property test for the import-boundary analyzer
     - **Property 1: Import boundary enforcement**
     - **Validates: Requirements 1.1, 1.3, 1.6, 2.4, 2.6, 22.6**
 
@@ -29,7 +29,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Derive the dependency graph from package manifests and detect cycles; wire into CI to fail on any cycle
     - _Requirements: 2.5_
 
-  - [ ]* 1.5 Write property test for dependency-graph acyclicity
+  - [ ] 1.5 Write property test for dependency-graph acyclicity
     - **Property 2: Package dependency graph is acyclic**
     - **Validates: Requirements 2.5**
 
@@ -39,7 +39,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Define serialized DTO types mirroring the domain entities for REST/WebSocket/SDK reuse
     - _Requirements: 2.4_
 
-  - [ ]* 2.2 Implement shared fast-check generators for tests
+  - [ ] 2.2 Implement shared fast-check generators for tests
     - Generators for emails, passwords, names at length bounds (1/200/255/2048/5000/10000/100000), timestamps around 0 and duration, chunk sizes around 1 MB/100 MB, byte payloads, multi-org resource graphs, and plugin sets with injected failures
     - _Requirements: 2.4_
 
@@ -48,7 +48,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Load and validate configuration via the StreetJS config interface; abort startup and emit an error naming every missing/invalid required value
     - _Requirements: 30.3_
 
-  - [ ]* 3.2 Write property test for startup configuration validation
+  - [ ] 3.2 Write property test for startup configuration validation
     - **Property 88: Startup validation names every invalid configuration value**
     - **Validates: Requirements 30.3**
 
@@ -62,15 +62,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Implement `append` (actor, action, target, orgId, UTC timestamp with ≥ms precision) within 5s, and org-scoped descending `query`; expose no update/delete path and reject mutation at the storage layer; record auth events, authorization denials, sharing changes, and administrative actions
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6_
 
-  - [ ]* 4.3 Write property test for audit field recording
+  - [ ] 4.3 Write property test for audit field recording
     - **Property 54: Audit entries record required fields for security actions**
     - **Validates: Requirements 17.1, 17.4**
 
-  - [ ]* 4.4 Write property test for audit immutability
+  - [ ] 4.4 Write property test for audit immutability
     - **Property 55: Audit entries are immutable**
     - **Validates: Requirements 17.2, 17.6**
 
-  - [ ]* 4.5 Write property test for audit query scoping and ordering
+  - [ ] 4.5 Write property test for audit query scoping and ordering
     - **Property 56: Audit queries are organization-scoped and ordered**
     - **Validates: Requirements 17.3, 17.5**
 
@@ -90,27 +90,27 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Authenticate through configured OAuth/SSO providers; deny sign-in and create no session on provider failure/unavailability
     - _Requirements: 3.5, 3.6, 3.10_
 
-  - [ ]* 6.4 Write property test for registration and password hashing
+  - [ ] 6.4 Write property test for registration and password hashing
     - **Property 3: Registration creates retrievable accounts without plaintext passwords**
     - **Validates: Requirements 3.1**
 
-  - [ ]* 6.5 Write property test for short-lived token issuance
+  - [ ] 6.5 Write property test for short-lived token issuance
     - **Property 4: Login issues short-lived tokens with sessions**
     - **Validates: Requirements 3.2**
 
-  - [ ]* 6.6 Write property test for non-disclosing invalid authentication
+  - [ ] 6.6 Write property test for non-disclosing invalid authentication
     - **Property 5: Invalid authentication is uniformly non-disclosing**
     - **Validates: Requirements 3.3, 3.8**
 
-  - [ ]* 6.7 Write property test for session and token invalidation
+  - [ ] 6.7 Write property test for session and token invalidation
     - **Property 6: Session and token invalidation**
     - **Validates: Requirements 3.4, 3.7**
 
-  - [ ]* 6.8 Write property test for account lockout
+  - [ ] 6.8 Write property test for account lockout
     - **Property 7: Account lockout after repeated failures**
     - **Validates: Requirements 3.9**
 
-  - [ ]* 6.9 Write unit tests for OAuth/SSO sign-in with mocked providers
+  - [ ] 6.9 Write unit tests for OAuth/SSO sign-in with mocked providers
     - Test success and provider-failure paths
     - _Requirements: 3.5, 3.6, 3.10_
 
@@ -119,15 +119,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - `create` returns the secret exactly once and stores only a salted hash; `getMeta` never returns the secret; `authenticate` accepts only valid non-revoked keys; `revoke` rejects subsequent use; uniform non-disclosing auth error for malformed/unrecognized/expired/revoked keys; permission-gate create/revoke
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6_
 
-  - [ ]* 7.2 Write property test for one-time secret disclosure
+  - [ ] 7.2 Write property test for one-time secret disclosure
     - **Property 57: API-key secrets are disclosed exactly once**
     - **Validates: Requirements 18.1, 18.2**
 
-  - [ ]* 7.3 Write property test for API-key authentication and validity
+  - [ ] 7.3 Write property test for API-key authentication and validity
     - **Property 58: API-key authentication reflects validity and permissions**
     - **Validates: Requirements 18.3, 18.4, 18.5**
 
-  - [ ]* 7.4 Write property test for API-key management permission gating
+  - [ ] 7.4 Write property test for API-key management permission gating
     - **Property 59: API-key management is permission-gated**
     - **Validates: Requirements 18.6**
 
@@ -136,19 +136,19 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - `can(ctx, action, resource)` evaluated in the organization scope that owns the resource, before any action; denied actions cause no change; `assignRole` permission-gated and membership-checked; permissions never leak across organizations; role changes govern subsequent decisions
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 26.3_
 
-  - [ ]* 8.2 Write property test for owning-organization-scoped authorization
+  - [ ] 8.2 Write property test for owning-organization-scoped authorization
     - **Property 50: Authorization is evaluated in the owning organization's scope**
     - **Validates: Requirements 16.1, 16.3**
 
-  - [ ]* 8.3 Write property test for role assignment governing decisions
+  - [ ] 8.3 Write property test for role assignment governing decisions
     - **Property 51: Role assignment governs subsequent decisions**
     - **Validates: Requirements 16.2, 26.3**
 
-  - [ ]* 8.4 Write property test for cross-organization permission isolation
+  - [ ] 8.4 Write property test for cross-organization permission isolation
     - **Property 52: Role permissions never leak across organizations**
     - **Validates: Requirements 16.4**
 
-  - [ ]* 8.5 Write property test for role-management gating
+  - [ ] 8.5 Write property test for role-management gating
     - **Property 53: Role management is permission-gated and membership-checked**
     - **Validates: Requirements 16.5, 16.6**
 
@@ -164,39 +164,39 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - `updateSettings` validating atomically and retaining prior settings on failure; `removeMember` revoking access within 5s; reject removing the last Administrator; deny non-Administrator administrative actions; record successful administrative actions in the Audit Log
     - _Requirements: 26.1, 26.2, 26.4, 26.5, 26.6, 26.7_
 
-  - [ ]* 10.3 Write property test for organization creation and admin assignment
+  - [ ] 10.3 Write property test for organization creation and admin assignment
     - **Property 8: Organization creation validity and administrator assignment**
     - **Validates: Requirements 4.1, 4.7**
 
-  - [ ]* 10.4 Write property test for invitation expiry
+  - [ ] 10.4 Write property test for invitation expiry
     - **Property 9: Invitations expire seven days after creation**
     - **Validates: Requirements 4.2, 4.8**
 
-  - [ ]* 10.5 Write property test for invitation acceptance validity
+  - [ ] 10.5 Write property test for invitation acceptance validity
     - **Property 10: Invitation acceptance is valid only while pending and unexpired**
     - **Validates: Requirements 4.3, 4.9**
 
-  - [ ]* 10.6 Write property test for team scoping
+  - [ ] 10.6 Write property test for team scoping
     - **Property 11: Team creation and membership are organization-scoped**
     - **Validates: Requirements 4.4, 4.5**
 
-  - [ ]* 10.7 Write property test for cross-organization access denial
+  - [ ] 10.7 Write property test for cross-organization access denial
     - **Property 12: Cross-organization access is denied**
     - **Validates: Requirements 4.6**
 
-  - [ ]* 10.8 Write property test for organization settings updates
+  - [ ] 10.8 Write property test for organization settings updates
     - **Property 75: Organization settings updates are validated atomically**
     - **Validates: Requirements 26.1, 26.5**
 
-  - [ ]* 10.9 Write property test for member removal revoking access
+  - [ ] 10.9 Write property test for member removal revoking access
     - **Property 76: Removing a member revokes access**
     - **Validates: Requirements 26.2**
 
-  - [ ]* 10.10 Write property test for administrator-only actions
+  - [ ] 10.10 Write property test for administrator-only actions
     - **Property 77: Administrative actions require Administrator role**
     - **Validates: Requirements 26.4**
 
-  - [ ]* 10.11 Write property test for last-administrator retention
+  - [ ] 10.11 Write property test for last-administrator retention
     - **Property 78: An organization always retains at least one Administrator**
     - **Validates: Requirements 26.6**
 
@@ -205,19 +205,19 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - `createProject`/`createFolder` (names 1–255) scoped to org/project with create-permission gating; enforce folder nesting depth ≤10; `moveVideo` same-org only, preserving identity/comments/transcripts/permissions and rejecting cross-org moves; `createWorkspace`
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
-  - [ ]* 11.2 Write property test for project/folder validity and scoping
+  - [ ] 11.2 Write property test for project/folder validity and scoping
     - **Property 13: Project and folder creation validity and scoping**
     - **Validates: Requirements 5.1, 5.2, 5.8**
 
-  - [ ]* 11.3 Write property test for folder nesting depth bound
+  - [ ] 11.3 Write property test for folder nesting depth bound
     - **Property 14: Folder nesting is bounded at depth 10**
     - **Validates: Requirements 5.3**
 
-  - [ ]* 11.4 Write property test for video move preservation
+  - [ ] 11.4 Write property test for video move preservation
     - **Property 15: Video moves preserve identity and associations within the organization**
     - **Validates: Requirements 5.4, 5.7**
 
-  - [ ]* 11.5 Write property test for create-permission enforcement
+  - [ ] 11.5 Write property test for create-permission enforcement
     - **Property 16: Create permission is required for projects and folders**
     - **Validates: Requirements 5.6**
 
@@ -229,19 +229,19 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Define `put`/`get`/`signUploadTarget`/`healthCheck`; route persistence exclusively through the interface; write ack within 30s or abort with `STORAGE_ERROR` recording provider id + timestamp; activation validates config/connectivity and retains prior provider on failure; signed targets valid 60–3600s (default 900), direct-to-storage ≤15 min, expired targets rejected
     - _Requirements: 9.1, 9.3, 9.4, 9.5, 9.6, 9.7, 29.3_
 
-  - [ ]* 13.2 Write property test for storage round-trip byte preservation
+  - [ ] 13.2 Write property test for storage round-trip byte preservation
     - **Property 27: Storage round-trip preserves object bytes**
     - **Validates: Requirements 9.1**
 
-  - [ ]* 13.3 Write property test for provider activation validation
+  - [ ] 13.3 Write property test for provider activation validation
     - **Property 28: Storage provider activation validates configuration**
     - **Validates: Requirements 9.4**
 
-  - [ ]* 13.4 Write property test for signed upload credential expiry
+  - [ ] 13.4 Write property test for signed upload credential expiry
     - **Property 29: Signed upload credentials have bounded, secure expiry**
     - **Validates: Requirements 9.6, 9.7, 29.3**
 
-  - [ ]* 13.5 Write unit tests for storage write timeout/abort handling
+  - [ ] 13.5 Write unit tests for storage write timeout/abort handling
     - Test the 30s no-ack abort and write-failure paths
     - _Requirements: 9.5_
 
@@ -250,27 +250,27 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Accept ordered chunks 1 MB–100 MB, acknowledging each; integrity-check each chunk, rejecting failures without persisting and retrying ≤3 times before aborting and discarding partial chunks; resume within 24h from the chunk after the last ack without retransmission; expire idle sessions after 24h; assemble in order into the completed Video; emit upload-progress on each ack
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
 
-  - [ ]* 14.2 Write property test for chunk size validation and acknowledgment
+  - [ ] 14.2 Write property test for chunk size validation and acknowledgment
     - **Property 18: Chunk acceptance validates size and acknowledges each received chunk**
     - **Validates: Requirements 7.1**
 
-  - [ ]* 14.3 Write property test for resumable uploads without retransmission
+  - [ ] 14.3 Write property test for resumable uploads without retransmission
     - **Property 19: Interrupted uploads resume without retransmitting acknowledged chunks**
     - **Validates: Requirements 7.2**
 
-  - [ ]* 14.4 Write property test for chunk-assembly round-trip
+  - [ ] 14.4 Write property test for chunk-assembly round-trip
     - **Property 20: Chunk assembly round-trip reconstructs the original media**
     - **Validates: Requirements 7.3**
 
-  - [ ]* 14.5 Write property test for bounded, non-destructive integrity failures
+  - [ ] 14.5 Write property test for bounded, non-destructive integrity failures
     - **Property 21: Chunk integrity failures are bounded and non-destructive**
     - **Validates: Requirements 7.4, 7.5**
 
-  - [ ]* 14.6 Write property test for upload session expiry
+  - [ ] 14.6 Write property test for upload session expiry
     - **Property 22: Upload sessions expire after 24 hours of inactivity**
     - **Validates: Requirements 7.6**
 
-  - [ ]* 14.7 Write property test for upload progress reporting
+  - [ ] 14.7 Write property test for upload progress reporting
     - **Property 23: Upload progress reflects acknowledged chunk count**
     - **Validates: Requirements 7.7**
 
@@ -279,11 +279,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Capture screen/window/region with optional camera/microphone/system audio; continue without unsupported system audio and notify; abort and retain nothing on denied permission; cursor highlighting/drawing tools and keyboard shortcuts; pause/resume retaining pre-pause media; finalize ≤10s on stop and initiate upload; persist offline stops locally and upload with ≤5 retries on reconnect
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 6.11, 6.12_
 
-  - [ ]* 15.2 Write property test for bounded offline upload retries
+  - [ ] 15.2 Write property test for bounded offline upload retries
     - **Property 17: Offline recording upload retries are bounded**
     - **Validates: Requirements 6.11**
 
-  - [ ]* 15.3 Write unit tests for capture, pause/resume, unsupported audio, and denied permission
+  - [ ] 15.3 Write unit tests for capture, pause/resume, unsupported audio, and denied permission
     - Test capture source selection, pause/resume state, system-audio-unavailable notification, denied-permission abort, and offline local storage
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.8, 6.9, 6.10_
 
@@ -292,15 +292,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Enqueue within 5s of upload completion; produce exactly one thumbnail, a 3–10s preview, and ≥3 ABR renditions, then mark the Video ready; emit processing-status transitions (queued|processing|ready|failed) to members with access within 2s; retry ≤3 times on failure, then record failure, retain source, and emit a failure event
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
 
-  - [ ]* 16.2 Write property test for required processing outputs
+  - [ ] 16.2 Write property test for required processing outputs
     - **Property 24: Processing produces the required outputs**
     - **Validates: Requirements 8.2, 8.3, 8.4, 8.7**
 
-  - [ ]* 16.3 Write property test for processing status values
+  - [ ] 16.3 Write property test for processing status values
     - **Property 25: Processing status events use only defined status values**
     - **Validates: Requirements 8.5**
 
-  - [ ]* 16.4 Write property test for bounded processing failures
+  - [ ] 16.4 Write property test for bounded processing failures
     - **Property 26: Processing failures are bounded and preserve the source**
     - **Validates: Requirements 8.6**
 
@@ -309,11 +309,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Provide an ABR streaming manifest within 3s if and only if the Video is ready and the requester holds view permission (or a valid share credential); deny with the appropriate error and no manifest otherwise
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-  - [ ]* 17.2 Write property test for playback state and authorization
+  - [ ] 17.2 Write property test for playback state and authorization
     - **Property 30: Playback requires ready state and authorization**
     - **Validates: Requirements 10.1, 10.2, 10.3**
 
-  - [ ]* 17.3 Write property test for share-credential playback
+  - [ ] 17.3 Write property test for share-credential playback
     - **Property 31: Share-credential playback is granted only for valid credentials**
     - **Validates: Requirements 10.4, 10.5**
 
@@ -325,19 +325,19 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Generate globally unique share credentials; deny access at/after expiry or once revoked with no change to the Video; grant passcode-protected access only on matching passcode and lock the link ≥15 min after 5 consecutive incorrect attempts; enforce content permission on every Video/Asset/Comment/Folder read or modify with no change on denial
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7_
 
-  - [ ]* 19.2 Write property test for globally unique share credentials
+  - [ ] 19.2 Write property test for globally unique share credentials
     - **Property 46: Share credentials are globally unique**
     - **Validates: Requirements 15.1**
 
-  - [ ]* 19.3 Write property test for share expiry and revocation
+  - [ ] 19.3 Write property test for share expiry and revocation
     - **Property 47: Share link expiry and revocation deny access**
     - **Validates: Requirements 15.2, 15.3**
 
-  - [ ]* 19.4 Write property test for content-permission enforcement
+  - [ ] 19.4 Write property test for content-permission enforcement
     - **Property 48: Content permission is required for resource access**
     - **Validates: Requirements 15.4**
 
-  - [ ]* 19.5 Write property test for passcode access and lockout
+  - [ ] 19.5 Write property test for passcode access and lockout
     - **Property 49: Passcode-protected share access and lockout**
     - **Validates: Requirements 15.5, 15.6, 15.7**
 
@@ -346,19 +346,19 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Store comments/replies only when body is 1–5000 chars and any timestamp is 0–duration (nested under parent for replies, associated with playback position when supplied); enforce comment permission; record at most one reaction of each type per member/target; create a mention notification within 2s for a mentioned member with view access
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.7, 11.8, 11.9_
 
-  - [ ]* 20.2 Write property test for comment body/timestamp validation
+  - [ ] 20.2 Write property test for comment body/timestamp validation
     - **Property 32: Comment creation validates body and timestamp**
     - **Validates: Requirements 11.1, 11.2, 11.3, 11.8, 11.9**
 
-  - [ ]* 20.3 Write property test for comment permission enforcement
+  - [ ] 20.3 Write property test for comment permission enforcement
     - **Property 33: Comment permission is enforced**
     - **Validates: Requirements 11.7**
 
-  - [ ]* 20.4 Write property test for mention notifications
+  - [ ] 20.4 Write property test for mention notifications
     - **Property 34: Mentions notify members with view access**
     - **Validates: Requirements 11.4**
 
-  - [ ]* 20.5 Write property test for reaction idempotency
+  - [ ] 20.5 Write property test for reaction idempotency
     - **Property 35: Reactions are idempotent per type, member, and target**
     - **Validates: Requirements 11.5**
 
@@ -367,15 +367,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Create a notification within 5s recording event type, source resource, and timestamp, respecting member preferences; mark-read only for owned notifications recording a read timestamp, rejecting others with no change; retain undelivered notifications and deliver within 5s of reconnect
     - _Requirements: 12.1, 12.3, 12.4, 12.5, 12.6_
 
-  - [ ]* 21.2 Write property test for notification creation and preferences
+  - [ ] 21.2 Write property test for notification creation and preferences
     - **Property 37: Notification creation records required fields and respects preferences**
     - **Validates: Requirements 12.1, 12.4**
 
-  - [ ]* 21.3 Write property test for notification delivery online and after reconnect
+  - [ ] 21.3 Write property test for notification delivery online and after reconnect
     - **Property 38: Notification delivery online and after reconnect**
     - **Validates: Requirements 12.2, 12.5**
 
-  - [ ]* 21.4 Write property test for ownership-checked mark-read
+  - [ ] 21.4 Write property test for ownership-checked mark-read
     - **Property 39: Marking notifications read is ownership-checked**
     - **Validates: Requirements 12.3, 12.6**
 
@@ -384,19 +384,19 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Implement `join`/`leave`/`emit` over StreetJS WebSockets with a Redis pub/sub backplane for cross-node fan-out; deliver presence-join/leave and typing/typing-stopped to other relevant connected members within 2s (never the originator); start typing on activity and stop after 5s inactivity; emit presence-departure within 5s on dropped connections; deliver live comments to concurrent viewers within 2s; discard events for members with no active connection without disrupting others; carry upload-progress, processing-status, live-comment, and notification events
     - _Requirements: 11.6, 12.2, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_
 
-  - [ ]* 22.2 Write property test for live comment delivery
+  - [ ] 22.2 Write property test for live comment delivery
     - **Property 36: Live comment delivery to concurrent viewers**
     - **Validates: Requirements 11.6**
 
-  - [ ]* 22.3 Write property test for presence/typing audience targeting
+  - [ ] 22.3 Write property test for presence/typing audience targeting
     - **Property 40: Presence and typing events target the correct audience**
     - **Validates: Requirements 13.1, 13.2, 13.3**
 
-  - [ ]* 22.4 Write property test for discarding events to disconnected members
+  - [ ] 22.4 Write property test for discarding events to disconnected members
     - **Property 41: Events for disconnected members are discarded harmlessly**
     - **Validates: Requirements 13.7**
 
-  - [ ]* 22.5 Write unit tests for typing-stop timer and dropped-connection departure
+  - [ ] 22.5 Write unit tests for typing-stop timer and dropped-connection departure
     - Test the 5s typing-stop emission and dropped-connection presence-departure using in-memory transport/clock fakes
     - _Requirements: 13.5, 13.6_
 
@@ -405,19 +405,19 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Return, within 3s, Videos/Assets whose indexed text matches a 1–500 char query within the member's authorized scope; include transcript matches with matching playback position; validate query length rejecting empty/>500; page results at ≤100 with a retrieval cursor; return empty set on no matches
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
 
-  - [ ]* 23.2 Write property test for matching, authorized-only results
+  - [ ] 23.2 Write property test for matching, authorized-only results
     - **Property 42: Search returns only matching, authorized results**
     - **Validates: Requirements 14.1, 14.4**
 
-  - [ ]* 23.3 Write property test for transcript playback positions
+  - [ ] 23.3 Write property test for transcript playback positions
     - **Property 43: Transcript matches include playback position**
     - **Validates: Requirements 14.2**
 
-  - [ ]* 23.4 Write property test for query length validation
+  - [ ] 23.4 Write property test for query length validation
     - **Property 44: Search query length is validated**
     - **Validates: Requirements 14.5**
 
-  - [ ]* 23.5 Write property test for bounded pagination
+  - [ ] 23.5 Write property test for bounded pagination
     - **Property 45: Search results are paginated with a bounded page size**
     - **Validates: Requirements 14.6**
 
@@ -429,15 +429,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Discover/load plugins via the StreetJS loader (≤30s/plugin); enable (activate+register ≤10s) and disable (deactivate+unregister ≤10s); on activation failure leave the plugin deactivated with prior registration unchanged; on load failure record the reason, exclude the plugin, and continue others; run each plugin in an isolated context with no write access to core, denying and recording core-modification attempts
     - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.5, 21.6, 21.7_
 
-  - [ ]* 25.2 Write property test for activation-failure state preservation
+  - [ ] 25.2 Write property test for activation-failure state preservation
     - **Property 66: Plugin activation failures preserve prior state**
     - **Validates: Requirements 21.3**
 
-  - [ ]* 25.3 Write property test for load-failure isolation
+  - [ ] 25.3 Write property test for load-failure isolation
     - **Property 67: Plugin load failures are isolated**
     - **Validates: Requirements 21.5**
 
-  - [ ]* 25.4 Write unit tests for plugin sandbox enforcement
+  - [ ] 25.4 Write unit tests for plugin sandbox enforcement
     - Test that core-modification attempts are denied and recorded
     - _Requirements: 21.6, 21.7_
 
@@ -446,7 +446,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Implement each provider against the StorageProvider interface as a plugin; no provider imported into core
     - _Requirements: 9.2_
 
-  - [ ]* 26.2 Write the shared storage-provider conformance suite
+  - [ ] 26.2 Write the shared storage-provider conformance suite
     - Run the round-trip and signed-target properties (Properties 27, 29) against every provider plugin, against real backends where reachable and MinIO/local otherwise
     - _Requirements: 9.1, 9.6_
 
@@ -455,11 +455,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Provide AI capabilities exclusively through AI_Provider plugins; route transcription/summarization/action-items/semantic-search to the enabled provider; reject AI requests within 2s with `AI_UNAVAILABLE` when none is enabled; abort on provider failure or >30s timeout; keep non-AI features unaffected; contain no vendor implementation in core
     - _Requirements: 22.1, 22.2, 22.3, 22.4, 22.5_
 
-  - [ ]* 27.2 Write property test for AI routing and clean failure
+  - [ ] 27.2 Write property test for AI routing and clean failure
     - **Property 68: AI requests route to the enabled provider or fail cleanly**
     - **Validates: Requirements 22.2, 22.3**
 
-  - [ ]* 27.3 Write unit tests for AI provider timeout/failure handling
+  - [ ] 27.3 Write unit tests for AI provider timeout/failure handling
     - Test the >30s timeout and provider-failure abort with non-AI features continuing
     - _Requirements: 22.5_
 
@@ -468,19 +468,19 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Expose billing exclusively through the abstraction with zero provider references in core; route to the single enabled billing plugin and return its result; reject with `BILLING_NOT_CONFIGURED` when none enabled while non-billing features/state continue; reject configuration when more than one is enabled and route nothing; on plugin failure or >30s return an error with no partial application
     - _Requirements: 27.1, 27.2, 27.3, 27.4, 27.5_
 
-  - [ ]* 28.2 Write property test for billing routing to the single plugin
+  - [ ] 28.2 Write property test for billing routing to the single plugin
     - **Property 79: Billing operations route to the single enabled plugin**
     - **Validates: Requirements 27.2**
 
-  - [ ]* 28.3 Write property test for optional, isolated billing
+  - [ ] 28.3 Write property test for optional, isolated billing
     - **Property 80: Billing is optional and isolated**
     - **Validates: Requirements 27.3**
 
-  - [ ]* 28.4 Write property test for at-most-one billing plugin
+  - [ ] 28.4 Write property test for at-most-one billing plugin
     - **Property 81: At most one billing plugin may be enabled**
     - **Validates: Requirements 27.4**
 
-  - [ ]* 28.5 Write unit tests for billing plugin failure/timeout handling
+  - [ ] 28.5 Write unit tests for billing plugin failure/timeout handling
     - Test the >30s timeout and no-partial-application paths
     - _Requirements: 27.5_
 
@@ -494,7 +494,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Attach code snippet/markdown (1–100,000 chars), terminal recording, and API recording as Assets when Developer Mode is enabled; reject out-of-range lengths and reject all developer attachments with "Developer Mode required" when disabled, leaving the Video unchanged
     - _Requirements: 23.1, 23.2, 23.3, 23.4, 23.5, 23.6_
 
-  - [ ]* 30.2 Write property test for developer asset validation and gating
+  - [ ] 30.2 Write property test for developer asset validation and gating
     - **Property 69: Developer assets validate length and require Developer Mode**
     - **Validates: Requirements 23.1, 23.3, 23.5, 23.6**
 
@@ -503,11 +503,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Store a PR association only when the source-control plugin is enabled, the PR/repository is accessible, and the member holds link permission; store review comments at the referenced position only when body is 1–5000 chars and timestamp is 0–duration
     - _Requirements: 24.1, 24.3, 24.4, 24.5, 24.6_
 
-  - [ ]* 31.2 Write property test for PR-link plugin and permission gating
+  - [ ] 31.2 Write property test for PR-link plugin and permission gating
     - **Property 70: Pull-request links require an enabled plugin and permission**
     - **Validates: Requirements 24.1, 24.4, 24.6**
 
-  - [ ]* 31.3 Write property test for review comment validation
+  - [ ] 31.3 Write property test for review comment validation
     - **Property 71: Review comments validate body and timestamp**
     - **Validates: Requirements 24.3, 24.5**
 
@@ -516,15 +516,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Index transcript text and make it searchable within scope within 30s; store AI-produced summaries of 1–10,000 chars associated with the Video; store documentation links of 1–2048 chars with edit permission up to 100 per Video, rejecting invalid/over-cap links
     - _Requirements: 25.1, 25.2, 25.3, 25.4, 25.5, 25.6_
 
-  - [ ]* 32.2 Write property test for transcript indexing and search
+  - [ ] 32.2 Write property test for transcript indexing and search
     - **Property 72: Transcript indexing makes content searchable within scope**
     - **Validates: Requirements 25.1**
 
-  - [ ]* 32.3 Write property test for summary storage bounds
+  - [ ] 32.3 Write property test for summary storage bounds
     - **Property 73: Summaries are stored within bounds and associated**
     - **Validates: Requirements 25.2**
 
-  - [ ]* 32.4 Write property test for documentation link validation and cap
+  - [ ] 32.4 Write property test for documentation link validation and cap
     - **Property 74: Documentation links validate input and enforce the per-video cap**
     - **Validates: Requirements 25.3, 25.4, 25.5, 25.6**
 
@@ -536,15 +536,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Record a view event scoped to the member's organization within 5s on playback start (Video id, member id, timestamp); aggregate total views, distinct viewers, and total watch duration for a valid time range within 5s, Administrator-only, excluding other organizations; reject invalid ranges
     - _Requirements: 28.1, 28.2, 28.3, 28.4, 28.5_
 
-  - [ ]* 34.2 Write property test for view-event recording
+  - [ ] 34.2 Write property test for view-event recording
     - **Property 82: View events are recorded with required fields on playback**
     - **Validates: Requirements 28.1**
 
-  - [ ]* 34.3 Write property test for analytics aggregation and org exclusion
+  - [ ] 34.3 Write property test for analytics aggregation and org exclusion
     - **Property 83: Analytics aggregates match a reference computation and exclude other organizations**
     - **Validates: Requirements 28.2, 28.3**
 
-  - [ ]* 34.4 Write property test for admin-only, validated-range analytics
+  - [ ] 34.4 Write property test for admin-only, validated-range analytics
     - **Property 84: Analytics access is Administrator-only with validated ranges**
     - **Validates: Requirements 28.4, 28.5**
 
@@ -553,19 +553,19 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Store subscriptions only for supported event types with well-formed HTTPS URLs ≤2048 chars; deliver signed payloads within 30s; treat a >10s non-success as failed and retry ≤5 more times with non-decreasing backoff, then record failed; stop delivery within 60s of deletion
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7_
 
-  - [ ]* 35.2 Write property test for webhook registration validation
+  - [ ] 35.2 Write property test for webhook registration validation
     - **Property 60: Webhook registration validates endpoint and event type**
     - **Validates: Requirements 19.1, 19.2**
 
-  - [ ]* 35.3 Write property test for webhook signature verification
+  - [ ] 35.3 Write property test for webhook signature verification
     - **Property 61: Webhook deliveries are signed and verifiable**
     - **Validates: Requirements 19.4**
 
-  - [ ]* 35.4 Write property test for bounded delivery retries with backoff
+  - [ ] 35.4 Write property test for bounded delivery retries with backoff
     - **Property 62: Webhook delivery retries are bounded with backoff**
     - **Validates: Requirements 19.5, 19.6**
 
-  - [ ]* 35.5 Write property test for delivery stop on deletion
+  - [ ] 35.5 Write property test for delivery stop on deletion
     - **Property 63: Deleting a webhook stops deliveries**
     - **Validates: Requirements 19.7**
 
@@ -574,15 +574,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Enforce a default 100 requests/60s rolling per-client limit rejecting excess with retry-after; store all secrets encrypted via the StreetJS secret interface, never plaintext; deny unauthenticated/invalid-auth requests to non-public endpoints with no state change
     - _Requirements: 29.1, 29.2, 29.4_
 
-  - [ ]* 36.2 Write property test for rate limiting
+  - [ ] 36.2 Write property test for rate limiting
     - **Property 85: Rate limiting rejects excess requests with retry guidance**
     - **Validates: Requirements 29.1**
 
-  - [ ]* 36.3 Write property test for secret encryption at rest
+  - [ ] 36.3 Write property test for secret encryption at rest
     - **Property 86: Secrets are never persisted in plaintext**
     - **Validates: Requirements 29.2**
 
-  - [ ]* 36.4 Write property test for non-public endpoint authentication
+  - [ ] 36.4 Write property test for non-public endpoint authentication
     - **Property 87: Non-public endpoints deny unauthenticated access**
     - **Validates: Requirements 29.4**
 
@@ -595,11 +595,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Provide typed client methods for every public REST and WebSocket operation; support lockstep release with contract changes and the 90-day deprecation window for breaking changes
     - _Requirements: 20.2, 20.3, 20.6_
 
-  - [ ]* 37.3 Write contract test for API/SDK parity
+  - [ ] 37.3 Write contract test for API/SDK parity
     - **Property 64: Public API parity and SDK coverage**
     - **Validates: Requirements 20.1, 20.2**
 
-  - [ ]* 37.4 Write property test for public-API authorization parity
+  - [ ] 37.4 Write property test for public-API authorization parity
     - **Property 65: Public API authorization matches web equivalents**
     - **Validates: Requirements 20.4, 20.5**
 
@@ -619,7 +619,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Provide `docker/` container images/compose and `infrastructure/` deployment configuration for self-hosting
     - _Requirements: 30.1_
 
-  - [ ]* 39.4 Write integration tests for startup/health/metrics and HA reconnection
+  - [ ] 39.4 Write integration tests for startup/health/metrics and HA reconnection
     - Test startup/health/metrics wiring and PostgreSQL HA / Redis Cluster node-loss reconnection against real dependencies where reachable
     - _Requirements: 30.2, 30.4, 30.5, 30.6_
 
@@ -633,7 +633,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Configure CI to execute unit, integration, contract, end-to-end, performance benchmark, load, and media pipeline categories (each with ≥1 executable test) reporting a single pass/fail within 30 min, indicating the failing category, distinguishing infrastructure from test failures, and failing below 80% line coverage; run the boundary and dependency-graph checks; verify behavior against real dependencies where reachable
     - _Requirements: 32.1, 32.2, 32.3, 32.4, 32.5, 32.6_
 
-  - [ ]* 41.2 Author end-to-end and performance/load/media-pipeline tests
+  - [ ] 41.2 Author end-to-end and performance/load/media-pipeline tests
     - E2E flow (register → org → invite/accept → project/folder → record → chunked upload → pipeline → ready → playback → comment → mention → share access) driven exclusively through the public API/SDK; latency-budget benchmarks; concurrent-upload/realtime-fanout/webhook load tests; media pipeline transcode/thumbnail/preview tests
     - _Requirements: 32.1, 32.4_
 
