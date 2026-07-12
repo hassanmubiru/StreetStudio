@@ -425,7 +425,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 25. Implement the Plugin_Manager
-  - [-] 25.1 Implement plugin discovery, load, enable, disable, and isolation
+  - [x] 25.1 Implement plugin discovery, load, enable, disable, and isolation
     - Discover/load plugins via the StreetJS loader (≤30s/plugin); enable (activate+register ≤10s) and disable (deactivate+unregister ≤10s); on activation failure leave the plugin deactivated with prior registration unchanged; on load failure record the reason, exclude the plugin, and continue others; run each plugin in an isolated context with no write access to core, denying and recording core-modification attempts
     - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.5, 21.6, 21.7_
 
