@@ -470,7 +470,9 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. THE StreetStudio SHALL include unit, integration, contract, end-to-end, performance benchmark, load, and media pipeline tests.
-2. WHEN a change is submitted to continuous integration, THE StreetStudio CI SHALL run the test suite and report a pass or fail result.
-3. IF any test fails in continuous integration, THEN THE StreetStudio CI SHALL report the change as failing.
-4. THE StreetStudio SHALL verify behavior against real dependencies where real verification is practical rather than asserting mocked success.
+1. THE StreetStudio test suite SHALL include unit, integration, contract, end-to-end, performance benchmark, load, and media pipeline test categories, with each category containing at least one executable test.
+2. WHEN a change is submitted to continuous integration, THE StreetStudio CI SHALL execute all test categories and report a single pass or fail result within 30 minutes of the run starting.
+3. IF any test in continuous integration fails, THEN THE StreetStudio CI SHALL report the change as failing and indicate which test category contained the failing test.
+4. WHERE a real dependency is reachable from the continuous integration environment, THE StreetStudio SHALL verify behavior against that real dependency rather than asserting success against a mocked response.
+5. THE StreetStudio test suite SHALL achieve at least 80% line coverage across the codebase, and THE StreetStudio CI SHALL report the change as failing when coverage falls below 80%.
+6. IF a continuous integration run cannot complete due to infrastructure or environment errors, THEN THE StreetStudio CI SHALL report the change as failing with an indication distinguishing an infrastructure failure from a test failure.
