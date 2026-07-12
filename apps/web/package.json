@@ -1,0 +1,21 @@
+{
+  "name": "@streetstudio/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Web_Client browser application.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@streetstudio/shared": "*",
+    "@streetstudio/ui": "*",
+    "@streetstudio/sdk": "*",
+    "@streetstudio/recording": "*"
+  },
+  "streetstudio": {
+    "domain": "Web_Client browser application."
+  }
+}
