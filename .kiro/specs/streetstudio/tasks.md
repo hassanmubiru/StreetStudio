@@ -8,7 +8,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
 
 ## Tasks
 
-- [ ] 1. Establish monorepo structure and boundary tooling
+- [x] 1. Establish monorepo structure and boundary tooling
   - [x] 1.1 Scaffold the monorepo layout and package manifests
     - Create `apps/{api,web,desktop,docs}` and `packages/{ui,sdk,shared,config,database,auth,media,recording,processing,notifications,plugins,analytics}`
     - Add a workspace-level package manifest and per-package manifests, each declaring a single primary domain responsibility and entry-point-only public exports
@@ -29,7 +29,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Derive the dependency graph from package manifests and detect cycles; wire into CI to fail on any cycle
     - _Requirements: 2.5_
 
-  - [-] 1.5 Write property test for dependency-graph acyclicity
+  - [x] 1.5 Write property test for dependency-graph acyclicity
     - **Property 2: Package dependency graph is acyclic**
     - **Validates: Requirements 2.5**
 
