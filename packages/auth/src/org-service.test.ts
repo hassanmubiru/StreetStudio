@@ -423,3 +423,144 @@ describe("OrgService teams", () => {
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });
+
+/* -------------------------------------------------------------------------
+ * Administrative controls (task 10.2)
+ * ---------------------------------------------------------------------- */
+
+describe("OrgService.updateSettings", () => {
+  let clock: MutableClock;
+  beforeEach(() => {
+    clock = new MutableClock(new Date("2024-01-01T00:00:00.000Z"));
+  });
+
+  it("persists valid settings, returns the org, and audits (R26.1, R26.7)", async () => {
+    const audit = new RecordingAuditLog();
+    const { service, store } = makeService(clock, audit);
+    const org = await service.createOrg(ctx(CREATOR), "Acme");
+
+    const updated = await service.updateSettings(ctx(CREATOR), org.id, {
+      theme: "dark",
+      retentionDays: 30,
+    });
+
+    expect(updated.settings).toEqual({ theme: "dark", retentionDays: 30 });
+    expect(store.organizations.get(org.id)?.settings).toEqual({
+      theme: "dark",
+      retentionDays: 30,
+    });
+    expect(audit.entries).toHaveLength(1);
+    expect(audit.entries[0]).toMatchObject({
+      actor: CREATOR,
+      action: ADMIN_ACTION_SETTINGS_UPDATED,
+      targetId: org.id,
+      orgId: org.id,
+    });
+  });
+
+  it("rejects invalid settings and retains existing settings (R26.5)", async () => {
+    const { service, store } = makeService(clock);
+    const org = await service.createOrg(ctx(CREATOR), "Acme");
+    await service.updateSettings(ctx(CREATOR), org.id, { theme: "light" });
+
+    // A value that does not survive a JSON round-trip is invalid.
+    await expect(
+      service.updateSettings(ctx(CREATOR), org.id, { broken: undefined }),
+    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" });
+
+    // The previously-stored settings are untouched.
+    expect(store.organizations.get(org.id)?.settings).toEqual({
+      theme: "light",
+    });
+  });
+
+  it("denies a non-Administrator and makes no change (R26.4)", async () => {
+    const { service, store } = makeService(clock);
+    const org = await service.createOrg(ctx(CREATOR), "Acme");
+    const invitation = await service.invite(ctx(CREATOR), org.id, "u@ex.com");
+    await service.acceptInvitation(invitation.token, INVITEE);
+
+    await expect(
+      service.updateSettings(ctx(INVITEE), org.id, { theme: "dark" }),
+    ).rejects.toMatchObject({ code: "AUTHORIZATION_DENIED" });
+    // An outsider is likewise denied.
+    await expect(
+      service.updateSettings(ctx(OUTSIDER), org.id, { theme: "dark" }),
+    ).rejects.toMatchObject({ code: "AUTHORIZATION_DENIED" });
+    expect(store.organizations.get(org.id)?.settings).toEqual({});
+  });
+});
+
+describe("OrgService.removeMember", () => {
+  let clock: MutableClock;
+  beforeEach(() => {
+    clock = new MutableClock(new Date("2024-01-01T00:00:00.000Z"));
+  });
+
+  it("revokes a Member's access and audits (R26.2, R26.7)", async () => {
+    const audit = new RecordingAuditLog();
+    const { service, store } = makeService(clock, audit);
+    const org = await service.createOrg(ctx(CREATOR), "Acme");
+    const invitation = await service.invite(ctx(CREATOR), org.id, "u@ex.com");
+    await service.acceptInvitation(invitation.token, INVITEE);
+    expect(await store.findMembership(org.id, INVITEE)).not.toBeNull();
+
+    await service.removeMember(ctx(CREATOR), org.id, INVITEE);
+
+    // Access revoked: the membership no longer resolves, so RBAC denies.
+    expect(await store.findMembership(org.id, INVITEE)).toBeNull();
+    expect(audit.entries).toHaveLength(1);
+    expect(audit.entries[0]).toMatchObject({
+      actor: CREATOR,
+      action: ADMIN_ACTION_MEMBER_REMOVED,
+      targetId: INVITEE,
+      orgId: org.id,
+    });
+  });
+
+  it("rejects removing the only remaining Administrator (R26.6)", async () => {
+    const { service, store } = makeService(clock);
+    const org = await service.createOrg(ctx(CREATOR), "Acme");
+
+    await expect(
+      service.removeMember(ctx(CREATOR), org.id, CREATOR),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    // The Administrator's access and Role are retained unchanged.
+    expect(await store.findMembership(org.id, CREATOR)).not.toBeNull();
+  });
+
+  it("denies a non-Administrator and removes no membership (R26.4)", async () => {
+    const { service, store } = makeService(clock);
+    const org = await service.createOrg(ctx(CREATOR), "Acme");
+    const invitation = await service.invite(ctx(CREATOR), org.id, "u@ex.com");
+    await service.acceptInvitation(invitation.token, INVITEE);
+
+    await expect(
+      service.removeMember(ctx(INVITEE), org.id, CREATOR),
+    ).rejects.toMatchObject({ code: "AUTHORIZATION_DENIED" });
+    expect(await store.findMembership(org.id, CREATOR)).not.toBeNull();
+  });
+
+  it("reports an unknown member as NOT_FOUND", async () => {
+    const { service } = makeService(clock);
+    const org = await service.createOrg(ctx(CREATOR), "Acme");
+    await expect(
+      service.removeMember(ctx(CREATOR), org.id, OUTSIDER),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+});
+
+describe("isValidOrgSettings", () => {
+  it("accepts plain JSON-serializable objects", () => {
+    expect(isValidOrgSettings({})).toBe(true);
+    expect(isValidOrgSettings({ a: 1, b: "x", c: { nested: true } })).toBe(true);
+  });
+
+  it("rejects non-objects, arrays, and non-round-tripping values", () => {
+    expect(isValidOrgSettings(null)).toBe(false);
+    expect(isValidOrgSettings("nope")).toBe(false);
+    expect(isValidOrgSettings([1, 2, 3])).toBe(false);
+    expect(isValidOrgSettings({ fn: () => 1 })).toBe(false);
+    expect(isValidOrgSettings({ u: undefined })).toBe(false);
+  });
+});
