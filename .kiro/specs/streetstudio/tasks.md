@@ -464,7 +464,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 22.5_
 
 - [ ] 28. Implement the billing abstraction
-  - [ ] 28.1 Implement BillingGateway routing to a single enabled billing plugin
+  - [-] 28.1 Implement BillingGateway routing to a single enabled billing plugin
     - Expose billing exclusively through the abstraction with zero provider references in core; route to the single enabled billing plugin and return its result; reject with `BILLING_NOT_CONFIGURED` when none enabled while non-billing features/state continue; reject configuration when more than one is enabled and route nothing; on plugin failure or >30s return an error with no partial application
     - _Requirements: 27.1, 27.2, 27.3, 27.4, 27.5_
 
