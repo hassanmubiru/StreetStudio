@@ -49,3 +49,12 @@ export type { AuthStores, MemberStore, SessionStore } from "./stores.js";
 // --- Clock -----------------------------------------------------------------
 export { systemClock } from "./clock.js";
 export type { Clock } from "./clock.js";
+
+// --- Account lockout (task 6.2) --------------------------------------------
+export {
+  DEFAULT_LOCK_MS,
+  DEFAULT_MAX_FAILURES,
+  DEFAULT_WINDOW_MS,
+  InMemoryLockoutPolicy,
+} from "./lockout.js";
+export type { LockoutOptions } from "./lockout.js";
