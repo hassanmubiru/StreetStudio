@@ -33,13 +33,13 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 2: Package dependency graph is acyclic**
     - **Validates: Requirements 2.5**
 
-- [ ] 2. Build the shared foundation package
-  - [ ] 2.1 Implement the shared error taxonomy and wire-DTO types
+- [x] 2. Build the shared foundation package
+  - [x] 2.1 Implement the shared error taxonomy and wire-DTO types
     - Define the error categories/codes (validation, authentication, authorization, not-found/gone, conflict, rate-limit, capability-unavailable, upload, boundary) with stable machine-readable `code`, HTTP status, and non-disclosing `message`
     - Define serialized DTO types mirroring the domain entities for REST/WebSocket/SDK reuse
     - _Requirements: 2.4_
 
-  - [ ] 2.2 Implement shared fast-check generators for tests
+  - [x] 2.2 Implement shared fast-check generators for tests
     - Generators for emails, passwords, names at length bounds (1/200/255/2048/5000/10000/100000), timestamps around 0 and duration, chunk sizes around 1 MB/100 MB, byte payloads, multi-org resource graphs, and plugin sets with injected failures
     - _Requirements: 2.4_
 
