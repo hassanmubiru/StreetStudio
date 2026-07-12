@@ -450,7 +450,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Run the round-trip and signed-target properties (Properties 27, 29) against every provider plugin, against real backends where reachable and MinIO/local otherwise
     - _Requirements: 9.1, 9.6_
 
-- [ ] 27. Implement the AI capability router
+- [x] 27. Implement the AI capability router
   - [x] 27.1 Implement AiRouter routing to enabled provider plugins
     - Provide AI capabilities exclusively through AI_Provider plugins; route transcription/summarization/action-items/semantic-search to the enabled provider; reject AI requests within 2s with `AI_UNAVAILABLE` when none is enabled; abort on provider failure or >30s timeout; keep non-AI features unaffected; contain no vendor implementation in core
     - _Requirements: 22.1, 22.2, 22.3, 22.4, 22.5_
@@ -459,7 +459,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 68: AI requests route to the enabled provider or fail cleanly**
     - **Validates: Requirements 22.2, 22.3**
 
-  - [-] 27.3 Write unit tests for AI provider timeout/failure handling
+  - [x] 27.3 Write unit tests for AI provider timeout/failure handling
     - Test the >30s timeout and provider-failure abort with non-AI features continuing
     - _Requirements: 22.5_
 
@@ -472,7 +472,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 79: Billing operations route to the single enabled plugin**
     - **Validates: Requirements 27.2**
 
-  - [-] 28.3 Write property test for optional, isolated billing
+  - [x] 28.3 Write property test for optional, isolated billing
     - **Property 80: Billing is optional and isolated**
     - **Validates: Requirements 27.3**
 
