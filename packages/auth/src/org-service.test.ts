@@ -59,6 +59,14 @@ class InMemoryOrgStore implements OrgStore {
   async findOrganizationById(id: Uuid): Promise<OrganizationRecord | null> {
     return this.organizations.get(id) ?? null;
   }
+  async updateOrganizationSettings(
+    record: OrganizationRecord,
+    settings: Record<string, unknown>,
+  ): Promise<OrganizationRecord> {
+    const updated = { ...record, settings };
+    this.organizations.set(record.id, updated);
+    return updated;
+  }
   async createRole(record: RoleRecord): Promise<RoleRecord> {
     this.roles.set(record.id, record);
     return record;
@@ -71,6 +79,13 @@ class InMemoryOrgStore implements OrgStore {
       if (r.organizationId === organizationId && r.name === name) return r;
     }
     return null;
+  }
+  async findRoleById(
+    organizationId: Uuid,
+    roleId: Uuid,
+  ): Promise<RoleRecord | null> {
+    const r = this.roles.get(roleId);
+    return r && r.organizationId === organizationId ? r : null;
   }
   async createMembership(
     record: MembershipRecord,
@@ -88,6 +103,16 @@ class InMemoryOrgStore implements OrgStore {
       }
     }
     return null;
+  }
+  async listMemberships(organizationId: Uuid): Promise<MembershipRecord[]> {
+    const out: MembershipRecord[] = [];
+    for (const m of this.memberships.values()) {
+      if (m.organizationId === organizationId) out.push(m);
+    }
+    return out;
+  }
+  async deleteMembership(record: MembershipRecord): Promise<void> {
+    this.memberships.delete(record.id);
   }
   async createInvitation(
     record: InvitationRecord,
