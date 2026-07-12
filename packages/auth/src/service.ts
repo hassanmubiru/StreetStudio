@@ -31,6 +31,10 @@ import type { MemberRecord, SessionRecord } from "@streetstudio/database";
 import { AppError } from "@streetstudio/shared";
 import type { IsoTimestamp, MemberDto, Uuid } from "@streetstudio/shared";
 import { systemClock, type Clock } from "./clock.js";
+import type {
+  FederatedIdentity,
+  FederatedProviderRegistry,
+} from "./federation.js";
 import type { PasswordHasher } from "./password-hasher.js";
 import type { AuthStores } from "./stores.js";
 import { normalizeEmail } from "./stores.js";
