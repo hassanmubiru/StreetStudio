@@ -1,0 +1,415 @@
+# Requirements Document
+
+## Introduction
+
+StreetStudio is an independent, open-source asynchronous collaboration platform for asynchronous video and screen recording, review, and knowledge sharing. It targets developers, engineering teams, educators, creators, and enterprises. StreetStudio is the flagship application built on top of the StreetJS framework and consumes StreetJS exclusively through published packages or local package links. StreetStudio lives in its own Git repository (`Development/StreetStudio/`) and never modifies, duplicates, or depends on StreetJS internals (`Development/StreetJS/`); the two repositories evolve independently.
+
+The product philosophy prioritizes developer workflows, team collaboration, knowledge sharing, self-hosting, privacy, enterprise ownership, extensibility, API-first design, plugin-first design, and AI assistance delivered exclusively through plugins. The product optimizes for experience and maintainability over raw feature count.
+
+This document specifies the requirements for the StreetStudio platform using EARS patterns and INCOSE quality rules. It is scoped to the platform's functional and non-functional behavior; concrete technical design decisions are deferred to the design phase.
+
+## Glossary
+
+- **StreetStudio**: The open-source asynchronous collaboration platform specified by this document. Also referred to as "the Platform".
+- **StreetJS**: The independent framework that StreetStudio consumes through published packages or local package links for HTTP serving, routing, controllers, validation, configuration, dependency injection, authentication primitives, authorization primitives, sessions, PostgreSQL access, Redis access, Redis Cluster, PostgreSQL high availability, queues, scheduling, storage interfaces, WebSockets, plugin loading, metrics, health checks, logging, CLI, resilience, and secret management.
+- **API_Service**: The StreetStudio backend application (`apps/api`) that exposes REST, WebSocket, and Webhook interfaces.
+- **Web_Client**: The StreetStudio browser application (`apps/web`).
+- **Desktop_Client**: The StreetStudio desktop application (`apps/desktop`).
+- **Recorder**: The subsystem that captures screen, camera, microphone, and system audio in the Web_Client or Desktop_Client.
+- **Media_Pipeline**: The subsystem that ingests, processes, transcodes, and prepares recorded media for streaming.
+- **Storage_Provider**: A pluggable backend that persists binary media objects (Local filesystem, Amazon S3, Cloudflare R2, Azure Blob, Google Cloud Storage, MinIO).
+- **Plugin_Manager**: The subsystem that discovers, loads, enables, disables, and isolates plugins.
+- **Plugin**: An installable extension that adds functionality (storage provider, chat integration, source control integration, AI provider, or other capability) without modifying platform core code.
+- **AI_Provider**: A Plugin that supplies AI capabilities such as transcription, summarization, or semantic search.
+- **Realtime_Service**: The subsystem that delivers live events over StreetJS WebSockets.
+- **Organization**: A top-level tenant that owns Teams, Projects, Workspaces, users, and billing.
+- **Team**: A group of Members within an Organization.
+- **Project**: A container for Folders and Videos within an Organization.
+- **Folder**: A hierarchical container for Videos and Assets within a Project.
+- **Workspace**: A collaborative context that scopes real-time presence and events.
+- **Video**: A recorded media item with metadata, transcripts, comments, and permissions.
+- **Asset**: A non-video file (image, markdown attachment, code snippet, terminal recording) associated with a Video or Folder.
+- **Member**: An authenticated user account associated with one or more Organizations.
+- **Role**: A named set of permissions assigned to a Member within an Organization scope.
+- **RBAC**: Role-Based Access Control, the authorization model governing Member access to resources.
+- **API_Key**: A credential that authenticates programmatic access to the API_Service.
+- **Webhook**: An outbound HTTP callback that delivers event notifications to an external endpoint.
+- **SDK**: The published client library that consumes the StreetStudio public API.
+- **Audit_Log**: An append-only record of security-relevant and administrative actions.
+- **Administrator**: A Member holding a Role that grants Organization-wide administrative permissions.
+
+## Requirements
+
+### Requirement 1: Repository Independence and StreetJS Consumption
+
+**User Story:** As a maintainer, I want StreetStudio to consume StreetJS only through published packages or local package links, so that the two repositories remain independent and StreetJS internals are never modified.
+
+#### Acceptance Criteria
+
+1. THE StreetStudio SHALL declare every dependency on StreetJS in a package manifest, referencing either a published package version or a local package link (workspace or linked package entry), and SHALL contain zero references that resolve to file-system paths inside the StreetJS repository.
+2. THE StreetStudio SHALL reside in a Git repository whose working tree and version-control history contain no StreetJS source files.
+3. IF a required capability is missing from StreetJS, THEN THE StreetStudio SHALL implement that capability within a StreetStudio package, importing StreetJS only through its published package entry points and never through paths that resolve inside StreetJS package internals (any module not exposed by the StreetJS package's public entry points).
+4. WHEN a StreetJS weakness is discovered, THE StreetStudio SHALL add a record in StreetStudio documentation that identifies the weakness and includes a reference to an external StreetJS issue, and SHALL make no modification to StreetJS source.
+5. THE StreetStudio SHALL use StreetJS for HTTP serving, routing, controllers, validation, configuration, dependency injection, sessions, PostgreSQL access, Redis access, queues, scheduling, storage interfaces, WebSockets, plugin loading, metrics, health checks, logging, CLI, resilience, and secret management.
+6. IF a build or dependency resolution encounters a StreetStudio import that resolves to a StreetJS internal module or a file-system path inside the StreetJS repository, THEN THE StreetStudio SHALL fail the build and produce an error indicating the disallowed StreetJS reference.
+
+### Requirement 2: Modular Monorepo Structure
+
+**User Story:** As a contributor, I want a modular monorepo with single-responsibility packages, so that the codebase stays maintainable and loosely coupled.
+
+#### Acceptance Criteria
+
+1. THE StreetStudio SHALL organize source code into `apps` directories for api, web, desktop, and docs applications.
+2. THE StreetStudio SHALL organize shared code into `packages` directories for ui, sdk, shared, config, database, auth, media, recording, processing, notifications, plugins, and analytics.
+3. THE StreetStudio SHALL assign a single responsibility to each package.
+4. WHERE a package exposes functionality to other packages, THE StreetStudio SHALL expose that functionality through published interfaces rather than internal file paths.
+
+### Requirement 3: Member Authentication
+
+**User Story:** As a user, I want to authenticate securely, so that only I can access my account and content.
+
+#### Acceptance Criteria
+
+1. WHEN a visitor submits valid registration details, THE API_Service SHALL create a Member account and return a success response.
+2. WHEN a Member submits valid credentials, THE API_Service SHALL issue a JWT access token and a session record.
+3. IF a Member submits invalid credentials, THEN THE API_Service SHALL reject the request and return an authentication error without revealing which credential was incorrect.
+4. WHEN a Member requests sign-out, THE API_Service SHALL invalidate the associated session.
+5. WHERE OAuth is configured, THE API_Service SHALL authenticate a Member through the configured OAuth provider.
+6. WHERE Single Sign-On is configured, THE API_Service SHALL authenticate a Member through the configured SSO identity provider.
+7. WHEN a JWT access token expires, THE API_Service SHALL reject requests presenting that token and return an authentication error.
+
+### Requirement 4: Organizations, Teams, and Membership
+
+**User Story:** As an organization owner, I want to manage organizations, teams, and members, so that I can control who collaborates and how.
+
+#### Acceptance Criteria
+
+1. WHEN an authenticated Member submits a request to create an Organization with a name of 1 to 200 characters, THE API_Service SHALL create the Organization and assign the creator an Administrator Role.
+2. WHEN an Administrator invites a user by a well-formed email address, THE API_Service SHALL create a pending invitation associated with the Organization that expires 7 days after creation.
+3. WHEN an invited user accepts a pending invitation before its expiration, THE API_Service SHALL add the user as a Member of the Organization and mark the invitation as accepted.
+4. WHEN an Administrator creates a Team within an Organization, THE API_Service SHALL create the Team scoped to that Organization.
+5. WHEN an Administrator assigns a Member who belongs to the Organization to a Team within that Organization, THE API_Service SHALL record the Team membership.
+6. IF a Member attempts to access an Organization they do not belong to, THEN THE API_Service SHALL deny access and return an authorization error.
+7. IF a Member submits a request to create an Organization with a name that is empty or exceeds 200 characters, THEN THE API_Service SHALL reject the request and return a validation error without creating the Organization.
+8. IF an Administrator submits an invitation with a malformed email address, THEN THE API_Service SHALL reject the request and return a validation error without creating the invitation.
+9. IF an invited user attempts to accept an invitation that is expired, already accepted, or revoked, THEN THE API_Service SHALL reject the request and return an error indicating the invitation is no longer valid.
+
+### Requirement 5: Projects, Folders, and Workspaces
+
+**User Story:** As a team member, I want to organize content into projects, folders, and workspaces, so that recordings stay structured and discoverable.
+
+#### Acceptance Criteria
+
+1. WHEN a Member with create permission creates a Project within an Organization, THE API_Service SHALL create the Project scoped to that Organization.
+2. WHEN a Member with create permission creates a Folder within a Project, THE API_Service SHALL create the Folder scoped to that Project.
+3. THE API_Service SHALL allow Folders to contain nested Folders, Videos, and Assets.
+4. WHEN a Member moves a Video to a different Folder within the same Organization, THE API_Service SHALL update the Video location and preserve the Video identity.
+5. WHEN a Member creates a Workspace, THE API_Service SHALL create the Workspace as a scope for real-time presence and events.
+
+### Requirement 6: Browser and Desktop Recording
+
+**User Story:** As a creator, I want to record my screen, camera, microphone, and system audio, so that I can produce async videos from the browser or desktop.
+
+#### Acceptance Criteria
+
+1. WHEN a Member starts a recording in the Web_Client, THE Recorder SHALL capture the selected screen, window, or region.
+2. WHERE a camera source is selected, THE Recorder SHALL capture camera video alongside the screen capture.
+3. WHERE a microphone source is selected, THE Recorder SHALL capture microphone audio.
+4. WHERE a system audio source is selected and supported by the client environment, THE Recorder SHALL capture system audio.
+5. WHILE a recording is in progress, THE Recorder SHALL provide cursor highlighting and drawing tools to the recording Member.
+6. WHEN a Member stops a recording, THE Recorder SHALL finalize the captured media and initiate upload to the API_Service.
+7. WHERE the client is offline during recording, THE Recorder SHALL store the recording locally and upload it when connectivity is restored.
+8. THE Recorder SHALL expose keyboard shortcuts for starting, pausing, and stopping a recording.
+
+### Requirement 7: Chunked and Resumable Uploads
+
+**User Story:** As a creator, I want uploads to be chunked and resumable, so that large recordings survive interruptions.
+
+#### Acceptance Criteria
+
+1. WHEN the Recorder uploads a Video, THE API_Service SHALL accept the media as an ordered sequence of chunks where each chunk is between 1 MB and 100 MB in size, and SHALL acknowledge each successfully received chunk to the Recorder.
+2. IF an upload is interrupted and the Recorder resumes within the upload session lifetime of 24 hours from the last acknowledged chunk, THEN THE API_Service SHALL accept continued chunk transmission starting from the chunk following the last acknowledged chunk without requiring retransmission of previously acknowledged chunks.
+3. WHEN all chunks of a Video have been received and acknowledged, THE API_Service SHALL assemble the chunks in order into a complete media object, record the Video as uploaded, and return a success response identifying the completed Video.
+4. IF a received chunk fails its integrity check, THEN THE API_Service SHALL reject that chunk without persisting it, retain all previously acknowledged chunks unchanged, and request retransmission of the failed chunk for up to 3 attempts.
+5. IF retransmission of a chunk fails its integrity check on 3 consecutive attempts, THEN THE API_Service SHALL abort the upload session, discard the partially received chunks, and return an upload-failure response indicating the chunk that could not be validated.
+6. IF an upload session remains incomplete for 24 hours after the last acknowledged chunk, THEN THE API_Service SHALL expire the session, discard the partially received chunks, and reject subsequent chunks for that session with an expired-session error.
+7. WHILE an upload is in progress, THE Realtime_Service SHALL emit an upload progress event to the uploading Member upon each chunk acknowledgment, where the event reports the count of acknowledged chunks relative to the total expected chunks.
+
+### Requirement 8: Media Processing Pipeline
+
+**User Story:** As a viewer, I want recordings to be processed for streaming, so that playback is fast and adaptive across devices.
+
+#### Acceptance Criteria
+
+1. WHEN a Video upload completes, THE Media_Pipeline SHALL enqueue the Video for background processing.
+2. WHEN the Media_Pipeline processes a Video, THE Media_Pipeline SHALL generate a thumbnail and a preview.
+3. WHEN the Media_Pipeline processes a Video, THE Media_Pipeline SHALL transcode the Video into streaming-ready renditions supporting adaptive bitrate playback.
+4. WHILE a Video is being processed, THE Realtime_Service SHALL emit processing status events to Members with access to the Video.
+5. IF processing of a Video fails, THEN THE Media_Pipeline SHALL record a failure status and emit a processing failure event.
+6. WHEN processing of a Video completes, THE Media_Pipeline SHALL mark the Video as ready for streaming.
+
+### Requirement 9: Storage Abstraction and Providers
+
+**User Story:** As a self-hosting operator, I want storage to be provider-agnostic, so that I can choose where media is persisted.
+
+#### Acceptance Criteria
+
+1. THE Media_Pipeline SHALL persist and retrieve media objects through a Storage_Provider interface.
+2. THE Plugin_Manager SHALL support Storage_Providers for Local filesystem, Amazon S3, Cloudflare R2, Azure Blob, Google Cloud Storage, and MinIO as plugins.
+3. WHEN an operator configures a Storage_Provider, THE API_Service SHALL route media persistence to the configured Storage_Provider.
+4. IF a configured Storage_Provider is unavailable during a write, THEN THE API_Service SHALL return a storage error and record the failure.
+5. WHERE signed uploads are enabled, THE API_Service SHALL issue time-limited signed upload targets for the configured Storage_Provider.
+
+### Requirement 10: Video Streaming and Playback
+
+**User Story:** As a viewer, I want to stream videos with adaptive quality, so that playback matches my connection and device.
+
+#### Acceptance Criteria
+
+1. WHEN a Member with view permission requests playback of a ready Video, THE API_Service SHALL provide a streaming manifest for adaptive bitrate playback.
+2. IF a Member without view permission requests playback of a Video, THEN THE API_Service SHALL deny access and return an authorization error.
+3. WHERE secure sharing is enabled for a Video, THE API_Service SHALL grant playback only to holders of a valid share credential.
+
+### Requirement 11: Comments, Mentions, Threads, and Reactions
+
+**User Story:** As a reviewer, I want to comment, mention, reply in threads, and react on videos, so that discussion stays attached to the content.
+
+#### Acceptance Criteria
+
+1. WHEN a Member with comment permission posts a comment on a Video, THE API_Service SHALL store the comment associated with the Video.
+2. WHERE a comment specifies a timestamp, THE API_Service SHALL associate the comment with that playback position in the Video.
+3. WHEN a Member posts a reply to a comment, THE API_Service SHALL store the reply within the parent comment thread.
+4. WHEN a Member mentions another Member in a comment, THE API_Service SHALL create a notification for the mentioned Member.
+5. WHEN a Member adds a reaction to a comment or Video, THE API_Service SHALL record the reaction associated with the target.
+6. WHILE a Member is viewing a Video, THE Realtime_Service SHALL emit new comments on that Video to the viewing Member.
+
+### Requirement 12: Notifications
+
+**User Story:** As a member, I want to receive notifications about relevant activity, so that I stay informed without polling.
+
+#### Acceptance Criteria
+
+1. WHEN an event relevant to a Member occurs, THE API_Service SHALL create a notification for that Member.
+2. WHILE a Member is connected, THE Realtime_Service SHALL deliver new notifications to that Member.
+3. WHEN a Member marks a notification as read, THE API_Service SHALL update the notification read status.
+4. WHERE a Member has configured notification preferences, THE API_Service SHALL create notifications only for event types the Member has enabled.
+
+### Requirement 13: Real-Time Events and Presence
+
+**User Story:** As a collaborator, I want real-time presence, typing indicators, and workspace events, so that collaboration feels live.
+
+#### Acceptance Criteria
+
+1. WHEN a Member joins a Workspace, THE Realtime_Service SHALL emit a presence event to other Members in that Workspace.
+2. WHILE a Member is typing a comment, THE Realtime_Service SHALL emit a typing indicator to other Members viewing the same Video.
+3. WHEN a Member leaves a Workspace, THE Realtime_Service SHALL emit a presence-departure event to other Members in that Workspace.
+4. THE Realtime_Service SHALL deliver upload progress, processing status, live comments, notifications, presence, typing indicators, and workspace events over StreetJS WebSockets.
+
+### Requirement 14: Search and Transcript Search
+
+**User Story:** As a user, I want to search videos and transcripts, so that I can find content quickly.
+
+#### Acceptance Criteria
+
+1. WHEN a Member submits a search query, THE API_Service SHALL return Videos and Assets matching the query within the Member's authorized scope.
+2. WHERE a Video has a transcript, THE API_Service SHALL include transcript matches in search results.
+3. IF a search query matches no authorized results, THEN THE API_Service SHALL return an empty result set.
+4. THE API_Service SHALL exclude resources outside the requesting Member's authorized scope from search results.
+
+### Requirement 15: Sharing and Content Permissions
+
+**User Story:** As a content owner, I want to control sharing and permissions, so that videos reach only intended audiences.
+
+#### Acceptance Criteria
+
+1. WHEN a Member with share permission creates a share link for a Video, THE API_Service SHALL generate a secure share credential.
+2. WHERE a share link is configured to expire, THE API_Service SHALL reject access through that link after the expiration time.
+3. WHEN a Member with share permission revokes a share link, THE API_Service SHALL reject subsequent access through that link.
+4. THE API_Service SHALL enforce content permissions on every request that reads or modifies a Video, Asset, Comment, or Folder.
+5. WHERE a share link requires a passcode, THE API_Service SHALL grant access only when the correct passcode is supplied.
+
+### Requirement 16: Role-Based Access Control
+
+**User Story:** As an administrator, I want role-based access control, so that permissions map to organizational roles.
+
+#### Acceptance Criteria
+
+1. THE API_Service SHALL evaluate every authenticated request against the requesting Member's Role permissions within the relevant scope.
+2. WHEN an Administrator assigns a Role to a Member, THE API_Service SHALL apply that Role's permissions to the Member within the assigned scope.
+3. IF a Member attempts an action not permitted by their Role, THEN THE API_Service SHALL deny the action and return an authorization error.
+4. THE API_Service SHALL scope Role permissions to the Organization in which the Role is assigned.
+
+### Requirement 17: Audit Logging
+
+**User Story:** As a compliance officer, I want an append-only audit log, so that security-relevant actions are traceable.
+
+#### Acceptance Criteria
+
+1. WHEN a security-relevant action occurs, THE API_Service SHALL append an Audit_Log entry recording the actor, action, target, and timestamp.
+2. THE API_Service SHALL prevent modification of existing Audit_Log entries.
+3. WHEN an Administrator requests Audit_Log entries within their Organization, THE API_Service SHALL return the entries scoped to that Organization.
+4. THE API_Service SHALL record authentication events, authorization denials, sharing changes, and administrative actions in the Audit_Log.
+
+### Requirement 18: API Keys
+
+**User Story:** As a developer, I want to manage API keys, so that I can authenticate programmatic access.
+
+#### Acceptance Criteria
+
+1. WHEN a Member with API management permission creates an API_Key, THE API_Service SHALL generate the API_Key and return its secret value exactly once.
+2. WHEN a request presents a valid API_Key, THE API_Service SHALL authenticate the request with the permissions associated with that API_Key.
+3. WHEN a Member revokes an API_Key, THE API_Service SHALL reject subsequent requests presenting that API_Key.
+4. IF a request presents an invalid or revoked API_Key, THEN THE API_Service SHALL deny the request and return an authentication error.
+
+### Requirement 19: Webhooks
+
+**User Story:** As an integrator, I want webhooks for platform events, so that external systems react to activity.
+
+#### Acceptance Criteria
+
+1. WHEN a Member with webhook management permission registers a Webhook for an event type, THE API_Service SHALL store the Webhook subscription.
+2. WHEN a subscribed event occurs, THE API_Service SHALL deliver an event payload to the registered Webhook endpoint.
+3. THE API_Service SHALL sign each Webhook delivery so the receiver can verify authenticity.
+4. IF a Webhook delivery fails, THEN THE API_Service SHALL retry delivery according to a bounded retry policy.
+5. WHEN a Member deletes a Webhook subscription, THE API_Service SHALL stop delivering events to that endpoint.
+
+### Requirement 20: API-First Parity and SDK
+
+**User Story:** As a developer, I want every UI capability available through the public API, so that automation has full coverage.
+
+#### Acceptance Criteria
+
+1. THE API_Service SHALL expose every capability available in the Web_Client through a public REST, WebSocket, or Webhook interface.
+2. THE SDK SHALL provide client access to the public REST and WebSocket interfaces of the API_Service.
+3. WHEN the public API contract changes, THE StreetStudio SHALL update the SDK to reflect the changed contract.
+4. THE API_Service SHALL enforce the same authorization rules for public API requests as for Web_Client requests.
+
+### Requirement 21: Plugin Management
+
+**User Story:** As an operator, I want to manage plugins, so that I can extend the platform without modifying core code.
+
+#### Acceptance Criteria
+
+1. THE Plugin_Manager SHALL discover and load Plugins through the StreetJS plugin loader.
+2. WHEN an Administrator enables a Plugin, THE Plugin_Manager SHALL activate the Plugin and register its capabilities.
+3. WHEN an Administrator disables a Plugin, THE Plugin_Manager SHALL deactivate the Plugin and unregister its capabilities.
+4. IF a Plugin fails to load, THEN THE Plugin_Manager SHALL record the failure and continue operating without the failed Plugin.
+5. THE Plugin_Manager SHALL isolate Plugin execution so a Plugin cannot modify platform core code.
+6. THE Plugin_Manager SHALL support integration Plugins for Slack, Discord, GitHub, GitLab, Jira, Linear, Microsoft Teams, and Notion.
+
+### Requirement 22: AI Capabilities via Plugins
+
+**User Story:** As a user, I want AI features delivered through plugins, so that no AI vendor is hardcoded into the platform.
+
+#### Acceptance Criteria
+
+1. THE API_Service SHALL provide AI capabilities exclusively through AI_Provider Plugins.
+2. WHERE an AI_Provider Plugin is enabled, THE API_Service SHALL route transcription, summarization, action-item extraction, and semantic search requests to the enabled AI_Provider.
+3. IF no AI_Provider Plugin is enabled, THEN THE API_Service SHALL make AI-dependent features unavailable without failing non-AI features.
+4. THE API_Service SHALL NOT embed a specific AI vendor implementation in platform core code.
+
+### Requirement 23: Developer Mode
+
+**User Story:** As a developer, I want developer-oriented recording features, so that I can share code and terminal context.
+
+#### Acceptance Criteria
+
+1. WHERE Developer Mode is enabled, THE Recorder SHALL allow attaching code snippets to a Video.
+2. WHERE Developer Mode is enabled, THE Recorder SHALL support terminal recordings as Assets.
+3. WHERE Developer Mode is enabled, THE API_Service SHALL allow attaching markdown attachments to a Video.
+4. WHERE Developer Mode is enabled, THE API_Service SHALL support API recordings as Assets associated with a Video.
+
+### Requirement 24: Engineering Reviews and Source Control Integration
+
+**User Story:** As an engineer, I want to link videos to pull requests and leave timestamped review comments, so that reviews carry visual context.
+
+#### Acceptance Criteria
+
+1. WHEN a Member links a Video to a pull request through a source control Plugin, THE API_Service SHALL store the association between the Video and the pull request.
+2. WHERE a GitHub or GitLab Plugin is enabled, THE API_Service SHALL allow linking Videos to repositories managed by that Plugin.
+3. WHEN a Member posts a timestamped review comment, THE API_Service SHALL associate the comment with the referenced playback position.
+
+### Requirement 25: Knowledge Base
+
+**User Story:** As a knowledge worker, I want searchable video documentation with transcripts and summaries, so that recorded knowledge stays discoverable.
+
+#### Acceptance Criteria
+
+1. WHERE a transcript is available for a Video, THE API_Service SHALL make the transcript searchable within the Knowledge Base.
+2. WHERE an AI_Provider Plugin is enabled, THE API_Service SHALL store auto-generated summaries produced by the AI_Provider for a Video.
+3. WHEN a Member links documentation to a Video, THE API_Service SHALL store the link association.
+
+### Requirement 26: Administration
+
+**User Story:** As an administrator, I want administrative controls, so that I can manage members, roles, and organization settings.
+
+#### Acceptance Criteria
+
+1. WHEN an Administrator updates Organization settings, THE API_Service SHALL persist the updated settings.
+2. WHEN an Administrator removes a Member from an Organization, THE API_Service SHALL revoke that Member's access to the Organization's resources.
+3. WHEN an Administrator changes a Member's Role, THE API_Service SHALL apply the new Role permissions to that Member.
+4. IF a non-Administrator attempts an administrative action, THEN THE API_Service SHALL deny the action and return an authorization error.
+
+### Requirement 27: Billing Abstraction
+
+**User Story:** As an operator, I want a billing abstraction, so that billing providers are pluggable and not hardcoded.
+
+#### Acceptance Criteria
+
+1. THE API_Service SHALL expose billing operations through a billing abstraction interface.
+2. WHERE a billing Plugin is enabled, THE API_Service SHALL route billing operations to the enabled billing Plugin.
+3. IF no billing Plugin is enabled, THEN THE API_Service SHALL operate core features without requiring billing.
+
+### Requirement 28: Analytics
+
+**User Story:** As an administrator, I want analytics on usage and engagement, so that I can understand platform activity.
+
+#### Acceptance Criteria
+
+1. WHEN a Member views a Video, THE API_Service SHALL record a view event for analytics within the Member's Organization scope.
+2. WHEN an Administrator requests analytics for their Organization, THE API_Service SHALL return aggregated metrics scoped to that Organization.
+3. THE API_Service SHALL exclude analytics data from Organizations other than the requesting Administrator's Organization.
+
+### Requirement 29: Security Defaults
+
+**User Story:** As a security-conscious operator, I want secure defaults, so that the platform is protected without extra configuration.
+
+#### Acceptance Criteria
+
+1. WHEN the API_Service receives requests exceeding the configured rate limit for a client, THE API_Service SHALL reject additional requests from that client and return a rate-limit error.
+2. THE API_Service SHALL store secrets using the StreetJS secret management interface in encrypted form.
+3. THE API_Service SHALL transmit signed, time-limited credentials for direct uploads to Storage_Providers.
+4. THE API_Service SHALL require authentication for every non-public endpoint.
+5. WHERE a network-exposed endpoint is public, THE StreetStudio SHALL document the absence of authentication for that endpoint.
+
+### Requirement 30: Self-Hosting and Deployment
+
+**User Story:** As an operator, I want to self-host StreetStudio, so that I retain data ownership and control.
+
+#### Acceptance Criteria
+
+1. THE StreetStudio SHALL provide container images and deployment configuration for self-hosting through the `docker` and `infrastructure` directories.
+2. WHEN an operator provides required configuration, THE API_Service SHALL start and pass its health checks.
+3. THE API_Service SHALL expose health check and metrics endpoints through the StreetJS health check and metrics interfaces.
+4. WHERE high availability is configured, THE API_Service SHALL operate against PostgreSQL high availability and Redis Cluster through the StreetJS interfaces.
+
+### Requirement 31: Documentation
+
+**User Story:** As a contributor, I want comprehensive documentation, so that I can understand, deploy, and extend the platform.
+
+#### Acceptance Criteria
+
+1. THE StreetStudio SHALL provide README, ARCHITECTURE, ROADMAP, CONTRIBUTING, SECURITY, API, PLUGIN_GUIDE, MEDIA_PIPELINE, DEPLOYMENT, and DECISIONS documents.
+2. WHEN an architectural decision is made, THE StreetStudio SHALL record the decision in an Architecture Decision Record.
+3. THE StreetStudio SHALL document the public API contract in the API documentation.
+
+### Requirement 32: Testing and Continuous Integration
+
+**User Story:** As a maintainer, I want a rigorous test strategy and green CI, so that quality stays high and regressions are caught.
+
+#### Acceptance Criteria
+
+1. THE StreetStudio SHALL include unit, integration, contract, end-to-end, performance benchmark, load, and media pipeline tests.
+2. WHEN a change is submitted to continuous integration, THE StreetStudio CI SHALL run the test suite and report a pass or fail result.
+3. IF any test fails in continuous integration, THEN THE StreetStudio CI SHALL report the change as failing.
+4. THE StreetStudio SHALL verify behavior against real dependencies where real verification is practical rather than asserting mocked success.
