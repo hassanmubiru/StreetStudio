@@ -154,3 +154,168 @@ StreetJS is consumed only through its public package entry points. Every cross-p
 
 - [ ] 9. Checkpoint - auth and RBAC
   - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 10. Implement organizations, teams, membership, and administration
+  - [ ] 10.1 Implement organization, team, and invitation services
+    - `createOrg` (name 1–200) assigning the creator Administrator; `invite` creating a pending invitation expiring at +7d and rejecting malformed emails; `acceptInvitation` valid only while pending/unexpired; `createTeam` and `assignToTeam` org-scoped; deny cross-organization access
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9_
+
+  - [ ] 10.2 Implement administrative controls
+    - `updateSettings` validating atomically and retaining prior settings on failure; `removeMember` revoking access within 5s; reject removing the last Administrator; deny non-Administrator administrative actions; record successful administrative actions in the Audit Log
+    - _Requirements: 26.1, 26.2, 26.4, 26.5, 26.6, 26.7_
+
+  - [ ]* 10.3 Write property test for organization creation and admin assignment
+    - **Property 8: Organization creation validity and administrator assignment**
+    - **Validates: Requirements 4.1, 4.7**
+
+  - [ ]* 10.4 Write property test for invitation expiry
+    - **Property 9: Invitations expire seven days after creation**
+    - **Validates: Requirements 4.2, 4.8**
+
+  - [ ]* 10.5 Write property test for invitation acceptance validity
+    - **Property 10: Invitation acceptance is valid only while pending and unexpired**
+    - **Validates: Requirements 4.3, 4.9**
+
+  - [ ]* 10.6 Write property test for team scoping
+    - **Property 11: Team creation and membership are organization-scoped**
+    - **Validates: Requirements 4.4, 4.5**
+
+  - [ ]* 10.7 Write property test for cross-organization access denial
+    - **Property 12: Cross-organization access is denied**
+    - **Validates: Requirements 4.6**
+
+  - [ ]* 10.8 Write property test for organization settings updates
+    - **Property 75: Organization settings updates are validated atomically**
+    - **Validates: Requirements 26.1, 26.5**
+
+  - [ ]* 10.9 Write property test for member removal revoking access
+    - **Property 76: Removing a member revokes access**
+    - **Validates: Requirements 26.2**
+
+  - [ ]* 10.10 Write property test for administrator-only actions
+    - **Property 77: Administrative actions require Administrator role**
+    - **Validates: Requirements 26.4**
+
+  - [ ]* 10.11 Write property test for last-administrator retention
+    - **Property 78: An organization always retains at least one Administrator**
+    - **Validates: Requirements 26.6**
+
+- [ ] 11. Implement content hierarchy (projects, folders, workspaces)
+  - [ ] 11.1 Implement ContentService for projects, folders, workspaces, and video moves
+    - `createProject`/`createFolder` (names 1–255) scoped to org/project with create-permission gating; enforce folder nesting depth ≤10; `moveVideo` same-org only, preserving identity/comments/transcripts/permissions and rejecting cross-org moves; `createWorkspace`
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
+
+  - [ ]* 11.2 Write property test for project/folder validity and scoping
+    - **Property 13: Project and folder creation validity and scoping**
+    - **Validates: Requirements 5.1, 5.2, 5.8**
+
+  - [ ]* 11.3 Write property test for folder nesting depth bound
+    - **Property 14: Folder nesting is bounded at depth 10**
+    - **Validates: Requirements 5.3**
+
+  - [ ]* 11.4 Write property test for video move preservation
+    - **Property 15: Video moves preserve identity and associations within the organization**
+    - **Validates: Requirements 5.4, 5.7**
+
+  - [ ]* 11.5 Write property test for create-permission enforcement
+    - **Property 16: Create permission is required for projects and folders**
+    - **Validates: Requirements 5.6**
+
+- [ ] 12. Checkpoint - organizations and content
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 13. Implement storage abstraction and provider contract
+  - [ ] 13.1 Implement the StorageProvider interface and routing
+    - Define `put`/`get`/`signUploadTarget`/`healthCheck`; route persistence exclusively through the interface; write ack within 30s or abort with `STORAGE_ERROR` recording provider id + timestamp; activation validates config/connectivity and retains prior provider on failure; signed targets valid 60–3600s (default 900), direct-to-storage ≤15 min, expired targets rejected
+    - _Requirements: 9.1, 9.3, 9.4, 9.5, 9.6, 9.7, 29.3_
+
+  - [ ]* 13.2 Write property test for storage round-trip byte preservation
+    - **Property 27: Storage round-trip preserves object bytes**
+    - **Validates: Requirements 9.1**
+
+  - [ ]* 13.3 Write property test for provider activation validation
+    - **Property 28: Storage provider activation validates configuration**
+    - **Validates: Requirements 9.4**
+
+  - [ ]* 13.4 Write property test for signed upload credential expiry
+    - **Property 29: Signed upload credentials have bounded, secure expiry**
+    - **Validates: Requirements 9.6, 9.7, 29.3**
+
+  - [ ]* 13.5 Write unit tests for storage write timeout/abort handling
+    - Test the 30s no-ack abort and write-failure paths
+    - _Requirements: 9.5_
+
+- [ ] 14. Implement chunked and resumable uploads
+  - [ ] 14.1 Implement the UploadService (init, putChunk, status, complete)
+    - Accept ordered chunks 1 MB–100 MB, acknowledging each; integrity-check each chunk, rejecting failures without persisting and retrying ≤3 times before aborting and discarding partial chunks; resume within 24h from the chunk after the last ack without retransmission; expire idle sessions after 24h; assemble in order into the completed Video; emit upload-progress on each ack
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
+
+  - [ ]* 14.2 Write property test for chunk size validation and acknowledgment
+    - **Property 18: Chunk acceptance validates size and acknowledges each received chunk**
+    - **Validates: Requirements 7.1**
+
+  - [ ]* 14.3 Write property test for resumable uploads without retransmission
+    - **Property 19: Interrupted uploads resume without retransmitting acknowledged chunks**
+    - **Validates: Requirements 7.2**
+
+  - [ ]* 14.4 Write property test for chunk-assembly round-trip
+    - **Property 20: Chunk assembly round-trip reconstructs the original media**
+    - **Validates: Requirements 7.3**
+
+  - [ ]* 14.5 Write property test for bounded, non-destructive integrity failures
+    - **Property 21: Chunk integrity failures are bounded and non-destructive**
+    - **Validates: Requirements 7.4, 7.5**
+
+  - [ ]* 14.6 Write property test for upload session expiry
+    - **Property 22: Upload sessions expire after 24 hours of inactivity**
+    - **Validates: Requirements 7.6**
+
+  - [ ]* 14.7 Write property test for upload progress reporting
+    - **Property 23: Upload progress reflects acknowledged chunk count**
+    - **Validates: Requirements 7.7**
+
+- [ ] 15. Implement the Recorder client capture and upload logic
+  - [ ] 15.1 Implement Recorder capture, controls, and offline upload
+    - Capture screen/window/region with optional camera/microphone/system audio; continue without unsupported system audio and notify; abort and retain nothing on denied permission; cursor highlighting/drawing tools and keyboard shortcuts; pause/resume retaining pre-pause media; finalize ≤10s on stop and initiate upload; persist offline stops locally and upload with ≤5 retries on reconnect
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 6.11, 6.12_
+
+  - [ ]* 15.2 Write property test for bounded offline upload retries
+    - **Property 17: Offline recording upload retries are bounded**
+    - **Validates: Requirements 6.11**
+
+  - [ ]* 15.3 Write unit tests for capture, pause/resume, unsupported audio, and denied permission
+    - Test capture source selection, pause/resume state, system-audio-unavailable notification, denied-permission abort, and offline local storage
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.8, 6.9, 6.10_
+
+- [ ] 16. Implement the media processing pipeline
+  - [ ] 16.1 Implement the MediaPipeline worker (enqueue and process)
+    - Enqueue within 5s of upload completion; produce exactly one thumbnail, a 3–10s preview, and ≥3 ABR renditions, then mark the Video ready; emit processing-status transitions (queued|processing|ready|failed) to members with access within 2s; retry ≤3 times on failure, then record failure, retain source, and emit a failure event
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
+
+  - [ ]* 16.2 Write property test for required processing outputs
+    - **Property 24: Processing produces the required outputs**
+    - **Validates: Requirements 8.2, 8.3, 8.4, 8.7**
+
+  - [ ]* 16.3 Write property test for processing status values
+    - **Property 25: Processing status events use only defined status values**
+    - **Validates: Requirements 8.5**
+
+  - [ ]* 16.4 Write property test for bounded processing failures
+    - **Property 26: Processing failures are bounded and preserve the source**
+    - **Validates: Requirements 8.6**
+
+- [ ] 17. Implement streaming and playback
+  - [ ] 17.1 Implement PlaybackService manifest generation
+    - Provide an ABR streaming manifest within 3s if and only if the Video is ready and the requester holds view permission (or a valid share credential); deny with the appropriate error and no manifest otherwise
+    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
+
+  - [ ]* 17.2 Write property test for playback state and authorization
+    - **Property 30: Playback requires ready state and authorization**
+    - **Validates: Requirements 10.1, 10.2, 10.3**
+
+  - [ ]* 17.3 Write property test for share-credential playback
+    - **Property 31: Share-credential playback is granted only for valid credentials**
+    - **Validates: Requirements 10.4, 10.5**
+
+- [ ] 18. Checkpoint - media path
+  - Ensure all tests pass, ask the user if questions arise.
