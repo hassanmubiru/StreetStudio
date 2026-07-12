@@ -143,7 +143,7 @@ export class HmacAccessTokenIssuer implements AccessTokenIssuer {
     }
 
     const expiresAt = new Date(payload.exp * 1000);
-    if (Date.now() >= expiresAt.getTime()) {
+    if (this.clock.now().getTime() >= expiresAt.getTime()) {
       throw new InvalidTokenError("token has expired");
     }
 
