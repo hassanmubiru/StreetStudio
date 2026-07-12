@@ -485,7 +485,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 27.5_
 
 - [ ] 29. Implement integration plugins
-  - [ ] 29.1 Implement integration plugins for Slack, Discord, GitHub, GitLab, Jira, Linear, Microsoft Teams, and Notion
+  - [-] 29.1 Implement integration plugins for Slack, Discord, GitHub, GitLab, Jira, Linear, Microsoft Teams, and Notion
     - Implement each integration against the plugin contract; source-control integrations (GitHub/GitLab) expose repository/pull-request access used by Engineering Reviews
     - _Requirements: 21.8, 24.2_
 
