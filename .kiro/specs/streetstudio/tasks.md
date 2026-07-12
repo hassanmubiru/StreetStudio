@@ -94,15 +94,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 3: Registration creates retrievable accounts without plaintext passwords**
     - **Validates: Requirements 3.1**
 
-  - [ ] 6.5 Write property test for short-lived token issuance
+  - [-] 6.5 Write property test for short-lived token issuance
     - **Property 4: Login issues short-lived tokens with sessions**
     - **Validates: Requirements 3.2**
 
-  - [ ] 6.6 Write property test for non-disclosing invalid authentication
+  - [-] 6.6 Write property test for non-disclosing invalid authentication
     - **Property 5: Invalid authentication is uniformly non-disclosing**
     - **Validates: Requirements 3.3, 3.8**
 
-  - [ ] 6.7 Write property test for session and token invalidation
+  - [-] 6.7 Write property test for session and token invalidation
     - **Property 6: Session and token invalidation**
     - **Validates: Requirements 3.4, 3.7**
 
