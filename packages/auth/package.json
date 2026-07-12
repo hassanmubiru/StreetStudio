@@ -1,0 +1,33 @@
+{
+  "name": "@streetstudio/auth",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Authentication, sessions, RBAC, and API keys.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@streetstudio/database": "*"
+  },
+  "peerDependencies": {
+    "@streetjs/core": "^0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@streetjs/core": { "optional": true }
+  },
+  "streetstudio": {
+    "domain": "Authentication, sessions, RBAC, and API keys.",
+    "streetjs": ["@streetjs/core"]
+  }
+}
