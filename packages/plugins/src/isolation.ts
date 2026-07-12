@@ -73,23 +73,27 @@ function guard(
     set(_target, prop, _newValue) {
       const childPath = path === "" ? String(prop) : `${path}.${String(prop)}`;
       record(sink, pluginId, childPath, "set");
-      // Deny the write. Returning false triggers a TypeError in strict-mode
-      // callers; non-strict callers simply observe the assignment had no effect.
-      return false;
+      // Deny the write: the trap never forwards to the target, so core is left
+      // unchanged. We report success (return true) so the denial is silent and
+      // does not crash the plugin; the attempt is already recorded (R21.6, R21.7).
+      return true;
     },
     deleteProperty(_target, prop) {
       const childPath = path === "" ? String(prop) : `${path}.${String(prop)}`;
       record(sink, pluginId, childPath, "delete");
-      return false;
+      // Deny the delete without forwarding to the target.
+      return true;
     },
     defineProperty(_target, prop, _descriptor) {
       const childPath = path === "" ? String(prop) : `${path}.${String(prop)}`;
       record(sink, pluginId, childPath, "defineProperty");
-      return false;
+      // Deny the (re)definition without forwarding to the target.
+      return true;
     },
     setPrototypeOf() {
       record(sink, pluginId, "[[Prototype]]", "set");
-      return false;
+      // Deny the prototype change without forwarding to the target.
+      return true;
     },
   });
 }
