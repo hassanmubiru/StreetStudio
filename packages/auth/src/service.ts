@@ -150,6 +150,7 @@ export class AuthService {
   private readonly clock: Clock;
   private readonly accessTokenTtlSeconds: number;
   private readonly lockoutPolicy: LockoutPolicy | undefined;
+  private readonly providers: FederatedProviderRegistry | undefined;
   private readonly newId: () => Uuid;
   /** Memoized placeholder hash used to equalize verification timing. */
   private dummyHash: Promise<string> | undefined;
