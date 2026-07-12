@@ -21,7 +21,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Reject imports resolving to StreetJS internals, filesystem paths inside the StreetJS repo, another package's internal module, or a specific AI/billing vendor implementation in core; emit a named error (`DISALLOWED_STREETJS_IMPORT`, `DISALLOWED_INTERNAL_IMPORT`, `DISALLOWED_AI_VENDOR`) and fail the build
     - _Requirements: 1.3, 1.6, 2.4, 2.6, 22.6_
 
-  - [-] 1.3 Write property test for the import-boundary analyzer
+  - [x] 1.3 Write property test for the import-boundary analyzer
     - **Property 1: Import boundary enforcement**
     - **Validates: Requirements 1.1, 1.3, 1.6, 2.4, 2.6, 22.6**
 
