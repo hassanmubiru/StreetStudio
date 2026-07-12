@@ -83,3 +83,18 @@ export type {
   ApiKeyStore,
   SecretHasher,
 } from "./api-key.js";
+
+// --- RBAC evaluator (task 8.1) ---------------------------------------------
+export {
+  RbacAccessControl,
+  ROLE_MANAGEMENT_PERMISSION,
+  repositoryRbacStore,
+} from "./access-control.js";
+export type {
+  AccessControl,
+  AccessControlDeps,
+  Action,
+  ResourceRef,
+  RbacStore,
+  RoleName,
+} from "./access-control.js";
