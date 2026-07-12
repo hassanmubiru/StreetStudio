@@ -13,21 +13,28 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b"
   },
   "dependencies": {
-    "@streetstudio/database": "*"
+    "@streetstudio/database": "*",
+    "argon2": "0.44.0"
   },
   "peerDependencies": {
     "@streetjs/core": "^0.1.0"
   },
   "peerDependenciesMeta": {
-    "@streetjs/core": { "optional": true }
+    "@streetjs/core": {
+      "optional": true
+    }
   },
   "streetstudio": {
     "domain": "Authentication, sessions, RBAC, and API keys.",
-    "streetjs": ["@streetjs/core"]
+    "streetjs": [
+      "@streetjs/core"
+    ]
   }
 }
