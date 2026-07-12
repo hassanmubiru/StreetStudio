@@ -156,7 +156,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 10. Implement organizations, teams, membership, and administration
-  - [-] 10.1 Implement organization, team, and invitation services
+  - [x] 10.1 Implement organization, team, and invitation services
     - `createOrg` (name 1–200) assigning the creator Administrator; `invite` creating a pending invitation expiring at +7d and rejecting malformed emails; `acceptInvitation` valid only while pending/unexpired; `createTeam` and `assignToTeam` org-scoped; deny cross-organization access
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9_
 
@@ -201,7 +201,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 26.6**
 
 - [ ] 11. Implement content hierarchy (projects, folders, workspaces)
-  - [-] 11.1 Implement ContentService for projects, folders, workspaces, and video moves
+  - [x] 11.1 Implement ContentService for projects, folders, workspaces, and video moves
     - `createProject`/`createFolder` (names 1–255) scoped to org/project with create-permission gating; enforce folder nesting depth ≤10; `moveVideo` same-org only, preserving identity/comments/transcripts/permissions and rejecting cross-org moves; `createWorkspace`
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
