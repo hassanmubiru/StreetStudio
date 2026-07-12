@@ -48,7 +48,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Load and validate configuration via the StreetJS config interface; abort startup and emit an error naming every missing/invalid required value
     - _Requirements: 30.3_
 
-  - [ ] 3.2 Write property test for startup configuration validation
+  - [-] 3.2 Write property test for startup configuration validation
     - **Property 88: Startup validation names every invalid configuration value**
     - **Validates: Requirements 30.3**
 
