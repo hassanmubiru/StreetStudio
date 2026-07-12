@@ -192,7 +192,7 @@ export class TenantRepository<
  * update or delete path, matching the audit log's immutability (R17.1, R17.2).
  */
 export class AppendOnlyTenantRepository<
-  TRecord extends { id: Uuid; organizationId: Uuid } & Record<string, unknown>,
+  TRecord extends { id: Uuid; organizationId: Uuid },
 > extends BaseRepository<TRecord> {
   /** Find an entry by id, scoped to the organization. */
   async findById(organizationId: Uuid, id: Uuid): Promise<TRecord | null> {
