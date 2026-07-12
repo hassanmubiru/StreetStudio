@@ -1,5 +1,3 @@
-	new file:   packages/storage-gcs/src/index.test.ts
-	modified:   tsconfig.json
 
 {
   "name": "@streetstudio/storage-gcs",
