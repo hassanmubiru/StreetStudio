@@ -131,7 +131,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 59: API-key management is permission-gated**
     - **Validates: Requirements 18.6**
 
-- [ ] 8. Implement RBAC evaluation
+- [x] 8. Implement RBAC evaluation
   - [x] 8.1 Implement the deny-by-default AccessControl evaluator and role assignment
     - `can(ctx, action, resource)` evaluated in the organization scope that owns the resource, before any action; denied actions cause no change; `assignRole` permission-gated and membership-checked; permissions never leak across organizations; role changes govern subsequent decisions
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 26.3_
@@ -144,11 +144,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 51: Role assignment governs subsequent decisions**
     - **Validates: Requirements 16.2, 26.3**
 
-  - [-] 8.4 Write property test for cross-organization permission isolation
+  - [x] 8.4 Write property test for cross-organization permission isolation
     - **Property 52: Role permissions never leak across organizations**
     - **Validates: Requirements 16.4**
 
-  - [-] 8.5 Write property test for role-management gating
+  - [x] 8.5 Write property test for role-management gating
     - **Property 53: Role management is permission-gated and membership-checked**
     - **Validates: Requirements 16.5, 16.6**
 
