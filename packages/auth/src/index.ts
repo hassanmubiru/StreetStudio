@@ -24,6 +24,16 @@ export type {
   RegisterInput,
 } from "./service.js";
 
+// --- OAuth/SSO federation (task 6.3) ---------------------------------------
+export { federatedProviderRegistry } from "./federation.js";
+export type {
+  FederatedIdentity,
+  FederatedProviderRegistry,
+  FederatedProviders,
+  OAuthProvider,
+  SsoProvider,
+} from "./federation.js";
+
 // --- Password hashing ------------------------------------------------------
 export { Argon2idPasswordHasher } from "./password-hasher.js";
 export type { PasswordHasher } from "./password-hasher.js";
