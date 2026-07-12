@@ -1,0 +1,33 @@
+{
+  "name": "@streetstudio/plugins",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plugin_Manager, plugin contracts, and isolation.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@streetstudio/shared": "*"
+  },
+  "peerDependencies": {
+    "@streetjs/core": "^0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@streetjs/core": { "optional": true }
+  },
+  "streetstudio": {
+    "domain": "Plugin_Manager, plugin contracts, and isolation.",
+    "streetjs": ["@streetjs/core"]
+  }
+}
