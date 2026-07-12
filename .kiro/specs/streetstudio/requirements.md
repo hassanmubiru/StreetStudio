@@ -236,10 +236,12 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Member submits a search query, THE API_Service SHALL return Videos and Assets matching the query within the Member's authorized scope.
-2. WHERE a Video has a transcript, THE API_Service SHALL include transcript matches in search results.
-3. IF a search query matches no authorized results, THEN THE API_Service SHALL return an empty result set.
+1. WHEN a Member submits a search query of 1 to 500 characters, THE API_Service SHALL return, within 3 seconds, Videos and Assets whose indexed text matches the query and that fall within the Member's authorized scope.
+2. WHERE a Video has a transcript, THE API_Service SHALL include Videos whose transcript text matches the query in the search results, and SHALL identify the matching playback position for each transcript match.
+3. IF a search query matches no authorized results, THEN THE API_Service SHALL return an empty result set within 3 seconds.
 4. THE API_Service SHALL exclude resources outside the requesting Member's authorized scope from search results.
+5. IF a Member submits a search query that is empty or exceeds 500 characters, THEN THE API_Service SHALL reject the request and return a validation error without performing the search.
+6. THE API_Service SHALL limit each search response to at most 100 matching results and provide a means to retrieve subsequent results.
 
 ### Requirement 15: Sharing and Content Permissions
 
