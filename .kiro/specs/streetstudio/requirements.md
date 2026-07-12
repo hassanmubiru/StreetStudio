@@ -276,10 +276,12 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a security-relevant action occurs, THE API_Service SHALL append an Audit_Log entry recording the actor, action, target, and timestamp.
-2. THE API_Service SHALL prevent modification of existing Audit_Log entries.
-3. WHEN an Administrator requests Audit_Log entries within their Organization, THE API_Service SHALL return the entries scoped to that Organization.
-4. THE API_Service SHALL record authentication events, authorization denials, sharing changes, and administrative actions in the Audit_Log.
+1. WHEN a security-relevant action occurs, THE API_Service SHALL append, within 5 seconds of the action, an Audit_Log entry recording the actor identity, the action type, the target resource identifier, and a UTC timestamp with at least millisecond precision.
+2. THE API_Service SHALL prevent modification and deletion of existing Audit_Log entries.
+3. WHEN an Administrator requests Audit_Log entries within their Organization, THE API_Service SHALL return the entries scoped to that Organization ordered by timestamp in descending order, and SHALL exclude every entry belonging to any other Organization.
+4. THE API_Service SHALL record authentication events, authorization denials, sharing changes, and administrative actions as Audit_Log entries.
+5. IF a Member who is not an Administrator of the target Organization requests Audit_Log entries, THEN THE API_Service SHALL deny the request, disclose no Audit_Log entries, and return an authorization error.
+6. IF a request attempts to modify or delete an existing Audit_Log entry, THEN THE API_Service SHALL reject the request, preserve the existing entry unchanged, and return an error indicating that Audit_Log entries are immutable.
 
 ### Requirement 18: API Keys
 
@@ -287,10 +289,12 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Member with API management permission creates an API_Key, THE API_Service SHALL generate the API_Key and return its secret value exactly once.
-2. WHEN a request presents a valid API_Key, THE API_Service SHALL authenticate the request with the permissions associated with that API_Key.
-3. WHEN a Member revokes an API_Key, THE API_Service SHALL reject subsequent requests presenting that API_Key.
-4. IF a request presents an invalid or revoked API_Key, THEN THE API_Service SHALL deny the request and return an authentication error.
+1. WHEN a Member with API management permission creates an API_Key with a name of 1 to 255 characters, THE API_Service SHALL generate the API_Key and return its secret value only within the creation response.
+2. THE API_Service SHALL reject any request to retrieve the secret value of an existing API_Key and return the API_Key metadata without its secret value.
+3. WHEN a request presents a valid, non-revoked API_Key, THE API_Service SHALL authenticate the request with the permissions associated with that API_Key.
+4. WHEN a Member with API management permission revokes an API_Key, THE API_Service SHALL reject subsequent requests presenting that API_Key and return an authentication error.
+5. IF a request presents a malformed, unrecognized, expired, or revoked API_Key, THEN THE API_Service SHALL deny the request, create no session, and return an authentication error that does not reveal whether the API_Key exists.
+6. IF a Member without API management permission attempts to create or revoke an API_Key, THEN THE API_Service SHALL deny the request, make no change to any API_Key, and return an authorization error.
 
 ### Requirement 19: Webhooks
 
