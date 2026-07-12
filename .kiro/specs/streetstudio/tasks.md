@@ -77,7 +77,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
 - [ ] 5. Checkpoint - foundation
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Implement authentication and sessions
+- [x] 6. Implement authentication and sessions
   - [x] 6.1 Implement registration, login, logout, and token verification
     - `register` (valid non-duplicate email, ≥8-char password) with Argon2id hashing and no plaintext storage; `login` issuing a JWT with `exp ≤ 15 min` plus a session record; `logout` invalidating the session; `verifyAccessToken` rejecting expired/invalidated tokens; uniform non-disclosing auth errors
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.7, 3.8_
@@ -106,11 +106,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 6: Session and token invalidation**
     - **Validates: Requirements 3.4, 3.7**
 
-  - [-] 6.8 Write property test for account lockout
+  - [x] 6.8 Write property test for account lockout
     - **Property 7: Account lockout after repeated failures**
     - **Validates: Requirements 3.9**
 
-  - [-] 6.9 Write unit tests for OAuth/SSO sign-in with mocked providers
+  - [x] 6.9 Write unit tests for OAuth/SSO sign-in with mocked providers
     - Test success and provider-failure paths
     - _Requirements: 3.5, 3.6, 3.10_
 
@@ -156,7 +156,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 10. Implement organizations, teams, membership, and administration
-  - [ ] 10.1 Implement organization, team, and invitation services
+  - [-] 10.1 Implement organization, team, and invitation services
     - `createOrg` (name 1–200) assigning the creator Administrator; `invite` creating a pending invitation expiring at +7d and rejecting malformed emails; `acceptInvitation` valid only while pending/unexpired; `createTeam` and `assignToTeam` org-scoped; deny cross-organization access
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9_
 
@@ -201,7 +201,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 26.6**
 
 - [ ] 11. Implement content hierarchy (projects, folders, workspaces)
-  - [ ] 11.1 Implement ContentService for projects, folders, workspaces, and video moves
+  - [-] 11.1 Implement ContentService for projects, folders, workspaces, and video moves
     - `createProject`/`createFolder` (names 1–255) scoped to org/project with create-permission gating; enforce folder nesting depth ≤10; `moveVideo` same-org only, preserving identity/comments/transcripts/permissions and rejecting cross-org moves; `createWorkspace`
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
