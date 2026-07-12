@@ -236,6 +236,45 @@ export class AuthService {
   }
 
   /**
+   * Authenticate a Member through a configured OAuth provider using an
+   * authorization `code` (Requirement 3.5). On success, resolve or provision
+   * the Member from the provider-verified email and issue a session + token via
+   * the same machinery as {@link login}.
+   *
+   * If the provider is not configured, the code exchange fails, the provider is
+   * unavailable, or no verified email is returned, the sign-in is denied, no
+   * session is created, and the uniform `AUTHENTICATION_FAILED` error is thrown
+   * (Requirement 3.10).
+   */
+  async loginWithOAuth(provider: string, code: string): Promise<AuthResult> {
+    const oauth = this.providers?.oauth(provider);
+    if (!oauth) {
+      throw new AppError("AUTHENTICATION_FAILED");
+    }
+    const identity = await this.resolveIdentity(() => oauth.exchangeCode(code));
+    return this.federatedSignIn(identity);
+  }
+
+  /**
+   * Authenticate a Member through a configured SSO identity provider using an
+   * `assertion` (Requirement 3.6). Behaves like {@link loginWithOAuth}: on a
+   * verified assertion the Member is resolved/provisioned and a session + token
+   * are issued; any provider failure, unavailability, unconfigured provider, or
+   * missing verified email denies the sign-in, creates no session, and yields
+   * the uniform `AUTHENTICATION_FAILED` error (Requirement 3.10).
+   */
+  async loginWithSSO(provider: string, assertion: string): Promise<AuthResult> {
+    const sso = this.providers?.sso(provider);
+    if (!sso) {
+      throw new AppError("AUTHENTICATION_FAILED");
+    }
+    const identity = await this.resolveIdentity(() =>
+      sso.verifyAssertion(assertion),
+    );
+    return this.federatedSignIn(identity);
+  }
+
+  /**
    * Resolve the authenticated principal from an access token, rejecting
    * tampered/expired tokens and tokens whose session has been invalidated or
    * has expired (Requirements 3.4, 3.7).
