@@ -423,3 +423,110 @@ StreetJS is consumed only through its public package entry points. Every cross-p
 
 - [ ] 24. Checkpoint - collaboration
   - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 25. Implement the Plugin_Manager
+  - [ ] 25.1 Implement plugin discovery, load, enable, disable, and isolation
+    - Discover/load plugins via the StreetJS loader (≤30s/plugin); enable (activate+register ≤10s) and disable (deactivate+unregister ≤10s); on activation failure leave the plugin deactivated with prior registration unchanged; on load failure record the reason, exclude the plugin, and continue others; run each plugin in an isolated context with no write access to core, denying and recording core-modification attempts
+    - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.5, 21.6, 21.7_
+
+  - [ ]* 25.2 Write property test for activation-failure state preservation
+    - **Property 66: Plugin activation failures preserve prior state**
+    - **Validates: Requirements 21.3**
+
+  - [ ]* 25.3 Write property test for load-failure isolation
+    - **Property 67: Plugin load failures are isolated**
+    - **Validates: Requirements 21.5**
+
+  - [ ]* 25.4 Write unit tests for plugin sandbox enforcement
+    - Test that core-modification attempts are denied and recorded
+    - _Requirements: 21.6, 21.7_
+
+- [ ] 26. Implement storage provider plugins
+  - [ ] 26.1 Implement Local, S3, R2, Azure Blob, GCS, and MinIO storage provider plugins
+    - Implement each provider against the StorageProvider interface as a plugin; no provider imported into core
+    - _Requirements: 9.2_
+
+  - [ ]* 26.2 Write the shared storage-provider conformance suite
+    - Run the round-trip and signed-target properties (Properties 27, 29) against every provider plugin, against real backends where reachable and MinIO/local otherwise
+    - _Requirements: 9.1, 9.6_
+
+- [ ] 27. Implement the AI capability router
+  - [ ] 27.1 Implement AiRouter routing to enabled provider plugins
+    - Provide AI capabilities exclusively through AI_Provider plugins; route transcription/summarization/action-items/semantic-search to the enabled provider; reject AI requests within 2s with `AI_UNAVAILABLE` when none is enabled; abort on provider failure or >30s timeout; keep non-AI features unaffected; contain no vendor implementation in core
+    - _Requirements: 22.1, 22.2, 22.3, 22.4, 22.5_
+
+  - [ ]* 27.2 Write property test for AI routing and clean failure
+    - **Property 68: AI requests route to the enabled provider or fail cleanly**
+    - **Validates: Requirements 22.2, 22.3**
+
+  - [ ]* 27.3 Write unit tests for AI provider timeout/failure handling
+    - Test the >30s timeout and provider-failure abort with non-AI features continuing
+    - _Requirements: 22.5_
+
+- [ ] 28. Implement the billing abstraction
+  - [ ] 28.1 Implement BillingGateway routing to a single enabled billing plugin
+    - Expose billing exclusively through the abstraction with zero provider references in core; route to the single enabled billing plugin and return its result; reject with `BILLING_NOT_CONFIGURED` when none enabled while non-billing features/state continue; reject configuration when more than one is enabled and route nothing; on plugin failure or >30s return an error with no partial application
+    - _Requirements: 27.1, 27.2, 27.3, 27.4, 27.5_
+
+  - [ ]* 28.2 Write property test for billing routing to the single plugin
+    - **Property 79: Billing operations route to the single enabled plugin**
+    - **Validates: Requirements 27.2**
+
+  - [ ]* 28.3 Write property test for optional, isolated billing
+    - **Property 80: Billing is optional and isolated**
+    - **Validates: Requirements 27.3**
+
+  - [ ]* 28.4 Write property test for at-most-one billing plugin
+    - **Property 81: At most one billing plugin may be enabled**
+    - **Validates: Requirements 27.4**
+
+  - [ ]* 28.5 Write unit tests for billing plugin failure/timeout handling
+    - Test the >30s timeout and no-partial-application paths
+    - _Requirements: 27.5_
+
+- [ ] 29. Implement integration plugins
+  - [ ] 29.1 Implement integration plugins for Slack, Discord, GitHub, GitLab, Jira, Linear, Microsoft Teams, and Notion
+    - Implement each integration against the plugin contract; source-control integrations (GitHub/GitLab) expose repository/pull-request access used by Engineering Reviews
+    - _Requirements: 21.8, 24.2_
+
+- [ ] 30. Implement Developer Mode assets
+  - [ ] 30.1 Implement DeveloperAssets attachments
+    - Attach code snippet/markdown (1–100,000 chars), terminal recording, and API recording as Assets when Developer Mode is enabled; reject out-of-range lengths and reject all developer attachments with "Developer Mode required" when disabled, leaving the Video unchanged
+    - _Requirements: 23.1, 23.2, 23.3, 23.4, 23.5, 23.6_
+
+  - [ ]* 30.2 Write property test for developer asset validation and gating
+    - **Property 69: Developer assets validate length and require Developer Mode**
+    - **Validates: Requirements 23.1, 23.3, 23.5, 23.6**
+
+- [ ] 31. Implement engineering reviews
+  - [ ] 31.1 Implement ReviewService (linkPullRequest, postReviewComment)
+    - Store a PR association only when the source-control plugin is enabled, the PR/repository is accessible, and the member holds link permission; store review comments at the referenced position only when body is 1–5000 chars and timestamp is 0–duration
+    - _Requirements: 24.1, 24.3, 24.4, 24.5, 24.6_
+
+  - [ ]* 31.2 Write property test for PR-link plugin and permission gating
+    - **Property 70: Pull-request links require an enabled plugin and permission**
+    - **Validates: Requirements 24.1, 24.4, 24.6**
+
+  - [ ]* 31.3 Write property test for review comment validation
+    - **Property 71: Review comments validate body and timestamp**
+    - **Validates: Requirements 24.3, 24.5**
+
+- [ ] 32. Implement the knowledge base
+  - [ ] 32.1 Implement KnowledgeBase (indexTranscript, storeSummary, linkDoc)
+    - Index transcript text and make it searchable within scope within 30s; store AI-produced summaries of 1–10,000 chars associated with the Video; store documentation links of 1–2048 chars with edit permission up to 100 per Video, rejecting invalid/over-cap links
+    - _Requirements: 25.1, 25.2, 25.3, 25.4, 25.5, 25.6_
+
+  - [ ]* 32.2 Write property test for transcript indexing and search
+    - **Property 72: Transcript indexing makes content searchable within scope**
+    - **Validates: Requirements 25.1**
+
+  - [ ]* 32.3 Write property test for summary storage bounds
+    - **Property 73: Summaries are stored within bounds and associated**
+    - **Validates: Requirements 25.2**
+
+  - [ ]* 32.4 Write property test for documentation link validation and cap
+    - **Property 74: Documentation links validate input and enforce the per-video cap**
+    - **Validates: Requirements 25.3, 25.4, 25.5, 25.6**
+
+- [ ] 33. Checkpoint - extensibility
+  - Ensure all tests pass, ask the user if questions arise.
