@@ -21,6 +21,7 @@
     "boundary:check": "echo \"boundary analyzer wired in task 1.2\" && exit 0"
   },
   "devDependencies": {
+    "@types/node": "^20.19.43",
     "fast-check": "^3.23.1",
     "typescript": "^5.6.3",
     "vitest": "^2.1.8"
