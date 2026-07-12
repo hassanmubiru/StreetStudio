@@ -263,10 +263,12 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. THE API_Service SHALL evaluate every authenticated request against the requesting Member's Role permissions within the relevant scope.
-2. WHEN an Administrator assigns a Role to a Member, THE API_Service SHALL apply that Role's permissions to the Member within the assigned scope.
-3. IF a Member attempts an action not permitted by their Role, THEN THE API_Service SHALL deny the action and return an authorization error.
-4. THE API_Service SHALL scope Role permissions to the Organization in which the Role is assigned.
+1. WHEN the API_Service receives an authenticated request to read or modify a resource, THE API_Service SHALL evaluate the request against the requesting Member's Role permissions in the Organization scope that owns the requested resource before performing the action.
+2. WHEN an Administrator assigns a Role to a Member who belongs to the Organization, THE API_Service SHALL apply that Role's permissions to the Member for subsequent requests within the assigned scope.
+3. IF a Member attempts an action not permitted by their Role, THEN THE API_Service SHALL deny the action, make no change to the target resource, and return an authorization error.
+4. THE API_Service SHALL scope Role permissions to the Organization in which the Role is assigned and SHALL NOT apply those permissions in any other Organization.
+5. IF a Member without Role-management permission attempts to assign or change a Role, THEN THE API_Service SHALL deny the request, make no change to any Role assignment, and return an authorization error.
+6. IF an Administrator attempts to assign a Role to a Member who does not belong to the Organization, THEN THE API_Service SHALL reject the request, make no Role assignment, and return an error.
 
 ### Requirement 17: Audit Logging
 
