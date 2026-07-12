@@ -132,7 +132,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 18.6**
 
 - [ ] 8. Implement RBAC evaluation
-  - [ ] 8.1 Implement the deny-by-default AccessControl evaluator and role assignment
+  - [-] 8.1 Implement the deny-by-default AccessControl evaluator and role assignment
     - `can(ctx, action, resource)` evaluated in the organization scope that owns the resource, before any action; denied actions cause no change; `assignRole` permission-gated and membership-checked; permissions never leak across organizations; role changes govern subsequent decisions
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 26.3_
 
