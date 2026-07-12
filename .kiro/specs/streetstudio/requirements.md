@@ -422,9 +422,11 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Member views a Video, THE API_Service SHALL record a view event for analytics within the Member's Organization scope.
-2. WHEN an Administrator requests analytics for their Organization, THE API_Service SHALL return aggregated metrics scoped to that Organization.
+1. WHEN a Member begins playback of a Video, THE API_Service SHALL record a view event scoped to the Member's Organization within 5 seconds, capturing the Video identifier, the Member identifier, and the event timestamp.
+2. WHEN an Administrator requests analytics for their Organization over a specified time range, THE API_Service SHALL return, within 5 seconds, aggregated metrics scoped to that Organization that include total view count, distinct viewer count, and total watch duration for that time range.
 3. THE API_Service SHALL exclude analytics data from Organizations other than the requesting Administrator's Organization.
+4. IF a Member who does not hold an Administrator Role requests Organization analytics, THEN THE API_Service SHALL deny the request, return no analytics data, and return an authorization error.
+5. IF an Administrator requests analytics with a time range whose end precedes its start or whose bounds are malformed, THEN THE API_Service SHALL reject the request and return a validation error without returning analytics data.
 
 ### Requirement 29: Security Defaults
 
