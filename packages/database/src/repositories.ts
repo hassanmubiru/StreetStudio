@@ -123,7 +123,7 @@ class BaseRepository<TRecord extends object> {
 
 /** Repository for a single-UUID-keyed entity that is not tenant-scoped. */
 export class GlobalRepository<
-  TRecord extends { id: Uuid } & Record<string, unknown>,
+  TRecord extends { id: Uuid },
 > extends BaseRepository<TRecord> {
   /** Find a row by its primary key, or null when absent. */
   async findById(id: Uuid): Promise<TRecord | null> {
