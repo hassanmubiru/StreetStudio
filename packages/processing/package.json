@@ -18,8 +18,9 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@streetstudio/media": "*",
-    "@streetstudio/plugins": "*"
+    "@streetstudio/shared": "*",
+    "@streetstudio/database": "*",
+    "@streetstudio/auth": "*"
   },
   "streetstudio": {
     "domain": "Media processing pipeline: transcode, thumbnail, and preview generation."
