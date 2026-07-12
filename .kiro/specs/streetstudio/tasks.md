@@ -58,7 +58,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Enforce acyclic layering: `database` depends on `shared`/`config` only
     - _Requirements: 2.5_
 
-  - [-] 4.2 Implement the append-only Audit Log
+  - [ ] 4.2 Implement the append-only Audit Log
     - Implement `append` (actor, action, target, orgId, UTC timestamp with ≥ms precision) within 5s, and org-scoped descending `query`; expose no update/delete path and reject mutation at the storage layer; record auth events, authorization denials, sharing changes, and administrative actions
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6_
 
@@ -78,7 +78,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 6. Implement authentication and sessions
-  - [-] 6.1 Implement registration, login, logout, and token verification
+  - [ ] 6.1 Implement registration, login, logout, and token verification
     - `register` (valid non-duplicate email, ≥8-char password) with Argon2id hashing and no plaintext storage; `login` issuing a JWT with `exp ≤ 15 min` plus a session record; `logout` invalidating the session; `verifyAccessToken` rejecting expired/invalidated tokens; uniform non-disclosing auth errors
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.7, 3.8_
 
@@ -451,7 +451,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 9.1, 9.6_
 
 - [ ] 27. Implement the AI capability router
-  - [-] 27.1 Implement AiRouter routing to enabled provider plugins
+  - [ ] 27.1 Implement AiRouter routing to enabled provider plugins
     - Provide AI capabilities exclusively through AI_Provider plugins; route transcription/summarization/action-items/semantic-search to the enabled provider; reject AI requests within 2s with `AI_UNAVAILABLE` when none is enabled; abort on provider failure or >30s timeout; keep non-AI features unaffected; contain no vendor implementation in core
     - _Requirements: 22.1, 22.2, 22.3, 22.4, 22.5_
 
@@ -485,7 +485,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 27.5_
 
 - [ ] 29. Implement integration plugins
-  - [-] 29.1 Implement integration plugins for Slack, Discord, GitHub, GitLab, Jira, Linear, Microsoft Teams, and Notion
+  - [ ] 29.1 Implement integration plugins for Slack, Discord, GitHub, GitLab, Jira, Linear, Microsoft Teams, and Notion
     - Implement each integration against the plugin contract; source-control integrations (GitHub/GitLab) expose repository/pull-request access used by Engineering Reviews
     - _Requirements: 21.8, 24.2_
 
