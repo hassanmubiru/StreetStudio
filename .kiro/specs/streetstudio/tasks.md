@@ -66,7 +66,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 54: Audit entries record required fields for security actions**
     - **Validates: Requirements 17.1, 17.4**
 
-  - [ ] 4.4 Write property test for audit immutability
+  - [-] 4.4 Write property test for audit immutability
     - **Property 55: Audit entries are immutable**
     - **Validates: Requirements 17.2, 17.6**
 
