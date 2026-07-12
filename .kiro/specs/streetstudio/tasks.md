@@ -148,7 +148,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 52: Role permissions never leak across organizations**
     - **Validates: Requirements 16.4**
 
-  - [ ] 8.5 Write property test for role-management gating
+  - [-] 8.5 Write property test for role-management gating
     - **Property 53: Role management is permission-gated and membership-checked**
     - **Validates: Requirements 16.5, 16.6**
 
