@@ -114,7 +114,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Test success and provider-failure paths
     - _Requirements: 3.5, 3.6, 3.10_
 
-- [ ] 7. Implement API keys
+- [x] 7. Implement API keys
   - [x] 7.1 Implement API key create, metadata, authenticate, and revoke
     - `create` returns the secret exactly once and stores only a salted hash; `getMeta` never returns the secret; `authenticate` accepts only valid non-revoked keys; `revoke` rejects subsequent use; uniform non-disclosing auth error for malformed/unrecognized/expired/revoked keys; permission-gate create/revoke
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6_
@@ -127,7 +127,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 58: API-key authentication reflects validity and permissions**
     - **Validates: Requirements 18.3, 18.4, 18.5**
 
-  - [-] 7.4 Write property test for API-key management permission gating
+  - [x] 7.4 Write property test for API-key management permission gating
     - **Property 59: API-key management is permission-gated**
     - **Validates: Requirements 18.6**
 
