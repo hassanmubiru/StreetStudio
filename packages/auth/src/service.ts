@@ -21,10 +21,18 @@
  * `REGISTRATION_FAILED`, so responses never reveal which credential was wrong
  * or whether an email is already registered (Requirements 3.3, 3.8).
  *
+ *  - {@link AuthService.loginWithOAuth} and {@link AuthService.loginWithSSO}
+ *    authenticate through a configured OAuth/SSO provider, resolve or provision
+ *    the Member, and issue a session + token by reusing the same machinery as
+ *    {@link AuthService.login}. A provider failure, provider unavailability, or
+ *    an unconfigured provider denies the sign-in and creates no session, always
+ *    surfacing the uniform `AUTHENTICATION_FAILED` error (Requirements 3.5,
+ *    3.6, 3.10).
+ *
  * Extension points: account lockout (task 6.2) is injected as an optional
- * {@link LockoutPolicy}, and OAuth/SSO sign-in (task 6.3) is expected to be
- * added as a separate module that reuses this service's session and token
- * machinery. Neither is implemented here.
+ * {@link LockoutPolicy}, and the OAuth/SSO providers are supplied behind an
+ * injectable {@link FederatedProviderRegistry} so no identity vendor is
+ * hardcoded in core (see `./federation.js`).
  */
 import { newUuid } from "@streetstudio/database";
 import type { MemberRecord, SessionRecord } from "@streetstudio/database";
