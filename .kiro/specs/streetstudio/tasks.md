@@ -102,7 +102,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 5: Invalid authentication is uniformly non-disclosing**
     - **Validates: Requirements 3.3, 3.8**
 
-  - [-] 6.7 Write property test for session and token invalidation
+  - [x] 6.7 Write property test for session and token invalidation
     - **Property 6: Session and token invalidation**
     - **Validates: Requirements 3.4, 3.7**
 
