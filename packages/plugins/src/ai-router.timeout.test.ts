@@ -163,13 +163,9 @@ describe("StreetAiRouter timeout / failure handling (R22.5)", () => {
     expect(nonAiFeature(2, 3)).toBe(5);
 
     // The same capability can be re-attempted once a working provider is
-    // enabled, proving the failure left no lingering router state.
-    registry.register("transcription", handler("boom-ai", async (req) => ({
-      capability: req.capability,
-      output: "recovered",
-    })));
-    // Replacing requires the same pluginId (registry rejects a different one),
-    // so unregister first to swap in a healthy handler.
+    // enabled, proving the failure left no lingering router state. Swapping in a
+    // different provider requires clearing the failed one first (the registry
+    // rejects a conflicting pluginId for the same capability).
     registry.unregister("transcription");
     registry.register(
       "transcription",
