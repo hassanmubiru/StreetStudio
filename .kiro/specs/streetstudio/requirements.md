@@ -302,11 +302,13 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Member with webhook management permission registers a Webhook for an event type, THE API_Service SHALL store the Webhook subscription.
-2. WHEN a subscribed event occurs, THE API_Service SHALL deliver an event payload to the registered Webhook endpoint.
-3. THE API_Service SHALL sign each Webhook delivery so the receiver can verify authenticity.
-4. IF a Webhook delivery fails, THEN THE API_Service SHALL retry delivery according to a bounded retry policy.
-5. WHEN a Member deletes a Webhook subscription, THE API_Service SHALL stop delivering events to that endpoint.
+1. WHEN a Member with webhook management permission registers a Webhook for a supported event type with a valid HTTPS endpoint URL of up to 2,048 characters, THE API_Service SHALL store the Webhook subscription and return a confirmation identifying the created subscription.
+2. IF a Member attempts to register a Webhook for an unsupported event type or with a malformed or non-HTTPS endpoint URL, THEN THE API_Service SHALL reject the registration and return an error indicating the invalid input without storing the subscription.
+3. WHEN a subscribed event occurs, THE API_Service SHALL deliver an event payload containing the event type and event data to the registered Webhook endpoint within 30 seconds of the event occurring.
+4. THE API_Service SHALL include a cryptographic signature in each Webhook delivery so the receiver can verify the authenticity and integrity of the payload.
+5. IF a Webhook delivery does not receive a success response within 10 seconds, THEN THE API_Service SHALL treat the delivery as failed and retry delivery up to 5 additional times using exponential backoff intervals.
+6. IF all retry attempts for a Webhook delivery are exhausted without a success response, THEN THE API_Service SHALL stop retrying that delivery and record the delivery as failed.
+7. WHEN a Member deletes a Webhook subscription, THE API_Service SHALL stop delivering events to that endpoint within 60 seconds of the deletion.
 
 ### Requirement 20: API-First Parity and SDK
 
