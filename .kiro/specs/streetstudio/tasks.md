@@ -363,7 +363,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 11.5**
 
 - [ ] 21. Implement notifications
-  - [ ] 21.1 Implement NotificationService (create, markRead, deliverPending)
+  - [-] 21.1 Implement NotificationService (create, markRead, deliverPending)
     - Create a notification within 5s recording event type, source resource, and timestamp, respecting member preferences; mark-read only for owned notifications recording a read timestamp, rejecting others with no change; retain undelivered notifications and deliver within 5s of reconnect
     - _Requirements: 12.1, 12.3, 12.4, 12.5, 12.6_
 
