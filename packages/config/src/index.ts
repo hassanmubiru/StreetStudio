@@ -2,11 +2,10 @@
  * @streetstudio/config
  *
  * Public entry point for configuration schema and loading. Configuration is
- * loaded and validated via the StreetJS configuration interface (imported only
- * through StreetJS public package entry points in later tasks).
+ * loaded and validated via the StreetJS configuration interface (consumed only
+ * through the `@streetjs/core` public package entry point by the composition
+ * root).
  */
-import type { Uuid } from "@streetstudio/shared";
-
 export const DOMAIN =
   "Configuration schema and loading via StreetJS configuration." as const;
 
@@ -18,10 +17,10 @@ export const DOMAIN =
  */
 export * from "./boundary/index.js";
 
-/** Placeholder shape for the validated platform configuration. */
-export interface PlatformConfig {
-  readonly instanceId: Uuid;
-}
+// Configuration schema, loading, and startup validation (Requirement 30.3).
+// Loads and validates configuration via the StreetJS configuration interface
+// and aborts startup with an error naming every missing/invalid required value.
+export * from "./config.js";
 
 // Package dependency-graph acyclicity checker (Requirement 2.5). Exposed
 // through the package entry point so CI tooling and tests consume it without
