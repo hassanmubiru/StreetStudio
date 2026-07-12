@@ -1,0 +1,33 @@
+{
+  "name": "@streetstudio/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API_Service: REST, WebSocket, and Webhook host built on StreetJS.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@streetstudio/shared": "*",
+    "@streetstudio/config": "*",
+    "@streetstudio/database": "*",
+    "@streetstudio/auth": "*",
+    "@streetstudio/media": "*",
+    "@streetstudio/processing": "*",
+    "@streetstudio/notifications": "*",
+    "@streetstudio/plugins": "*",
+    "@streetstudio/analytics": "*"
+  },
+  "peerDependencies": {
+    "@streetjs/core": "^0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@streetjs/core": { "optional": true }
+  },
+  "streetstudio": {
+    "domain": "API_Service: REST, WebSocket, and Webhook host built on StreetJS.",
+    "streetjs": ["@streetjs/core"]
+  }
+}
