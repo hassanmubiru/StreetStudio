@@ -20,7 +20,8 @@
   "dependencies": {
     "@streetstudio/database": "*",
     "@streetstudio/auth": "*",
-    "@streetstudio/plugins": "*"
+    "@streetstudio/plugins": "*",
+    "@streetstudio/shared": "*"
   },
   "streetstudio": {
     "domain": "Media domain: videos, assets, storage abstraction, comments, sharing, playback, and search."
