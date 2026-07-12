@@ -437,7 +437,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 67: Plugin load failures are isolated**
     - **Validates: Requirements 21.5**
 
-  - [ ] 25.4 Write unit tests for plugin sandbox enforcement
+  - [-] 25.4 Write unit tests for plugin sandbox enforcement
     - Test that core-modification attempts are denied and recorded
     - _Requirements: 21.6, 21.7_
 
