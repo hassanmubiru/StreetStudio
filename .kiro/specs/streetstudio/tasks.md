@@ -90,7 +90,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Authenticate through configured OAuth/SSO providers; deny sign-in and create no session on provider failure/unavailability
     - _Requirements: 3.5, 3.6, 3.10_
 
-  - [ ] 6.4 Write property test for registration and password hashing
+  - [-] 6.4 Write property test for registration and password hashing
     - **Property 3: Registration creates retrievable accounts without plaintext passwords**
     - **Validates: Requirements 3.1**
 
