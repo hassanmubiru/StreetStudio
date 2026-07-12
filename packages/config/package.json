@@ -1,0 +1,33 @@
+{
+  "name": "@streetstudio/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Configuration schema and loading via the StreetJS configuration interface.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@streetstudio/shared": "*"
+  },
+  "peerDependencies": {
+    "@streetjs/core": "^0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@streetjs/core": { "optional": true }
+  },
+  "streetstudio": {
+    "domain": "Configuration schema and loading via StreetJS configuration.",
+    "streetjs": ["@streetjs/core"]
+  }
+}
