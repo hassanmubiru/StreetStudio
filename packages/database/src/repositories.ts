@@ -154,7 +154,7 @@ export class GlobalRepository<
  * (Requirement 2.5 data model; supports R4.6, R16.4).
  */
 export class TenantRepository<
-  TRecord extends { id: Uuid; organizationId: Uuid } & Record<string, unknown>,
+  TRecord extends { id: Uuid; organizationId: Uuid },
 > extends BaseRepository<TRecord> {
   /** Find a row by id, scoped to the organization. */
   async findById(
