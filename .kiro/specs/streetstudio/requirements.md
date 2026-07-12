@@ -329,12 +329,14 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. THE Plugin_Manager SHALL discover and load Plugins through the StreetJS plugin loader.
-2. WHEN an Administrator enables a Plugin, THE Plugin_Manager SHALL activate the Plugin and register its capabilities.
-3. WHEN an Administrator disables a Plugin, THE Plugin_Manager SHALL deactivate the Plugin and unregister its capabilities.
-4. IF a Plugin fails to load, THEN THE Plugin_Manager SHALL record the failure and continue operating without the failed Plugin.
-5. THE Plugin_Manager SHALL isolate Plugin execution so a Plugin cannot modify platform core code.
-6. THE Plugin_Manager SHALL support integration Plugins for Slack, Discord, GitHub, GitLab, Jira, Linear, Microsoft Teams, and Notion.
+1. WHEN the Plugin_Manager initializes, THE Plugin_Manager SHALL discover available Plugins through the StreetJS plugin loader and load each discovered Plugin within 30 seconds per Plugin.
+2. WHEN an Administrator enables a Plugin, THE Plugin_Manager SHALL activate the Plugin and register its capabilities within 10 seconds.
+3. IF activation of an enabled Plugin fails, THEN THE Plugin_Manager SHALL leave the Plugin in the deactivated state, preserve the prior capability registration state unchanged, and return an error indication describing the activation failure.
+4. WHEN an Administrator disables a Plugin, THE Plugin_Manager SHALL deactivate the Plugin and unregister its capabilities within 10 seconds.
+5. IF a Plugin fails to load, THEN THE Plugin_Manager SHALL record a failure entry identifying the Plugin and the failure reason, exclude the failed Plugin from the active Plugin set, and continue loading and operating the remaining Plugins.
+6. THE Plugin_Manager SHALL execute each Plugin within an isolated context that has no write access to platform core code.
+7. IF a Plugin attempts to modify platform core code, THEN THE Plugin_Manager SHALL deny the modification and record the attempt identifying the Plugin.
+8. THE Plugin_Manager SHALL support integration Plugins for Slack, Discord, GitHub, GitLab, Jira, Linear, Microsoft Teams, and Notion.
 
 ### Requirement 22: AI Capabilities via Plugins
 
@@ -343,9 +345,11 @@ This document specifies the requirements for the StreetStudio platform using EAR
 #### Acceptance Criteria
 
 1. THE API_Service SHALL provide AI capabilities exclusively through AI_Provider Plugins.
-2. WHERE an AI_Provider Plugin is enabled, THE API_Service SHALL route transcription, summarization, action-item extraction, and semantic search requests to the enabled AI_Provider.
-3. IF no AI_Provider Plugin is enabled, THEN THE API_Service SHALL make AI-dependent features unavailable without failing non-AI features.
+2. WHERE an AI_Provider Plugin is enabled for a requested AI capability, THE API_Service SHALL route transcription, summarization, action-item extraction, and semantic search requests to the AI_Provider Plugin enabled for that capability.
+3. IF no AI_Provider Plugin is enabled for a requested AI capability, THEN THE API_Service SHALL reject the AI-dependent request within 2 seconds, return an error indicating the AI capability is unavailable, and continue accepting and serving requests for non-AI features without degradation.
 4. THE API_Service SHALL NOT embed a specific AI vendor implementation in platform core code.
+5. IF an enabled AI_Provider Plugin returns a failure or does not respond within 30 seconds for an AI request, THEN THE API_Service SHALL abort that AI request, return an error indicating the AI capability is temporarily unavailable, and continue accepting and serving requests for non-AI features without degradation.
+6. IF a build or dependency resolution encounters platform core code that imports or references a specific AI vendor implementation, THEN THE StreetStudio SHALL fail the build and produce an error indicating the disallowed AI vendor reference.
 
 ### Requirement 23: Developer Mode
 
