@@ -59,3 +59,18 @@ export type {
   AiRouter,
   AiRouterOptions,
 } from "./ai-router.js";
+
+// Billing Gateway (routing only; no vendor implementation in core).
+export {
+  BILLING_OPERATION_TIMEOUT_MS,
+  StreetBillingGateway,
+  BillingProviderRegistry,
+} from "./billing-gateway.js";
+export type {
+  BillingOperation,
+  BillingResult,
+  BillingProviderHandler,
+  BillingProviderResolver,
+  BillingGateway,
+  BillingGatewayOptions,
+} from "./billing-gateway.js";
