@@ -43,17 +43,17 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Generators for emails, passwords, names at length bounds (1/200/255/2048/5000/10000/100000), timestamps around 0 and duration, chunk sizes around 1 MB/100 MB, byte payloads, multi-org resource graphs, and plugin sets with injected failures
     - _Requirements: 2.4_
 
-- [ ] 3. Implement configuration loading and startup validation
+- [x] 3. Implement configuration loading and startup validation
   - [x] 3.1 Implement config schema, loading, and startup validation
     - Load and validate configuration via the StreetJS config interface; abort startup and emit an error naming every missing/invalid required value
     - _Requirements: 30.3_
 
-  - [-] 3.2 Write property test for startup configuration validation
+  - [x] 3.2 Write property test for startup configuration validation
     - **Property 88: Startup validation names every invalid configuration value**
     - **Validates: Requirements 30.3**
 
 - [ ] 4. Implement the database layer and audit log
-  - [-] 4.1 Define schema, migrations, and repositories
+  - [x] 4.1 Define schema, migrations, and repositories
     - Implement PostgreSQL schema/migrations and repositories (via StreetJS PostgreSQL access) for all core entities; UUID identifiers; `organization_id` on tenant-scoped tables with indexes for isolation
     - Enforce acyclic layering: `database` depends on `shared`/`config` only
     - _Requirements: 2.5_
@@ -424,20 +424,20 @@ StreetJS is consumed only through its public package entry points. Every cross-p
 - [ ] 24. Checkpoint - collaboration
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 25. Implement the Plugin_Manager
+- [x] 25. Implement the Plugin_Manager
   - [x] 25.1 Implement plugin discovery, load, enable, disable, and isolation
     - Discover/load plugins via the StreetJS loader (≤30s/plugin); enable (activate+register ≤10s) and disable (deactivate+unregister ≤10s); on activation failure leave the plugin deactivated with prior registration unchanged; on load failure record the reason, exclude the plugin, and continue others; run each plugin in an isolated context with no write access to core, denying and recording core-modification attempts
     - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.5, 21.6, 21.7_
 
-  - [-] 25.2 Write property test for activation-failure state preservation
+  - [x] 25.2 Write property test for activation-failure state preservation
     - **Property 66: Plugin activation failures preserve prior state**
     - **Validates: Requirements 21.3**
 
-  - [-] 25.3 Write property test for load-failure isolation
+  - [x] 25.3 Write property test for load-failure isolation
     - **Property 67: Plugin load failures are isolated**
     - **Validates: Requirements 21.5**
 
-  - [-] 25.4 Write unit tests for plugin sandbox enforcement
+  - [x] 25.4 Write unit tests for plugin sandbox enforcement
     - Test that core-modification attempts are denied and recorded
     - _Requirements: 21.6, 21.7_
 
