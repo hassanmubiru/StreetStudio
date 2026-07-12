@@ -59,10 +59,12 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. THE StreetStudio SHALL organize source code into `apps` directories for api, web, desktop, and docs applications.
-2. THE StreetStudio SHALL organize shared code into `packages` directories for ui, sdk, shared, config, database, auth, media, recording, processing, notifications, plugins, and analytics.
-3. THE StreetStudio SHALL assign a single responsibility to each package.
-4. WHERE a package exposes functionality to other packages, THE StreetStudio SHALL expose that functionality through published interfaces rather than internal file paths.
+1. THE StreetStudio SHALL organize application source code under an `apps` directory containing exactly the api, web, desktop, and docs applications.
+2. THE StreetStudio SHALL organize shared source code under a `packages` directory containing exactly the ui, sdk, shared, config, database, auth, media, recording, processing, notifications, plugins, and analytics packages.
+3. THE StreetStudio SHALL declare a single primary domain responsibility in each package's manifest.
+4. WHERE a package exposes functionality to other packages, THE StreetStudio SHALL expose that functionality only through the entry points declared in the package manifest and never through paths that resolve to the package's internal modules.
+5. THE StreetStudio SHALL maintain an acyclic dependency graph among its packages.
+6. IF the build or dependency resolution encounters an import from one package that resolves to another package's internal module path rather than a declared entry point, THEN THE StreetStudio CI SHALL fail and report the disallowed internal import.
 
 ### Requirement 3: Member Authentication
 
@@ -70,13 +72,16 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a visitor submits valid registration details, THE API_Service SHALL create a Member account and return a success response.
-2. WHEN a Member submits valid credentials, THE API_Service SHALL issue a JWT access token and a session record.
-3. IF a Member submits invalid credentials, THEN THE API_Service SHALL reject the request and return an authentication error without revealing which credential was incorrect.
-4. WHEN a Member requests sign-out, THE API_Service SHALL invalidate the associated session.
+1. WHEN a visitor submits registration details containing a syntactically valid, non-duplicate email address and a password of at least 8 characters, THE API_Service SHALL create a Member account and return a success response within 5 seconds.
+2. WHEN a Member submits valid credentials, THE API_Service SHALL issue a JWT access token that expires within 15 minutes and create a session record.
+3. IF a Member submits invalid credentials, THEN THE API_Service SHALL reject the request within 2 seconds and return an authentication error that does not reveal which credential was incorrect.
+4. WHEN a Member requests sign-out, THE API_Service SHALL invalidate the associated session and reject subsequent requests presenting that session.
 5. WHERE OAuth is configured, THE API_Service SHALL authenticate a Member through the configured OAuth provider.
 6. WHERE Single Sign-On is configured, THE API_Service SHALL authenticate a Member through the configured SSO identity provider.
 7. WHEN a JWT access token expires, THE API_Service SHALL reject requests presenting that token and return an authentication error.
+8. IF a visitor submits registration details with an email address already associated with an existing Member, THEN THE API_Service SHALL reject the request and return an error without creating an account and without revealing whether the email is registered.
+9. IF a Member submits invalid credentials on 5 consecutive attempts within 15 minutes, THEN THE API_Service SHALL lock the account for at least 15 minutes and reject further authentication attempts during the lock period.
+10. IF a configured OAuth or SSO provider fails or is unavailable during authentication, THEN THE API_Service SHALL deny the sign-in, create no session, and return an authentication error.
 
 ### Requirement 4: Organizations, Teams, and Membership
 
@@ -100,11 +105,14 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Member with create permission creates a Project within an Organization, THE API_Service SHALL create the Project scoped to that Organization.
-2. WHEN a Member with create permission creates a Folder within a Project, THE API_Service SHALL create the Folder scoped to that Project.
-3. THE API_Service SHALL allow Folders to contain nested Folders, Videos, and Assets.
-4. WHEN a Member moves a Video to a different Folder within the same Organization, THE API_Service SHALL update the Video location and preserve the Video identity.
+1. WHEN a Member who belongs to an Organization and holds create permission creates a Project with a name of 1 to 255 characters within that Organization, THE API_Service SHALL create the Project scoped to that Organization.
+2. WHEN a Member with create permission creates a Folder with a name of 1 to 255 characters within a Project, THE API_Service SHALL create the Folder scoped to that Project.
+3. THE API_Service SHALL allow Folders to contain nested Folders, Videos, and Assets up to a maximum nesting depth of 10 Folder levels.
+4. WHEN a Member moves a Video to a different Folder within the same Organization, THE API_Service SHALL update the Video location and preserve the Video identity, comments, transcripts, and permissions.
 5. WHEN a Member creates a Workspace, THE API_Service SHALL create the Workspace as a scope for real-time presence and events.
+6. IF a Member without create permission attempts to create a Project or Folder, THEN THE API_Service SHALL deny the request, create no resource, and return an authorization error.
+7. IF a Member attempts to move a Video to a Folder outside the Video's Organization, THEN THE API_Service SHALL reject the request, preserve the Video's current location, and return an error.
+8. IF a Member submits a Project or Folder name that is empty or exceeds 255 characters, THEN THE API_Service SHALL reject the request and return a validation error without creating the resource.
 
 ### Requirement 6: Browser and Desktop Recording
 
@@ -112,14 +120,18 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Member starts a recording in the Web_Client, THE Recorder SHALL capture the selected screen, window, or region.
+1. WHEN a Member starts a recording in the Web_Client or Desktop_Client, THE Recorder SHALL capture the selected screen, window, or region.
 2. WHERE a camera source is selected, THE Recorder SHALL capture camera video alongside the screen capture.
 3. WHERE a microphone source is selected, THE Recorder SHALL capture microphone audio.
 4. WHERE a system audio source is selected and supported by the client environment, THE Recorder SHALL capture system audio.
-5. WHILE a recording is in progress, THE Recorder SHALL provide cursor highlighting and drawing tools to the recording Member.
-6. WHEN a Member stops a recording, THE Recorder SHALL finalize the captured media and initiate upload to the API_Service.
-7. WHERE the client is offline during recording, THE Recorder SHALL store the recording locally and upload it when connectivity is restored.
-8. THE Recorder SHALL expose keyboard shortcuts for starting, pausing, and stopping a recording.
+5. IF a system audio source is selected but not supported by the client environment, THEN THE Recorder SHALL continue the recording without system audio and notify the Member that system audio is unavailable.
+6. IF the client environment denies a requested capture permission, THEN THE Recorder SHALL abort the recording, retain no captured media, and return an error indicating the denied permission.
+7. WHILE a recording is in progress, THE Recorder SHALL provide cursor highlighting and drawing tools to the recording Member.
+8. WHILE a recording is paused, THE Recorder SHALL suspend capture and retain the media captured before the pause.
+9. WHEN a Member stops a recording, THE Recorder SHALL finalize the captured media within 10 seconds and initiate upload to the API_Service.
+10. WHERE the client is offline when a recording is stopped, THE Recorder SHALL store the recording locally.
+11. WHEN connectivity is restored after an offline recording, THE Recorder SHALL upload the stored recording, retrying up to 5 attempts on failure.
+12. THE Recorder SHALL expose keyboard shortcuts for starting, pausing, resuming, and stopping a recording.
 
 ### Requirement 7: Chunked and Resumable Uploads
 
@@ -141,12 +153,13 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Video upload completes, THE Media_Pipeline SHALL enqueue the Video for background processing.
-2. WHEN the Media_Pipeline processes a Video, THE Media_Pipeline SHALL generate a thumbnail and a preview.
-3. WHEN the Media_Pipeline processes a Video, THE Media_Pipeline SHALL transcode the Video into streaming-ready renditions supporting adaptive bitrate playback.
-4. WHILE a Video is being processed, THE Realtime_Service SHALL emit processing status events to Members with access to the Video.
-5. IF processing of a Video fails, THEN THE Media_Pipeline SHALL record a failure status and emit a processing failure event.
-6. WHEN processing of a Video completes, THE Media_Pipeline SHALL mark the Video as ready for streaming.
+1. WHEN a Video upload completes, THE Media_Pipeline SHALL enqueue the Video for background processing within 5 seconds.
+2. WHEN the Media_Pipeline processes a Video, THE Media_Pipeline SHALL generate exactly one thumbnail for the Video.
+3. WHEN the Media_Pipeline processes a Video, THE Media_Pipeline SHALL generate a preview of 3 to 10 seconds in duration.
+4. WHEN the Media_Pipeline processes a Video, THE Media_Pipeline SHALL transcode the Video into at least 3 distinct quality renditions supporting adaptive bitrate playback.
+5. WHILE a Video is being processed, THE Realtime_Service SHALL emit a processing status event, reporting one of the status values queued, processing, ready, or failed, to Members with access to the Video within 2 seconds of each stage transition.
+6. IF processing of a Video fails, THEN THE Media_Pipeline SHALL retry processing up to 3 attempts, and upon exhausting the attempts SHALL record a failure status, retain the original source media, and emit a processing failure event indicating the Video could not be processed.
+7. WHEN processing of a Video completes successfully, THE Media_Pipeline SHALL mark the Video as ready for streaming.
 
 ### Requirement 9: Storage Abstraction and Providers
 
@@ -157,8 +170,10 @@ This document specifies the requirements for the StreetStudio platform using EAR
 1. THE Media_Pipeline SHALL persist and retrieve media objects through a Storage_Provider interface.
 2. THE Plugin_Manager SHALL support Storage_Providers for Local filesystem, Amazon S3, Cloudflare R2, Azure Blob, Google Cloud Storage, and MinIO as plugins.
 3. WHEN an operator configures a Storage_Provider, THE API_Service SHALL route media persistence to the configured Storage_Provider.
-4. IF a configured Storage_Provider is unavailable during a write, THEN THE API_Service SHALL return a storage error and record the failure.
-5. WHERE signed uploads are enabled, THE API_Service SHALL issue time-limited signed upload targets for the configured Storage_Provider.
+4. IF an operator activates a Storage_Provider whose required configuration values are missing or fail a connectivity check, THEN THE API_Service SHALL reject the activation, retain the previously active Storage_Provider, and return an error indicating the invalid configuration.
+5. IF a configured Storage_Provider does not acknowledge a write within 30 seconds or returns a write failure, THEN THE API_Service SHALL abort the write, return a storage error to the caller indicating the persistence failure, and record the failure with the Storage_Provider identifier and timestamp.
+6. WHERE signed uploads are enabled, WHEN a client requests an upload target, THE API_Service SHALL issue a signed upload target for the configured Storage_Provider that remains valid for an operator-configured duration between 60 and 3600 seconds, defaulting to 900 seconds.
+7. WHERE signed uploads are enabled, IF a client presents a signed upload target after its validity duration has elapsed, THEN THE API_Service SHALL reject the upload and return an error indicating the target has expired.
 
 ### Requirement 10: Video Streaming and Playback
 
@@ -166,9 +181,11 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Member with view permission requests playback of a ready Video, THE API_Service SHALL provide a streaming manifest for adaptive bitrate playback.
-2. IF a Member without view permission requests playback of a Video, THEN THE API_Service SHALL deny access and return an authorization error.
-3. WHERE secure sharing is enabled for a Video, THE API_Service SHALL grant playback only to holders of a valid share credential.
+1. WHEN a Member with view permission requests playback of a Video in the ready state, THE API_Service SHALL provide, within 3 seconds, a streaming manifest referencing the Video's adaptive bitrate renditions.
+2. IF a Member without view permission requests playback of a Video, THEN THE API_Service SHALL deny access, provide no streaming manifest, and return an authorization error.
+3. IF a Member requests playback of a Video that is not in the ready state, THEN THE API_Service SHALL provide no streaming manifest and return an error indicating the Video is not available for playback.
+4. WHERE secure sharing is enabled for a Video, THE API_Service SHALL grant playback only to holders of a share credential that is valid, unexpired, and not revoked.
+5. IF a playback request presents a share credential that is expired, revoked, or invalid, THEN THE API_Service SHALL deny playback and return an error indicating the share credential is not valid.
 
 ### Requirement 11: Comments, Mentions, Threads, and Reactions
 
@@ -176,12 +193,15 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Member with comment permission posts a comment on a Video, THE API_Service SHALL store the comment associated with the Video.
-2. WHERE a comment specifies a timestamp, THE API_Service SHALL associate the comment with that playback position in the Video.
-3. WHEN a Member posts a reply to a comment, THE API_Service SHALL store the reply within the parent comment thread.
-4. WHEN a Member mentions another Member in a comment, THE API_Service SHALL create a notification for the mentioned Member.
-5. WHEN a Member adds a reaction to a comment or Video, THE API_Service SHALL record the reaction associated with the target.
-6. WHILE a Member is viewing a Video, THE Realtime_Service SHALL emit new comments on that Video to the viewing Member.
+1. WHEN a Member with comment permission posts a comment with a body of 1 to 5000 characters on a Video, THE API_Service SHALL store the comment associated with the Video and return a success response within 2 seconds.
+2. WHERE a comment specifies a timestamp between 0 seconds and the Video's duration, THE API_Service SHALL associate the comment with that playback position in the Video.
+3. WHEN a Member with comment permission posts a reply to an existing comment, THE API_Service SHALL store the reply within the parent comment thread.
+4. WHEN a Member mentions another Member who has view access to the Video in a comment, THE API_Service SHALL create a notification for the mentioned Member within 2 seconds.
+5. WHEN a Member adds a reaction to a comment or Video, THE API_Service SHALL record the reaction associated with the target and SHALL retain at most one reaction of each reaction type per Member per target.
+6. WHILE a Member is viewing a Video, WHEN another Member posts a comment on that Video, THE Realtime_Service SHALL emit the new comment to the viewing Member within 2 seconds.
+7. IF a Member without comment permission attempts to post a comment or reply on a Video, THEN THE API_Service SHALL deny the request, store no comment, and return an authorization error.
+8. IF a Member posts a comment or reply with a body that is empty or exceeds 5000 characters, THEN THE API_Service SHALL reject the request and return a validation error without storing the comment.
+9. IF a comment specifies a timestamp that is negative or exceeds the Video's duration, THEN THE API_Service SHALL reject the request and return a validation error without storing the comment.
 
 ### Requirement 12: Notifications
 
@@ -189,10 +209,12 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN an event relevant to a Member occurs, THE API_Service SHALL create a notification for that Member.
-2. WHILE a Member is connected, THE Realtime_Service SHALL deliver new notifications to that Member.
-3. WHEN a Member marks a notification as read, THE API_Service SHALL update the notification read status.
+1. WHEN an event that targets a Member occurs, THE API_Service SHALL create a notification associated with that Member, recording the event type, the source resource, and a creation timestamp, within 5 seconds of the event.
+2. WHILE a Member is connected, THE Realtime_Service SHALL deliver each new notification for that Member within 2 seconds of the notification's creation.
+3. WHEN a Member marks a notification that belongs to that Member as read, THE API_Service SHALL set the notification read status to read, record a read timestamp, and retain the notification.
 4. WHERE a Member has configured notification preferences, THE API_Service SHALL create notifications only for event types the Member has enabled.
+5. WHILE a Member is not connected, THE API_Service SHALL retain each undelivered notification for that Member and deliver it within 5 seconds after the Member next connects.
+6. IF a Member marks a notification that does not exist or does not belong to that Member as read, THEN THE API_Service SHALL reject the request, make no change to any notification read status, and return an error indicating the notification is not accessible.
 
 ### Requirement 13: Real-Time Events and Presence
 
@@ -200,10 +222,13 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Member joins a Workspace, THE Realtime_Service SHALL emit a presence event to other Members in that Workspace.
-2. WHILE a Member is typing a comment, THE Realtime_Service SHALL emit a typing indicator to other Members viewing the same Video.
-3. WHEN a Member leaves a Workspace, THE Realtime_Service SHALL emit a presence-departure event to other Members in that Workspace.
+1. WHEN a Member joins a Workspace, THE Realtime_Service SHALL emit a presence event to all other connected Members in that Workspace within 2 seconds, excluding the joining Member.
+2. WHILE a Member is typing a comment, THE Realtime_Service SHALL emit a typing indicator to all other Members viewing the same Video within 2 seconds.
+3. WHEN a Member leaves a Workspace, THE Realtime_Service SHALL emit a presence-departure event to all other connected Members in that Workspace within 2 seconds.
 4. THE Realtime_Service SHALL deliver upload progress, processing status, live comments, notifications, presence, typing indicators, and workspace events over StreetJS WebSockets.
+5. WHEN a Member stops typing or remains inactive for 5 seconds after typing, THE Realtime_Service SHALL emit a typing-stopped indicator to the other Members viewing the same Video.
+6. IF a Member's WebSocket connection is dropped without an explicit leave, THEN THE Realtime_Service SHALL emit a presence-departure event for that Member to the other connected Members in the Workspace within 5 seconds.
+7. IF a real-time event targets a Member who has no active connection, THEN THE Realtime_Service SHALL discard the event for that Member without disrupting delivery to other Members.
 
 ### Requirement 14: Search and Transcript Search
 
