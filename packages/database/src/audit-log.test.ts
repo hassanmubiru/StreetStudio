@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AppError } from "@streetstudio/shared";
 import { InMemorySqlClient } from "./testing.js";
-import { createAuditLog, toAuditTimestamp } from "./audit-log.js";
+import { auditImmutableClient, createAuditLog, toAuditTimestamp } from "./audit-log.js";
 import { newUuid } from "./ids.js";
 
 /**
