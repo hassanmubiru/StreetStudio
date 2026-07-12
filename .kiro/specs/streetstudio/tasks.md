@@ -82,7 +82,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - `register` (valid non-duplicate email, ≥8-char password) with Argon2id hashing and no plaintext storage; `login` issuing a JWT with `exp ≤ 15 min` plus a session record; `logout` invalidating the session; `verifyAccessToken` rejecting expired/invalidated tokens; uniform non-disclosing auth errors
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.7, 3.8_
 
-  - [ ] 6.2 Implement account lockout policy
+  - [-] 6.2 Implement account lockout policy
     - Lock an account for ≥15 min after 5 failed attempts within a 15-minute window and reject further attempts during the lock
     - _Requirements: 3.9_
 
