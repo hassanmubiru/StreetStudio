@@ -106,7 +106,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 6: Session and token invalidation**
     - **Validates: Requirements 3.4, 3.7**
 
-  - [ ] 6.8 Write property test for account lockout
+  - [-] 6.8 Write property test for account lockout
     - **Property 7: Account lockout after repeated failures**
     - **Validates: Requirements 3.9**
 
