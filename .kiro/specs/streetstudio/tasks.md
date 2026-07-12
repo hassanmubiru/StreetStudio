@@ -78,7 +78,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 6. Implement authentication and sessions
-  - [ ] 6.1 Implement registration, login, logout, and token verification
+  - [x] 6.1 Implement registration, login, logout, and token verification
     - `register` (valid non-duplicate email, ≥8-char password) with Argon2id hashing and no plaintext storage; `login` issuing a JWT with `exp ≤ 15 min` plus a session record; `logout` invalidating the session; `verifyAccessToken` rejecting expired/invalidated tokens; uniform non-disclosing auth errors
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.7, 3.8_
 
