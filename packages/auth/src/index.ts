@@ -68,3 +68,18 @@ export {
   InMemoryLockoutPolicy,
 } from "./lockout.js";
 export type { LockoutOptions } from "./lockout.js";
+
+// --- API keys (task 7.1) ---------------------------------------------------
+export {
+  ApiKeyService,
+  MAX_API_KEY_NAME_LENGTH,
+  Sha256SecretHasher,
+  repositoryApiKeyStore,
+} from "./api-key.js";
+export type {
+  ApiKeyAuthContext,
+  ApiKeyAuthorizer,
+  ApiKeyServiceDeps,
+  ApiKeyStore,
+  SecretHasher,
+} from "./api-key.js";
