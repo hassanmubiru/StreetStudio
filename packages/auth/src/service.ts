@@ -302,6 +302,55 @@ export class AuthService {
 
   /* -------------------------- internals -------------------------------- */
 
+  /**
+   * Run a provider resolve step, converting any rejection (provider failure or
+   * unavailability) into the uniform `AUTHENTICATION_FAILED` error so nothing
+   * about the provider is disclosed and no session is created (Requirement
+   * 3.10).
+   */
+  private async resolveIdentity(
+    resolve: () => Promise<FederatedIdentity>,
+  ): Promise<FederatedIdentity> {
+    try {
+      return await resolve();
+    } catch {
+      throw new AppError("AUTHENTICATION_FAILED");
+    }
+  }
+
+  /**
+   * Complete a federated sign-in from a resolved identity: validate the
+   * provider-asserted email, resolve or provision the Member, then issue a
+   * session + token. A missing or malformed email is a denied sign-in.
+   */
+  private async federatedSignIn(
+    identity: FederatedIdentity,
+  ): Promise<AuthResult> {
+    const email = normalizeEmail(identity.email ?? "");
+    if (!isSyntacticallyValidEmail(email)) {
+      throw new AppError("AUTHENTICATION_FAILED");
+    }
+
+    const existing = await this.stores.members.findByEmail(email);
+    const member = existing ?? (await this.provisionMember(email));
+    return this.issueSession(member.id);
+  }
+
+  /**
+   * Provision a Member for a federated identity whose email is not yet known.
+   * The account has no password (`passwordHash: null`), marking it SSO/OAuth-
+   * only, consistent with the data model.
+   */
+  private async provisionMember(email: string): Promise<MemberRecord> {
+    const record: MemberRecord = {
+      id: this.newId(),
+      email,
+      passwordHash: null,
+      createdAt: this.nowIso(),
+    };
+    return this.stores.members.create(record);
+  }
+
   private async issueSession(memberId: Uuid): Promise<AuthResult> {
     const now = this.clock.now();
     const expiresAtDate = new Date(
