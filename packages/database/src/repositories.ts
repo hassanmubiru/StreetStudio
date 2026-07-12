@@ -169,6 +169,28 @@ export class TenantRepository<
     return row ? this.map(row) : null;
   }
 
+  /**
+   * Find a row by its primary key without constraining the organization, then
+   * expose its owning `organizationId` to the caller.
+   *
+   * Tenant reads normally go through {@link findById}, which requires the
+   * organization up front. A few operations, however, resolve a resource from a
+   * globally-unique id supplied by the caller (e.g. assigning a Member to a Team
+   * by team id) and only then know which organization owns it — at which point
+   * the caller authorizes the request against that owning organization
+   * (Requirement 4.6). This method serves exactly that "resolve, then authorize
+   * in the owning scope" pattern; it performs no authorization itself, so
+   * callers MUST check the returned record's `organizationId` before acting.
+   */
+  async findByIdUnscoped(id: Uuid): Promise<TRecord | null> {
+    const result = await this.client.query(
+      `SELECT * FROM ${this.table} WHERE id = $1`,
+      [id],
+    );
+    const row = result.rows[0];
+    return row ? this.map(row) : null;
+  }
+
   /** List every row owned by the organization. */
   async listByOrganization(organizationId: Uuid): Promise<TRecord[]> {
     const result = await this.client.query(
