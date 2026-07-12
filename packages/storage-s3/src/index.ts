@@ -137,10 +137,7 @@ export class S3StyleStorageProvider implements StorageProvider {
       key,
       body: data,
     });
-    const put: PutResult = { key };
-    return result.etag !== undefined || result.sizeBytes !== undefined
-      ? { ...put, ...trimUndefined({ etag: result.etag, sizeBytes: result.sizeBytes }) }
-      : put;
+    return { key, etag: result.etag, sizeBytes: result.sizeBytes };
   }
 
   async get(key: string): Promise<ObjectStream> {
@@ -155,18 +152,16 @@ export class S3StyleStorageProvider implements StorageProvider {
     });
     const issued = this.clock.now();
     const expires = new Date(issued.getTime() + ttlSeconds * 1000);
-    const target: SignedTarget = {
+    return {
       key,
       providerId: this.id,
       url: presigned.url,
       method: presigned.method ?? "PUT",
+      headers: presigned.headers,
       issuedAt: issued.toISOString(),
       expiresAt: expires.toISOString(),
       ttlSeconds,
     };
-    return presigned.headers !== undefined
-      ? { ...target, headers: presigned.headers }
-      : target;
   }
 
   async healthCheck(): Promise<void> {
@@ -174,15 +169,6 @@ export class S3StyleStorageProvider implements StorageProvider {
     // provider (R9.4). Otherwise validate connectivity through the client.
     await this.requireClient().ping();
   }
-}
-
-/** Drop keys whose value is `undefined` so exactOptionalPropertyTypes holds. */
-function trimUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
-  const out: Partial<T> = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (v !== undefined) (out as Record<string, unknown>)[k] = v;
-  }
-  return out;
 }
 
 /** Options for {@link createStorageProviderPlugin}. */

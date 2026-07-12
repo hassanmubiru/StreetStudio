@@ -17,3 +17,18 @@ export type RealtimeEventType =
   | "typing-start"
   | "typing-stop"
   | "workspace-event";
+
+// --- Notifications (task 21.1) ---------------------------------------------
+export {
+  NotificationService,
+  toNotificationDto,
+  repositoryNotificationStore,
+  repositoryNotificationPreferenceStore,
+} from "./notification-service.js";
+export type {
+  EventRef,
+  NotificationEmitter,
+  NotificationServiceDeps,
+  NotificationStore,
+  NotificationPreferenceStore,
+} from "./notification-service.js";
