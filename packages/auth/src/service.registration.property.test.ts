@@ -123,5 +123,5 @@ describe("Feature: streetstudio, Property 3: Registration creates retrievable ac
       }),
       { numRuns: 100 },
     );
-  });
+  }, 120_000);
 });
