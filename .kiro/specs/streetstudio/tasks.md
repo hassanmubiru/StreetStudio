@@ -140,7 +140,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 50: Authorization is evaluated in the owning organization's scope**
     - **Validates: Requirements 16.1, 16.3**
 
-  - [ ] 8.3 Write property test for role assignment governing decisions
+  - [-] 8.3 Write property test for role assignment governing decisions
     - **Property 51: Role assignment governs subsequent decisions**
     - **Validates: Requirements 16.2, 26.3**
 
