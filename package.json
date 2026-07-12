@@ -18,7 +18,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
-    "boundary:check": "vite-node packages/config/src/boundary/cli.ts",
+    "boundary:check": "vite-node packages/config/src/boundary/bin.ts",
     "graph:check": "tsc -b packages/config && node packages/config/dist/dependency-graph.cli.js"
   },
   "devDependencies": {
