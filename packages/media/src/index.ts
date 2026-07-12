@@ -33,3 +33,23 @@ export type {
   ContentStore,
   FolderRef,
 } from "./content.js";
+
+// --- Storage Abstraction and Provider Contract (task 13.1) -----------------
+export {
+  StorageRouter,
+  STORAGE_WRITE_ACK_TIMEOUT_MS,
+  SIGNED_UPLOAD_MIN_TTL_SECONDS,
+  SIGNED_UPLOAD_MAX_TTL_SECONDS,
+  SIGNED_UPLOAD_DEFAULT_TTL_SECONDS,
+  DIRECT_UPLOAD_MAX_TTL_SECONDS,
+} from "./storage.js";
+export type {
+  StorageProvider,
+  ObjectStream,
+  PutResult,
+  SignedTarget,
+  StorageRouterOptions,
+  StorageFailureRecorder,
+  StorageWriteFailure,
+  StorageWriteFailureReason,
+} from "./storage.js";
