@@ -459,7 +459,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 68: AI requests route to the enabled provider or fail cleanly**
     - **Validates: Requirements 22.2, 22.3**
 
-  - [ ] 27.3 Write unit tests for AI provider timeout/failure handling
+  - [-] 27.3 Write unit tests for AI provider timeout/failure handling
     - Test the >30s timeout and provider-failure abort with non-AI features continuing
     - _Requirements: 22.5_
 
