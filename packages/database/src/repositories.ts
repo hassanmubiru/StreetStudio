@@ -219,9 +219,7 @@ export class AppendOnlyTenantRepository<
  * ------------------------------------------------------------------------ */
 
 /** Team membership join table (team_id, member_id). */
-export class TeamMembershipRepository extends BaseRepository<
-  TeamMembershipRecord & Record<string, unknown>
-> {
+export class TeamMembershipRepository extends BaseRepository<TeamMembershipRecord> {
   async listByTeam(teamId: Uuid): Promise<TeamMembershipRecord[]> {
     const result = await this.client.query(
       `SELECT * FROM team_membership WHERE team_id = $1`,
