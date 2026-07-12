@@ -1,91 +1,82 @@
 import { describe, it, expect } from "vitest";
-import * as fc from "fast-check";
+import fc from "fast-check";
 import { InMemorySqlClient } from "./testing.js";
-import {
-  AUDIT_ACTION_CATEGORIES,
-  createAuditLog,
-} from "./audit-log.js";
+import { createAuditLog } from "./audit-log.js";
 
 /**
- * Property 54: Audit entries record required fields for security actions.
+ * Property 56: Audit queries are organization-scoped and ordered.
  *
- * Feature: streetstudio, Property 54: Audit entries record required fields for
- * security actions
+ * Feature: streetstudio, Property 56: Audit queries are organization-scoped and ordered
  *
- * *For any* security-relevant action (authentication events, authorization
- * denials, sharing changes, administrative actions), an audit entry is appended
- * recording the actor identity, action type, target resource identifier, and a
- * UTC timestamp with at least millisecond precision.
+ * Validates: Requirements 17.3, 17.5
  *
- * **Validates: Requirements 17.1, 17.4**
+ * For any set of audit entries appended across multiple organizations,
+ * `AuditLog.query(orgId)` returns ONLY the entries belonging to that
+ * organization — never disclosing another tenant's entries (the data-layer
+ * guarantee behind R17.3's exclusion clause and R17.5's non-disclosure
+ * requirement) — ordered by timestamp in descending order (newest first).
+ *
+ * Role-based authorization (denying non-Administrators) is enforced by the
+ * calling layer; this package guarantees that a query can never leak another
+ * Organization's entries and always returns them newest-first.
  */
 
-/**
- * Millisecond-precision UTC ISO-8601 timestamp, e.g.
- * `2024-05-06T07:08:09.123Z`. `Date.prototype.toISOString` always renders this
- * exact shape, so recording preserves >= millisecond precision in UTC.
- */
-const UTC_MS_TIMESTAMP_RE =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+// Upper bound ~ year 2100, keeps generated instants valid and UTC.
+const MAX_EPOCH_MS = 4_102_444_800_000;
 
-/**
- * An append input covering the full security-relevant action space: an arbitrary
- * actor and target UUID, an org UUID, an action drawn from the security action
- * categories (R17.4), and a millisecond-resolution instant to record.
- *
- * Timestamps are drawn from a range spanning the full ISO-8601 four-digit-year
- * window so the recording holds for any valid instant, not just "now".
- */
-const appendInputArb = fc.record({
-  actor: fc.uuid(),
-  targetId: fc.uuid(),
-  orgId: fc.uuid(),
-  action: fc.constantFrom(...AUDIT_ACTION_CATEGORIES),
-  at: fc
-    .date({
-      min: new Date("0001-01-01T00:00:00.000Z"),
-      max: new Date("9999-12-31T23:59:59.999Z"),
-      noInvalidDate: true,
-    })
-    // Constrain to whole-millisecond instants — the precision the audit log
-    // guarantees and the resolution a JS Date can faithfully round-trip.
-    .map((d) => new Date(Math.trunc(d.getTime()))),
-});
+/** A batch of audit entries spanning a fixed set of distinct organizations. */
+const scenario = fc
+  .uniqueArray(fc.uuid(), { minLength: 2, maxLength: 4 })
+  .chain((orgIds) =>
+    fc
+      .array(
+        fc.record({
+          orgId: fc.constantFrom(...orgIds),
+          actor: fc.uuid(),
+          action: fc.string(),
+          targetId: fc.uuid(),
+          atMs: fc.integer({ min: 0, max: MAX_EPOCH_MS }),
+        }),
+        { minLength: 0, maxLength: 40 },
+      )
+      .map((entries) => ({ orgIds, entries })),
+  );
 
-describe("Feature: streetstudio, Property 54: Audit entries record required fields for security actions", () => {
-  it("preserves actor, action, target, org, and a UTC ms-precision timestamp for any security action", async () => {
+describe("Feature: streetstudio, Property 56: Audit queries are organization-scoped and ordered", () => {
+  it("returns only the requesting organization's entries, newest-first", async () => {
     await fc.assert(
-      fc.asyncProperty(appendInputArb, async (input) => {
+      fc.asyncProperty(scenario, async ({ orgIds, entries }) => {
         const log = createAuditLog(new InMemorySqlClient());
 
-        await log.append({
-          actor: input.actor,
-          action: input.action,
-          targetId: input.targetId,
-          orgId: input.orgId,
-          at: input.at,
-        });
+        for (const e of entries) {
+          await log.append({
+            actor: e.actor,
+            action: e.action,
+            targetId: e.targetId,
+            orgId: e.orgId,
+            at: new Date(e.atMs),
+          });
+        }
 
-        const entries = await log.query(input.orgId);
-        // Exactly one entry was appended for this organization.
-        expect(entries).toHaveLength(1);
-        const entry = entries[0]!;
+        for (const orgId of orgIds) {
+          const result = await log.query(orgId);
 
-        // Every required field is recorded faithfully (R17.1).
-        expect(entry.actorId).toBe(input.actor);
-        expect(entry.action).toBe(input.action);
-        expect(entry.targetId).toBe(input.targetId);
-        expect(entry.organizationId).toBe(input.orgId);
+          // Scoping: every returned entry belongs to the queried org, and the
+          // count matches exactly the number appended for that org — no other
+          // tenant's entries leak in, and none of this org's entries are lost.
+          expect(result.every((r) => r.organizationId === orgId)).toBe(true);
+          const expectedCount = entries.filter((e) => e.orgId === orgId).length;
+          expect(result).toHaveLength(expectedCount);
 
-        // The action is one of the tracked security-relevant categories (R17.4).
-        expect(AUDIT_ACTION_CATEGORIES).toContain(entry.action);
-
-        // The timestamp is a UTC, >= millisecond-precision ISO-8601 instant that
-        // reflects the recorded time exactly (R17.1).
-        expect(entry.at).toMatch(UTC_MS_TIMESTAMP_RE);
-        expect(entry.at.endsWith("Z")).toBe(true);
-        expect(Date.parse(entry.at)).toBe(input.at.getTime());
-        expect(entry.at).toBe(input.at.toISOString());
+          // Ordering: timestamps are non-increasing (descending, newest-first).
+          // ISO-8601 UTC timestamps sort lexicographically in chronological
+          // order, so a string comparison is the correct ordering check.
+          for (let i = 1; i < result.length; i++) {
+            expect(
+              (result[i - 1]?.at ?? "") >= (result[i]?.at ?? ""),
+            ).toBe(true);
+          }
+        }
       }),
       { numRuns: 100 },
     );
