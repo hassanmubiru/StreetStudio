@@ -1,0 +1,15 @@
+{
+  "name": "@streetstudio/docs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Documentation site.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "streetstudio": {
+    "domain": "Documentation site."
+  }
+}
