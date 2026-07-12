@@ -451,7 +451,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 9.1, 9.6_
 
 - [ ] 27. Implement the AI capability router
-  - [ ] 27.1 Implement AiRouter routing to enabled provider plugins
+  - [x] 27.1 Implement AiRouter routing to enabled provider plugins
     - Provide AI capabilities exclusively through AI_Provider plugins; route transcription/summarization/action-items/semantic-search to the enabled provider; reject AI requests within 2s with `AI_UNAVAILABLE` when none is enabled; abort on provider failure or >30s timeout; keep non-AI features unaffected; contain no vendor implementation in core
     - _Requirements: 22.1, 22.2, 22.3, 22.4, 22.5_
 
