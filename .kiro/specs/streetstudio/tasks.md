@@ -86,7 +86,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Lock an account for ≥15 min after 5 failed attempts within a 15-minute window and reject further attempts during the lock
     - _Requirements: 3.9_
 
-  - [-] 6.3 Implement OAuth and SSO sign-in
+  - [x] 6.3 Implement OAuth and SSO sign-in
     - Authenticate through configured OAuth/SSO providers; deny sign-in and create no session on provider failure/unavailability
     - _Requirements: 3.5, 3.6, 3.10_
 
