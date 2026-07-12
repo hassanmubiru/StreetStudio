@@ -505,7 +505,176 @@ export class OrgService {
     await this.store.createTeamMembership({ teamId, memberId: member });
   }
 
+  /* ----------------------- administrative controls --------------------- */
+
+  /**
+   * Update an Organization's settings on behalf of an Administrator (R26.1).
+   *
+   * The `actor` must be an Administrator of `orgId` — an actor who is not a
+   * member, or whose Role does not grant the role-management permission, is
+   * denied with `AUTHORIZATION_DENIED` and no settings are changed (R26.4). The
+   * `patch` is validated atomically against {@link OrgServiceDeps.validateOrgSettings}
+   * (default {@link isValidOrgSettings}); if either the patch or the resulting
+   * merged settings fail validation, the request is rejected with
+   * `VALIDATION_FAILED` and the existing settings are retained unchanged (R26.5).
+   * On success the merged settings are persisted, the successful action is
+   * recorded in the Audit Log (R26.7), and the updated Organization is returned.
+   */
+  async updateSettings(
+    actor: AuthContext,
+    orgId: Uuid,
+    patch: OrgSettings,
+  ): Promise<OrganizationRecord> {
+    // R26.4 — administrative action; gate on the Administrator role.
+    await this.requireAdministrator(orgId, actor.memberId);
+
+    const organization = await this.store.findOrganizationById(orgId);
+    if (!organization) {
+      throw new AppError("NOT_FOUND");
+    }
+
+    // R26.1 / R26.5 — validate atomically. The patch is merged over the current
+    // settings; both the patch itself and the merged result must be valid, so a
+    // malformed update never partially applies and never disturbs the stored
+    // settings on failure.
+    const nextSettings: OrgSettings = { ...organization.settings, ...patch };
+    if (
+      !this.validateOrgSettings(patch) ||
+      !this.validateOrgSettings(nextSettings)
+    ) {
+      throw new AppError("VALIDATION_FAILED", {
+        details: { field: "settings", reason: "invalid organization settings" },
+      });
+    }
+
+    const updated = await this.store.updateOrganizationSettings(
+      organization,
+      nextSettings,
+    );
+
+    // R26.7 — record the successful administrative action against the org.
+    await this.recordAdminAction(
+      actor.memberId,
+      ADMIN_ACTION_SETTINGS_UPDATED,
+      orgId,
+      orgId,
+    );
+
+    return updated;
+  }
+
+  /**
+   * Remove `member` from `orgId`, revoking their access to the Organization's
+   * resources (R26.2).
+   *
+   * The `actor` must be an Administrator of `orgId`; a non-Administrator is
+   * denied with `AUTHORIZATION_DENIED` and no Membership is removed (R26.4). An
+   * unknown Member is reported as `NOT_FOUND`. Removing the only remaining
+   * Administrator is refused with `CONFLICT`, leaving that Member's access and
+   * Role unchanged (R26.6). On success the Membership is deleted — so subsequent
+   * RBAC checks resolve no Membership for the Member and deny by default, well
+   * within the 5-second bound (R26.2) — and the successful action is recorded in
+   * the Audit Log (R26.7).
+   */
+  async removeMember(
+    actor: AuthContext,
+    orgId: Uuid,
+    member: Uuid,
+  ): Promise<void> {
+    // R26.4 — administrative action; gate on the Administrator role.
+    await this.requireAdministrator(orgId, actor.memberId);
+
+    const membership = await this.store.findMembership(orgId, member);
+    if (!membership) {
+      throw new AppError("NOT_FOUND");
+    }
+
+    // R26.6 — never remove the last Administrator. If the target holds the
+    // Administrator Role and is the only Administrator left, reject and retain
+    // their access and Role unchanged.
+    const adminRole = await this.store.findRoleByName(
+      orgId,
+      ADMINISTRATOR_ROLE_NAME,
+    );
+    if (adminRole && membership.roleId === adminRole.id) {
+      const memberships = await this.store.listMemberships(orgId);
+      const administrators = memberships.filter(
+        (m) => m.roleId === adminRole.id,
+      );
+      if (administrators.length <= 1) {
+        throw new AppError("CONFLICT", {
+          details: {
+            reason: "An Organization must retain at least one Administrator.",
+          },
+        });
+      }
+    }
+
+    // R26.2 — revoke access by removing the Membership.
+    await this.store.deleteMembership(membership);
+
+    // R26.7 — record the successful administrative action against the member.
+    await this.recordAdminAction(
+      actor.memberId,
+      ADMIN_ACTION_MEMBER_REMOVED,
+      member,
+      orgId,
+    );
+  }
+
   /* -------------------------- internals -------------------------------- */
+
+  /**
+   * Ensure `actorMemberId` is an Administrator of `organizationId` before an
+   * administrative action runs (R26.4). Administration is gated on the
+   * role-management permission — the permission the seeded Administrator Role
+   * carries and that the RBAC evaluator gates role assignment on — so the gate
+   * is consistent with the rest of the authorization model. A non-member, or a
+   * member whose Role lacks that permission, is denied with
+   * `AUTHORIZATION_DENIED`. Returns the actor's Membership on success.
+   */
+  private async requireAdministrator(
+    organizationId: Uuid,
+    actorMemberId: Uuid,
+  ): Promise<MembershipRecord> {
+    const membership = await this.store.findMembership(
+      organizationId,
+      actorMemberId,
+    );
+    if (!membership) {
+      throw new AppError("AUTHORIZATION_DENIED");
+    }
+    const role = await this.store.findRoleById(
+      organizationId,
+      membership.roleId,
+    );
+    if (!role || !role.permissions.includes(ROLE_MANAGEMENT_PERMISSION)) {
+      throw new AppError("AUTHORIZATION_DENIED");
+    }
+    return membership;
+  }
+
+  /**
+   * Record a successful administrative action in the Audit Log when a recorder
+   * is configured (R26.7): the acting Administrator, the action, the affected
+   * resource, the owning Organization, and the creation timestamp. A no-op when
+   * no {@link AdminAuditRecorder} was injected.
+   */
+  private async recordAdminAction(
+    actor: Uuid,
+    action: string,
+    targetId: Uuid,
+    orgId: Uuid,
+  ): Promise<void> {
+    if (!this.auditLog) return;
+    await this.auditLog.append({
+      actor,
+      action,
+      targetId,
+      orgId,
+      at: this.clock.now(),
+    });
+  }
 
   /**
    * Ensure `memberId` belongs to `organizationId`; deny cross-organization
