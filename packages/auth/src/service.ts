@@ -66,13 +66,19 @@ export interface AuthResult {
 }
 
 /**
- * The authenticated principal resolved from a valid access token. Organization
- * scoping is applied later by RBAC (task 8) against the resource being
- * accessed, so it is not part of the authentication context.
+ * The authenticated principal.
+ *
+ * Authentication resolves a `memberId` and the `sessionId` backing the access
+ * token. Organization scoping is not established at authentication time — RBAC
+ * (task 8) binds an `organizationId` against the resource being accessed — so
+ * that field is optional and populated by higher layers.
  */
 export interface AuthContext {
   readonly memberId: Uuid;
-  readonly sessionId: Uuid;
+  /** Session the access token is bound to, when derived from a token. */
+  readonly sessionId?: Uuid;
+  /** Organization scope, when the context has been bound to one (RBAC). */
+  readonly organizationId?: Uuid;
 }
 
 /**
