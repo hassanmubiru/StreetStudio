@@ -396,10 +396,13 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN an Administrator updates Organization settings, THE API_Service SHALL persist the updated settings.
-2. WHEN an Administrator removes a Member from an Organization, THE API_Service SHALL revoke that Member's access to the Organization's resources.
-3. WHEN an Administrator changes a Member's Role, THE API_Service SHALL apply the new Role permissions to that Member.
-4. IF a non-Administrator attempts an administrative action, THEN THE API_Service SHALL deny the action and return an authorization error.
+1. WHEN an Administrator submits valid updates to Organization settings, THE API_Service SHALL persist the updated settings and return a success response within 5 seconds.
+2. WHEN an Administrator removes a Member from an Organization, THE API_Service SHALL revoke that Member's access to the Organization's resources within 5 seconds and reject subsequent requests from that Member to those resources with an authorization error.
+3. WHEN an Administrator changes a Member's Role within an Organization, THE API_Service SHALL apply the new Role's permissions to that Member for subsequent requests within that Organization scope.
+4. IF a non-Administrator attempts an administrative action, THEN THE API_Service SHALL deny the action, make no change to the target resource, and return an authorization error.
+5. IF an Administrator submits Organization settings that fail validation, THEN THE API_Service SHALL reject the request, retain the existing settings unchanged, and return a validation error indicating the invalid settings.
+6. IF an Administrator attempts to remove the only remaining Administrator of an Organization, THEN THE API_Service SHALL reject the request, retain that Member's access and Role unchanged, and return an error indicating the Organization must retain at least one Administrator.
+7. WHEN an administrative action succeeds, THE API_Service SHALL record the action in the Audit_Log with the acting Administrator identifier, the affected resource, and a creation timestamp within 5 seconds.
 
 ### Requirement 27: Billing Abstraction
 
@@ -407,9 +410,11 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. THE API_Service SHALL expose billing operations through a billing abstraction interface.
-2. WHERE a billing Plugin is enabled, THE API_Service SHALL route billing operations to the enabled billing Plugin.
-3. IF no billing Plugin is enabled, THEN THE API_Service SHALL operate core features without requiring billing.
+1. THE API_Service SHALL expose all billing operations exclusively through a single billing abstraction interface, and SHALL contain zero direct references to any specific billing provider outside a billing Plugin.
+2. WHERE exactly one billing Plugin is enabled, WHEN the API_Service receives a billing operation request, THE API_Service SHALL route that request to the enabled billing Plugin and SHALL return the result produced by that Plugin to the caller.
+3. IF no billing Plugin is enabled, THEN THE API_Service SHALL operate every core feature that does not depend on billing without error, and SHALL reject each billing operation request with an error response indicating that billing is not configured while preserving all existing non-billing state.
+4. IF more than one billing Plugin is enabled at the same time, THEN THE API_Service SHALL reject the conflicting configuration with an error response indicating that at most one billing Plugin may be enabled, and SHALL not route billing operations to any billing Plugin.
+5. IF an enabled billing Plugin fails to complete a routed billing operation or does not respond within 30 seconds, THEN THE API_Service SHALL return an error response indicating the billing operation failed and SHALL preserve all non-billing state without partial application of the failed operation.
 
 ### Requirement 28: Analytics
 
