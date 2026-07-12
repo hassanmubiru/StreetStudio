@@ -89,6 +89,16 @@ export {
 } from "./repositories.js";
 export type { Repositories } from "./repositories.js";
 
+// Append-only Audit Log service (append + org-scoped descending query).
+export {
+  AuditLog,
+  createAuditLog,
+  auditImmutableClient,
+  toAuditTimestamp,
+  AUDIT_ACTION_CATEGORIES,
+} from "./audit-log.js";
+export type { AuditAppendInput, AuditActionCategory } from "./audit-log.js";
+
 // Entity record types (full persistence shapes, including secret-bearing
 // columns absent from the public DTOs).
 export type {
