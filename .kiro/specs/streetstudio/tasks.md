@@ -58,7 +58,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Enforce acyclic layering: `database` depends on `shared`/`config` only
     - _Requirements: 2.5_
 
-  - [ ] 4.2 Implement the append-only Audit Log
+  - [x] 4.2 Implement the append-only Audit Log
     - Implement `append` (actor, action, target, orgId, UTC timestamp with ≥ms precision) within 5s, and org-scoped descending `query`; expose no update/delete path and reject mutation at the storage layer; record auth events, authorization denials, sharing changes, and administrative actions
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6_
 
