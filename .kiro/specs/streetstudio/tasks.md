@@ -110,7 +110,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 7: Account lockout after repeated failures**
     - **Validates: Requirements 3.9**
 
-  - [ ] 6.9 Write unit tests for OAuth/SSO sign-in with mocked providers
+  - [-] 6.9 Write unit tests for OAuth/SSO sign-in with mocked providers
     - Test success and provider-failure paths
     - _Requirements: 3.5, 3.6, 3.10_
 
