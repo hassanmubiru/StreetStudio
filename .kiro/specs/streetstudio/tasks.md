@@ -9,7 +9,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
 ## Tasks
 
 - [ ] 1. Establish monorepo structure and boundary tooling
-  - [-] 1.1 Scaffold the monorepo layout and package manifests
+  - [x] 1.1 Scaffold the monorepo layout and package manifests
     - Create `apps/{api,web,desktop,docs}` and `packages/{ui,sdk,shared,config,database,auth,media,recording,processing,notifications,plugins,analytics}`
     - Add a workspace-level package manifest and per-package manifests, each declaring a single primary domain responsibility and entry-point-only public exports
     - Reference StreetJS only via published version or local package link; add zero filesystem references into the StreetJS repo
