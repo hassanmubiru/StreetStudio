@@ -44,7 +44,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 2.4_
 
 - [ ] 3. Implement configuration loading and startup validation
-  - [-] 3.1 Implement config schema, loading, and startup validation
+  - [x] 3.1 Implement config schema, loading, and startup validation
     - Load and validate configuration via the StreetJS config interface; abort startup and emit an error naming every missing/invalid required value
     - _Requirements: 30.3_
 
