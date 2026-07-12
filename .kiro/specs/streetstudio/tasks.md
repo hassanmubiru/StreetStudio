@@ -288,7 +288,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.8, 6.9, 6.10_
 
 - [ ] 16. Implement the media processing pipeline
-  - [ ] 16.1 Implement the MediaPipeline worker (enqueue and process)
+  - [-] 16.1 Implement the MediaPipeline worker (enqueue and process)
     - Enqueue within 5s of upload completion; produce exactly one thumbnail, a 3–10s preview, and ≥3 ABR renditions, then mark the Video ready; emit processing-status transitions (queued|processing|ready|failed) to members with access within 2s; retry ≤3 times on failure, then record failure, retain source, and emit a failure event
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
 
