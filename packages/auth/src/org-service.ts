@@ -182,11 +182,22 @@ export interface OrgStore {
   createOrganization(record: OrganizationRecord): Promise<OrganizationRecord>;
   /** Find an Organization by id, or null when absent. */
   findOrganizationById(id: Uuid): Promise<OrganizationRecord | null>;
+  /**
+   * Replace `record`'s settings with `settings`, retaining its other fields,
+   * and return the updated Organization. Used by administrative settings
+   * updates (R26.1).
+   */
+  updateOrganizationSettings(
+    record: OrganizationRecord,
+    settings: Record<string, unknown>,
+  ): Promise<OrganizationRecord>;
 
   /** Persist a new Role and return it. */
   createRole(record: RoleRecord): Promise<RoleRecord>;
   /** Find a Role by name within an Organization, or null when absent. */
   findRoleByName(organizationId: Uuid, name: string): Promise<RoleRecord | null>;
+  /** Find a Role by id within an Organization, or null when absent. */
+  findRoleById(organizationId: Uuid, roleId: Uuid): Promise<RoleRecord | null>;
 
   /** Persist a new Membership and return it. */
   createMembership(record: MembershipRecord): Promise<MembershipRecord>;
@@ -195,6 +206,16 @@ export interface OrgStore {
     organizationId: Uuid,
     memberId: Uuid,
   ): Promise<MembershipRecord | null>;
+  /**
+   * Every Membership in an Organization. Used to count Administrators when
+   * guarding the last-Administrator invariant (R26.6).
+   */
+  listMemberships(organizationId: Uuid): Promise<MembershipRecord[]>;
+  /**
+   * Remove `record`, revoking that Member's access to the Organization so
+   * subsequent authorization checks resolve no Membership and deny (R26.2).
+   */
+  deleteMembership(record: MembershipRecord): Promise<void>;
 
   /** Persist a new Invitation and return it. */
   createInvitation(record: InvitationRecord): Promise<InvitationRecord>;
@@ -232,6 +253,17 @@ export interface OrgServiceDeps {
   readonly newId?: () => Uuid;
   /** Random-secret generator for invitation tokens; defaults to a CSPRNG token. */
   readonly generateSecret?: () => string;
+  /**
+   * Recorder for successful administrative actions (R26.7). When omitted,
+   * administrative actions still succeed but are not audited; production
+   * wiring SHOULD supply the `@streetstudio/database` `AuditLog`.
+   */
+  readonly auditLog?: AdminAuditRecorder;
+  /**
+   * Validator for Organization settings updates (R26.5). Defaults to
+   * {@link isValidOrgSettings}. Return `false` to reject a settings payload.
+   */
+  readonly validateOrgSettings?: (settings: OrgSettings) => boolean;
 }
 
 /** Generate a URL-safe, 256-bit random invitation-token secret component. */
@@ -250,12 +282,16 @@ export class OrgService {
   private readonly clock: Clock;
   private readonly newId: () => Uuid;
   private readonly generateSecret: () => string;
+  private readonly auditLog?: AdminAuditRecorder;
+  private readonly validateOrgSettings: (settings: OrgSettings) => boolean;
 
   constructor(deps: OrgServiceDeps) {
     this.store = deps.store;
     this.clock = deps.clock ?? systemClock;
     this.newId = deps.newId ?? newUuid;
     this.generateSecret = deps.generateSecret ?? defaultGenerateSecret;
+    this.auditLog = deps.auditLog;
+    this.validateOrgSettings = deps.validateOrgSettings ?? isValidOrgSettings;
   }
 
   /**
