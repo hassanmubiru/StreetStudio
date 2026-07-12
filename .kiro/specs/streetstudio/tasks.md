@@ -225,7 +225,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 13. Implement storage abstraction and provider contract
-  - [ ] 13.1 Implement the StorageProvider interface and routing
+  - [-] 13.1 Implement the StorageProvider interface and routing
     - Define `put`/`get`/`signUploadTarget`/`healthCheck`; route persistence exclusively through the interface; write ack within 30s or abort with `STORAGE_ERROR` recording provider id + timestamp; activation validates config/connectivity and retains prior provider on failure; signed targets valid 60–3600s (default 900), direct-to-storage ≤15 min, expired targets rejected
     - _Requirements: 9.1, 9.3, 9.4, 9.5, 9.6, 9.7, 29.3_
 
