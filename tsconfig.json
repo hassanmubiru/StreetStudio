@@ -1,0 +1,21 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/config" },
+    { "path": "./packages/database" },
+    { "path": "./packages/auth" },
+    { "path": "./packages/plugins" },
+    { "path": "./packages/media" },
+    { "path": "./packages/processing" },
+    { "path": "./packages/notifications" },
+    { "path": "./packages/recording" },
+    { "path": "./packages/analytics" },
+    { "path": "./packages/sdk" },
+    { "path": "./packages/ui" },
+    { "path": "./apps/api" },
+    { "path": "./apps/web" },
+    { "path": "./apps/desktop" },
+    { "path": "./apps/docs" }
+  ]
+}
