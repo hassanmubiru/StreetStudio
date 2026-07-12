@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@streetstudio/database": "*",
+    "@streetstudio/shared": "*",
     "argon2": "0.44.0"
   },
   "peerDependencies": {
