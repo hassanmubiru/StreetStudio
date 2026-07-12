@@ -127,7 +127,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 58: API-key authentication reflects validity and permissions**
     - **Validates: Requirements 18.3, 18.4, 18.5**
 
-  - [ ] 7.4 Write property test for API-key management permission gating
+  - [-] 7.4 Write property test for API-key management permission gating
     - **Property 59: API-key management is permission-gated**
     - **Validates: Requirements 18.6**
 
