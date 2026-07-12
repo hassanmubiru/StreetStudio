@@ -530,3 +530,121 @@ StreetJS is consumed only through its public package entry points. Every cross-p
 
 - [ ] 33. Checkpoint - extensibility
   - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 34. Implement analytics
+  - [ ] 34.1 Implement AnalyticsService (recordView, aggregate)
+    - Record a view event scoped to the member's organization within 5s on playback start (Video id, member id, timestamp); aggregate total views, distinct viewers, and total watch duration for a valid time range within 5s, Administrator-only, excluding other organizations; reject invalid ranges
+    - _Requirements: 28.1, 28.2, 28.3, 28.4, 28.5_
+
+  - [ ]* 34.2 Write property test for view-event recording
+    - **Property 82: View events are recorded with required fields on playback**
+    - **Validates: Requirements 28.1**
+
+  - [ ]* 34.3 Write property test for analytics aggregation and org exclusion
+    - **Property 83: Analytics aggregates match a reference computation and exclude other organizations**
+    - **Validates: Requirements 28.2, 28.3**
+
+  - [ ]* 34.4 Write property test for admin-only, validated-range analytics
+    - **Property 84: Analytics access is Administrator-only with validated ranges**
+    - **Validates: Requirements 28.4, 28.5**
+
+- [ ] 35. Implement webhooks
+  - [ ] 35.1 Implement WebhookService (register, delete) and signed worker delivery
+    - Store subscriptions only for supported event types with well-formed HTTPS URLs ≤2048 chars; deliver signed payloads within 30s; treat a >10s non-success as failed and retry ≤5 more times with non-decreasing backoff, then record failed; stop delivery within 60s of deletion
+    - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7_
+
+  - [ ]* 35.2 Write property test for webhook registration validation
+    - **Property 60: Webhook registration validates endpoint and event type**
+    - **Validates: Requirements 19.1, 19.2**
+
+  - [ ]* 35.3 Write property test for webhook signature verification
+    - **Property 61: Webhook deliveries are signed and verifiable**
+    - **Validates: Requirements 19.4**
+
+  - [ ]* 35.4 Write property test for bounded delivery retries with backoff
+    - **Property 62: Webhook delivery retries are bounded with backoff**
+    - **Validates: Requirements 19.5, 19.6**
+
+  - [ ]* 35.5 Write property test for delivery stop on deletion
+    - **Property 63: Deleting a webhook stops deliveries**
+    - **Validates: Requirements 19.7**
+
+- [ ] 36. Implement security middleware and defaults
+  - [ ] 36.1 Implement rate limiting, secret handling, and auth-required middleware
+    - Enforce a default 100 requests/60s rolling per-client limit rejecting excess with retry-after; store all secrets encrypted via the StreetJS secret interface, never plaintext; deny unauthenticated/invalid-auth requests to non-public endpoints with no state change
+    - _Requirements: 29.1, 29.2, 29.4_
+
+  - [ ]* 36.2 Write property test for rate limiting
+    - **Property 85: Rate limiting rejects excess requests with retry guidance**
+    - **Validates: Requirements 29.1**
+
+  - [ ]* 36.3 Write property test for secret encryption at rest
+    - **Property 86: Secrets are never persisted in plaintext**
+    - **Validates: Requirements 29.2**
+
+  - [ ]* 36.4 Write property test for non-public endpoint authentication
+    - **Property 87: Non-public endpoints deny unauthenticated access**
+    - **Validates: Requirements 29.4**
+
+- [ ] 37. Wire the API_Service, REST/WebSocket controllers, and SDK
+  - [ ] 37.1 Assemble the API_Service host and controllers
+    - Wire all domain services via StreetJS DI into REST controllers and the WebSocket gateway with the request lifecycle (rate limit → authenticate → validate → RBAC → service → audit); expose every Web_Client capability through a public REST/WebSocket/Webhook interface enforcing the same authorization as the equivalent Web_Client request
+    - _Requirements: 20.1, 20.4, 20.5_
+
+  - [ ] 37.2 Implement the SDK client
+    - Provide typed client methods for every public REST and WebSocket operation; support lockstep release with contract changes and the 90-day deprecation window for breaking changes
+    - _Requirements: 20.2, 20.3, 20.6_
+
+  - [ ]* 37.3 Write contract test for API/SDK parity
+    - **Property 64: Public API parity and SDK coverage**
+    - **Validates: Requirements 20.1, 20.2**
+
+  - [ ]* 37.4 Write property test for public-API authorization parity
+    - **Property 65: Public API authorization matches web equivalents**
+    - **Validates: Requirements 20.4, 20.5**
+
+- [ ] 38. Checkpoint - API surface
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 39. Implement self-hosting, deployment, and HA operation
+  - [ ] 39.1 Implement startup, health, and metrics endpoints
+    - Complete startup within 60s when config is valid; expose health (reflecting dependency reachability) and metrics via the StreetJS interfaces; abort startup on missing/invalid config
+    - _Requirements: 30.2, 30.3, 30.4_
+
+  - [ ] 39.2 Implement HA operation against PostgreSQL HA and Redis Cluster
+    - Operate against PostgreSQL HA and Redis Cluster via StreetJS interfaces; reconnect on primary/node loss and resume without operator restart
+    - _Requirements: 30.5, 30.6_
+
+  - [ ] 39.3 Author container images and deployment configuration
+    - Provide `docker/` container images/compose and `infrastructure/` deployment configuration for self-hosting
+    - _Requirements: 30.1_
+
+  - [ ]* 39.4 Write integration tests for startup/health/metrics and HA reconnection
+    - Test startup/health/metrics wiring and PostgreSQL HA / Redis Cluster node-loss reconnection against real dependencies where reachable
+    - _Requirements: 30.2, 30.4, 30.5, 30.6_
+
+- [ ] 40. Author project documentation
+  - [ ] 40.1 Create the required documentation set
+    - Create README, ARCHITECTURE, ROADMAP, CONTRIBUTING, SECURITY, API, PLUGIN_GUIDE, MEDIA_PIPELINE, DEPLOYMENT, and DECISIONS files with content addressing each topic; document StreetJS gaps with external-issue references; record ADRs; document every public endpoint's request/response/auth/error formats; document public endpoints requiring no authentication
+    - _Requirements: 1.4, 29.5, 31.1, 31.2, 31.3, 31.4_
+
+- [ ] 41. Establish continuous integration and coverage gating
+  - [ ] 41.1 Configure the CI pipeline and test categories
+    - Configure CI to execute unit, integration, contract, end-to-end, performance benchmark, load, and media pipeline categories (each with ≥1 executable test) reporting a single pass/fail within 30 min, indicating the failing category, distinguishing infrastructure from test failures, and failing below 80% line coverage; run the boundary and dependency-graph checks; verify behavior against real dependencies where reachable
+    - _Requirements: 32.1, 32.2, 32.3, 32.4, 32.5, 32.6_
+
+  - [ ]* 41.2 Author end-to-end and performance/load/media-pipeline tests
+    - E2E flow (register → org → invite/accept → project/folder → record → chunked upload → pipeline → ready → playback → comment → mention → share access) driven exclusively through the public API/SDK; latency-budget benchmarks; concurrent-upload/realtime-fanout/webhook load tests; media pipeline transcode/thumbnail/preview tests
+    - _Requirements: 32.1, 32.4_
+
+- [ ] 42. Final checkpoint - full suite
+  - Ensure all tests pass, ask the user if questions arise.
+
+## Notes
+
+- Tasks marked with `*` are optional test tasks and can be skipped for a faster MVP; core implementation tasks are never optional.
+- Each task references the specific requirements clauses (and, for test tasks, the numbered correctness property) it implements for traceability.
+- Property-based tests use `fast-check` with a minimum of 100 iterations and are tagged `Feature: streetstudio, Property N`. Determinism-sensitive properties (realtime, timing) use in-memory transport/clock fakes.
+- All 88 correctness properties from the design are covered by the property/contract test sub-tasks above.
+- Checkpoints ensure incremental validation at natural boundaries.
+- StreetJS is consumed only through public package entry points; cross-package imports use declared entry points only.
