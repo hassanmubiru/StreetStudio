@@ -433,7 +433,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 66: Plugin activation failures preserve prior state**
     - **Validates: Requirements 21.3**
 
-  - [ ] 25.3 Write property test for load-failure isolation
+  - [-] 25.3 Write property test for load-failure isolation
     - **Property 67: Plugin load failures are isolated**
     - **Validates: Requirements 21.5**
 
