@@ -144,7 +144,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 51: Role assignment governs subsequent decisions**
     - **Validates: Requirements 16.2, 26.3**
 
-  - [ ] 8.4 Write property test for cross-organization permission isolation
+  - [-] 8.4 Write property test for cross-organization permission isolation
     - **Property 52: Role permissions never leak across organizations**
     - **Validates: Requirements 16.4**
 
