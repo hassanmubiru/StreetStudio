@@ -18,7 +18,8 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@streetstudio/shared": "*"
+    "@streetstudio/shared": "*",
+    "@streetstudio/auth": "*"
   },
   "peerDependencies": {
     "@streetjs/core": "^0.1.0"
