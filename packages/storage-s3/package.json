@@ -1,8 +1,8 @@
 {
-  "name": "@streetstudio/notifications",
+  "name": "@streetstudio/storage-s3",
   "version": "0.1.0",
   "private": true,
-  "description": "Notifications and realtime event contracts.",
+  "description": "Amazon S3 (and S3-compatible) storage provider plugin.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -18,13 +18,11 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@streetstudio/shared": "*",
-    "@streetstudio/database": "*",
-    "@streetstudio/auth": "*",
     "@streetstudio/media": "*",
     "@streetstudio/plugins": "*"
   },
   "streetstudio": {
-    "domain": "Notifications and realtime event contracts."
+    "domain": "Amazon S3 (and S3-compatible) storage provider plugin.",
+    "pluginKind": "storage"
   }
 }
