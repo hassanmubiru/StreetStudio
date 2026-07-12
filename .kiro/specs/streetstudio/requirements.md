@@ -316,10 +316,12 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. THE API_Service SHALL expose every capability available in the Web_Client through a public REST, WebSocket, or Webhook interface.
-2. THE SDK SHALL provide client access to the public REST and WebSocket interfaces of the API_Service.
-3. WHEN the public API contract changes, THE StreetStudio SHALL update the SDK to reflect the changed contract.
-4. THE API_Service SHALL enforce the same authorization rules for public API requests as for Web_Client requests.
+1. THE API_Service SHALL expose every capability available in the Web_Client through a public REST, WebSocket, or Webhook interface, such that no Web_Client capability is accessible exclusively through the Web_Client.
+2. THE SDK SHALL provide client access to every public REST and WebSocket interface exposed by the API_Service.
+3. WHEN a change to the public API contract is released, THE StreetStudio SHALL publish an updated SDK that reflects the changed contract no later than the release of that contract change.
+4. WHEN the API_Service receives a public API request, THE API_Service SHALL enforce the same authorization rules that apply to the equivalent Web_Client request.
+5. IF a public API request presents credentials that lack the authorization required for the requested capability, THEN THE API_Service SHALL deny the request, perform no state change, and return an authorization error.
+6. IF a backward-incompatible change is introduced to the public API contract, THEN THE StreetStudio SHALL publish a deprecation notice and continue to support the prior contract version for at least 90 days after the notice.
 
 ### Requirement 21: Plugin Management
 
