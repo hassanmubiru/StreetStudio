@@ -39,13 +39,3 @@ export function runCli(argv: readonly string[] = process.argv.slice(2)): number 
   }
   return 1;
 }
-
-// Execute when invoked directly (via node or vite-node).
-const invokedPath = process.argv[1] ?? "";
-if (
-  invokedPath.endsWith("cli.ts") ||
-  invokedPath.endsWith("cli.js") ||
-  invokedPath.endsWith("boundary")
-) {
-  process.exit(runCli());
-}
