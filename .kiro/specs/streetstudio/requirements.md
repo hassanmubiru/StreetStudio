@@ -370,9 +370,12 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Member links a Video to a pull request through a source control Plugin, THE API_Service SHALL store the association between the Video and the pull request.
-2. WHERE a GitHub or GitLab Plugin is enabled, THE API_Service SHALL allow linking Videos to repositories managed by that Plugin.
-3. WHEN a Member posts a timestamped review comment, THE API_Service SHALL associate the comment with the referenced playback position.
+1. WHEN a Member with link permission links a Video to a pull request through an enabled source control Plugin, THE API_Service SHALL store the association between the Video and the pull request and return a success response within 2 seconds.
+2. WHERE a GitHub or GitLab Plugin is enabled, THE API_Service SHALL allow a Member with link permission to associate Videos with repositories managed by that Plugin.
+3. WHEN a Member posts a review comment with a body of 1 to 5000 characters that references a timestamp between 0 seconds and the Video's duration, THE API_Service SHALL store the comment associated with that playback position and return a success response within 2 seconds.
+4. IF a Member attempts to link a Video to a pull request through a source control Plugin that is not enabled, or references a pull request or repository that does not exist or is not accessible through that Plugin, THEN THE API_Service SHALL reject the request, create no association, and return an error indicating the pull request or repository is not accessible.
+5. IF a Member posts a review comment whose referenced timestamp is negative or exceeds the Video's duration, or whose body is empty or exceeds 5000 characters, THEN THE API_Service SHALL reject the request, store no comment, and return a validation error.
+6. IF a Member without link permission attempts to link a Video to a pull request, THEN THE API_Service SHALL deny the request, create no association, and return an authorization error.
 
 ### Requirement 25: Knowledge Base
 
@@ -380,9 +383,12 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHERE a transcript is available for a Video, THE API_Service SHALL make the transcript searchable within the Knowledge Base.
-2. WHERE an AI_Provider Plugin is enabled, THE API_Service SHALL store auto-generated summaries produced by the AI_Provider for a Video.
-3. WHEN a Member links documentation to a Video, THE API_Service SHALL store the link association.
+1. WHEN a transcript becomes available for a Video, THE API_Service SHALL index the transcript text within the Knowledge Base within 30 seconds and make the transcript searchable to Members within their authorized scope.
+2. WHERE an AI_Provider Plugin is enabled, WHEN the AI_Provider produces a summary for a Video, THE API_Service SHALL store the auto-generated summary of 1 to 10,000 characters and associate it with that Video.
+3. WHEN a Member with edit permission links a documentation reference of 1 to 2048 characters to a Video, THE API_Service SHALL store the link association, associate it with the Video, and make it retrievable, up to a maximum of 100 documentation links per Video.
+4. IF a Member links a documentation reference to a Video that is empty, exceeds 2048 characters, or is malformed, THEN THE API_Service SHALL reject the request, store no link association, and return a validation error indicating the invalid documentation reference.
+5. IF a Member without edit permission attempts to link documentation to a Video, THEN THE API_Service SHALL deny the request, store no link association, and return an authorization error.
+6. IF a Member attempts to link documentation to a Video that already has 100 documentation links, THEN THE API_Service SHALL reject the request, store no additional link association, and return an error indicating the maximum documentation link count has been reached.
 
 ### Requirement 26: Administration
 
