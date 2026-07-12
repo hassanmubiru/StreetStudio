@@ -245,9 +245,7 @@ export class TeamMembershipRepository extends BaseRepository<TeamMembershipRecor
 }
 
 /** Reaction table with composite natural key. */
-export class ReactionRepository extends BaseRepository<
-  ReactionRecord & Record<string, unknown>
-> {
+export class ReactionRepository extends BaseRepository<ReactionRecord> {
   async listByTarget(
     targetType: ReactionRecord["targetType"],
     targetId: Uuid,
