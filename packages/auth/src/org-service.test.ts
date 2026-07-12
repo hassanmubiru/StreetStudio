@@ -10,10 +10,14 @@ import type {
 } from "@streetstudio/database";
 import type { InvitationStatus, Uuid } from "@streetstudio/shared";
 import {
+  ADMIN_ACTION_MEMBER_REMOVED,
+  ADMIN_ACTION_SETTINGS_UPDATED,
   ADMINISTRATOR_ROLE_NAME,
   INVITATION_TTL_MS,
+  isValidOrgSettings,
   MEMBER_ROLE_NAME,
   OrgService,
+  type AdminAuditRecorder,
   type OrgStore,
 } from "./org-service.js";
 import type { AuthContext } from "./service.js";
@@ -173,7 +177,30 @@ function sequentialIds(): () => Uuid {
   };
 }
 
-function makeService(clock: MutableClock): {
+/** Captures audit entries appended by administrative actions (R26.7). */
+class RecordingAuditLog implements AdminAuditRecorder {
+  readonly entries: {
+    actor: Uuid;
+    action: string;
+    targetId: Uuid;
+    orgId: Uuid;
+    at?: Date;
+  }[] = [];
+  async append(input: {
+    readonly actor: Uuid;
+    readonly action: string;
+    readonly targetId: Uuid;
+    readonly orgId: Uuid;
+    readonly at?: Date;
+  }): Promise<void> {
+    this.entries.push({ ...input });
+  }
+}
+
+function makeService(
+  clock: MutableClock,
+  auditLog?: AdminAuditRecorder,
+): {
   service: OrgService;
   store: InMemoryOrgStore;
 } {
@@ -184,6 +211,7 @@ function makeService(clock: MutableClock): {
     clock,
     newId: sequentialIds(),
     generateSecret: () => `secret-${(secret += 1)}`,
+    auditLog,
   });
   return { service, store };
 }
