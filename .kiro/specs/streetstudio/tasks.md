@@ -123,7 +123,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 57: API-key secrets are disclosed exactly once**
     - **Validates: Requirements 18.1, 18.2**
 
-  - [ ] 7.3 Write property test for API-key authentication and validity
+  - [-] 7.3 Write property test for API-key authentication and validity
     - **Property 58: API-key authentication reflects validity and permissions**
     - **Validates: Requirements 18.3, 18.4, 18.5**
 
