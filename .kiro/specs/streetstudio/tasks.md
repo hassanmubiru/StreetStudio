@@ -25,7 +25,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 1: Import boundary enforcement**
     - **Validates: Requirements 1.1, 1.3, 1.6, 2.4, 2.6, 22.6**
 
-  - [ ] 1.4 Implement the package dependency-graph acyclicity checker
+  - [x] 1.4 Implement the package dependency-graph acyclicity checker
     - Derive the dependency graph from package manifests and detect cycles; wire into CI to fail on any cycle
     - _Requirements: 2.5_
 
