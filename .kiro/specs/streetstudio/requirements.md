@@ -459,9 +459,10 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. THE StreetStudio SHALL provide README, ARCHITECTURE, ROADMAP, CONTRIBUTING, SECURITY, API, PLUGIN_GUIDE, MEDIA_PIPELINE, DEPLOYMENT, and DECISIONS documents.
-2. WHEN an architectural decision is made, THE StreetStudio SHALL record the decision in an Architecture Decision Record.
-3. THE StreetStudio SHALL document the public API contract in the API documentation.
+1. THE StreetStudio SHALL provide the following documents, each present and containing content that addresses its named topic: README, ARCHITECTURE, ROADMAP, CONTRIBUTING, SECURITY, API, PLUGIN_GUIDE, MEDIA_PIPELINE, DEPLOYMENT, and DECISIONS.
+2. WHEN an architectural decision is made, THE StreetStudio SHALL record the decision in an Architecture Decision Record that states the decision title, the current status, the context that motivated the decision, the decision made, and the resulting consequences.
+3. THE StreetStudio SHALL document in the API documentation, for every public API endpoint, the request format, the response format, the authentication requirement, and the error responses returned on failure.
+4. WHEN a public API endpoint is added, removed, or changed, THE StreetStudio SHALL update the API documentation to reflect the added, removed, or changed endpoint.
 
 ### Requirement 32: Testing and Continuous Integration
 
