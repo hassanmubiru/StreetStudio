@@ -616,3 +616,605 @@ erDiagram
 ### Shared DTOs and Errors (`packages/shared`)
 
 A single error taxonomy is shared across REST/WebSocket/SDK so behavior is uniform (see Error Handling). DTOs are the serialized wire representations of the entities above; the SDK consumes these types directly to guarantee parity.
+
+## Correctness Properties
+
+*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+
+The following properties are derived from the acceptance-criteria prework. Each is universally quantified and intended to be implemented as a single property-based test (minimum 100 iterations). Criteria classified as SMOKE, INTEGRATION, EXAMPLE, or EDGE_CASE in the prework are covered by the Testing Strategy rather than by these properties.
+
+### Property 1: Import boundary enforcement
+
+*For any* import specifier, the boundary analyzer accepts it if and only if it resolves to a StreetJS public package entry point or a declared package entry point, and rejects any specifier resolving to a StreetJS internal module, a filesystem path inside the StreetJS repository, another package's internal module, or a specific AI/billing vendor implementation in core — producing a named error identifying the disallowed reference.
+
+**Validates: Requirements 1.1, 1.3, 1.6, 2.4, 2.6, 22.6**
+
+### Property 2: Package dependency graph is acyclic
+
+*For any* dependency graph derived from package manifests, the acyclicity detector agrees with a reference cycle-detection algorithm, and the graph built from the real manifests contains no cycle.
+
+**Validates: Requirements 2.5**
+
+### Property 3: Registration creates retrievable accounts without plaintext passwords
+
+*For any* syntactically valid, non-duplicate email and password of at least 8 characters, registration creates a Member that is retrievable, and the stored credential is never equal to the plaintext password.
+
+**Validates: Requirements 3.1**
+
+### Property 4: Login issues short-lived tokens with sessions
+
+*For any* registered Member presenting correct credentials, login issues a JWT whose expiry is at most 15 minutes in the future and creates a corresponding session record.
+
+**Validates: Requirements 3.2**
+
+### Property 5: Invalid authentication is uniformly non-disclosing
+
+*For any* invalid credential pair (wrong password or unknown email), authentication is rejected with an error that is identical in shape and message regardless of which element was incorrect and regardless of whether the email is registered.
+
+**Validates: Requirements 3.3, 3.8**
+
+### Property 6: Session and token invalidation
+
+*For any* session, after sign-out or after its token's expiry, every subsequent request presenting that session or token is rejected with an authentication error.
+
+**Validates: Requirements 3.4, 3.7**
+
+### Property 7: Account lockout after repeated failures
+
+*For any* sequence of authentication attempts against a single account, once 5 failures occur within a 15-minute window, all further attempts are rejected for at least 15 minutes.
+
+**Validates: Requirements 3.9**
+
+### Property 8: Organization creation validity and administrator assignment
+
+*For any* organization name, creation succeeds if and only if the name length is between 1 and 200 characters; on success the creator holds the Administrator role, and on failure no organization is created.
+
+**Validates: Requirements 4.1, 4.7**
+
+### Property 9: Invitations expire seven days after creation
+
+*For any* well-formed invitation email, the created invitation is pending with an expiry exactly 7 days after its creation time; malformed emails are rejected with no invitation created.
+
+**Validates: Requirements 4.2, 4.8**
+
+### Property 10: Invitation acceptance is valid only while pending and unexpired
+
+*For any* invitation, accepting it before expiry while pending adds the invited user as a Member and marks the invitation accepted; accepting an expired, already-accepted, or revoked invitation is rejected and creates no membership.
+
+**Validates: Requirements 4.3, 4.9**
+
+### Property 11: Team creation and membership are organization-scoped
+
+*For any* team created within an organization and any organization Member assigned to it, the team and its recorded memberships belong exclusively to that organization.
+
+**Validates: Requirements 4.4, 4.5**
+
+### Property 12: Cross-organization access is denied
+
+*For any* Member and any organization the Member does not belong to, requests to access that organization's resources are denied with an authorization error.
+
+**Validates: Requirements 4.6**
+
+### Property 13: Project and folder creation validity and scoping
+
+*For any* project or folder name, creation by a permitted Member succeeds if and only if the name length is between 1 and 255 characters, and the created resource is scoped to its parent organization/project; invalid names create no resource.
+
+**Validates: Requirements 5.1, 5.2, 5.8**
+
+### Property 14: Folder nesting is bounded at depth 10
+
+*For any* folder nesting attempt, creation is allowed when the resulting depth is within 10 levels and rejected when it would exceed 10 levels.
+
+**Validates: Requirements 5.3**
+
+### Property 15: Video moves preserve identity and associations within the organization
+
+*For any* Video with comments, transcripts, and permissions, moving it to another Folder in the same organization preserves its identity and all associations; moving it to a Folder outside its organization is rejected and leaves its location unchanged.
+
+**Validates: Requirements 5.4, 5.7**
+
+### Property 16: Create permission is required for projects and folders
+
+*For any* Member lacking create permission, attempts to create a Project or Folder are denied with an authorization error and create no resource.
+
+**Validates: Requirements 5.6**
+
+### Property 17: Offline recording upload retries are bounded
+
+*For any* sequence of upload failures for a stored offline recording, the Recorder retries at most 5 times before giving up.
+
+**Validates: Requirements 6.11**
+
+### Property 18: Chunk acceptance validates size and acknowledges each received chunk
+
+*For any* ordered chunk sequence, each chunk whose size is between 1 MB and 100 MB is accepted and acknowledged, and any chunk outside that range is rejected.
+
+**Validates: Requirements 7.1**
+
+### Property 19: Interrupted uploads resume without retransmitting acknowledged chunks
+
+*For any* partially uploaded Video resumed within the 24-hour session lifetime, transmission continues from the chunk immediately following the last acknowledged chunk, and no already-acknowledged chunk is re-transmitted or re-acknowledged.
+
+**Validates: Requirements 7.2**
+
+### Property 20: Chunk assembly round-trip reconstructs the original media
+
+*For any* byte payload split into an ordered sequence of chunks and uploaded to completion, assembling the acknowledged chunks in order reproduces the original payload exactly.
+
+**Validates: Requirements 7.3**
+
+### Property 21: Chunk integrity failures are bounded and non-destructive
+
+*For any* chunk that fails its integrity check, it is not persisted and previously acknowledged chunks remain unchanged; retransmission is attempted at most 3 times, after which the session is aborted, partial chunks are discarded, and an upload-failure response identifies the failing chunk.
+
+**Validates: Requirements 7.4, 7.5**
+
+### Property 22: Upload sessions expire after 24 hours of inactivity
+
+*For any* upload session idle for 24 hours after its last acknowledged chunk, the session is expired, its partial chunks are discarded, and subsequent chunks are rejected with an expired-session error.
+
+**Validates: Requirements 7.6**
+
+### Property 23: Upload progress reflects acknowledged chunk count
+
+*For any* sequence of chunk acknowledgments, each emitted progress event reports the count of acknowledged chunks relative to the total expected chunks, and the reported acknowledged count is non-decreasing.
+
+**Validates: Requirements 7.7**
+
+### Property 24: Processing produces the required outputs
+
+*For any* successfully processed Video, the pipeline produces exactly one thumbnail, a preview of 3 to 10 seconds, at least 3 adaptive-bitrate renditions, and marks the Video ready.
+
+**Validates: Requirements 8.2, 8.3, 8.4, 8.7**
+
+### Property 25: Processing status events use only defined status values
+
+*For any* processing lifecycle, each emitted processing-status event carries exactly one of the values queued, processing, ready, or failed, and one event is emitted per stage transition.
+
+**Validates: Requirements 8.5**
+
+### Property 26: Processing failures are bounded and preserve the source
+
+*For any* Video whose processing fails, the pipeline retries at most 3 times; on exhaustion it records a failure status, retains the original source media, and emits a processing-failure event.
+
+**Validates: Requirements 8.6**
+
+### Property 27: Storage round-trip preserves object bytes
+
+*For any* media object written through the Storage_Provider interface, retrieving it returns bytes identical to those written.
+
+**Validates: Requirements 9.1**
+
+### Property 28: Storage provider activation validates configuration
+
+*For any* Storage_Provider activation whose required configuration is missing or fails the connectivity check, activation is rejected and the previously active provider is retained.
+
+**Validates: Requirements 9.4**
+
+### Property 29: Signed upload credentials have bounded, secure expiry
+
+*For any* signed upload target, its validity duration is between 60 and 3600 seconds (defaulting to 900 when unspecified) and, for direct-to-storage credentials, at most 15 minutes; a target presented after its expiry is rejected.
+
+**Validates: Requirements 9.6, 9.7, 29.3**
+
+### Property 30: Playback requires ready state and authorization
+
+*For any* playback request, a streaming manifest referencing the Video's adaptive-bitrate renditions is provided if and only if the Video is in the ready state and the requester holds view permission; otherwise no manifest is provided and an appropriate error is returned.
+
+**Validates: Requirements 10.1, 10.2, 10.3**
+
+### Property 31: Share-credential playback is granted only for valid credentials
+
+*For any* Video with secure sharing enabled and any share credential, playback is granted if and only if the credential is valid, unexpired, and not revoked.
+
+**Validates: Requirements 10.4, 10.5**
+
+### Property 32: Comment creation validates body and timestamp
+
+*For any* comment or reply, creation succeeds and is stored (nested under its parent for replies, associated with the given playback position when a timestamp is supplied) if and only if the body length is between 1 and 5000 characters and any supplied timestamp is between 0 and the Video's duration; otherwise no comment is stored.
+
+**Validates: Requirements 11.1, 11.2, 11.3, 11.8, 11.9**
+
+### Property 33: Comment permission is enforced
+
+*For any* Member lacking comment permission, attempts to post a comment or reply are denied and store no comment.
+
+**Validates: Requirements 11.7**
+
+### Property 34: Mentions notify members with view access
+
+*For any* comment mentioning a Member who has view access to the Video, a notification is created for that Member.
+
+**Validates: Requirements 11.4**
+
+### Property 35: Reactions are idempotent per type, member, and target
+
+*For any* target and Member, adding the same reaction type any number of times results in at most one recorded reaction of that type for that Member on that target.
+
+**Validates: Requirements 11.5**
+
+### Property 36: Live comment delivery to concurrent viewers
+
+*For any* set of Members viewing a Video, when one Member posts a comment the comment is delivered to every other viewing Member.
+
+**Validates: Requirements 11.6**
+
+### Property 37: Notification creation records required fields and respects preferences
+
+*For any* event targeting a Member, a notification is created recording the event type, source resource, and creation timestamp, and only when the Member has enabled that event type in their preferences.
+
+**Validates: Requirements 12.1, 12.4**
+
+### Property 38: Notification delivery online and after reconnect
+
+*For any* new notification, a connected recipient receives it, and an offline recipient's undelivered notifications are retained and delivered upon their next connection.
+
+**Validates: Requirements 12.2, 12.5**
+
+### Property 39: Marking notifications read is ownership-checked
+
+*For any* notification, marking it read succeeds and records a read timestamp only when it belongs to the requesting Member; otherwise the request is rejected and no notification's read status changes.
+
+**Validates: Requirements 12.3, 12.6**
+
+### Property 40: Presence and typing events target the correct audience
+
+*For any* Workspace or Video audience, join, leave, typing, and typing-stopped events are delivered to all other relevant connected Members and never to the originating Member.
+
+**Validates: Requirements 13.1, 13.2, 13.3**
+
+### Property 41: Events for disconnected members are discarded harmlessly
+
+*For any* audience containing both connected and disconnected Members, an event is delivered to every connected Member and discarded for each disconnected Member without disrupting delivery to the others.
+
+**Validates: Requirements 13.7**
+
+### Property 42: Search returns only matching, authorized results
+
+*For any* search query of 1 to 500 characters, every returned result matches the query text and lies within the requesting Member's authorized scope, and no resource outside that scope appears.
+
+**Validates: Requirements 14.1, 14.4**
+
+### Property 43: Transcript matches include playback position
+
+*For any* Video whose transcript text matches the query, the result includes the Video and identifies the matching playback position.
+
+**Validates: Requirements 14.2**
+
+### Property 44: Search query length is validated
+
+*For any* search query that is empty or exceeds 500 characters, the request is rejected with a validation error and no search is performed.
+
+**Validates: Requirements 14.5**
+
+### Property 45: Search results are paginated with a bounded page size
+
+*For any* result set, each response contains at most 100 results, and the complete set of matching results is retrievable by following the provided pagination cursor.
+
+**Validates: Requirements 14.6**
+
+### Property 46: Share credentials are globally unique
+
+*For any* set of created share links, all generated share credentials are distinct.
+
+**Validates: Requirements 15.1**
+
+### Property 47: Share link expiry and revocation deny access
+
+*For any* share link, access through it is denied and the Video is unchanged once the link is at or past its configured expiry or has been revoked.
+
+**Validates: Requirements 15.2, 15.3**
+
+### Property 48: Content permission is required for resource access
+
+*For any* request that reads or modifies a Video, Asset, Comment, or Folder from a requester lacking the required content permission, the request is rejected and the resource is unchanged.
+
+**Validates: Requirements 15.4**
+
+### Property 49: Passcode-protected share access and lockout
+
+*For any* passcode-protected share link, access is granted if and only if the supplied passcode matches the configured passcode; and after 5 consecutive incorrect passcode attempts, all access through the link is blocked for at least 15 minutes.
+
+**Validates: Requirements 15.5, 15.6, 15.7**
+
+### Property 50: Authorization is evaluated in the owning organization's scope
+
+*For any* authenticated read or modify request, the decision is made against the requesting Member's Role permissions in the organization that owns the target resource, before any action is performed, and denied actions cause no change to the target.
+
+**Validates: Requirements 16.1, 16.3**
+
+### Property 51: Role assignment governs subsequent decisions
+
+*For any* Role assigned to (or changed for) an organization Member, subsequent authorization decisions for that Member within that scope reflect the assigned Role's permissions.
+
+**Validates: Requirements 16.2, 26.3**
+
+### Property 52: Role permissions never leak across organizations
+
+*For any* Role assigned in one organization, the granted permissions are never applied to the Member in any other organization.
+
+**Validates: Requirements 16.4**
+
+### Property 53: Role management is permission-gated and membership-checked
+
+*For any* Member lacking role-management permission, attempts to assign or change a Role are denied with no assignment made; and assigning a Role to a user who is not a member of the organization is rejected with no assignment made.
+
+**Validates: Requirements 16.5, 16.6**
+
+### Property 54: Audit entries record required fields for security actions
+
+*For any* security-relevant action (authentication events, authorization denials, sharing changes, administrative actions), an audit entry is appended recording the actor identity, action type, target resource identifier, and a UTC timestamp with at least millisecond precision.
+
+**Validates: Requirements 17.1, 17.4**
+
+### Property 55: Audit entries are immutable
+
+*For any* existing audit entry, every attempt to modify or delete it is rejected, the entry remains unchanged, and an immutability error is returned.
+
+**Validates: Requirements 17.2, 17.6**
+
+### Property 56: Audit queries are organization-scoped and ordered
+
+*For any* set of audit entries spanning multiple organizations, an Administrator's query returns only entries belonging to the requesting organization, ordered by timestamp descending, and a non-Administrator's request is denied and discloses no entries.
+
+**Validates: Requirements 17.3, 17.5**
+
+### Property 57: API-key secrets are disclosed exactly once
+
+*For any* API_Key created with a name of 1 to 255 characters, the secret value is returned only within the creation response, and subsequent retrievals return metadata without the secret.
+
+**Validates: Requirements 18.1, 18.2**
+
+### Property 58: API-key authentication reflects validity and permissions
+
+*For any* API_Key, a request presenting it authenticates with the key's permissions if and only if the key is valid and non-revoked; malformed, unrecognized, expired, or revoked keys are denied with a uniform non-disclosing authentication error and create no session.
+
+**Validates: Requirements 18.3, 18.4, 18.5**
+
+### Property 59: API-key management is permission-gated
+
+*For any* Member lacking API management permission, attempts to create or revoke an API_Key are denied and change no API_Key.
+
+**Validates: Requirements 18.6**
+
+### Property 60: Webhook registration validates endpoint and event type
+
+*For any* webhook registration, it is stored if and only if the event type is supported and the endpoint URL is a well-formed HTTPS URL of at most 2048 characters; otherwise it is rejected with no subscription stored.
+
+**Validates: Requirements 19.1, 19.2**
+
+### Property 61: Webhook deliveries are signed and verifiable
+
+*For any* webhook delivery payload, the signature verifies against the subscription's signing secret for the unmodified payload and fails verification for any tampered payload or incorrect secret.
+
+**Validates: Requirements 19.4**
+
+### Property 62: Webhook delivery retries are bounded with backoff
+
+*For any* webhook delivery that does not receive a success response within the timeout, delivery is retried at most 5 additional times with non-decreasing backoff intervals, after which retrying stops and the delivery is recorded as failed.
+
+**Validates: Requirements 19.5, 19.6**
+
+### Property 63: Deleting a webhook stops deliveries
+
+*For any* deleted webhook subscription, no further events are delivered to its endpoint.
+
+**Validates: Requirements 19.7**
+
+### Property 64: Public API parity and SDK coverage
+
+*For any* Web_Client capability, a corresponding public REST, WebSocket, or Webhook operation exists, and *for any* public REST or WebSocket operation, the SDK exposes a client method for it.
+
+**Validates: Requirements 20.1, 20.2**
+
+### Property 65: Public API authorization matches web equivalents
+
+*For any* operation and requester context, the authorization decision made for a public API request equals the decision made for the equivalent Web_Client request, and a request lacking the required authorization is denied with no state change.
+
+**Validates: Requirements 20.4, 20.5**
+
+### Property 66: Plugin activation failures preserve prior state
+
+*For any* plugin whose activation fails, the plugin remains deactivated and the prior capability-registration state is unchanged.
+
+**Validates: Requirements 21.3**
+
+### Property 67: Plugin load failures are isolated
+
+*For any* set of discovered plugins containing failing members, every non-failing plugin still loads and operates, and each failed plugin is recorded with its failure reason and excluded from the active set.
+
+**Validates: Requirements 21.5**
+
+### Property 68: AI requests route to the enabled provider or fail cleanly
+
+*For any* AI capability, a request routes to the AI_Provider Plugin enabled for that capability when one exists; when none is enabled the AI request is rejected while non-AI features continue to operate.
+
+**Validates: Requirements 22.2, 22.3**
+
+### Property 69: Developer assets validate length and require Developer Mode
+
+*For any* code snippet or markdown attachment, it is stored as an Asset if and only if Developer Mode is enabled and its length is between 1 and 100,000 characters; when Developer Mode is disabled, every developer attachment is rejected with a "Developer Mode required" error and the Video is unchanged.
+
+**Validates: Requirements 23.1, 23.3, 23.5, 23.6**
+
+### Property 70: Pull-request links require an enabled plugin and permission
+
+*For any* attempt to link a Video to a pull request, the association is stored only when the source-control Plugin is enabled, the referenced pull request/repository is accessible, and the Member holds link permission; otherwise no association is created.
+
+**Validates: Requirements 24.1, 24.4, 24.6**
+
+### Property 71: Review comments validate body and timestamp
+
+*For any* review comment, it is stored at the referenced playback position if and only if its body length is between 1 and 5000 characters and its referenced timestamp is between 0 and the Video's duration; otherwise no comment is stored.
+
+**Validates: Requirements 24.3, 24.5**
+
+### Property 72: Transcript indexing makes content searchable within scope
+
+*For any* Video whose transcript becomes available, the transcript text is indexed and subsequently returned by searches issued by Members within their authorized scope.
+
+**Validates: Requirements 25.1**
+
+### Property 73: Summaries are stored within bounds and associated
+
+*For any* summary produced by an enabled AI_Provider, it is stored with a length between 1 and 10,000 characters and associated with its Video.
+
+**Validates: Requirements 25.2**
+
+### Property 74: Documentation links validate input and enforce the per-video cap
+
+*For any* documentation reference, it is stored and retrievable only when its length is between 1 and 2048 characters, it is well-formed, the Member holds edit permission, and the Video has fewer than 100 existing links; otherwise no link association is stored.
+
+**Validates: Requirements 25.3, 25.4, 25.5, 25.6**
+
+### Property 75: Organization settings updates are validated atomically
+
+*For any* organization settings update, valid updates are persisted and invalid updates are rejected with the existing settings retained unchanged.
+
+**Validates: Requirements 26.1, 26.5**
+
+### Property 76: Removing a member revokes access
+
+*For any* Member removed from an organization, subsequent requests from that Member to the organization's resources are denied with an authorization error.
+
+**Validates: Requirements 26.2**
+
+### Property 77: Administrative actions require Administrator role
+
+*For any* administrative action attempted by a non-Administrator, the action is denied and the target resource is unchanged.
+
+**Validates: Requirements 26.4**
+
+### Property 78: An organization always retains at least one Administrator
+
+*For any* organization, an attempt to remove its only remaining Administrator is rejected and that Member's access and Role are retained.
+
+**Validates: Requirements 26.6**
+
+### Property 79: Billing operations route to the single enabled plugin
+
+*For any* billing operation, when exactly one billing Plugin is enabled the operation is routed to it and its result returned to the caller.
+
+**Validates: Requirements 27.2**
+
+### Property 80: Billing is optional and isolated
+
+*For any* platform configuration with no billing Plugin enabled, all non-billing features operate normally and every billing operation is rejected with a "billing not configured" error while non-billing state is preserved.
+
+**Validates: Requirements 27.3**
+
+### Property 81: At most one billing plugin may be enabled
+
+*For any* plugin configuration, the configuration is accepted only when at most one billing Plugin is enabled; a configuration enabling more than one is rejected and no billing operation is routed.
+
+**Validates: Requirements 27.4**
+
+### Property 82: View events are recorded with required fields on playback
+
+*For any* playback start, a view event scoped to the Member's organization is recorded capturing the Video identifier, Member identifier, and event timestamp.
+
+**Validates: Requirements 28.1**
+
+### Property 83: Analytics aggregates match a reference computation and exclude other organizations
+
+*For any* set of view events across organizations and any valid time range, the aggregated total view count, distinct viewer count, and total watch duration returned to an Administrator equal a reference computation over only that Administrator's organization events within the range.
+
+**Validates: Requirements 28.2, 28.3**
+
+### Property 84: Analytics access is Administrator-only with validated ranges
+
+*For any* analytics request, it is served only to an Administrator and only when the time range is well-formed with end not preceding start; non-Administrator requests and invalid ranges are rejected with no analytics data returned.
+
+**Validates: Requirements 28.4, 28.5**
+
+### Property 85: Rate limiting rejects excess requests with retry guidance
+
+*For any* stream of requests from a single client within a rolling window, requests up to the configured limit (default 100 per 60 seconds) are accepted and each request beyond the limit is rejected with a rate-limit error indicating when the client may retry.
+
+**Validates: Requirements 29.1**
+
+### Property 86: Secrets are never persisted in plaintext
+
+*For any* secret stored by the platform, the persisted representation is encrypted and never equal to the secret's plaintext value.
+
+**Validates: Requirements 29.2**
+
+### Property 87: Non-public endpoints deny unauthenticated access
+
+*For any* request that is unauthenticated or presents invalid authentication against a non-public endpoint, the request is denied with an authentication error and performs no state change.
+
+**Validates: Requirements 29.4**
+
+### Property 88: Startup validation names every invalid configuration value
+
+*For any* startup configuration with one or more required values missing or invalid, startup is aborted, no requests are served, and every offending configuration value is named in the emitted error.
+
+**Validates: Requirements 30.3**
+
+## Error Handling
+
+StreetStudio uses a single, shared error taxonomy (`packages/shared`) so REST, WebSocket, Webhook, and SDK surfaces behave identically. Every error carries a stable machine-readable `code`, an HTTP status (for REST), and a safe, non-disclosing `message`.
+
+### Error Categories
+
+| Category | Representative codes | HTTP | Notes |
+|---|---|---|---|
+| Validation | `VALIDATION_FAILED`, `NAME_TOO_LONG`, `TIMESTAMP_OUT_OF_RANGE`, `QUERY_TOO_LONG` | 400 | No state change; field-level detail where safe. |
+| Authentication | `AUTHENTICATION_FAILED`, `TOKEN_EXPIRED`, `ACCOUNT_LOCKED`, `API_KEY_INVALID` | 401 | Uniform, non-disclosing (R3.3, R3.8, R18.5). |
+| Authorization | `ACCESS_DENIED`, `ROLE_FORBIDDEN` | 403 | Deny-by-default; recorded in Audit_Log (R17.4). |
+| Not found / gone | `NOT_FOUND`, `INVITATION_INVALID`, `SHARE_EXPIRED`, `SHARE_REVOKED`, `SESSION_EXPIRED` | 404/410 | Existence not disclosed where sensitive. |
+| Conflict / state | `DUPLICATE_EMAIL`, `NOT_READY`, `LAST_ADMINISTRATOR`, `BILLING_MULTIPLE_ENABLED` | 409 | Preserves existing state. |
+| Rate limit | `RATE_LIMITED` | 429 | Includes retry-after (R29.1). |
+| Capability unavailable | `AI_UNAVAILABLE`, `BILLING_NOT_CONFIGURED`, `STORAGE_ERROR` | 503 | Non-AI/non-billing features continue (R22.3, R22.5, R27.3, R27.5). |
+| Upload | `CHUNK_INTEGRITY_FAILED`, `UPLOAD_ABORTED`, `TARGET_EXPIRED` | 422/410 | Atomic per chunk; prior chunks preserved (R7.4, R7.5). |
+| Boundary/build | `DISALLOWED_STREETJS_IMPORT`, `DISALLOWED_INTERNAL_IMPORT`, `DISALLOWED_AI_VENDOR` | build fail | Named references (R1.6, R2.6, R22.6). |
+
+### Cross-Cutting Principles
+
+- **Atomicity**: any request that fails authorization, validation, or a downstream dependency makes no partial change to the target resource. Multi-step writes run inside a database transaction and roll back on failure (R7.4, R9.5, R26.5, R27.5).
+- **Non-disclosure**: authentication and share/passcode errors are uniform and reveal neither which factor failed nor whether a resource exists (R3.3, R3.8, R15.6, R18.5).
+- **Isolation of optional capabilities**: failures in AI, billing, storage, plugins, or webhooks never degrade unrelated core features; they surface as scoped `503`/capability errors while the rest of the API continues to serve (R21.5, R22.3, R22.5, R27.3).
+- **Resilience**: outbound calls (storage, webhooks, plugins, AI) use StreetJS resilience primitives (timeouts, bounded retries, circuit breakers). Retry bounds are explicit — chunks 3, processing 3, offline upload 5, webhook delivery 5 (R7.4, R8.6, R6.11, R19.5).
+- **Realtime degradation**: events destined for disconnected members are discarded without error and without affecting other recipients; dropped connections trigger presence-departure within 5s (R13.6, R13.7).
+- **HA reconnection**: when a PostgreSQL primary or Redis Cluster node becomes unreachable, the API reconnects through StreetJS HA interfaces and resumes without operator restart (R30.6).
+
+## Testing Strategy
+
+StreetStudio uses a dual approach — property-based tests for universal correctness and example/integration tests for concrete scenarios and infrastructure — matching the test categories required by Requirement 32 (unit, integration, contract, end-to-end, performance benchmark, load, media pipeline).
+
+### Property-Based Testing
+
+- **Library**: `fast-check` for the TypeScript/Node codebase. Property tests are not implemented from scratch.
+- **Iterations**: each property test runs a minimum of 100 generated cases.
+- **Traceability**: each property test is tagged with a comment in the form
+  `Feature: streetstudio, Property {number}: {property_text}` referencing the corresponding property above.
+- **Generators**: shared generators (`packages/shared` test utilities) produce valid and boundary inputs — emails, passwords, names at length bounds (1/200/255/2048/5000/10000/100000), timestamps around 0 and Video duration, chunk sizes around 1 MB and 100 MB, byte payloads for assembly round-trips, multi-organization resource graphs for scope/isolation properties, plugin sets with injected failures, and view-event sets for analytics aggregation.
+- **Coverage**: the 88 properties above cover the acceptance criteria classified as PROPERTY in the prework. Determinism-sensitive properties (realtime delivery, timing) use in-memory fakes/mocks for transport and clocks so behavior — not wall-clock timing — is asserted.
+
+### Example-Based Unit Tests
+
+For criteria classified EXAMPLE or EDGE_CASE: OAuth/SSO sign-in with mocked providers (R3.5, R3.6, R3.10), recorder capture and pause/resume state (R6.1–R6.9), unsupported system audio and denied-permission handling (R6.5, R6.6), offline local storage (R6.10), typing-stop timers (R13.5), dropped-connection departure (R13.6), empty search results (R14.3), storage write timeout/abort (R9.5), plugin sandbox enforcement (R21.6, R21.7), and AI/billing provider timeout handling (R22.5, R27.5).
+
+### Contract Tests
+
+- **API/SDK parity**: a contract catalog enumerates every public capability; a test asserts each Web_Client capability maps to a public operation and each public operation has an SDK method (Properties 64, 65).
+- **Storage provider contract**: a shared conformance suite runs the round-trip and signed-target properties (Properties 27, 29) against every provider plugin, executed against real backends where reachable in CI (R32.4) and against MinIO/local otherwise.
+- **Webhook signature contract**: verifies signing/verification interop (Property 61).
+
+### Integration Tests
+
+For criteria classified INTEGRATION/SMOKE: plugin discovery/load timing via the StreetJS loader (R21.1), startup/health/metrics wiring (R30.2, R30.4), PostgreSQL HA and Redis Cluster operation and node-loss reconnection (R30.5, R30.6), and boundary/structure smoke checks (monorepo layout R2.1–R2.3, no StreetJS source in tree R1.2, docs presence R31, container/deploy artifacts R30.1). The import-boundary analyzer additionally has property-level tests (Property 1) plus a smoke run over the real repository.
+
+### End-to-End Tests
+
+Full flows exercised through the public API and clients: register → create org → invite/accept → create project/folder → record → chunked upload → pipeline → ready → playback → comment → mention notification → share link access. E2E asserts parity by driving flows exclusively through the public API/SDK.
+
+### Performance, Load, and Media Pipeline Tests
+
+- **Performance benchmarks**: assert latency budgets (registration ≤5s, login rejection ≤2s, comment post ≤2s, manifest ≤3s, search ≤3s, analytics ≤5s).
+- **Load tests**: concurrent uploads, realtime fan-out across nodes via the Redis backplane, and webhook delivery under retry pressure.
+- **Media pipeline tests**: transcode to ≥3 renditions, single thumbnail, 3–10s preview, and failure/retry behavior (Properties 24, 26) using representative sample media.
+
+### Continuous Integration
+
+CI executes all seven categories and reports a single pass/fail within 30 minutes, indicating the failing category on failure, distinguishing infrastructure failures from test failures, and failing the build when line coverage drops below 80% (R32.2, R32.3, R32.5, R32.6). CI also runs the import-boundary and dependency-graph checks, failing on any disallowed StreetJS/internal/AI-vendor reference or dependency cycle (R1.6, R2.6, R22.6, Properties 1, 2).
