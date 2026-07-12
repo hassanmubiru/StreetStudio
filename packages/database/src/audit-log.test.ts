@@ -74,16 +74,7 @@ describe("audit immutability at the storage layer", () => {
     const orgId = newUuid();
     await log.append({ actor: newUuid(), action: "authentication", targetId: newUuid(), orgId });
 
-    // The guarded client used by the service must refuse mutations. Reach the
-    // same guard the repository uses via a fresh service over the same client.
-    const guardedProbe = createAuditLog(client);
-    // Appends still work through the service; there is simply no mutation path.
-    await expect(
-      log.query(orgId),
-    ).resolves.toHaveLength(1);
-
-    // Directly issuing a mutation through the guarded client is rejected.
-    const { auditImmutableClient } = await import("./audit-log.js");
+    // The storage guard refuses any mutation aimed at the audit table.
     const guarded = auditImmutableClient(client);
     await expect(
       guarded.query("UPDATE audit_entry SET action = $1 WHERE id = $2", ["x", newUuid()]),
@@ -92,8 +83,8 @@ describe("audit immutability at the storage layer", () => {
       guarded.query("DELETE FROM audit_entry WHERE organization_id = $1", [orgId]),
     ).rejects.toBeInstanceOf(AppError);
 
-    // Existing entry is preserved unchanged.
-    expect(await guardedProbe.query(orgId)).toHaveLength(1);
+    // The existing entry is preserved unchanged.
+    expect(await log.query(orgId)).toHaveLength(1);
   });
 });
 
