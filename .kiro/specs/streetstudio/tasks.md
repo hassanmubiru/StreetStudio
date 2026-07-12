@@ -53,7 +53,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 30.3**
 
 - [ ] 4. Implement the database layer and audit log
-  - [ ] 4.1 Define schema, migrations, and repositories
+  - [-] 4.1 Define schema, migrations, and repositories
     - Implement PostgreSQL schema/migrations and repositories (via StreetJS PostgreSQL access) for all core entities; UUID identifiers; `organization_id` on tenant-scoped tables with indexes for isolation
     - Enforce acyclic layering: `database` depends on `shared`/`config` only
     - _Requirements: 2.5_
