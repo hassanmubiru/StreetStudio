@@ -21,7 +21,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Reject imports resolving to StreetJS internals, filesystem paths inside the StreetJS repo, another package's internal module, or a specific AI/billing vendor implementation in core; emit a named error (`DISALLOWED_STREETJS_IMPORT`, `DISALLOWED_INTERNAL_IMPORT`, `DISALLOWED_AI_VENDOR`) and fail the build
     - _Requirements: 1.3, 1.6, 2.4, 2.6, 22.6_
 
-  - [ ] 1.3 Write property test for the import-boundary analyzer
+  - [-] 1.3 Write property test for the import-boundary analyzer
     - **Property 1: Import boundary enforcement**
     - **Validates: Requirements 1.1, 1.3, 1.6, 2.4, 2.6, 22.6**
 
@@ -29,7 +29,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Derive the dependency graph from package manifests and detect cycles; wire into CI to fail on any cycle
     - _Requirements: 2.5_
 
-  - [ ] 1.5 Write property test for dependency-graph acyclicity
+  - [-] 1.5 Write property test for dependency-graph acyclicity
     - **Property 2: Package dependency graph is acyclic**
     - **Validates: Requirements 2.5**
 
@@ -44,7 +44,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 2.4_
 
 - [ ] 3. Implement configuration loading and startup validation
-  - [ ] 3.1 Implement config schema, loading, and startup validation
+  - [-] 3.1 Implement config schema, loading, and startup validation
     - Load and validate configuration via the StreetJS config interface; abort startup and emit an error naming every missing/invalid required value
     - _Requirements: 30.3_
 
