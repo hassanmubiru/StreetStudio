@@ -434,11 +434,11 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN the API_Service receives requests exceeding the configured rate limit for a client, THE API_Service SHALL reject additional requests from that client and return a rate-limit error.
-2. THE API_Service SHALL store secrets using the StreetJS secret management interface in encrypted form.
-3. THE API_Service SHALL transmit signed, time-limited credentials for direct uploads to Storage_Providers.
-4. THE API_Service SHALL require authentication for every non-public endpoint.
-5. WHERE a network-exposed endpoint is public, THE StreetStudio SHALL document the absence of authentication for that endpoint.
+1. WHEN the API_Service receives more requests from a client than the configured per-client rate limit (default 100 requests per 60-second rolling window) within that window, THE API_Service SHALL reject each additional request from that client and return a rate-limit error that indicates the duration after which the client may retry.
+2. THE API_Service SHALL store every secret through the StreetJS secret management interface in encrypted form and SHALL never persist a secret in plaintext.
+3. WHEN the API_Service issues credentials for a direct upload to a Storage_Provider, THE API_Service SHALL transmit signed credentials that expire within 15 minutes of issuance.
+4. IF a request that is unauthenticated or presents invalid authentication targets a non-public endpoint, THEN THE API_Service SHALL deny the request, perform no state change, and return an authentication error.
+5. WHERE a network-exposed endpoint is public, THE StreetStudio SHALL record, in StreetStudio documentation, that the endpoint requires no authentication.
 
 ### Requirement 30: Self-Hosting and Deployment
 
