@@ -1,0 +1,28 @@
+{
+  "name": "@streetstudio/media",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Media domain: videos, assets, storage abstraction, comments, sharing, playback, and search.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@streetstudio/database": "*",
+    "@streetstudio/auth": "*",
+    "@streetstudio/plugins": "*"
+  },
+  "streetstudio": {
+    "domain": "Media domain: videos, assets, storage abstraction, comments, sharing, playback, and search."
+  }
+}
