@@ -94,7 +94,7 @@ export class HmacAccessTokenIssuer implements AccessTokenIssuer {
 
   issue(claims: AccessTokenClaims): string {
     const exp = Math.floor(claims.expiresAt.getTime() / 1000);
-    const iat = Math.floor(Date.now() / 1000);
+    const iat = Math.floor(this.clock.now().getTime() / 1000);
     const payload: JwtPayload = {
       sub: claims.memberId,
       sid: claims.sessionId,
