@@ -58,7 +58,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Enforce acyclic layering: `database` depends on `shared`/`config` only
     - _Requirements: 2.5_
 
-  - [ ] 4.2 Implement the append-only Audit Log
+  - [-] 4.2 Implement the append-only Audit Log
     - Implement `append` (actor, action, target, orgId, UTC timestamp with ≥ms precision) within 5s, and org-scoped descending `query`; expose no update/delete path and reject mutation at the storage layer; record auth events, authorization denials, sharing changes, and administrative actions
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6_
 
@@ -78,7 +78,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 6. Implement authentication and sessions
-  - [ ] 6.1 Implement registration, login, logout, and token verification
+  - [-] 6.1 Implement registration, login, logout, and token verification
     - `register` (valid non-duplicate email, ≥8-char password) with Argon2id hashing and no plaintext storage; `login` issuing a JWT with `exp ≤ 15 min` plus a session record; `logout` invalidating the session; `verifyAccessToken` rejecting expired/invalidated tokens; uniform non-disclosing auth errors
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.7, 3.8_
 
