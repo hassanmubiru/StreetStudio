@@ -357,10 +357,12 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHERE Developer Mode is enabled, THE Recorder SHALL allow attaching code snippets to a Video.
-2. WHERE Developer Mode is enabled, THE Recorder SHALL support terminal recordings as Assets.
-3. WHERE Developer Mode is enabled, THE API_Service SHALL allow attaching markdown attachments to a Video.
-4. WHERE Developer Mode is enabled, THE API_Service SHALL support API recordings as Assets associated with a Video.
+1. WHERE Developer Mode is enabled, WHEN a Member attaches a code snippet of 1 to 100,000 characters to a Video, THE Recorder SHALL associate the code snippet with that Video as an Asset.
+2. WHERE Developer Mode is enabled, WHEN a Member records a terminal session, THE Recorder SHALL store the terminal recording as an Asset associated with a Video.
+3. WHERE Developer Mode is enabled, WHEN a Member attaches a markdown attachment of 1 to 100,000 characters to a Video, THE API_Service SHALL associate the markdown attachment with that Video as an Asset.
+4. WHERE Developer Mode is enabled, WHEN a Member creates an API recording, THE API_Service SHALL store the API recording as an Asset associated with a Video.
+5. IF a Member attempts to attach a code snippet or markdown attachment that contains 0 characters or exceeds 100,000 characters, THEN THE API_Service SHALL reject the attachment, make no change to the Video, and return an error indicating the character-length limit was violated.
+6. WHERE Developer Mode is not enabled, IF a Member attempts to attach a code snippet, terminal recording, markdown attachment, or API recording, THEN THE API_Service SHALL reject the request, make no change to the Video, and return an error indicating Developer Mode is required.
 
 ### Requirement 24: Engineering Reviews and Source Control Integration
 
