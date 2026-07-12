@@ -442,7 +442,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 21.6, 21.7_
 
 - [ ] 26. Implement storage provider plugins
-  - [ ] 26.1 Implement Local, S3, R2, Azure Blob, GCS, and MinIO storage provider plugins
+  - [-] 26.1 Implement Local, S3, R2, Azure Blob, GCS, and MinIO storage provider plugins
     - Implement each provider against the StorageProvider interface as a plugin; no provider imported into core
     - _Requirements: 9.2_
 
