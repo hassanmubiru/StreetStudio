@@ -249,11 +249,13 @@ This document specifies the requirements for the StreetStudio platform using EAR
 
 #### Acceptance Criteria
 
-1. WHEN a Member with share permission creates a share link for a Video, THE API_Service SHALL generate a secure share credential.
-2. WHERE a share link is configured to expire, THE API_Service SHALL reject access through that link after the expiration time.
-3. WHEN a Member with share permission revokes a share link, THE API_Service SHALL reject subsequent access through that link.
-4. THE API_Service SHALL enforce content permissions on every request that reads or modifies a Video, Asset, Comment, or Folder.
-5. WHERE a share link requires a passcode, THE API_Service SHALL grant access only when the correct passcode is supplied.
+1. WHEN a Member with share permission creates a share link for a Video, THE API_Service SHALL generate a share credential that is unique across all active share links and return it to the requesting Member.
+2. WHERE a share link is configured to expire, WHEN a request attempts to access the Video through that link at or after the configured expiration time, THE API_Service SHALL deny access, make no change to the Video, and return an error indicating the share link has expired.
+3. WHEN a Member with share permission revokes a share link, THE API_Service SHALL deny every subsequent access attempt through that link and return an error indicating the share link is no longer valid.
+4. IF a request that reads or modifies a Video, Asset, Comment, or Folder originates from a requester that lacks the required content permission for that resource, THEN THE API_Service SHALL reject the request, make no change to the resource, and return an error indicating access is denied.
+5. WHERE a share link requires a passcode, WHEN the passcode supplied matches the configured passcode, THE API_Service SHALL grant access to the Video through that link.
+6. IF the passcode supplied for a passcode-protected share link does not match the configured passcode, THEN THE API_Service SHALL deny access, make no change to the Video, and return an error indicating the passcode is invalid.
+7. IF 5 consecutive incorrect passcode attempts are made against a single share link, THEN THE API_Service SHALL block all further access attempts through that link for at least 15 minutes and return an error indicating the link is temporarily locked.
 
 ### Requirement 16: Role-Based Access Control
 
