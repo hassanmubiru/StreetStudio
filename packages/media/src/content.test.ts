@@ -192,7 +192,7 @@ describe("ContentService", () => {
       status: "ready",
       sourceObjectKey: "key",
       developerMode: false,
-      createdAt: "2024-01-01T00:00:00.000Z" as never,
+      createdAt: "2024-01-01T00:00:00.000Z",
     };
     store.videos.set(video.id, video);
 
@@ -227,7 +227,7 @@ describe("ContentService", () => {
       status: "ready",
       sourceObjectKey: null,
       developerMode: false,
-      createdAt: "2024-01-01T00:00:00.000Z" as never,
+      createdAt: "2024-01-01T00:00:00.000Z",
     };
     store.videos.set(video.id, video);
 
