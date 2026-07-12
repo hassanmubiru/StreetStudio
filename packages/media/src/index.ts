@@ -17,3 +17,19 @@ export interface AccessContext {
 
 /** Storage providers are supplied by plugins of this type. */
 export const STORAGE_PLUGIN_TYPE: PluginType = "storage";
+
+// --- Content Hierarchy Service (task 11.1) ---------------------------------
+export {
+  ContentService,
+  repositoryContentStore,
+  CREATE_PROJECT_PERMISSION,
+  CREATE_FOLDER_PERMISSION,
+  MAX_FOLDER_NESTING_DEPTH,
+  NAME_MIN_LENGTH,
+  NAME_MAX_LENGTH,
+} from "./content.js";
+export type {
+  ContentServiceDeps,
+  ContentStore,
+  FolderRef,
+} from "./content.js";
