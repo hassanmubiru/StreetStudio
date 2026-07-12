@@ -75,6 +75,12 @@ export const ADMINISTRATOR_ROLE_NAME = "Administrator";
 /** Name of the default Role granted to an invited Member on acceptance. */
 export const MEMBER_ROLE_NAME = "Member";
 
+/** Audit `action` recorded when an Organization's settings are updated (R26.7). */
+export const ADMIN_ACTION_SETTINGS_UPDATED = "org.settings.updated";
+
+/** Audit `action` recorded when a Member is removed from an Organization (R26.7). */
+export const ADMIN_ACTION_MEMBER_REMOVED = "org.member.removed";
+
 /**
  * Permissions seeded on the Administrator Role. Includes the role-management
  * permission the RBAC evaluator gates role assignment on, so the creator can
