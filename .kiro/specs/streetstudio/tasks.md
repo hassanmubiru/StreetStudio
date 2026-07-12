@@ -62,7 +62,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Implement `append` (actor, action, target, orgId, UTC timestamp with ≥ms precision) within 5s, and org-scoped descending `query`; expose no update/delete path and reject mutation at the storage layer; record auth events, authorization denials, sharing changes, and administrative actions
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6_
 
-  - [ ] 4.3 Write property test for audit field recording
+  - [-] 4.3 Write property test for audit field recording
     - **Property 54: Audit entries record required fields for security actions**
     - **Validates: Requirements 17.1, 17.4**
 
