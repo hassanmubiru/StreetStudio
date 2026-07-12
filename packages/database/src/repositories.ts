@@ -266,9 +266,7 @@ export class ReactionRepository extends BaseRepository<ReactionRecord> {
 }
 
 /** Per-member notification preferences (member_id, event_type). */
-export class NotificationPreferenceRepository extends BaseRepository<
-  NotificationPreferenceRecord & Record<string, unknown>
-> {
+export class NotificationPreferenceRepository extends BaseRepository<NotificationPreferenceRecord> {
   async listByMember(
     memberId: Uuid,
   ): Promise<NotificationPreferenceRecord[]> {
