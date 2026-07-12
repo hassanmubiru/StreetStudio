@@ -16,7 +16,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Configure TypeScript project references, build, and the `fast-check` test runner
     - _Requirements: 1.1, 1.2, 1.5, 2.1, 2.2, 2.3, 2.4_
 
-  - [~] 1.2 Implement the import-boundary analyzer
+  - [-] 1.2 Implement the import-boundary analyzer
     - Build a static-analysis step in `packages/config` build tooling that resolves import specifiers against an allowlist
     - Reject imports resolving to StreetJS internals, filesystem paths inside the StreetJS repo, another package's internal module, or a specific AI/billing vendor implementation in core; emit a named error (`DISALLOWED_STREETJS_IMPORT`, `DISALLOWED_INTERNAL_IMPORT`, `DISALLOWED_AI_VENDOR`) and fail the build
     - _Requirements: 1.3, 1.6, 2.4, 2.6, 22.6_
@@ -25,7 +25,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 1: Import boundary enforcement**
     - **Validates: Requirements 1.1, 1.3, 1.6, 2.4, 2.6, 22.6**
 
-  - [~] 1.4 Implement the package dependency-graph acyclicity checker
+  - [-] 1.4 Implement the package dependency-graph acyclicity checker
     - Derive the dependency graph from package manifests and detect cycles; wire into CI to fail on any cycle
     - _Requirements: 2.5_
 
