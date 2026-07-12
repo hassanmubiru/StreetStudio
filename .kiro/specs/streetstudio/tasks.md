@@ -319,3 +319,107 @@ StreetJS is consumed only through its public package entry points. Every cross-p
 
 - [ ] 18. Checkpoint - media path
   - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 19. Implement sharing and content permissions
+  - [ ] 19.1 Implement ShareService (create, revoke, resolve) and content-permission enforcement
+    - Generate globally unique share credentials; deny access at/after expiry or once revoked with no change to the Video; grant passcode-protected access only on matching passcode and lock the link ≥15 min after 5 consecutive incorrect attempts; enforce content permission on every Video/Asset/Comment/Folder read or modify with no change on denial
+    - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7_
+
+  - [ ]* 19.2 Write property test for globally unique share credentials
+    - **Property 46: Share credentials are globally unique**
+    - **Validates: Requirements 15.1**
+
+  - [ ]* 19.3 Write property test for share expiry and revocation
+    - **Property 47: Share link expiry and revocation deny access**
+    - **Validates: Requirements 15.2, 15.3**
+
+  - [ ]* 19.4 Write property test for content-permission enforcement
+    - **Property 48: Content permission is required for resource access**
+    - **Validates: Requirements 15.4**
+
+  - [ ]* 19.5 Write property test for passcode access and lockout
+    - **Property 49: Passcode-protected share access and lockout**
+    - **Validates: Requirements 15.5, 15.6, 15.7**
+
+- [ ] 20. Implement comments, mentions, threads, and reactions
+  - [ ] 20.1 Implement CommentService (post, reply, react, mention)
+    - Store comments/replies only when body is 1–5000 chars and any timestamp is 0–duration (nested under parent for replies, associated with playback position when supplied); enforce comment permission; record at most one reaction of each type per member/target; create a mention notification within 2s for a mentioned member with view access
+    - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.7, 11.8, 11.9_
+
+  - [ ]* 20.2 Write property test for comment body/timestamp validation
+    - **Property 32: Comment creation validates body and timestamp**
+    - **Validates: Requirements 11.1, 11.2, 11.3, 11.8, 11.9**
+
+  - [ ]* 20.3 Write property test for comment permission enforcement
+    - **Property 33: Comment permission is enforced**
+    - **Validates: Requirements 11.7**
+
+  - [ ]* 20.4 Write property test for mention notifications
+    - **Property 34: Mentions notify members with view access**
+    - **Validates: Requirements 11.4**
+
+  - [ ]* 20.5 Write property test for reaction idempotency
+    - **Property 35: Reactions are idempotent per type, member, and target**
+    - **Validates: Requirements 11.5**
+
+- [ ] 21. Implement notifications
+  - [ ] 21.1 Implement NotificationService (create, markRead, deliverPending)
+    - Create a notification within 5s recording event type, source resource, and timestamp, respecting member preferences; mark-read only for owned notifications recording a read timestamp, rejecting others with no change; retain undelivered notifications and deliver within 5s of reconnect
+    - _Requirements: 12.1, 12.3, 12.4, 12.5, 12.6_
+
+  - [ ]* 21.2 Write property test for notification creation and preferences
+    - **Property 37: Notification creation records required fields and respects preferences**
+    - **Validates: Requirements 12.1, 12.4**
+
+  - [ ]* 21.3 Write property test for notification delivery online and after reconnect
+    - **Property 38: Notification delivery online and after reconnect**
+    - **Validates: Requirements 12.2, 12.5**
+
+  - [ ]* 21.4 Write property test for ownership-checked mark-read
+    - **Property 39: Marking notifications read is ownership-checked**
+    - **Validates: Requirements 12.3, 12.6**
+
+- [ ] 22. Implement the Realtime_Service gateway
+  - [ ] 22.1 Implement the WebSocket gateway with Redis backplane
+    - Implement `join`/`leave`/`emit` over StreetJS WebSockets with a Redis pub/sub backplane for cross-node fan-out; deliver presence-join/leave and typing/typing-stopped to other relevant connected members within 2s (never the originator); start typing on activity and stop after 5s inactivity; emit presence-departure within 5s on dropped connections; deliver live comments to concurrent viewers within 2s; discard events for members with no active connection without disrupting others; carry upload-progress, processing-status, live-comment, and notification events
+    - _Requirements: 11.6, 12.2, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_
+
+  - [ ]* 22.2 Write property test for live comment delivery
+    - **Property 36: Live comment delivery to concurrent viewers**
+    - **Validates: Requirements 11.6**
+
+  - [ ]* 22.3 Write property test for presence/typing audience targeting
+    - **Property 40: Presence and typing events target the correct audience**
+    - **Validates: Requirements 13.1, 13.2, 13.3**
+
+  - [ ]* 22.4 Write property test for discarding events to disconnected members
+    - **Property 41: Events for disconnected members are discarded harmlessly**
+    - **Validates: Requirements 13.7**
+
+  - [ ]* 22.5 Write unit tests for typing-stop timer and dropped-connection departure
+    - Test the 5s typing-stop emission and dropped-connection presence-departure using in-memory transport/clock fakes
+    - _Requirements: 13.5, 13.6_
+
+- [ ] 23. Implement search and transcript search
+  - [ ] 23.1 Implement SearchService with authorized scoping and pagination
+    - Return, within 3s, Videos/Assets whose indexed text matches a 1–500 char query within the member's authorized scope; include transcript matches with matching playback position; validate query length rejecting empty/>500; page results at ≤100 with a retrieval cursor; return empty set on no matches
+    - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
+
+  - [ ]* 23.2 Write property test for matching, authorized-only results
+    - **Property 42: Search returns only matching, authorized results**
+    - **Validates: Requirements 14.1, 14.4**
+
+  - [ ]* 23.3 Write property test for transcript playback positions
+    - **Property 43: Transcript matches include playback position**
+    - **Validates: Requirements 14.2**
+
+  - [ ]* 23.4 Write property test for query length validation
+    - **Property 44: Search query length is validated**
+    - **Validates: Requirements 14.5**
+
+  - [ ]* 23.5 Write property test for bounded pagination
+    - **Property 45: Search results are paginated with a bounded page size**
+    - **Validates: Requirements 14.6**
+
+- [ ] 24. Checkpoint - collaboration
+  - Ensure all tests pass, ask the user if questions arise.
