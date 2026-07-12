@@ -1,0 +1,21 @@
+{
+  "name": "@streetstudio/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Desktop_Client application wrapping the web client with native capture.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@streetstudio/shared": "*",
+    "@streetstudio/ui": "*",
+    "@streetstudio/sdk": "*",
+    "@streetstudio/recording": "*"
+  },
+  "streetstudio": {
+    "domain": "Desktop_Client application wrapping the web client with native capture."
+  }
+}
