@@ -14,3 +14,8 @@ export const DOMAIN =
 export interface PlatformConfig {
   readonly instanceId: Uuid;
 }
+
+// Package dependency-graph acyclicity checker (Requirement 2.5). Exposed
+// through the package entry point so CI tooling and tests consume it without
+// reaching into internal module paths.
+export * from "./dependency-graph.js";

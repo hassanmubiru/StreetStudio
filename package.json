@@ -18,7 +18,8 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
-    "boundary:check": "echo \"boundary analyzer wired in task 1.2\" && exit 0"
+    "boundary:check": "echo \"boundary analyzer wired in task 1.2\" && exit 0",
+    "graph:check": "tsc -b packages/config && node packages/config/dist/dependency-graph.cli.js"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",
