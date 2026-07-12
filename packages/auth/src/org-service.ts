@@ -800,6 +800,18 @@ export function repositoryOrgStore(
     findOrganizationById(id: Uuid): Promise<OrganizationRecord | null> {
       return organizations.findById(id);
     },
+    async updateOrganizationSettings(
+      record: OrganizationRecord,
+      settings: Record<string, unknown>,
+    ): Promise<OrganizationRecord> {
+      // The organization repository exposes no in-place update, so apply a
+      // delete + re-insert soft update, preserving the record's identity and
+      // other fields — the same pattern the invitation status update uses.
+      const updated: OrganizationRecord = { ...record, settings };
+      await organizations.deleteById(record.id);
+      await organizations.insert(updated);
+      return updated;
+    },
     createRole(record: RoleRecord): Promise<RoleRecord> {
       return roles.insert(record);
     },
@@ -810,6 +822,12 @@ export function repositoryOrgStore(
       const all = await roles.listByOrganization(organizationId);
       return all.find((r) => r.name === name) ?? null;
     },
+    findRoleById(
+      organizationId: Uuid,
+      roleId: Uuid,
+    ): Promise<RoleRecord | null> {
+      return roles.findById(organizationId, roleId);
+    },
     createMembership(record: MembershipRecord): Promise<MembershipRecord> {
       return memberships.insert(record);
     },
@@ -819,6 +837,12 @@ export function repositoryOrgStore(
     ): Promise<MembershipRecord | null> {
       const all = await memberships.listByOrganization(organizationId);
       return all.find((m) => m.memberId === memberId) ?? null;
+    },
+    listMemberships(organizationId: Uuid): Promise<MembershipRecord[]> {
+      return memberships.listByOrganization(organizationId);
+    },
+    async deleteMembership(record: MembershipRecord): Promise<void> {
+      await memberships.deleteById(record.organizationId, record.id);
     },
     createInvitation(record: InvitationRecord): Promise<InvitationRecord> {
       return invitations.insert(record);
