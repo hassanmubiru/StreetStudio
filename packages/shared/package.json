@@ -11,11 +11,18 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
     }
   },
   "files": ["dist"],
   "scripts": {
     "build": "tsc -b"
+  },
+  "dependencies": {
+    "fast-check": "^3.23.1"
   },
   "streetstudio": {
     "domain": "Cross-cutting types, DTOs, errors, and constants shared across all packages."

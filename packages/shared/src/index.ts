@@ -10,8 +10,66 @@
 export const DOMAIN =
   "Cross-cutting types, DTOs, errors, and constants shared across all packages." as const;
 
-/** Universally-unique identifier used for all persisted entities. */
-export type Uuid = string;
+// Cross-cutting scalar types.
+export type { Uuid, IsoTimestamp } from "./identifiers.js";
 
-/** ISO-8601 timestamp string. */
-export type IsoTimestamp = string;
+// Shared error taxonomy (codes, categories, catalog, AppError, ErrorDto).
+export {
+  ERROR_CATALOG,
+  ERROR_CODES,
+  isErrorCode,
+  getErrorDefinition,
+  toErrorDto,
+  AppError,
+} from "./errors.js";
+export type {
+  ErrorCategory,
+  ErrorCode,
+  ErrorDefinition,
+  ErrorDto,
+  AppErrorOptions,
+} from "./errors.js";
+
+// Serialized wire DTOs mirroring the domain entities.
+export type {
+  VideoStatus,
+  AssetType,
+  InvitationStatus,
+  UploadSessionStatus,
+  ProcessingStatus,
+  ReactionTargetType,
+  PluginType,
+  PluginLoadState,
+  MemberDto,
+  SessionDto,
+  OrganizationDto,
+  MembershipDto,
+  RoleDto,
+  TeamDto,
+  TeamMembershipDto,
+  InvitationDto,
+  ProjectDto,
+  FolderDto,
+  WorkspaceDto,
+  VideoDto,
+  RenditionDto,
+  AssetDto,
+  TranscriptSegmentDto,
+  TranscriptDto,
+  SummaryDto,
+  CommentDto,
+  ReactionDto,
+  NotificationDto,
+  NotificationPreferenceDto,
+  ShareLinkDto,
+  UploadSessionDto,
+  AuditEntryDto,
+  ApiKeyDto,
+  ApiKeyRevealDto,
+  WebhookDto,
+  PullRequestLinkDto,
+  DocLinkDto,
+  ViewEventDto,
+  MetricsDto,
+  PluginDto,
+} from "./dto.js";
