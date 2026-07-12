@@ -98,3 +98,15 @@ export type {
   RbacStore,
   RoleName,
 } from "./access-control.js";
+
+// --- Organization & Membership service (task 10.1) -------------------------
+export {
+  OrgService,
+  repositoryOrgStore,
+  ADMINISTRATOR_ROLE_NAME,
+  MEMBER_ROLE_NAME,
+  INVITATION_TTL_MS,
+  MAX_ORG_NAME_LENGTH,
+  MAX_TEAM_NAME_LENGTH,
+} from "./org-service.js";
+export type { OrgServiceDeps, OrgStore } from "./org-service.js";
