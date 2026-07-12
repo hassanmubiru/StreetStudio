@@ -52,7 +52,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 88: Startup validation names every invalid configuration value**
     - **Validates: Requirements 30.3**
 
-- [ ] 4. Implement the database layer and audit log
+- [x] 4. Implement the database layer and audit log
   - [x] 4.1 Define schema, migrations, and repositories
     - Implement PostgreSQL schema/migrations and repositories (via StreetJS PostgreSQL access) for all core entities; UUID identifiers; `organization_id` on tenant-scoped tables with indexes for isolation
     - Enforce acyclic layering: `database` depends on `shared`/`config` only
@@ -70,7 +70,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 55: Audit entries are immutable**
     - **Validates: Requirements 17.2, 17.6**
 
-  - [-] 4.5 Write property test for audit query scoping and ordering
+  - [x] 4.5 Write property test for audit query scoping and ordering
     - **Property 56: Audit queries are organization-scoped and ordered**
     - **Validates: Requirements 17.3, 17.5**
 
