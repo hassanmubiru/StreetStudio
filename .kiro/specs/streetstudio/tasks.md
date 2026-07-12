@@ -119,7 +119,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - `create` returns the secret exactly once and stores only a salted hash; `getMeta` never returns the secret; `authenticate` accepts only valid non-revoked keys; `revoke` rejects subsequent use; uniform non-disclosing auth error for malformed/unrecognized/expired/revoked keys; permission-gate create/revoke
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6_
 
-  - [ ] 7.2 Write property test for one-time secret disclosure
+  - [-] 7.2 Write property test for one-time secret disclosure
     - **Property 57: API-key secrets are disclosed exactly once**
     - **Validates: Requirements 18.1, 18.2**
 
@@ -136,7 +136,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - `can(ctx, action, resource)` evaluated in the organization scope that owns the resource, before any action; denied actions cause no change; `assignRole` permission-gated and membership-checked; permissions never leak across organizations; role changes govern subsequent decisions
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 26.3_
 
-  - [ ] 8.2 Write property test for owning-organization-scoped authorization
+  - [-] 8.2 Write property test for owning-organization-scoped authorization
     - **Property 50: Authorization is evaluated in the owning organization's scope**
     - **Validates: Requirements 16.1, 16.3**
 
