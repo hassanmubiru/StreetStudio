@@ -447,9 +447,11 @@ This document specifies the requirements for the StreetStudio platform using EAR
 #### Acceptance Criteria
 
 1. THE StreetStudio SHALL provide container images and deployment configuration for self-hosting through the `docker` and `infrastructure` directories.
-2. WHEN an operator provides required configuration, THE API_Service SHALL start and pass its health checks.
-3. THE API_Service SHALL expose health check and metrics endpoints through the StreetJS health check and metrics interfaces.
-4. WHERE high availability is configured, THE API_Service SHALL operate against PostgreSQL high availability and Redis Cluster through the StreetJS interfaces.
+2. WHEN an operator starts the API_Service with all required configuration values present and valid, THE API_Service SHALL complete startup and report a passing status from its health check endpoint within 60 seconds.
+3. IF the API_Service is started with one or more required configuration values missing or invalid, THEN THE API_Service SHALL abort startup, refrain from serving requests, and emit an error indicating each missing or invalid configuration value by name.
+4. THE API_Service SHALL expose a health check endpoint and a metrics endpoint through the StreetJS health check and metrics interfaces, with the health check endpoint returning a passing status when all required dependencies are reachable and a failing status when any required dependency is unreachable.
+5. WHERE high availability is configured, THE API_Service SHALL operate against PostgreSQL high availability and Redis Cluster through the StreetJS interfaces.
+6. WHERE high availability is configured, WHEN the active PostgreSQL primary or a Redis Cluster node becomes unreachable, THE API_Service SHALL reconnect through the StreetJS high availability interfaces and resume serving requests without requiring an operator restart.
 
 ### Requirement 31: Documentation
 
