@@ -480,7 +480,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 81: At most one billing plugin may be enabled**
     - **Validates: Requirements 27.4**
 
-  - [ ] 28.5 Write unit tests for billing plugin failure/timeout handling
+  - [-] 28.5 Write unit tests for billing plugin failure/timeout handling
     - Test the >30s timeout and no-partial-application paths
     - _Requirements: 27.5_
 
