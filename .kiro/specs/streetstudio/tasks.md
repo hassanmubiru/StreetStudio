@@ -463,7 +463,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Test the >30s timeout and provider-failure abort with non-AI features continuing
     - _Requirements: 22.5_
 
-- [ ] 28. Implement the billing abstraction
+- [x] 28. Implement the billing abstraction
   - [x] 28.1 Implement BillingGateway routing to a single enabled billing plugin
     - Expose billing exclusively through the abstraction with zero provider references in core; route to the single enabled billing plugin and return its result; reject with `BILLING_NOT_CONFIGURED` when none enabled while non-billing features/state continue; reject configuration when more than one is enabled and route nothing; on plugin failure or >30s return an error with no partial application
     - _Requirements: 27.1, 27.2, 27.3, 27.4, 27.5_
@@ -476,11 +476,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 80: Billing is optional and isolated**
     - **Validates: Requirements 27.3**
 
-  - [-] 28.4 Write property test for at-most-one billing plugin
+  - [x] 28.4 Write property test for at-most-one billing plugin
     - **Property 81: At most one billing plugin may be enabled**
     - **Validates: Requirements 27.4**
 
-  - [-] 28.5 Write unit tests for billing plugin failure/timeout handling
+  - [x] 28.5 Write unit tests for billing plugin failure/timeout handling
     - Test the >30s timeout and no-partial-application paths
     - _Requirements: 27.5_
 
