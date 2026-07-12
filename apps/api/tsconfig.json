@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "dist"],
+  "references": [
+    { "path": "../../packages/shared" },
+    { "path": "../../packages/config" },
+    { "path": "../../packages/database" },
+    { "path": "../../packages/auth" },
+    { "path": "../../packages/media" },
+    { "path": "../../packages/processing" },
+    { "path": "../../packages/notifications" },
+    { "path": "../../packages/plugins" },
+    { "path": "../../packages/analytics" }
+  ]
+}
