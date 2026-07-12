@@ -476,7 +476,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 80: Billing is optional and isolated**
     - **Validates: Requirements 27.3**
 
-  - [ ] 28.4 Write property test for at-most-one billing plugin
+  - [-] 28.4 Write property test for at-most-one billing plugin
     - **Property 81: At most one billing plugin may be enabled**
     - **Validates: Requirements 27.4**
 
