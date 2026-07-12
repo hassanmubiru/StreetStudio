@@ -126,6 +126,12 @@ export interface AuthServiceDeps {
   readonly accessTokenTtlSeconds?: number;
   /** Optional account-lockout policy (task 6.2). */
   readonly lockoutPolicy?: LockoutPolicy;
+  /**
+   * Optional registry of configured OAuth/SSO providers. Required to service
+   * {@link AuthService.loginWithOAuth} / {@link AuthService.loginWithSSO}; when
+   * absent, every federated sign-in is denied with `AUTHENTICATION_FAILED`.
+   */
+  readonly providers?: FederatedProviderRegistry;
   /** UUID generator; defaults to the database id generator. */
   readonly newId?: () => Uuid;
 }
