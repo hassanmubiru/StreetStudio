@@ -557,7 +557,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 60: Webhook registration validates endpoint and event type**
     - **Validates: Requirements 19.1, 19.2**
 
-  - [ ] 35.3 Write property test for webhook signature verification
+  - [-] 35.3 Write property test for webhook signature verification
     - **Property 61: Webhook deliveries are signed and verifiable**
     - **Validates: Requirements 19.4**
 
