@@ -499,7 +499,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 23.1, 23.3, 23.5, 23.6**
 
 - [ ] 31. Implement engineering reviews
-  - [-] 31.1 Implement ReviewService (linkPullRequest, postReviewComment)
+  - [x] 31.1 Implement ReviewService (linkPullRequest, postReviewComment)
     - Store a PR association only when the source-control plugin is enabled, the PR/repository is accessible, and the member holds link permission; store review comments at the referenced position only when body is 1–5000 chars and timestamp is 0–duration
     - _Requirements: 24.1, 24.3, 24.4, 24.5, 24.6_
 
@@ -512,7 +512,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 24.3, 24.5**
 
 - [ ] 32. Implement the knowledge base
-  - [ ] 32.1 Implement KnowledgeBase (indexTranscript, storeSummary, linkDoc)
+  - [-] 32.1 Implement KnowledgeBase (indexTranscript, storeSummary, linkDoc)
     - Index transcript text and make it searchable within scope within 30s; store AI-produced summaries of 1–10,000 chars associated with the Video; store documentation links of 1–2048 chars with edit permission up to 100 per Video, rejecting invalid/over-cap links
     - _Requirements: 25.1, 25.2, 25.3, 25.4, 25.5, 25.6_
 
