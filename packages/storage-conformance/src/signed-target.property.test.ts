@@ -55,6 +55,15 @@ const issuedAtMsArb = fc.integer({
   max: Date.UTC(2100, 0, 1),
 });
 
+/**
+ * A safe object key accepted by every provider, including the Local filesystem
+ * provider (no leading separator, no `..` segments, no NUL). Property 29 is
+ * about expiry bounds, so keys are constrained to the shared valid key space.
+ */
+const safeKeyArb = fc
+  .array(fc.stringMatching(/^[a-z0-9_-]{1,16}$/), { minLength: 1, maxLength: 4 })
+  .map((segs) => segs.join("/"));
+
 const targets: ProviderUnderTest[] = conformanceTargets();
 
 afterAll(async () => {
