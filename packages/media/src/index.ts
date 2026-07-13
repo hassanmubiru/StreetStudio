@@ -132,3 +132,20 @@ export type {
   ReactionTarget,
   MentionNotifier,
 } from "./comment.js";
+
+// --- Search & Transcript Search Service (task 23.1) ------------------------
+export {
+  SearchService,
+  SEARCH_QUERY_MIN_LENGTH,
+  SEARCH_QUERY_MAX_LENGTH,
+  SEARCH_MAX_PAGE_SIZE,
+  VIEW_ASSET_PERMISSION,
+} from "./search.js";
+export type {
+  SearchServiceDeps,
+  SearchIndex,
+  IndexedMatch,
+  SearchHit,
+  SearchPage,
+  Cursor,
+} from "./search.js";
