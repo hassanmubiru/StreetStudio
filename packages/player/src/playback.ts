@@ -56,6 +56,7 @@ import { systemClock, type Clock } from "@streetstudio/auth";
 import type { AccessControl, AuthContext } from "@streetstudio/auth";
 import { AppError } from "@streetstudio/shared";
 import type { Uuid } from "@streetstudio/shared";
+import { VIEW_VIDEO_PERMISSION } from "@streetstudio/media";
 
 /**
  * Permission a Role must grant to stream a Video within an Organization (R10.1,
