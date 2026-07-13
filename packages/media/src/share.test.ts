@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { AppError } from "@streetstudio/shared";
 import type { Uuid } from "@streetstudio/shared";
 import type { ShareLinkRecord, VideoRecord } from "@streetstudio/database";
