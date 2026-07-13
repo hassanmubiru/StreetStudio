@@ -528,7 +528,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 74: Documentation links validate input and enforce the per-video cap**
     - **Validates: Requirements 25.3, 25.4, 25.5, 25.6**
 
-- [ ] 33. Checkpoint - extensibility
+- [x] 33. Checkpoint - extensibility
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 34. Implement analytics
