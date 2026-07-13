@@ -274,7 +274,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 23: Upload progress reflects acknowledged chunk count**
     - **Validates: Requirements 7.7**
 
-- [ ] 15. Implement the Recorder client capture and upload logic
+- [x] 15. Implement the Recorder client capture and upload logic
   - [x] 15.1 Implement Recorder capture, controls, and offline upload
     - Capture screen/window/region with optional camera/microphone/system audio; continue without unsupported system audio and notify; abort and retain nothing on denied permission; cursor highlighting/drawing tools and keyboard shortcuts; pause/resume retaining pre-pause media; finalize ≤10s on stop and initiate upload; persist offline stops locally and upload with ≤5 retries on reconnect
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 6.11, 6.12_
@@ -283,7 +283,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 17: Offline recording upload retries are bounded**
     - **Validates: Requirements 6.11**
 
-  - [-] 15.3 Write unit tests for capture, pause/resume, unsupported audio, and denied permission
+  - [x] 15.3 Write unit tests for capture, pause/resume, unsupported audio, and denied permission
     - Test capture source selection, pause/resume state, system-audio-unavailable notification, denied-permission abort, and offline local storage
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.8, 6.9, 6.10_
 
