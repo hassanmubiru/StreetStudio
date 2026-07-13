@@ -498,12 +498,12 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 69: Developer assets validate length and require Developer Mode**
     - **Validates: Requirements 23.1, 23.3, 23.5, 23.6**
 
-- [ ] 31. Implement engineering reviews
+- [x] 31. Implement engineering reviews
   - [x] 31.1 Implement ReviewService (linkPullRequest, postReviewComment)
     - Store a PR association only when the source-control plugin is enabled, the PR/repository is accessible, and the member holds link permission; store review comments at the referenced position only when body is 1–5000 chars and timestamp is 0–duration
     - _Requirements: 24.1, 24.3, 24.4, 24.5, 24.6_
 
-  - [-] 31.2 Write property test for PR-link plugin and permission gating
+  - [x] 31.2 Write property test for PR-link plugin and permission gating
     - **Property 70: Pull-request links require an enabled plugin and permission**
     - **Validates: Requirements 24.1, 24.4, 24.6**
 
