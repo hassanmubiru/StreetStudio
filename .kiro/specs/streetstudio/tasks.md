@@ -305,7 +305,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 8.6**
 
 - [ ] 17. Implement streaming and playback
-  - [ ] 17.1 Implement PlaybackService manifest generation
+  - [x] 17.1 Implement PlaybackService manifest generation
     - Provide an ABR streaming manifest within 3s if and only if the Video is ready and the requester holds view permission (or a valid share credential); deny with the appropriate error and no manifest otherwise
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
