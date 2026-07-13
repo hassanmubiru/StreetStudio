@@ -27,7 +27,7 @@ import type {
   PutResult,
   SignedTarget,
   StorageProvider,
-} from "@streetstudio/media";
+} from "@streetstudio/storage";
 import type { Capability, Plugin, PluginContext } from "@streetstudio/plugins";
 
 export const DOMAIN = "Local filesystem storage provider plugin." as const;

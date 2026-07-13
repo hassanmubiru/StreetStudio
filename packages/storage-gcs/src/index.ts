@@ -16,7 +16,7 @@ import type {
   PutResult,
   SignedTarget,
   StorageProvider,
-} from "@streetstudio/media";
+} from "@streetstudio/storage";
 import type { Capability, Plugin, PluginContext } from "@streetstudio/plugins";
 
 export const DOMAIN = "Google Cloud Storage provider plugin." as const;

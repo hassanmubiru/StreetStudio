@@ -4,7 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
-import type { ObjectStream } from "@streetstudio/media";
+import type { ObjectStream } from "@streetstudio/storage";
 import type { PluginContext } from "@streetstudio/plugins";
 import localStoragePlugin, {
   LocalStorageProvider,

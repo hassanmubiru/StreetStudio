@@ -8,7 +8,7 @@ import {
   SIGNED_UPLOAD_DEFAULT_TTL_SECONDS,
   DIRECT_UPLOAD_MAX_TTL_SECONDS,
   type SignedTarget,
-} from "@streetstudio/media";
+} from "@streetstudio/storage";
 import {
   conformanceTargets,
   cleanupTempDirs,

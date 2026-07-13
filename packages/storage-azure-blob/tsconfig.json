@@ -7,7 +7,7 @@
   "include": ["src/**/*"],
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "dist"],
   "references": [
-    { "path": "../media" },
+    { "path": "../storage" },
     { "path": "../plugins" }
   ]
 }

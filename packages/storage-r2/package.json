@@ -18,7 +18,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@streetstudio/media": "*",
+    "@streetstudio/storage": "*",
     "@streetstudio/plugins": "*",
     "@streetstudio/storage-s3": "*"
   },

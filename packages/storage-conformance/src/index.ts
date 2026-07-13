@@ -38,7 +38,7 @@ import type {
   PutResult,
   SignedTarget,
   StorageProvider,
-} from "@streetstudio/media";
+} from "@streetstudio/storage";
 import {
   LocalStorageProvider,
   createLocalStoragePlugin,

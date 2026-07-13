@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Readable } from "node:stream";
-import type { ObjectStream } from "@streetstudio/media";
+import type { ObjectStream } from "@streetstudio/storage";
 import type { PluginContext } from "@streetstudio/plugins";
 import type { S3StyleClient } from "@streetstudio/storage-s3";
 import r2StoragePlugin, {

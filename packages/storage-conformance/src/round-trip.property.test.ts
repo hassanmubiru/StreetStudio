@@ -1,6 +1,6 @@
 import { describe, it, expect, afterAll } from "vitest";
 import fc from "fast-check";
-import { StorageRouter } from "@streetstudio/media";
+import { StorageRouter } from "@streetstudio/storage";
 import {
   conformanceTargets,
   cleanupTempDirs,
