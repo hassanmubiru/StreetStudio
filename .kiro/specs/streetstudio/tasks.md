@@ -396,7 +396,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 41: Events for disconnected members are discarded harmlessly**
     - **Validates: Requirements 13.7**
 
-  - [ ] 22.5 Write unit tests for typing-stop timer and dropped-connection departure
+  - [-] 22.5 Write unit tests for typing-stop timer and dropped-connection departure
     - Test the 5s typing-stop emission and dropped-connection presence-departure using in-memory transport/clock fakes
     - _Requirements: 13.5, 13.6_
 
