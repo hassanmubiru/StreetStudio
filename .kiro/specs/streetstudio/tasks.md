@@ -405,7 +405,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Return, within 3s, Videos/Assets whose indexed text matches a 1–500 char query within the member's authorized scope; include transcript matches with matching playback position; validate query length rejecting empty/>500; page results at ≤100 with a retrieval cursor; return empty set on no matches
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
 
-  - [-] 23.2 Write property test for matching, authorized-only results
+  - [x] 23.2 Write property test for matching, authorized-only results
     - **Property 42: Search returns only matching, authorized results**
     - **Validates: Requirements 14.1, 14.4**
 
