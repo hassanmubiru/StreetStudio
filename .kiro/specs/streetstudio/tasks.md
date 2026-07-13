@@ -205,7 +205,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - `createProject`/`createFolder` (names 1–255) scoped to org/project with create-permission gating; enforce folder nesting depth ≤10; `moveVideo` same-org only, preserving identity/comments/transcripts/permissions and rejecting cross-org moves; `createWorkspace`
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
-  - [ ] 11.2 Write property test for project/folder validity and scoping
+  - [-] 11.2 Write property test for project/folder validity and scoping
     - **Property 13: Project and folder creation validity and scoping**
     - **Validates: Requirements 5.1, 5.2, 5.8**
 
@@ -229,7 +229,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Define `put`/`get`/`signUploadTarget`/`healthCheck`; route persistence exclusively through the interface; write ack within 30s or abort with `STORAGE_ERROR` recording provider id + timestamp; activation validates config/connectivity and retains prior provider on failure; signed targets valid 60–3600s (default 900), direct-to-storage ≤15 min, expired targets rejected
     - _Requirements: 9.1, 9.3, 9.4, 9.5, 9.6, 9.7, 29.3_
 
-  - [ ] 13.2 Write property test for storage round-trip byte preservation
+  - [-] 13.2 Write property test for storage round-trip byte preservation
     - **Property 27: Storage round-trip preserves object bytes**
     - **Validates: Requirements 9.1**
 
