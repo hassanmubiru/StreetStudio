@@ -532,7 +532,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 34. Implement analytics
-  - [ ] 34.1 Implement AnalyticsService (recordView, aggregate)
+  - [x] 34.1 Implement AnalyticsService (recordView, aggregate)
     - Record a view event scoped to the member's organization within 5s on playback start (Video id, member id, timestamp); aggregate total views, distinct viewers, and total watch duration for a valid time range within 5s, Administrator-only, excluding other organizations; reject invalid ranges
     - _Requirements: 28.1, 28.2, 28.3, 28.4, 28.5_
 
