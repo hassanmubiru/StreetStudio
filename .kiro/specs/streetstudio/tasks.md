@@ -329,7 +329,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 46: Share credentials are globally unique**
     - **Validates: Requirements 15.1**
 
-  - [ ] 19.3 Write property test for share expiry and revocation
+  - [x] 19.3 Write property test for share expiry and revocation
     - **Property 47: Share link expiry and revocation deny access**
     - **Validates: Requirements 15.2, 15.3**
 
@@ -337,7 +337,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 48: Content permission is required for resource access**
     - **Validates: Requirements 15.4**
 
-  - [ ] 19.5 Write property test for passcode access and lockout
+  - [x] 19.5 Write property test for passcode access and lockout
     - **Property 49: Passcode-protected share access and lockout**
     - **Validates: Requirements 15.5, 15.6, 15.7**
 
@@ -358,7 +358,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 34: Mentions notify members with view access**
     - **Validates: Requirements 11.4**
 
-  - [ ] 20.5 Write property test for reaction idempotency
+  - [x] 20.5 Write property test for reaction idempotency
     - **Property 35: Reactions are idempotent per type, member, and target**
     - **Validates: Requirements 11.5**
 
@@ -392,7 +392,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 40: Presence and typing events target the correct audience**
     - **Validates: Requirements 13.1, 13.2, 13.3**
 
-  - [ ] 22.4 Write property test for discarding events to disconnected members
+  - [x] 22.4 Write property test for discarding events to disconnected members
     - **Property 41: Events for disconnected members are discarded harmlessly**
     - **Validates: Requirements 13.7**
 
@@ -544,7 +544,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 83: Analytics aggregates match a reference computation and exclude other organizations**
     - **Validates: Requirements 28.2, 28.3**
 
-  - [ ] 34.4 Write property test for admin-only, validated-range analytics
+  - [x] 34.4 Write property test for admin-only, validated-range analytics
     - **Property 84: Analytics access is Administrator-only with validated ranges**
     - **Validates: Requirements 28.4, 28.5**
 
