@@ -338,6 +338,9 @@ The top-level `examples/` directory from the sketch is now present
 
 The package layout now matches the sketch one-to-one: `organizations`,
 `comments`, `search`, `realtime`, `ai`, and `integrations` were extracted into
-standalone packages (ADR-0009), and `examples/` was added. Each extraction was
-done incrementally with the full gate (`scripts/check.sh`) green at every step,
-as with the `recorder`/`player` work (ADR-0008).
+standalone packages (ADR-0009), and `examples/` was added. Following the
+lead-architect product review, `projects`, `storage`, and `knowledge` were also
+split out of `media` (ADR-0010) — knowledge evolves independently of media
+bytes. Each extraction was done incrementally with the full gate
+(`scripts/check.sh`) green at every step, as with the `recorder`/`player` work
+(ADR-0008). A future `apps/mobile` client is reserved on the roadmap.
