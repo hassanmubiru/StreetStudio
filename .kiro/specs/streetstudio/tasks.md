@@ -367,7 +367,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Create a notification within 5s recording event type, source resource, and timestamp, respecting member preferences; mark-read only for owned notifications recording a read timestamp, rejecting others with no change; retain undelivered notifications and deliver within 5s of reconnect
     - _Requirements: 12.1, 12.3, 12.4, 12.5, 12.6_
 
-  - [-] 21.2 Write property test for notification creation and preferences
+  - [x] 21.2 Write property test for notification creation and preferences
     - **Property 37: Notification creation records required fields and respects preferences**
     - **Validates: Requirements 12.1, 12.4**
 
