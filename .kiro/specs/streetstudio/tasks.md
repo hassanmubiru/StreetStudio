@@ -172,7 +172,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 9: Invitations expire seven days after creation**
     - **Validates: Requirements 4.2, 4.8**
 
-  - [-] 10.5 Write property test for invitation acceptance validity
+  - [x] 10.5 Write property test for invitation acceptance validity
     - **Property 10: Invitation acceptance is valid only while pending and unexpired**
     - **Validates: Requirements 4.3, 4.9**
 
