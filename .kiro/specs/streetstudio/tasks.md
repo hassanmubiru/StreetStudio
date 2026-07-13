@@ -615,7 +615,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Operate against PostgreSQL HA and Redis Cluster via StreetJS interfaces; reconnect on primary/node loss and resume without operator restart
     - _Requirements: 30.5, 30.6_
 
-  - [-] 39.3 Author container images and deployment configuration
+  - [x] 39.3 Author container images and deployment configuration
     - Provide `docker/` container images/compose and `infrastructure/` deployment configuration for self-hosting
     - _Requirements: 30.1_
 
