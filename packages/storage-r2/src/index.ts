@@ -5,7 +5,7 @@
  * (Requirement 9.2). R2 is S3-compatible, so this package reuses the S3-style
  * implementation from `@streetstudio/storage-s3`, parameterized by the R2
  * account endpoint. It implements the storage contract from
- * `@streetstudio/media` and the {@link Plugin} contract from
+ * `@streetstudio/storage` and the {@link Plugin} contract from
  * `@streetstudio/plugins` (type `"storage"`). No provider is imported into
  * platform core, and no cloud vendor SDK is hard-imported — the S3-compatible
  * client is injected at deployment time.

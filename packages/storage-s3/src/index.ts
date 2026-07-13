@@ -3,7 +3,7 @@
  *
  * Amazon S3 (and S3-compatible) {@link StorageProvider} delivered as an
  * isolated plugin (Requirement 9.2). Implements the storage contract from
- * `@streetstudio/media` and the {@link Plugin} contract from
+ * `@streetstudio/storage` and the {@link Plugin} contract from
  * `@streetstudio/plugins` (type `"storage"`). No provider is imported into
  * platform core.
  *

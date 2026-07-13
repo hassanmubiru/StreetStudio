@@ -3,7 +3,7 @@
  *
  * Local filesystem {@link StorageProvider} delivered as an isolated plugin
  * (Requirement 9.2). It implements the storage contract from
- * `@streetstudio/media` (`put`/`get`/`signUploadTarget`/`healthCheck`/`id`) and
+ * `@streetstudio/storage` (`put`/`get`/`signUploadTarget`/`healthCheck`/`id`) and
  * the {@link Plugin} contract from `@streetstudio/plugins` (type `"storage"`),
  * so it is discovered/loaded through the StreetJS plugin loader like any other
  * plugin. No provider is imported into platform core — the implementation lives
