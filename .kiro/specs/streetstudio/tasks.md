@@ -217,7 +217,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 15: Video moves preserve identity and associations within the organization**
     - **Validates: Requirements 5.4, 5.7**
 
-  - [ ] 11.5 Write property test for create-permission enforcement
+  - [-] 11.5 Write property test for create-permission enforcement
     - **Property 16: Create permission is required for projects and folders**
     - **Validates: Requirements 5.6**
 
