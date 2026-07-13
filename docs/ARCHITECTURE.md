@@ -60,8 +60,9 @@ StreetStudio/
 │   ├── config/        # Config schema + loading via StreetJS config; boundary tooling
 │   ├── database/      # Schema, migrations, repositories, audit log
 │   ├── auth/          # Authentication, sessions, RBAC, API keys
-│   ├── media/         # Videos, assets, storage abstraction, comments, sharing, playback, search
-│   ├── recording/     # Recorder capture + chunked/resumable upload client
+│   ├── media/         # Videos, assets, storage abstraction, comments, sharing, search
+│   ├── player/        # Streaming/playback: ABR manifest with permission & share-credential gating
+│   ├── recorder/      # Recorder capture + chunked/resumable upload client
 │   ├── processing/    # Media pipeline: transcode, thumbnail, preview
 │   ├── notifications/ # Notifications + realtime event contracts
 │   ├── plugins/       # Plugin_Manager, plugin contracts, isolation
