@@ -241,7 +241,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 29: Signed upload credentials have bounded, secure expiry**
     - **Validates: Requirements 9.6, 9.7, 29.3**
 
-  - [ ] 13.5 Write unit tests for storage write timeout/abort handling
+  - [-] 13.5 Write unit tests for storage write timeout/abort handling
     - Test the 30s no-ack abort and write-failure paths
     - _Requirements: 9.5_
 
