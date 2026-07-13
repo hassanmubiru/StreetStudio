@@ -279,7 +279,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Capture screen/window/region with optional camera/microphone/system audio; continue without unsupported system audio and notify; abort and retain nothing on denied permission; cursor highlighting/drawing tools and keyboard shortcuts; pause/resume retaining pre-pause media; finalize ≤10s on stop and initiate upload; persist offline stops locally and upload with ≤5 retries on reconnect
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 6.11, 6.12_
 
-  - [ ] 15.2 Write property test for bounded offline upload retries
+  - [-] 15.2 Write property test for bounded offline upload retries
     - **Property 17: Offline recording upload retries are bounded**
     - **Validates: Requirements 6.11**
 
