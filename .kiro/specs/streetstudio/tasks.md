@@ -152,7 +152,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 53: Role management is permission-gated and membership-checked**
     - **Validates: Requirements 16.5, 16.6**
 
-- [ ] 9. Checkpoint - auth and RBAC
+- [x] 9. Checkpoint - auth and RBAC
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 10. Implement organizations, teams, membership, and administration
