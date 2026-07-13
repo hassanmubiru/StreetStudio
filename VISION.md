@@ -302,19 +302,19 @@ to match the sketch; alignment is an optional, owner-approved refactor.
 | Vision package        | Where it lives today                                             |
 | --------------------- | ---------------------------------------------------------------- |
 | `auth`                | `packages/auth` (auth, sessions, RBAC, API keys)                 |
-| `organizations`       | `packages/media` (content/orgs) + `packages/auth` (RBAC)         |
+| `organizations`       | `packages/organizations`                                         |
 | `media`               | `packages/media`                                                 |
 | `recorder`            | `packages/recorder`                                              |
 | `processing`          | `packages/processing`                                            |
 | `player`              | `packages/player`                                                |
-| `comments`            | `packages/media` (comment module)                                |
+| `comments`            | `packages/comments`                                              |
 | `notifications`       | `packages/notifications`                                         |
-| `realtime`            | `packages/notifications` (realtime gateway) + `apps/api` gateway |
-| `search`              | `packages/media` (search module)                                 |
+| `realtime`            | `packages/realtime`                                              |
+| `search`              | `packages/search`                                                |
 | `analytics`           | `packages/analytics`                                             |
 | `plugins`             | `packages/plugins`                                               |
-| `ai`                  | `packages/plugins` (AI capability router) + AI provider plugins  |
-| `integrations`        | `packages/integration-*` (slack, discord, github, …)             |
+| `ai`                  | `packages/ai` (capability router) + AI provider plugins          |
+| `integrations`        | `packages/integrations` (framework) + `packages/integration-*` plugins |
 | `sdk`                 | `packages/sdk`                                                   |
 | `ui`                  | `packages/ui`                                                    |
 | `shared`              | `packages/shared`                                                |
