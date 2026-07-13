@@ -18,11 +18,20 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:contract": "vitest run --project contract",
+    "test:e2e": "vitest run --project e2e",
+    "test:perf": "vitest run --project perf",
+    "test:load": "vitest run --project load",
+    "test:media": "vitest run --project media",
+    "test:coverage": "vitest run --coverage",
     "boundary:check": "vite-node packages/config/src/boundary/bin.ts",
     "graph:check": "tsc -b packages/config && node packages/config/dist/dependency-graph.cli.js"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",
+    "@vitest/coverage-v8": "^2.1.8",
     "fast-check": "^3.23.1",
     "typescript": "^5.6.3",
     "vitest": "^2.1.8"
