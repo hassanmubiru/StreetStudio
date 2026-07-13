@@ -10,6 +10,6 @@
     { "path": "../../packages/shared" },
     { "path": "../../packages/ui" },
     { "path": "../../packages/sdk" },
-    { "path": "../../packages/recording" }
+    { "path": "../../packages/recorder" }
   ]
 }

@@ -13,7 +13,7 @@
     "@streetstudio/shared": "*",
     "@streetstudio/ui": "*",
     "@streetstudio/sdk": "*",
-    "@streetstudio/recording": "*"
+    "@streetstudio/recorder": "*"
   },
   "streetstudio": {
     "domain": "Desktop_Client application wrapping the web client with native capture."
