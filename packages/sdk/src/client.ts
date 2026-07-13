@@ -287,10 +287,10 @@ export interface CreateApiKeyInput {
   readonly name: string;
   readonly permissions: readonly string[];
 }
-export interface MetricsQuery {
+export type MetricsQuery = {
   readonly from?: string;
   readonly to?: string;
-}
+};
 
 /** Playback manifest returned for a ready video. */
 export interface PlaybackManifest {
