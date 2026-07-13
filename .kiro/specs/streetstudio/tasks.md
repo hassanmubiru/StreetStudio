@@ -409,7 +409,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 42: Search returns only matching, authorized results**
     - **Validates: Requirements 14.1, 14.4**
 
-  - [ ] 23.3 Write property test for transcript playback positions
+  - [-] 23.3 Write property test for transcript playback positions
     - **Property 43: Transcript matches include playback position**
     - **Validates: Requirements 14.2**
 
