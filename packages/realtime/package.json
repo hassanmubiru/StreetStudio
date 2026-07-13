@@ -1,0 +1,19 @@
+{
+  "name": "@streetstudio/realtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Realtime_Service gateway: presence, typing, and live event fan-out over StreetJS WebSockets with a Redis backplane.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "files": ["dist"],
+  "scripts": { "build": "tsc -b" },
+  "dependencies": {
+    "@streetstudio/shared": "*",
+    "@streetstudio/auth": "*",
+    "@streetstudio/notifications": "*"
+  },
+  "streetstudio": { "domain": "Realtime_Service gateway: presence, typing, and live event fan-out over StreetJS WebSockets with a Redis backplane." }
+}
