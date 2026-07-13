@@ -21,12 +21,18 @@ packages/
   config/        Config schema + loading via StreetJS config
   database/      Schema, migrations, repositories, audit log
   auth/          Authentication, sessions, RBAC, API keys
-  media/         Videos, assets, storage abstraction, comments, sharing, search
+  organizations/ Organizations, teams, membership, invitations, admin
+  media/         Videos, assets, storage abstraction, sharing, dev-assets, reviews, KB
+  comments/      Comments, threads, reactions, mentions
+  search/        Search + transcript search (authorized scope)
   player/        Streaming/playback: ABR manifest with permission & share-credential gating
   recorder/      Recorder capture + chunked/resumable upload client
   processing/    Media pipeline: transcode, thumbnail, preview
-  notifications/ Notifications + realtime event contracts
+  notifications/ Notifications + event contracts
+  realtime/      Realtime gateway: presence, typing, live fan-out (Redis backplane)
   plugins/       Plugin_Manager, plugin contracts, isolation
+  ai/            AI capability router (routing only; providers are plugins)
+  integrations/  Integration framework: contract, registry, built-in catalog
   analytics/     View events + aggregation
 ```
 

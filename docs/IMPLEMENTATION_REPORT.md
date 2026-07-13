@@ -12,8 +12,8 @@ architectural boundary gates pass, and the entire test suite is green.
 | Tasks complete                   | 184 / 184 (100%)                          |
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
-| Apps / packages                  | 4 apps, 28 packages                       |
-| Source files / LOC (excl. tests) | 110 files, ~21,900 LOC                    |
+| Apps / packages                  | 4 apps, 34 packages                       |
+| Source files / LOC (excl. tests) | 117 files, ~21,900 LOC                    |
 | Test files / LOC                 | 160 files, ~32,600 LOC                    |
 | Full test run                    | 160 files, 753 passed, 1 skipped, 0 failed|
 | Documentation                    | 11 files (README + 10 under `docs/`)      |
@@ -68,13 +68,19 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/shared                        | 6   | 3     | 0    | Error taxonomy, wire DTOs, generators           |
 | packages/config                        | 12  | 8     | 4    | Config loading + boundary/graph tooling         |
 | packages/database                      | 9   | 6     | 2    | Schema, repositories, append-only audit log     |
-| packages/auth                          | 11  | 27    | 21   | Auth, sessions, RBAC, API keys                  |
-| packages/media                         | 11  | 41    | 31   | Videos, uploads, storage abstraction, comments, sharing, search |
+| packages/auth                          | 10  | 17    | 12   | Auth, sessions, RBAC, API keys                  |
+| packages/organizations                 | 2   | 10    | 9    | Organizations, teams, membership, admin         |
+| packages/media                         | 9   | 31    | 23   | Videos, uploads, storage abstraction, sharing, dev-assets, reviews, KB |
+| packages/comments                      | 2   | 5     | 4    | Comments, threads, reactions, mentions          |
+| packages/search                        | 2   | 5     | 4    | Search + transcript search (authorized scope)   |
 | packages/player                        | 2   | 3     | 2    | Streaming/playback: ABR manifest with view-permission & share-credential gating |
 | packages/recorder                      | 5   | 2     | 1    | Recorder capture + offline upload client        |
 | packages/processing                    | 2   | 5     | 3    | Media pipeline: transcode/thumbnail/preview     |
-| packages/notifications                 | 3   | 8     | 6    | Notifications + realtime event contracts        |
-| packages/plugins                       | 7   | 11    | 5    | Plugin_Manager, AI router, billing, isolation   |
+| packages/notifications                 | 2   | 4     | 3    | Notifications + event contracts                 |
+| packages/realtime                      | 2   | 4     | 3    | Realtime gateway: presence, typing, fan-out     |
+| packages/plugins                       | 6   | 8     | 4    | Plugin_Manager, billing, isolation              |
+| packages/ai                            | 2   | 3     | 1    | AI capability router (routing only)             |
+| packages/integrations                  | 2   | 1     | 0    | Integration framework: contract, registry, catalog |
 | packages/analytics                     | 2   | 4     | 3    | View events + aggregation                       |
 | packages/sdk                           | 2   | 1     | 0    | Public client library (REST + WebSocket)        |
 | packages/ui                            | 1   | 0     | 0    | Shared UI components                            |

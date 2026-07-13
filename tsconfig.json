@@ -13,6 +13,7 @@
     { "path": "./packages/search" },
     { "path": "./packages/realtime" },
     { "path": "./packages/ai" },
+    { "path": "./packages/integrations" },
     { "path": "./packages/storage-local" },
     { "path": "./packages/storage-s3" },
     { "path": "./packages/storage-r2" },
