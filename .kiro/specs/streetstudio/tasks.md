@@ -549,7 +549,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 28.4, 28.5**
 
 - [ ] 35. Implement webhooks
-  - [ ] 35.1 Implement WebhookService (register, delete) and signed worker delivery
+  - [-] 35.1 Implement WebhookService (register, delete) and signed worker delivery
     - Store subscriptions only for supported event types with well-formed HTTPS URLs ≤2048 chars; deliver signed payloads within 30s; treat a >10s non-success as failed and retry ≤5 more times with non-decreasing backoff, then record failed; stop delivery within 60s of deletion
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7_
 
