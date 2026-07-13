@@ -524,7 +524,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 73: Summaries are stored within bounds and associated**
     - **Validates: Requirements 25.2**
 
-  - [ ] 32.4 Write property test for documentation link validation and cap
+  - [-] 32.4 Write property test for documentation link validation and cap
     - **Property 74: Documentation links validate input and enforce the per-video cap**
     - **Validates: Requirements 25.3, 25.4, 25.5, 25.6**
 
