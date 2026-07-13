@@ -238,11 +238,11 @@ export interface UpdateVideoInput {
   readonly title?: string;
   readonly folderId?: Uuid;
 }
-export interface ListVideosQuery {
+export type ListVideosQuery = {
   readonly folderId?: Uuid;
   readonly limit?: number;
   readonly cursor?: string;
-}
+};
 export interface CreateUploadInput {
   readonly title: string;
   readonly totalChunks: number;
@@ -258,11 +258,11 @@ export interface ReactionInput {
   readonly targetId: Uuid;
   readonly type: string;
 }
-export interface SearchQuery {
+export type SearchQuery = {
   readonly q: string;
   readonly limit?: number;
   readonly cursor?: string;
-}
+};
 export interface CreateShareLinkInput {
   readonly expiresAt?: string;
   readonly passcode?: string;
@@ -271,10 +271,10 @@ export interface ResolveShareLinkInput {
   readonly credential: string;
   readonly passcode?: string;
 }
-export interface ListNotificationsQuery {
+export type ListNotificationsQuery = {
   readonly unreadOnly?: boolean;
   readonly limit?: number;
-}
+};
 export interface UpdateNotificationPreferenceInput {
   readonly eventType: string;
   readonly enabled: boolean;
