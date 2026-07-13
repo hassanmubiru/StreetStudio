@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implemented layout.
 - `examples/` directory — SDK quickstart and Docker Compose self-hosting guide,
   both driven exclusively through the public API/SDK surface.
+- Split `@streetstudio/projects`, `@streetstudio/storage`, and
+  `@streetstudio/knowledge` out of `@streetstudio/media` (ADR-0010) — knowledge
+  evolves independently of media bytes. The six `storage-*` provider plugins and
+  the conformance suite now import the `StorageProvider` contract from
+  `@streetstudio/storage`. Monorepo is now 37 packages.
 - Six standalone domain packages extracted to match the vision sketch (ADR-0009):
   `@streetstudio/organizations`, `@streetstudio/comments`, `@streetstudio/search`,
   `@streetstudio/realtime`, `@streetstudio/ai`, and a new
