@@ -144,3 +144,193 @@ public APIs only:
 | OpenTelemetry  | Tracing                        |
 | Resilience     | Retry & circuit breaker        |
 | CLI            | Administration                 |
+
+## Release plan
+
+### MVP (0.1) — usable product, not maximum feature count
+
+- **Authentication:** login, registration, sessions.
+- **Organizations.**
+- **Recording:** browser recording, microphone, camera, screen.
+- **Upload:** chunked uploads, resume, progress.
+- **Processing:** thumbnail, preview, transcoding.
+- **Playback:** adaptive streaming, video player.
+- **Sharing:** public links, private links, organization-only.
+- **Comments:** timeline comments, replies, mentions.
+- **Search:** title, description, transcript.
+
+This is enough for a public alpha.
+
+### 0.2
+
+- Folders, projects, teams.
+- Notifications, realtime, presence, activity.
+
+### 0.3
+
+- Desktop recorder, offline queue, native capture, keyboard shortcuts,
+  auto-updates.
+
+### 0.4
+
+- AI: transcript, summary, action items, meeting notes, chapters, smart titles,
+  knowledge extraction.
+
+### 0.5
+
+- Integrations: GitHub, GitLab, Slack, Discord, Teams, Jira, Linear, Notion.
+- Webhook engine.
+
+### 1.0
+
+- Stable, enterprise, HA, plugin marketplace, SDK, CLI, production
+  documentation, self-hosted installer.
+
+## Future vision
+
+StreetStudio becomes more than recording:
+
+```
+Record Bug → Transcript → AI Summary → GitHub Issue → Architecture Decision → Knowledge Base → Searchable forever
+```
+
+```
+Record Deployment → AI detects commands → Creates documentation → Indexes logs → Adds diagrams → Links pull requests
+```
+
+Every recording becomes structured knowledge.
+
+## AI philosophy
+
+AI is optional. StreetStudio must always work offline with no AI provider
+required. AI is simply another plugin.
+
+## Plugins
+
+Storage, AI, billing, integrations, authentication, analytics, notifications —
+anything replaceable.
+
+## Security
+
+RBAC, organizations, audit logs, signed plugins, encrypted secrets, API keys,
+webhooks, rate limiting, supply-chain verification.
+
+## Deployment
+
+Docker, Docker Compose, Kubernetes, HA, single-node, enterprise, cloud,
+self-hosted.
+
+## Documentation
+
+Installation, architecture, developer guide, plugin guide, API, deployment,
+examples, tutorials, migration, troubleshooting.
+
+## Success metrics
+
+- **Technical:** stable releases, high test coverage, fast builds, zero critical
+  vulnerabilities, verified supply chain.
+- **Community:** contributors, stars, issues, discussions, plugin authors.
+- **Product:** active installations, monthly downloads, organizations using it,
+  videos created, community plugins.
+
+## What not to build
+
+- Do not become another general video platform.
+- Do not chase every Loom feature.
+- Do not add unnecessary complexity.
+- Do not tightly couple to any cloud vendor.
+- Do not lock users into AI.
+- Do not compromise StreetJS architecture.
+
+## Relationship with StreetJS
+
+StreetStudio exists to prove StreetJS; StreetJS exists to power StreetStudio.
+Neither depends on the other's internal implementation.
+
+```
+StreetJS
+├── Framework
+├── Runtime
+├── Libraries
+├── Plugins
+└── Tooling
+        ▲
+        │  Public APIs only
+        ▼
+StreetStudio
+├── Browser Recorder
+├── Desktop Recorder
+├── API
+├── Web UI
+├── Processing
+├── AI
+├── Collaboration
+├── Search
+└── Knowledge Platform
+```
+
+This separation keeps StreetJS a clean, reusable framework while StreetStudio
+evolves rapidly as a real-world application.
+
+## Long-term vision
+
+Within three to five years, StreetStudio should be recognized not simply as an
+open-source alternative to Loom, but as the leading developer knowledge
+platform. Its defining capability is that every recording becomes durable,
+searchable engineering knowledge. Organizations should be able to build an
+internal, living knowledge base from videos, transcripts, comments, architecture
+discussions, code walkthroughs, and AI-assisted summaries. As StreetStudio
+grows, it continuously validates and strengthens StreetJS through real
+production use — a feedback loop that improves the framework without coupling the
+two projects.
+
+Success is not measured by matching Loom feature-for-feature. It is measured by
+enabling engineering teams to communicate asynchronously, preserve institutional
+knowledge, and self-host a secure, extensible, vendor-neutral platform built on
+open standards.
+
+---
+
+## Appendix: current implementation vs this vision
+
+This vision is the north star. The repository already implements most of the
+backend on StreetJS (via adapter seams); the package **sketch** above differs in
+naming/granularity from the **implemented** layout. The capabilities exist today
+— they are organized differently. No speculative empty packages have been created
+to match the sketch; alignment is an optional, owner-approved refactor.
+
+| Vision package        | Where it lives today                                             |
+| --------------------- | ---------------------------------------------------------------- |
+| `auth`                | `packages/auth` (auth, sessions, RBAC, API keys)                 |
+| `organizations`       | `packages/media` (content/orgs) + `packages/auth` (RBAC)         |
+| `media`               | `packages/media`                                                 |
+| `recorder`            | `packages/recorder`                                              |
+| `processing`          | `packages/processing`                                            |
+| `player`              | `packages/player`                                                |
+| `comments`            | `packages/media` (comment module)                                |
+| `notifications`       | `packages/notifications`                                         |
+| `realtime`            | `packages/notifications` (realtime gateway) + `apps/api` gateway |
+| `search`              | `packages/media` (search module)                                 |
+| `analytics`           | `packages/analytics`                                             |
+| `plugins`             | `packages/plugins`                                               |
+| `ai`                  | `packages/plugins` (AI capability router) + AI provider plugins  |
+| `integrations`        | `packages/integration-*` (slack, discord, github, …)             |
+| `sdk`                 | `packages/sdk`                                                   |
+| `ui`                  | `packages/ui`                                                    |
+| `shared`              | `packages/shared`                                                |
+
+Not in the sketch but present (and required): `packages/config` (config +
+boundary/graph tooling), `packages/database` (schema, repositories, audit log),
+and the `storage-*` provider plugins.
+
+Not yet present from the sketch: a top-level `examples/` directory.
+
+**Licensing:** the sketch left MIT/Apache to owner decision; the repository ships
+**Apache-2.0** (`LICENSE`, and every `package.json`).
+
+If you want the package layout to match the sketch one-to-one (e.g. extract
+standalone `organizations`, `comments`, `search`, `realtime`, `ai`, and
+`integrations` packages, and add `examples/`), that is a larger, boundary-graph
+-affecting refactor — say the word and it can be done incrementally with the full
+gate (`scripts/check.sh`) green at each step, as with the `recorder`/`player`
+work (ADR-0008).
