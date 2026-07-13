@@ -354,7 +354,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 33: Comment permission is enforced**
     - **Validates: Requirements 11.7**
 
-  - [ ] 20.4 Write property test for mention notifications
+  - [-] 20.4 Write property test for mention notifications
     - **Property 34: Mentions notify members with view access**
     - **Validates: Requirements 11.4**
 
