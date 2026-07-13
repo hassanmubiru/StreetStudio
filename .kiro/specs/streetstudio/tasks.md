@@ -188,7 +188,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 75: Organization settings updates are validated atomically**
     - **Validates: Requirements 26.1, 26.5**
 
-  - [ ] 10.9 Write property test for member removal revoking access
+  - [-] 10.9 Write property test for member removal revoking access
     - **Property 76: Removing a member revokes access**
     - **Validates: Requirements 26.2**
 
