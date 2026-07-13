@@ -4,10 +4,12 @@
 # One job produces a single overall pass/fail (R32.2) within a 30-minute budget
 # (`timeout-minutes: 30`). It runs the import-boundary and dependency-graph
 # gates, then every test category as its own named step so a failure clearly
-# indicates WHICH category failed (R32.3). Real dependencies (PostgreSQL, Redis,
-# S3-compatible object storage) are provided as service containers and wired via
-# environment variables so tests verify behavior against them where reachable
-# (R32.4); category tests skip/gate themselves when a dependency is unreachable.
+# indicates WHICH category failed (R32.3). Real dependencies (PostgreSQL, Redis)
+# are provided as official service containers and wired via environment variables
+# so tests verify behavior against them where reachable (R32.4); category tests
+# skip/gate themselves when a dependency is unreachable. Object storage is
+# exercised via the in-memory/local providers and the storage-conformance suite;
+# a real S3-compatible backend can be verified out-of-band where provisioned.
 # A final coverage step fails the build below 80% line coverage (R32.5). The
 # classification step distinguishes an infrastructure/environment failure from a
 # test failure (R32.6).
