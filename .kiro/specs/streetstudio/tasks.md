@@ -266,11 +266,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 21: Chunk integrity failures are bounded and non-destructive**
     - **Validates: Requirements 7.4, 7.5**
 
-  - [ ] 14.6 Write property test for upload session expiry
+  - [-] 14.6 Write property test for upload session expiry
     - **Property 22: Upload sessions expire after 24 hours of inactivity**
     - **Validates: Requirements 7.6**
 
-  - [ ] 14.7 Write property test for upload progress reporting
+  - [-] 14.7 Write property test for upload progress reporting
     - **Property 23: Upload progress reflects acknowledged chunk count**
     - **Validates: Requirements 7.7**
 
@@ -401,7 +401,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 13.5, 13.6_
 
 - [ ] 23. Implement search and transcript search
-  - [ ] 23.1 Implement SearchService with authorized scoping and pagination
+  - [-] 23.1 Implement SearchService with authorized scoping and pagination
     - Return, within 3s, Videos/Assets whose indexed text matches a 1–500 char query within the member's authorized scope; include transcript matches with matching playback position; validate query length rejecting empty/>500; page results at ≤100 with a retrieval cursor; return empty set on no matches
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
 
