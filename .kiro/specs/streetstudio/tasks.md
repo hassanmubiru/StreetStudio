@@ -254,7 +254,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 18: Chunk acceptance validates size and acknowledges each received chunk**
     - **Validates: Requirements 7.1**
 
-  - [-] 14.3 Write property test for resumable uploads without retransmission
+  - [x] 14.3 Write property test for resumable uploads without retransmission
     - **Property 19: Interrupted uploads resume without retransmitting acknowledged chunks**
     - **Validates: Requirements 7.2**
 
