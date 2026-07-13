@@ -8,7 +8,7 @@ import type { AuthContext } from "@streetstudio/auth";
 import type { PluginType } from "@streetstudio/plugins";
 
 export const DOMAIN =
-  "Media domain: videos, assets, storage abstraction, uploads, sharing, developer assets, reviews, and knowledge base." as const;
+  "Media domain: videos, assets, uploads, sharing, developer assets, and engineering reviews." as const;
 
 /** Placeholder access context threaded through media operations. */
 export interface AccessContext {

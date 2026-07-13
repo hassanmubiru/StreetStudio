@@ -10,6 +10,7 @@
     { "path": "../shared" },
     { "path": "../database" },
     { "path": "../auth" },
-    { "path": "../plugins" }
+    { "path": "../plugins" },
+    { "path": "../storage" }
   ]
 }
