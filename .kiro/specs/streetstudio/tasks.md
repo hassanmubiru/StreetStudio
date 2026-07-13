@@ -333,7 +333,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 47: Share link expiry and revocation deny access**
     - **Validates: Requirements 15.2, 15.3**
 
-  - [ ] 19.4 Write property test for content-permission enforcement
+  - [-] 19.4 Write property test for content-permission enforcement
     - **Property 48: Content permission is required for resource access**
     - **Validates: Requirements 15.4**
 
