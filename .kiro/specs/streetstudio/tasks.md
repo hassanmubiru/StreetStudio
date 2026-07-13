@@ -283,7 +283,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 17: Offline recording upload retries are bounded**
     - **Validates: Requirements 6.11**
 
-  - [ ] 15.3 Write unit tests for capture, pause/resume, unsupported audio, and denied permission
+  - [-] 15.3 Write unit tests for capture, pause/resume, unsupported audio, and denied permission
     - Test capture source selection, pause/resume state, system-audio-unavailable notification, denied-permission abort, and offline local storage
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.8, 6.9, 6.10_
 
