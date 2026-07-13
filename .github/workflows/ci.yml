@@ -64,34 +64,14 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      # bitnami/minio starts the S3-compatible server automatically (GitHub
-      # service containers cannot override the image command/args), and creates
-      # the media bucket on boot via MINIO_DEFAULT_BUCKETS.
-      minio:
-        image: bitnami/minio:latest
-        env:
-          MINIO_ROOT_USER: streetstudio
-          MINIO_ROOT_PASSWORD: streetstudio-ci-secret
-          MINIO_DEFAULT_BUCKETS: streetstudio-media
-        ports:
-          - 9000:9000
-          - 9001:9001
-        options: >-
-          --health-cmd "curl -f http://localhost:9000/minio/health/live || exit 1"
-          --health-interval 15s
-          --health-timeout 5s
-          --health-retries 5
-
     env:
-      # Real-dependency wiring for tests that can reach these services (R32.4).
+      # Real-dependency wiring (R32.4). The reachability-gated integration tests
+      # read the STREETSTUDIO_IT_* URLs and exercise the live PostgreSQL/Redis
+      # service containers when present, skipping gracefully when they are not.
       DATABASE_URL: postgres://streetstudio:streetstudio@localhost:5432/streetstudio
       REDIS_URL: redis://localhost:6379
-      STORAGE_ENDPOINT: http://localhost:9000
-      STORAGE_REGION: us-east-1
-      STORAGE_BUCKET: streetstudio-media
-      STORAGE_ACCESS_KEY_ID: streetstudio
-      STORAGE_SECRET_ACCESS_KEY: streetstudio-ci-secret
-      STORAGE_FORCE_PATH_STYLE: "true"
+      STREETSTUDIO_IT_DATABASE_URL: postgres://streetstudio:streetstudio@localhost:5432/streetstudio
+      STREETSTUDIO_IT_REDIS_URL: redis://localhost:6379
       # Minimal valid app config so services can start under test.
       AUTH_JWT_SECRET: ci-only-jwt-secret-value-at-least-32-characters
       INSTANCE_ID: 00000000-0000-4000-8000-000000000000
