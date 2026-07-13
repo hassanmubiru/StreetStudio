@@ -413,7 +413,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 43: Transcript matches include playback position**
     - **Validates: Requirements 14.2**
 
-  - [ ] 23.4 Write property test for query length validation
+  - [x] 23.4 Write property test for query length validation
     - **Property 44: Search query length is validated**
     - **Validates: Requirements 14.5**
 
