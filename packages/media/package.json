@@ -21,9 +21,10 @@
     "@streetstudio/database": "*",
     "@streetstudio/auth": "*",
     "@streetstudio/plugins": "*",
+    "@streetstudio/storage": "*",
     "@streetstudio/shared": "*"
   },
   "streetstudio": {
-    "domain": "Media domain: videos, assets, storage abstraction, comments, sharing, and search."
+    "domain": "Media domain: videos, assets, uploads, sharing, developer assets, and engineering reviews."
   }
 }
