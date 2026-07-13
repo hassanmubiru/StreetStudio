@@ -182,3 +182,40 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   independently-consumable player (e.g. an embeddable player SDK) becomes a real
   requirement, extract `packages/player` at that point behind its current
   public types, and supersede this ADR.
+
+---
+
+## ADR-0008: Align package names with the product sketch — `recorder` and standalone `player`
+
+- **Status:** Accepted (supersedes ADR-0007)
+- **Context:** ADR-0007 kept the recorder as `packages/recording` and playback
+  inside `packages/media`, arguing a rename/extraction was churn without benefit.
+  The project owner subsequently asked to align the package layout with the
+  product sketch (`packages/recorder`, `packages/player`) so the repository
+  structure matches the documented architecture and an independently-consumable
+  player package exists (e.g. for an embeddable player surface).
+- **Decision:** Perform both changes:
+  1. Rename `packages/recording` → `packages/recorder`
+     (`@streetstudio/recording` → `@streetstudio/recorder`). It had **no code
+     importers**; only `apps/web` and `apps/desktop` referenced it via project
+     references and manifests, which were updated.
+  2. Extract streaming/playback from `packages/media` into a new
+     **`packages/player`** (`@streetstudio/player`) exposing `PlaybackService`
+     and its ports. The `VIEW_VIDEO_PERMISSION` contract **stays in the media
+     domain** (it also gates comments and search) in a new
+     `packages/media/src/permissions.ts`, and `player` depends on `media` for it
+     and re-exports it for player consumers. Direction is
+     `player → media → {database, auth, plugins, shared}` — acyclic.
+- **Rationale / trade-offs:** The extraction was contained: no external package
+  imports playback symbols (the storage plugins consume only storage types from
+  `media`, and `apps/api` imports only `DOMAIN`), so the only coupling to resolve
+  was the `VIEW_VIDEO_PERMISSION` constant. Keeping that constant in the media
+  domain avoids a backwards `media → player` dependency. The alternative (leaving
+  the layout as-is) was rejected in favour of matching the documented structure.
+- **Consequences:** The monorepo now has `packages/recorder` and
+  `packages/player`. Playback tests moved with the code into `packages/player`.
+  The full gate remains green after the change (build, `graph:check`,
+  `boundary:check`, and the whole test suite — 160 files, 753 passed, 1 skipped;
+  coverage 84.85%). Documentation (`README.md`, `docs/ARCHITECTURE.md`,
+  `docs/MEDIA_PIPELINE.md`, `docs/IMPLEMENTATION_REPORT.md`, `ROADMAP.md`) was
+  updated to the new names.
