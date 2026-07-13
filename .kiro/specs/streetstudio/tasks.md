@@ -561,11 +561,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 61: Webhook deliveries are signed and verifiable**
     - **Validates: Requirements 19.4**
 
-  - [ ] 35.4 Write property test for bounded delivery retries with backoff
+  - [-] 35.4 Write property test for bounded delivery retries with backoff
     - **Property 62: Webhook delivery retries are bounded with backoff**
     - **Validates: Requirements 19.5, 19.6**
 
-  - [ ] 35.5 Write property test for delivery stop on deletion
+  - [-] 35.5 Write property test for delivery stop on deletion
     - **Property 63: Deleting a webhook stops deliveries**
     - **Validates: Requirements 19.7**
 
@@ -582,7 +582,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 86: Secrets are never persisted in plaintext**
     - **Validates: Requirements 29.2**
 
-  - [ ] 36.4 Write property test for non-public endpoint authentication
+  - [-] 36.4 Write property test for non-public endpoint authentication
     - **Property 87: Non-public endpoints deny unauthenticated access**
     - **Validates: Requirements 29.4**
 
@@ -615,7 +615,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Operate against PostgreSQL HA and Redis Cluster via StreetJS interfaces; reconnect on primary/node loss and resume without operator restart
     - _Requirements: 30.5, 30.6_
 
-  - [ ] 39.3 Author container images and deployment configuration
+  - [-] 39.3 Author container images and deployment configuration
     - Provide `docker/` container images/compose and `infrastructure/` deployment configuration for self-hosting
     - _Requirements: 30.1_
 
