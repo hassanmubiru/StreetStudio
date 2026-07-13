@@ -209,7 +209,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 13: Project and folder creation validity and scoping**
     - **Validates: Requirements 5.1, 5.2, 5.8**
 
-  - [-] 11.3 Write property test for folder nesting depth bound
+  - [x] 11.3 Write property test for folder nesting depth bound
     - **Property 14: Folder nesting is bounded at depth 10**
     - **Validates: Requirements 5.3**
 
