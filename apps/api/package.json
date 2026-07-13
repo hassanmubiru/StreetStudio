@@ -17,6 +17,7 @@
     "@streetstudio/media": "*",
     "@streetstudio/processing": "*",
     "@streetstudio/notifications": "*",
+    "@streetstudio/realtime": "*",
     "@streetstudio/plugins": "*",
     "@streetstudio/analytics": "*"
   },
