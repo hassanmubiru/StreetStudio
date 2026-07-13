@@ -14,14 +14,17 @@ stack locally using the container assets in [`../docker/`](../docker/).
 # 1. From the repository root, copy the example environment.
 cp docker/.env.example docker/.env
 
-# 2. Edit docker/.env and set the required values. Startup validates these and
-#    aborts naming every missing/invalid one (see docs/DEPLOYMENT.md):
+# 2. Edit docker/.env and set the required values. Startup validates the
+#    resulting config and aborts naming every missing/invalid one
+#    (see docs/DEPLOYMENT.md). At minimum, replace:
 #      - INSTANCE_ID            (UUID)
-#      - DATABASE_URL           (postgres://…)
-#      - REDIS_URL              (redis://…)
 #      - AUTH_JWT_SECRET        (≥ 32 characters)
 #      - HTTP_PORT              (1–65535)
 #      - HTTP_PUBLIC_BASE_URL   (http(s)://…)
+#      - POSTGRES_PASSWORD      (strong password)
+#      - MINIO_ROOT_PASSWORD    (strong password)
+#    The in-stack PostgreSQL/Redis URLs are derived automatically; set
+#    DATABASE_URL / REDIS_URL only to target an external or HA endpoint.
 
 # 3. Bring up the stack (API + PostgreSQL + Redis + object storage).
 docker compose -f docker/docker-compose.yml up -d

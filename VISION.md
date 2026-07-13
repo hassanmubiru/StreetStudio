@@ -323,7 +323,8 @@ Not in the sketch but present (and required): `packages/config` (config +
 boundary/graph tooling), `packages/database` (schema, repositories, audit log),
 and the `storage-*` provider plugins.
 
-Not yet present from the sketch: a top-level `examples/` directory.
+The top-level `examples/` directory from the sketch is now present
+([`examples/`](examples/)) with an SDK quickstart and a self-hosting guide.
 
 **Licensing:** the sketch left MIT/Apache to owner decision; the repository ships
 **Apache-2.0** (`LICENSE`, and every `package.json`).
