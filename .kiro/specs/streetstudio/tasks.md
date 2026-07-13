@@ -446,7 +446,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Implement each provider against the StorageProvider interface as a plugin; no provider imported into core
     - _Requirements: 9.2_
 
-  - [ ] 26.2 Write the shared storage-provider conformance suite
+  - [-] 26.2 Write the shared storage-provider conformance suite
     - Run the round-trip and signed-target properties (Properties 27, 29) against every provider plugin, against real backends where reachable and MinIO/local otherwise
     - _Requirements: 9.1, 9.6_
 
