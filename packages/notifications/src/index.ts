@@ -21,26 +21,6 @@ export type {
   NotificationPreferenceStore,
 } from "./notification-service.js";
 
-// --- Realtime_Service gateway (task 22.1) ----------------------------------
-export {
-  RealtimeGateway,
-  systemTimer,
-  realtimeNotificationEmitter,
-  streetWebSocketTransport,
-  streetRedisBackplane,
-  InMemoryTransport,
-  InMemoryBackplane,
-  ManualTimer,
-} from "./realtime.js";
-export type {
-  RealtimeEventType,
-  RealtimeEvent,
-  Audience,
-  RealtimeTransport,
-  RealtimeBackplane,
-  Timer,
-  TimerHandle,
-  RealtimeGatewayDeps,
-  StreetWebSocketHub,
-  StreetRedisPubSub,
-} from "./realtime.js";
+// The Realtime_Service gateway lives in `@streetstudio/realtime`; it consumes
+// the notification contracts (`NotificationEmitter`, `NotificationDto`) exported
+// above.

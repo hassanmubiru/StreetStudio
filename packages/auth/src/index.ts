@@ -99,22 +99,7 @@ export type {
   RoleName,
 } from "./access-control.js";
 
-// --- Organization & Membership service (task 10.1, 10.2) -------------------
-export {
-  OrgService,
-  repositoryOrgStore,
-  isValidOrgSettings,
-  ADMINISTRATOR_ROLE_NAME,
-  MEMBER_ROLE_NAME,
-  ADMIN_ACTION_SETTINGS_UPDATED,
-  ADMIN_ACTION_MEMBER_REMOVED,
-  INVITATION_TTL_MS,
-  MAX_ORG_NAME_LENGTH,
-  MAX_TEAM_NAME_LENGTH,
-} from "./org-service.js";
-export type {
-  AdminAuditRecorder,
-  OrgServiceDeps,
-  OrgSettings,
-  OrgStore,
-} from "./org-service.js";
+// Organizations, teams, membership, invitations, and administration live in
+// `@streetstudio/organizations`, which builds on the auth primitives
+// (AuthContext, ROLE_MANAGEMENT_PERMISSION, systemClock, toIsoTimestamp)
+// exported above.
