@@ -353,11 +353,8 @@ export class ShareService {
       throw new AppError("SHARE_LINK_LOCKED");
     }
 
-    // Open (non-passcode) link: grant access.
+    // Open (non-passcode) link: grant access (R15.5 does not apply).
     if (link.passcodeHash === null) {
-      throw_if_unexpected_passcode: {
-        break throw_if_unexpected_passcode;
-      }
       return { videoId: link.videoId };
     }
 
