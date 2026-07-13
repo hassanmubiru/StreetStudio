@@ -22,6 +22,12 @@ export * from "./boundary/index.js";
 // and aborts startup with an error naming every missing/invalid required value.
 export * from "./config.js";
 
+// Secret storage via the StreetJS secret interface (Requirement 29.2). All
+// secrets are persisted encrypted through the injectable SecretCipher seam and
+// never in plaintext. Exposed through the entry point so the composition root
+// and other packages consume it without reaching into internal modules.
+export * from "./secrets.js";
+
 // Package dependency-graph acyclicity checker (Requirement 2.5). Exposed
 // through the package entry point so CI tooling and tests consume it without
 // reaching into internal module paths.
