@@ -637,7 +637,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - E2E flow (register → org → invite/accept → project/folder → record → chunked upload → pipeline → ready → playback → comment → mention → share access) driven exclusively through the public API/SDK; latency-budget benchmarks; concurrent-upload/realtime-fanout/webhook load tests; media pipeline transcode/thumbnail/preview tests
     - _Requirements: 32.1, 32.4_
 
-- [ ] 42. Final checkpoint - full suite
+- [-] 42. Final checkpoint - full suite
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
