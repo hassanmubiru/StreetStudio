@@ -48,6 +48,8 @@ The full documentation set lives under [`docs/`](docs/):
 - [DEPLOYMENT](docs/DEPLOYMENT.md) — self-hosting, configuration, health/metrics, scaling, HA.
 - [DECISIONS](docs/DECISIONS.md) — architecture decision records (ADRs).
 
+Copy-pasteable [examples](examples/) show the public API/SDK in action (SDK quickstart, self-hosting).
+
 ## StreetJS gap register
 
 Per the consumption policy above, StreetStudio never modifies StreetJS. Where a
