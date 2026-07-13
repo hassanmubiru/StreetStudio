@@ -49,3 +49,21 @@ export type {
   MetricSnapshot,
   StreetMetricsInterface,
 } from "./metrics.js";
+
+export {
+  ConnectionLostError,
+  DEFAULT_HA_RECONNECT_POLICY,
+  HaConnectionManager,
+  createHaConnectionManager,
+  isConnectionLoss,
+} from "./ha.js";
+export type {
+  ConnectionLossPredicate,
+  HaConnection,
+  HaConnectionManagerOptions,
+  HaConnectionState,
+  HaReconnectPolicy,
+  PostgresHaConnection,
+  RedisClusterConnection,
+  Sleep,
+} from "./ha.js";

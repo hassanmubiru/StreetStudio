@@ -607,11 +607,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 39. Implement self-hosting, deployment, and HA operation
-  - [-] 39.1 Implement startup, health, and metrics endpoints
+  - [x] 39.1 Implement startup, health, and metrics endpoints
     - Complete startup within 60s when config is valid; expose health (reflecting dependency reachability) and metrics via the StreetJS interfaces; abort startup on missing/invalid config
     - _Requirements: 30.2, 30.3, 30.4_
 
-  - [ ] 39.2 Implement HA operation against PostgreSQL HA and Redis Cluster
+  - [-] 39.2 Implement HA operation against PostgreSQL HA and Redis Cluster
     - Operate against PostgreSQL HA and Redis Cluster via StreetJS interfaces; reconnect on primary/node loss and resume without operator restart
     - _Requirements: 30.5, 30.6_
 
