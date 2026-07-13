@@ -490,7 +490,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 21.8, 24.2_
 
 - [ ] 30. Implement Developer Mode assets
-  - [ ] 30.1 Implement DeveloperAssets attachments
+  - [-] 30.1 Implement DeveloperAssets attachments
     - Attach code snippet/markdown (1–100,000 chars), terminal recording, and API recording as Assets when Developer Mode is enabled; reject out-of-range lengths and reject all developer attachments with "Developer Mode required" when disabled, leaving the Video unchanged
     - _Requirements: 23.1, 23.2, 23.3, 23.4, 23.5, 23.6_
 
