@@ -54,22 +54,11 @@ export type {
   StorageWriteFailureReason,
 } from "./storage.js";
 
-// --- Streaming & Playback Service (task 17.1) ------------------------------
-export {
-  PlaybackService,
-  repositoryPlaybackStore,
-  repositoryShareCredentialResolver,
-  VIEW_VIDEO_PERMISSION,
-} from "./playback.js";
-export type {
-  PlaybackServiceDeps,
-  PlaybackStore,
-  PlaybackContext,
-  ShareCredentialResolver,
-  ResolvedShare,
-  StreamManifest,
-  ManifestRendition,
-} from "./playback.js";
+// --- Media-domain permission contracts -------------------------------------
+// Streaming & playback itself now lives in `@streetstudio/player`; the
+// VIEW_VIDEO_PERMISSION contract remains here in the media domain (it gates
+// comments and search too) and is re-exported by the player for its consumers.
+export { VIEW_VIDEO_PERMISSION } from "./permissions.js";
 
 // --- Sharing & Content Permissions (task 19.1) -----------------------------
 export {
