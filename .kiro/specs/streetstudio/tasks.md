@@ -196,7 +196,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 77: Administrative actions require Administrator role**
     - **Validates: Requirements 26.4**
 
-  - [ ] 10.11 Write property test for last-administrator retention
+  - [-] 10.11 Write property test for last-administrator retention
     - **Property 78: An organization always retains at least one Administrator**
     - **Validates: Requirements 26.6**
 
