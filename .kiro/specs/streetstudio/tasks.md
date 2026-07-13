@@ -246,7 +246,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 9.5_
 
 - [ ] 14. Implement chunked and resumable uploads
-  - [x] 14.1 Implement the UploadService (init, putChunk, status, complete)
+  - [-] 14.1 Implement the UploadService (init, putChunk, status, complete)
     - Accept ordered chunks 1 MB–100 MB, acknowledging each; integrity-check each chunk, rejecting failures without persisting and retrying ≤3 times before aborting and discarding partial chunks; resume within 24h from the chunk after the last ack without retransmission; expire idle sessions after 24h; assemble in order into the completed Video; emit upload-progress on each ack
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
 
