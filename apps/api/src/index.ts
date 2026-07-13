@@ -26,6 +26,15 @@ export const DOMAIN =
  */
 export * from "./security/index.js";
 
+/**
+ * Webhooks (Requirement 19): register/delete outbound subscriptions with
+ * HTTPS-only, ≤2048-character URL validation and supported-event-type checking,
+ * plus signed worker delivery with a 10s per-attempt timeout, bounded retries
+ * with exponential backoff, and deletion that stops further delivery. Exposed
+ * through the API entry point for composition-root wiring.
+ */
+export * from "./webhooks/index.js";
+
 /** Domains wired into the API service, proving cross-package resolution. */
 export const WIRED_DOMAINS = [
   SHARED_DOMAIN,
