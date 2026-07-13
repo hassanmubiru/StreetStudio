@@ -591,7 +591,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Wire all domain services via StreetJS DI into REST controllers and the WebSocket gateway with the request lifecycle (rate limit → authenticate → validate → RBAC → service → audit); expose every Web_Client capability through a public REST/WebSocket/Webhook interface enforcing the same authorization as the equivalent Web_Client request
     - _Requirements: 20.1, 20.4, 20.5_
 
-  - [ ] 37.2 Implement the SDK client
+  - [-] 37.2 Implement the SDK client
     - Provide typed client methods for every public REST and WebSocket operation; support lockstep release with contract changes and the 90-day deprecation window for breaking changes
     - _Requirements: 20.2, 20.3, 20.6_
 
