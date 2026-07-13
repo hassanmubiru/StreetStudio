@@ -77,6 +77,7 @@ node.disconnect("d1");
 node.connect("dave", "d2"); // reconnect before timer fires
 const carolBefore = tt.eventsFor("c1").length;
 timer2.advance(5000);
+await flush();
 assert.equal(tt.eventsFor("c1").length, carolBefore, "no departure after reconnect");
 console.log("ok: reconnect cancels pending departure");
 
