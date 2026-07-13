@@ -321,7 +321,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 19. Implement sharing and content permissions
-  - [ ] 19.1 Implement ShareService (create, revoke, resolve) and content-permission enforcement
+  - [-] 19.1 Implement ShareService (create, revoke, resolve) and content-permission enforcement
     - Generate globally unique share credentials; deny access at/after expiry or once revoked with no change to the Video; grant passcode-protected access only on matching passcode and lock the link ≥15 min after 5 consecutive incorrect attempts; enforce content permission on every Video/Asset/Comment/Folder read or modify with no change on denial
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7_
 
