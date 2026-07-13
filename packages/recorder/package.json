@@ -1,5 +1,5 @@
 {
-  "name": "@streetstudio/recording",
+  "name": "@streetstudio/recorder",
   "version": "0.1.0",
   "private": true,
   "description": "Recorder capture and chunked/resumable upload client logic.",
