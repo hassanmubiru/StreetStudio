@@ -30,7 +30,7 @@ import {
   InMemoryTransport,
   RealtimeGateway,
   type RealtimeEvent,
-} from "@streetstudio/notifications";
+} from "@streetstudio/realtime";
 import {
   WebhookDeliveryWorker,
   verifySignature,
