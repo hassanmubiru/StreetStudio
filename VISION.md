@@ -71,6 +71,13 @@ engineering knowledge.
 
 ## Product position
 
+> **StreetStudio is the asynchronous operating system for software teams.**
+
+The experience-centric product strategy — the lifecycle (Capture → Explain →
+Collaborate → Track → Resolve → Archive), the engineering knowledge graph,
+recorder markers, whole-workflow reviews, outcome-based analytics, and the
+experience-based roadmap — lives in [`docs/PRODUCT.md`](docs/PRODUCT.md).
+
 Rather than competing with Loom feature-for-feature, StreetStudio competes
 differently:
 
