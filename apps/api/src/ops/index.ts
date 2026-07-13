@@ -12,6 +12,10 @@
  *    StreetJS health check interface (R30.2, R30.4).
  *  - {@link MetricsRegistry} / {@link exposeMetrics}: record counters/gauges and
  *    publish them through the StreetJS metrics interface (R30.4).
+ *  - {@link HaConnectionManager} / {@link createHaConnectionManager}: operate
+ *    against PostgreSQL HA and Redis Cluster through the StreetJS HA interfaces
+ *    (R30.5) and reconnect on primary/node loss, resuming without an operator
+ *    restart (R30.6).
  *
  * Every StreetJS touchpoint is a structural adapter seam, so the host never
  * imports framework internals.
