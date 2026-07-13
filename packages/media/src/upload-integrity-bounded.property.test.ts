@@ -260,19 +260,62 @@ describe("Feature: streetstudio, Property 21: Chunk integrity failures are bound
           const bad = badChunk(failIndex);
 
           for (let attempt = 1; attempt <= attemptsToRun; attempt++) {
-            await expect(service.putChunk(sessionId, bad)).rejects.toBeTruthy();
-
+            // Capture the error raised by this single transmission of the bad
+            // chunk so its code/details can be asserted.
             let thrown: unknown;
             try {
               await service.putChunk(sessionId, bad);
+              // A failing-integrity chunk must never be accepted.
+              expect.unreachable("bad chunk was accepted");
             } catch (err) {
               thrown = err;
             }
-            // NOTE: the call above is a second invocation only to capture the
-            // error object; account for it by advancing `attempt` accordingly.
-            attempt++;
+            const error = thrown as { code?: string; details?: Record<string, unknown> };
 
-            void thrown;
+            if (attempt < MAX_CHUNK_INTEGRITY_ATTEMPTS) {
+              // R7.4 — non-final failures request retransmission and leave the
+              // session usable, with attempts remaining.
+              expect(error.code).toBe("UPLOAD_CHUNK_INVALID");
+              expect(error.details).toMatchObject({
+                sessionId,
+                chunkIndex: failIndex,
+                attempts: attempt,
+                remaining: MAX_CHUNK_INTEGRITY_ATTEMPTS - attempt,
+              });
+
+              // Non-destructive: the failing chunk was not persisted and the
+              // previously acknowledged prefix is byte-for-byte unchanged.
+              expect(snapshotStaged(chunks, sessionId)).toEqual(baseline);
+              expect(chunks.staged.get(sessionId)?.has(failIndex) ?? false).toBe(
+                false,
+              );
+
+              // The session stays open with the same acknowledged count.
+              const st = await service.status(sessionId);
+              expect(st.status).toBe("open");
+              expect(st.acknowledged).toBe(failIndex);
+              expect(st.nextExpectedIndex).toBe(failIndex);
+              expect(chunks.discarded.has(sessionId)).toBe(false);
+            } else {
+              // R7.5 — the 3rd consecutive failure aborts the session, discards
+              // the partial chunks, and identifies the failing chunk.
+              expect(error.code).toBe("UPLOAD_FAILED");
+              expect(error.details).toMatchObject({
+                reason: "chunk-integrity",
+                sessionId,
+                chunkIndex: failIndex,
+                attempts: MAX_CHUNK_INTEGRITY_ATTEMPTS,
+              });
+
+              expect(store.sessions.get(sessionId)?.status).toBe("aborted");
+              expect(chunks.discarded.has(sessionId)).toBe(true);
+              expect(chunks.staged.has(sessionId)).toBe(false);
+
+              // The aborted session rejects any further chunk transmission.
+              await expect(
+                service.putChunk(sessionId, goodChunk(failIndex)),
+              ).rejects.toMatchObject({ code: "UPLOAD_FAILED" });
+            }
           }
         },
       ),
