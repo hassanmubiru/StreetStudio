@@ -90,3 +90,29 @@ export type {
   ContentResourceType,
   ContentResourceRef,
 } from "./share.js";
+
+// --- Chunked & Resumable Upload Service (task 14.1) ------------------------
+export {
+  UploadService,
+  repositoryUploadStore,
+  storageRouterChunkStorage,
+  sha256ChunkVerifier,
+  MIN_CHUNK_BYTES,
+  MAX_CHUNK_BYTES,
+  UPLOAD_SESSION_LIFETIME_MS,
+  MAX_CHUNK_INTEGRITY_ATTEMPTS,
+} from "./upload.js";
+export type {
+  UploadServiceDeps,
+  UploadStore,
+  ChunkStorage,
+  ChunkVerifier,
+  UploadProgressEmitter,
+  UploadProgressEvent,
+  UploadMeta,
+  UploadChunk,
+  ChunkAck,
+  UploadStatus,
+  AssembledObject,
+  StorageRouterChunkStorageOptions,
+} from "./upload.js";
