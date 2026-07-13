@@ -164,3 +164,18 @@ export type {
   TerminalCapture,
   ApiRecording,
 } from "./developer-assets.js";
+
+// --- Engineering Reviews Service (task 31.1) -------------------------------
+export {
+  ReviewService,
+  repositoryReviewStore,
+  LINK_PULL_REQUEST_PERMISSION,
+} from "./review.js";
+export type {
+  ReviewServiceDeps,
+  ReviewStore,
+  SourceControlAccess,
+  CommentPoster,
+  PrRef,
+  ResolvedPullRequest,
+} from "./review.js";

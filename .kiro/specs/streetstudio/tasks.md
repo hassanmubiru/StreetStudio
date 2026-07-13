@@ -490,7 +490,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 21.8, 24.2_
 
 - [ ] 30. Implement Developer Mode assets
-  - [-] 30.1 Implement DeveloperAssets attachments
+  - [x] 30.1 Implement DeveloperAssets attachments
     - Attach code snippet/markdown (1–100,000 chars), terminal recording, and API recording as Assets when Developer Mode is enabled; reject out-of-range lengths and reject all developer attachments with "Developer Mode required" when disabled, leaving the Video unchanged
     - _Requirements: 23.1, 23.2, 23.3, 23.4, 23.5, 23.6_
 
@@ -499,7 +499,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 23.1, 23.3, 23.5, 23.6**
 
 - [ ] 31. Implement engineering reviews
-  - [ ] 31.1 Implement ReviewService (linkPullRequest, postReviewComment)
+  - [-] 31.1 Implement ReviewService (linkPullRequest, postReviewComment)
     - Store a PR association only when the source-control plugin is enabled, the PR/repository is accessible, and the member holds link permission; store review comments at the referenced position only when body is 1–5000 chars and timestamp is 0–duration
     - _Requirements: 24.1, 24.3, 24.4, 24.5, 24.6_
 
