@@ -309,7 +309,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Provide an ABR streaming manifest within 3s if and only if the Video is ready and the requester holds view permission (or a valid share credential); deny with the appropriate error and no manifest otherwise
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-  - [-] 17.2 Write property test for playback state and authorization
+  - [x] 17.2 Write property test for playback state and authorization
     - **Property 30: Playback requires ready state and authorization**
     - **Validates: Requirements 10.1, 10.2, 10.3**
 
