@@ -578,7 +578,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 85: Rate limiting rejects excess requests with retry guidance**
     - **Validates: Requirements 29.1**
 
-  - [-] 36.3 Write property test for secret encryption at rest
+  - [x] 36.3 Write property test for secret encryption at rest
     - **Property 86: Secrets are never persisted in plaintext**
     - **Validates: Requirements 29.2**
 
