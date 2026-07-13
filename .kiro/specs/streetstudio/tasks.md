@@ -221,7 +221,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 16: Create permission is required for projects and folders**
     - **Validates: Requirements 5.6**
 
-- [ ] 12. Checkpoint - organizations and content
+- [x] 12. Checkpoint - organizations and content
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 13. Implement storage abstraction and provider contract
