@@ -380,7 +380,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 12.3, 12.6**
 
 - [ ] 22. Implement the Realtime_Service gateway
-  - [ ] 22.1 Implement the WebSocket gateway with Redis backplane
+  - [x] 22.1 Implement the WebSocket gateway with Redis backplane
     - Implement `join`/`leave`/`emit` over StreetJS WebSockets with a Redis pub/sub backplane for cross-node fan-out; deliver presence-join/leave and typing/typing-stopped to other relevant connected members within 2s (never the originator); start typing on activity and stop after 5s inactivity; emit presence-departure within 5s on dropped connections; deliver live comments to concurrent viewers within 2s; discard events for members with no active connection without disrupting others; carry upload-progress, processing-status, live-comment, and notification events
     - _Requirements: 11.6, 12.2, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_
 
