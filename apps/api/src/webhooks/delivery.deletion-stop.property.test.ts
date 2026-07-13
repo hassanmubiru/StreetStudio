@@ -144,32 +144,34 @@ describe("Feature: streetstudio, Property 63: Deleting a webhook stops deliverie
 
           const client = failingClient();
 
-          // The sleeper runs during backoff, after each failed attempt. Once
-          // the recorded request count reaches the chosen threshold, delete the
-          // subscription so the very next pre-attempt re-read stops delivery.
+          // Inject the deletion at the shared store's re-read seam: the worker
+          // calls `findById` once before each attempt. On the worker's
+          // `deleteAt`-th such re-read (0-based), remove the subscription via
+          // the real `service.delete` before answering, so that very re-read
+          // observes it gone and delivery stops. A re-entrancy guard prevents
+          // the `findById` that `service.delete` itself performs from being
+          // counted as a worker re-read.
+          const realFindById = store.findById.bind(store);
+          let workerReReads = 0;
+          let deleting = false;
           let deleted = false;
-          const sleeper: Sleeper = {
-            async sleep() {
-              if (
-                deleteAt >= 1 &&
-                !deleted &&
-                client.requests.length >= deleteAt
-              ) {
+          store.findById = async (orgId, id) => {
+            if (!deleting && id === dto.id) {
+              if (workerReReads === deleteAt && !deleted) {
                 deleted = true;
+                deleting = true;
                 await service.delete(ctx, dto.id);
+                deleting = false;
               }
-            },
+              workerReReads++;
+            }
+            return realFindById(orgId, id);
           };
-
-          // For the "delete before delivery begins" case, remove it up front.
-          if (deleteAt === 0) {
-            await service.delete(ctx, dto.id);
-          }
 
           const worker = new WebhookDeliveryWorker({
             store,
             client,
-            sleeper,
+            sleeper: noSleep,
             clock: fixedClock,
           });
           const event: PlatformEvent = {
@@ -181,10 +183,11 @@ describe("Feature: streetstudio, Property 63: Deleting a webhook stops deliverie
           const [outcome] = await worker.deliver(event);
 
           // The subscription must actually be gone from the shared store.
+          expect(deleted).toBe(true);
           expect(store.rows.has(dto.id)).toBe(false);
 
-          // Delivery stopped because the subscription was deleted; it was never
-          // marked delivered.
+          // The subscription was enumerated by the run, so an outcome exists;
+          // delivery stopped because it was deleted and was never delivered.
           expect(outcome).toBeDefined();
           expect(outcome?.delivered).toBe(false);
           expect(outcome?.stoppedReason).toBe("deleted");
