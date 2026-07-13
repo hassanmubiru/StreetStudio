@@ -329,9 +329,8 @@ The top-level `examples/` directory from the sketch is now present
 **Licensing:** the sketch left MIT/Apache to owner decision; the repository ships
 **Apache-2.0** (`LICENSE`, and every `package.json`).
 
-If you want the package layout to match the sketch one-to-one (e.g. extract
-standalone `organizations`, `comments`, `search`, `realtime`, `ai`, and
-`integrations` packages, and add `examples/`), that is a larger, boundary-graph
--affecting refactor — say the word and it can be done incrementally with the full
-gate (`scripts/check.sh`) green at each step, as with the `recorder`/`player`
-work (ADR-0008).
+The package layout now matches the sketch one-to-one: `organizations`,
+`comments`, `search`, `realtime`, `ai`, and `integrations` were extracted into
+standalone packages (ADR-0009), and `examples/` was added. Each extraction was
+done incrementally with the full gate (`scripts/check.sh`) green at every step,
+as with the `recorder`/`player` work (ADR-0008).

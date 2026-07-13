@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implemented layout.
 - `examples/` directory — SDK quickstart and Docker Compose self-hosting guide,
   both driven exclusively through the public API/SDK surface.
+- Six standalone domain packages extracted to match the vision sketch (ADR-0009):
+  `@streetstudio/organizations`, `@streetstudio/comments`, `@streetstudio/search`,
+  `@streetstudio/realtime`, `@streetstudio/ai`, and a new
+  `@streetstudio/integrations` framework (integration-plugin contract, registry,
+  built-in catalog). The monorepo package layout now matches VISION.md one-to-one.
 
 ### Changed
 

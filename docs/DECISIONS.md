@@ -219,3 +219,43 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   coverage 84.85%). Documentation (`README.md`, `docs/ARCHITECTURE.md`,
   `docs/MEDIA_PIPELINE.md`, `docs/IMPLEMENTATION_REPORT.md`, `ROADMAP.md`) was
   updated to the new names.
+
+---
+
+## ADR-0009: Extract standalone domain packages to match the vision sketch
+
+- **Status:** Accepted
+- **Context:** The founding vision ([`VISION.md`](../VISION.md)) sketches
+  standalone `organizations`, `comments`, `search`, `realtime`, `ai`, and
+  `integrations` packages. After ADR-0008 (recorder/player), the owner asked to
+  align the full package layout with the sketch.
+- **Decision:** Extract six packages, each depending on its source domain so the
+  graph stays acyclic:
+  - `@streetstudio/organizations` ← `packages/auth` (`org-service`); depends on
+    `auth`, `database`, `shared`.
+  - `@streetstudio/comments` ← `packages/media` (`comment`); depends on `media`,
+    `auth`, `database`, `shared`.
+  - `@streetstudio/search` ← `packages/media` (`search`); depends on `media`,
+    `auth`, `shared`.
+  - `@streetstudio/realtime` ← `packages/notifications` (`realtime`); depends on
+    `notifications`, `auth`, `shared`.
+  - `@streetstudio/ai` ← `packages/plugins` (`ai-router`); depends on `shared`.
+  - `@streetstudio/integrations` — a **new** integration framework (typed
+    integration-plugin contract, registry, and built-in catalog) over the plugin
+    system; depends on `plugins`, `shared`. The existing `integration-*` plugins
+    are unchanged (they already implement the generic `Plugin` contract).
+- **Rationale / trade-offs:** Each moved domain had **no external code
+  importers** (they were wired through the DI container / SDK), so the moves were
+  contained — only shared constants (`VIEW_VIDEO_PERMISSION`) and one test import
+  (`RealtimeGateway`) needed repointing. Keeping shared permission contracts in
+  the media domain preserved acyclicity (`comments`/`search`/`player` → `media`;
+  `organizations` → `auth`; `realtime` → `notifications`). The `integrations`
+  package was purpose-built rather than faked, giving the domain a real contract
+  and registry without rewriting the eight integration plugins.
+- **Consequences:** The monorepo now exposes all vision-sketch packages as
+  first-class entry points (34 packages total). The full gate stayed green at
+  every step (build, `graph:check`, `boundary:check`; 161 test files, 759
+  passed, 1 skipped; coverage 84.84%). Source that previously imported these from
+  their old homes now imports the dedicated packages. Docs (`README.md`,
+  `docs/ARCHITECTURE.md`, `docs/IMPLEMENTATION_REPORT.md`, `VISION.md`) were
+  updated to the new layout.
