@@ -192,7 +192,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 76: Removing a member revokes access**
     - **Validates: Requirements 26.2**
 
-  - [ ] 10.10 Write property test for administrator-only actions
+  - [-] 10.10 Write property test for administrator-only actions
     - **Property 77: Administrative actions require Administrator role**
     - **Validates: Requirements 26.4**
 
