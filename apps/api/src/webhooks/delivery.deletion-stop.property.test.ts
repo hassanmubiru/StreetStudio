@@ -86,6 +86,9 @@ function failingClient(): WebhookDeliveryClient & {
   };
 }
 
+/** Backoff waits are irrelevant here; make them instant. */
+const noSleep: Sleeper = { sleep: async () => {} };
+
 /* -------------------------------------------------------------------------
  * Generators
  * ---------------------------------------------------------------------- */
