@@ -275,7 +275,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 7.7**
 
 - [ ] 15. Implement the Recorder client capture and upload logic
-  - [-] 15.1 Implement Recorder capture, controls, and offline upload
+  - [ ] 15.1 Implement Recorder capture, controls, and offline upload
     - Capture screen/window/region with optional camera/microphone/system audio; continue without unsupported system audio and notify; abort and retain nothing on denied permission; cursor highlighting/drawing tools and keyboard shortcuts; pause/resume retaining pre-pause media; finalize ≤10s on stop and initiate upload; persist offline stops locally and upload with ≤5 retries on reconnect
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 6.11, 6.12_
 
@@ -292,7 +292,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Enqueue within 5s of upload completion; produce exactly one thumbnail, a 3–10s preview, and ≥3 ABR renditions, then mark the Video ready; emit processing-status transitions (queued|processing|ready|failed) to members with access within 2s; retry ≤3 times on failure, then record failure, retain source, and emit a failure event
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
 
-  - [-] 16.2 Write property test for required processing outputs
+  - [ ] 16.2 Write property test for required processing outputs
     - **Property 24: Processing produces the required outputs**
     - **Validates: Requirements 8.2, 8.3, 8.4, 8.7**
 
@@ -305,7 +305,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 8.6**
 
 - [ ] 17. Implement streaming and playback
-  - [-] 17.1 Implement PlaybackService manifest generation
+  - [ ] 17.1 Implement PlaybackService manifest generation
     - Provide an ABR streaming manifest within 3s if and only if the Video is ready and the requester holds view permission (or a valid share credential); deny with the appropriate error and no manifest otherwise
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
@@ -380,7 +380,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 12.3, 12.6**
 
 - [ ] 22. Implement the Realtime_Service gateway
-  - [-] 22.1 Implement the WebSocket gateway with Redis backplane
+  - [ ] 22.1 Implement the WebSocket gateway with Redis backplane
     - Implement `join`/`leave`/`emit` over StreetJS WebSockets with a Redis pub/sub backplane for cross-node fan-out; deliver presence-join/leave and typing/typing-stopped to other relevant connected members within 2s (never the originator); start typing on activity and stop after 5s inactivity; emit presence-departure within 5s on dropped connections; deliver live comments to concurrent viewers within 2s; discard events for members with no active connection without disrupting others; carry upload-progress, processing-status, live-comment, and notification events
     - _Requirements: 11.6, 12.2, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_
 
@@ -532,7 +532,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 34. Implement analytics
-  - [-] 34.1 Implement AnalyticsService (recordView, aggregate)
+  - [ ] 34.1 Implement AnalyticsService (recordView, aggregate)
     - Record a view event scoped to the member's organization within 5s on playback start (Video id, member id, timestamp); aggregate total views, distinct viewers, and total watch duration for a valid time range within 5s, Administrator-only, excluding other organizations; reject invalid ranges
     - _Requirements: 28.1, 28.2, 28.3, 28.4, 28.5_
 
