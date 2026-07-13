@@ -317,7 +317,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 31: Share-credential playback is granted only for valid credentials**
     - **Validates: Requirements 10.4, 10.5**
 
-- [ ] 18. Checkpoint - media path
+- [x] 18. Checkpoint - media path
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 19. Implement sharing and content permissions
