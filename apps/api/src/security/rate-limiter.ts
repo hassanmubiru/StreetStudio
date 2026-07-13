@@ -64,18 +64,21 @@ export class RateLimiter {
   private readonly hits = new Map<string, number[]>();
 
   constructor(options: RateLimiterOptions = {}) {
-    this.limit = options.limit ?? DEFAULT_RATE_LIMIT;
-    this.windowSeconds(options.windowSeconds ?? DEFAULT_WINDOW_SECONDS);
-    this.windowMs = (options.windowSeconds ?? DEFAULT_WINDOW_SECONDS) * 1000;
-    this.clock = options.clock ?? systemClock;
-  }
-
-  private windowSeconds(seconds: number): void {
-    if (!Number.isFinite(seconds) || seconds <= 0) {
+    const windowSeconds = options.windowSeconds ?? DEFAULT_WINDOW_SECONDS;
+    const limit = options.limit ?? DEFAULT_RATE_LIMIT;
+    if (!Number.isFinite(windowSeconds) || windowSeconds <= 0) {
       throw new AppError("CONFIGURATION_INVALID", {
         details: { reason: "rate-limit window must be a positive number of seconds" },
       });
     }
+    if (!Number.isInteger(limit) || limit <= 0) {
+      throw new AppError("CONFIGURATION_INVALID", {
+        details: { reason: "rate limit must be a positive integer" },
+      });
+    }
+    this.limit = limit;
+    this.windowMs = windowSeconds * 1000;
+    this.clock = options.clock ?? systemClock;
   }
 
   /**

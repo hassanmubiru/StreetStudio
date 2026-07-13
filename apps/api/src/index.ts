@@ -18,6 +18,14 @@ import { DOMAIN as ANALYTICS_DOMAIN } from "@streetstudio/analytics";
 export const DOMAIN =
   "API_Service: REST, WebSocket, and Webhook host built on StreetJS." as const;
 
+/**
+ * Security middleware and defaults (Requirement 29): per-client rate limiting,
+ * auth-required-by-default endpoint guarding, and StreetJS-backed encrypted
+ * secret storage. Exposed through the API entry point for composition-root
+ * wiring into the request lifecycle.
+ */
+export * from "./security/index.js";
+
 /** Domains wired into the API service, proving cross-package resolution. */
 export const WIRED_DOMAINS = [
   SHARED_DOMAIN,
