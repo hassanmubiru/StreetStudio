@@ -296,7 +296,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 24: Processing produces the required outputs**
     - **Validates: Requirements 8.2, 8.3, 8.4, 8.7**
 
-  - [ ] 16.3 Write property test for processing status values
+  - [-] 16.3 Write property test for processing status values
     - **Property 25: Processing status events use only defined status values**
     - **Validates: Requirements 8.5**
 
