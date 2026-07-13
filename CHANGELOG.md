@@ -12,8 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Top-level project meta files: `LICENSE` (Apache-2.0), root `ARCHITECTURE.md`,
   `ROADMAP.md`, `CONTRIBUTING.md`, this `CHANGELOG.md`, and a `scripts/`
   directory (`scripts/check.sh` local CI gate).
+- New `@streetstudio/player` package: streaming/playback (`PlaybackService`)
+  extracted from `@streetstudio/media` into an independently-consumable package
+  (ADR-0008).
 
 ### Changed
+
+- Renamed `@streetstudio/recording` → `@streetstudio/recorder`
+  (`packages/recording` → `packages/recorder`); updated `apps/web` and
+  `apps/desktop` project references and manifests (ADR-0008).
+- `@streetstudio/media` no longer contains playback; the `VIEW_VIDEO_PERMISSION`
+  contract moved to `packages/media/src/permissions.ts` (still exported from the
+  media entry point and re-exported by `@streetstudio/player`).
 
 - CI (`.github/workflows/ci.yml`): removed the unpullable `bitnami/minio` service
   container (the public Bitnami catalog was moved to a legacy archive) and wired

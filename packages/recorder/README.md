@@ -1,4 +1,4 @@
-# @streetstudio/recording
+# @streetstudio/recorder
 
 **Primary domain responsibility:** Recorder capture and chunked/resumable upload client logic.
 
