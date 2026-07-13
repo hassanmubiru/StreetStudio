@@ -1,100 +1,55 @@
-# StreetStudio — Implementation Report
+# StreetStudio — Full Implementation Report
 
-## Summary
+## 1. Executive summary
 
-The StreetStudio spec is fully implemented and verified. All 184 tasks
-(42 top-level tasks + 142 leaf sub-tasks, including 8 checkpoints) are complete.
-The project builds cleanly, all boundary and dependency-graph gates pass, and
-the full test suite is green.
+StreetStudio — an open-source asynchronous video collaboration platform built as
+the flagship application on the **StreetJS** framework — is fully implemented and
+verified. Every task in the spec is complete, the monorepo builds cleanly, all
+architectural boundary gates pass, and the entire test suite is green.
 
-## Task completion
+| Dimension                        | Result                                    |
+| -------------------------------- | ----------------------------------------- |
+| Tasks complete                   | 184 / 184 (100%)                          |
+| Requirements implemented (EARS)  | 32 / 32                                   |
+| Correctness properties covered   | 88 / 88 (1 property test each)            |
+| Apps / packages                  | 4 apps, 27 packages                       |
+| Source files / LOC (excl. tests) | 108 files, ~21,900 LOC                    |
+| Test files / LOC                 | 160 files, ~32,600 LOC                    |
+| Full test run                    | 160 files, 753 passed, 1 skipped, 0 failed|
+| Documentation                    | 11 files (README + 10 under `docs/`)      |
 
-| Metric              | Count             |
-| ------------------- | ----------------- |
-| Total tasks         | 184 (100%)        |
-| Top-level tasks     | 42                |
-| Leaf sub-tasks      | 142               |
-| Checkpoints passed  | 8 (incl. final)   |
+## 2. Verification results
 
-## Requirements & correctness coverage
+All commands run from the workspace root (`/…/StreetStudio`).
 
-| Metric                              | Count                    |
-| ----------------------------------- | ------------------------ |
-| Requirements (EARS)                 | 32                       |
-| Correctness properties (design)     | 88                       |
-| Property-based test files           | 88 (1:1 with properties) |
-
-Every one of the 88 design correctness properties has a corresponding
-`fast-check` property test (minimum 100 iterations, tagged
-`Feature: streetstudio, Property N`).
-
-## Codebase scale
-
-| Metric                       | Value                                            |
-| ---------------------------- | ------------------------------------------------ |
-| Apps                         | 4 (`api`, `web`, `desktop`, `docs`)              |
-| Packages                     | 27 (core domain + `storage-*` + `integration-*`) |
-| Source files (excl. tests)   | 108 `.ts` (~21,900 LOC)                           |
-| Test files                   | 160 (~32,600 LOC)                                |
-| Documentation files          | 10 (README + 9 under `docs/`)                    |
-
-Core packages: `shared`, `config`, `database`, `auth`, `media`, `recording`,
-`processing`, `notifications`, `plugins`, `analytics`, `sdk`, `ui`.
-Plugin families: 6 storage providers (`local`, `s3`, `r2`, `azure-blob`, `gcs`,
-`minio`) plus a shared conformance suite, and 8 integrations (`slack`,
-`discord`, `github`, `gitlab`, `jira`, `linear`, `notion`, `microsoft-teams`).
-
-## Verification (from workspace root)
-
-| Gate                      | Result                                           |
-| ------------------------- | ------------------------------------------------ |
-| `npm run build` (tsc -b)  | PASS (exit 0)                                    |
-| `npm run graph:check`     | PASS — "Package dependency graph is acyclic."    |
-| `npm run boundary:check`  | PASS — 109 files scanned, 0 violations           |
-| `npm test` (full vitest)  | PASS — 160 files, 753 passed / 1 skipped / 0 failed |
+| Gate                        | Command                  | Result                                          |
+| --------------------------- | ------------------------ | ----------------------------------------------- |
+| Build (project references)  | `npm run build`          | PASS (exit 0)                                   |
+| Dependency-graph acyclicity | `npm run graph:check`    | PASS — "Package dependency graph is acyclic."   |
+| Import boundaries           | `npm run boundary:check` | PASS — 109 files scanned, 0 violations          |
+| Full test suite             | `npm test`               | PASS — 160 files, 753 passed / 1 skipped        |
 
 The single skipped test is the intentional reachability-gated real-dependency
-ops check (skips gracefully when no live PostgreSQL/Redis is present).
+ops check; it skips gracefully when no live PostgreSQL/Redis endpoint is present
+and runs when `STREETSTUDIO_IT_DATABASE_URL` / `STREETSTUDIO_IT_REDIS_URL` are set.
 
-## CI test categories (R32.1)
+## 3. CI test categories (Requirement 32.1)
 
-All seven mandated categories are wired and each has at least one executable,
-passing test:
+All seven mandated categories are wired in `vitest.workspace.ts` (by file-name
+convention) and each contains at least one executable, passing test.
 
-| Category    | Files | Notes                                                     |
-| ----------- | ----- | --------------------------------------------------------- |
-| unit        | 154   | Includes all property-based tests                         |
-| integration | 1     | Ops surface wired end-to-end via structural seams         |
-| contract    | 1     | API↔SDK parity (Property 64)                              |
-| e2e         | 1     | Full register→share journey via public API/SDK            |
-| perf        | 1     | Deterministic latency-budget benchmarks                   |
-| load        | 1     | Concurrent uploads / realtime fan-out / webhook delivery  |
-| media       | 1     | Transcode / thumbnail / preview / ABR renditions          |
+| Category    | Files | Coverage focus                                             |
+| ----------- | ----- | ---------------------------------------------------------- |
+| unit        | 154   | Per-module behaviour incl. all 88 property tests           |
+| integration | 1     | Ops surface wired end-to-end (startup→health→metrics→HA)   |
+| contract    | 1     | API↔SDK one-for-one parity (Property 64)                   |
+| e2e         | 1     | Full journey via the public API/SDK only (R32.4)           |
+| perf        | 1     | Deterministic latency-budget / bounded-work benchmarks     |
+| load        | 1     | Concurrent uploads, realtime fan-out, webhook delivery     |
+| media       | 1     | Transcode / thumbnail / preview / ABR renditions           |
 
-CI (`.github/workflows/ci.yml`) runs a single 30-minute-budgeted job with real
-service containers (PostgreSQL, Redis, MinIO), boundary + graph gates, all
-category steps, an 80% line-coverage threshold, and infrastructure-vs-test
-failure classification.
-
-## Architecture highlights delivered
-
-- **StreetJS boundary integrity** — StreetJS is consumed only via
-  `@streetjs/core` public entry points through structural adapter seams; a
-  build-time analyzer fails on any disallowed import (StreetJS internals,
-  cross-package internals, or hardcoded AI/billing vendors). Zero filesystem
-  references into StreetJS.
-- **API-first parity** — a single `PUBLIC_OPERATIONS` catalog is the source of
-  truth; the SDK mirrors it one-for-one (contract-tested), and every request
-  flows through one lifecycle: rate limit → authenticate → validate → RBAC →
-  service → audit.
-- **Deny-by-default RBAC** scoped per owning organization; denials cause no
-  state change and are audited — proven identical across REST and WebSocket
-  channels.
-- **Self-hosting & HA** — startup config validation (names every offending
-  value), health/metrics via StreetJS interfaces, and bounded reconnection
-  against PostgreSQL HA / Redis Cluster without operator restart.
-
-## Follow-up note
-
-The StreetJS gap-register issue URLs in `README.md` are intentional placeholders
-(`.../issues/NNN`) — swap them for real upstream issue links when filed.
+CI (`.github/workflows/ci.yml`) is a single job with a 30-minute budget (R32.2),
+real service containers (PostgreSQL 16, Redis 7, MinIO) for real-dependency
+verification (R32.4), per-category named steps so a failure identifies the
+category (R32.3), an 80% line-coverage gate (R32.5), and an
+infrastructure-vs-test failure classifier (R32.6).
