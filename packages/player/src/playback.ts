@@ -61,9 +61,11 @@ import { VIEW_VIDEO_PERMISSION } from "@streetstudio/media";
 /**
  * Permission a Role must grant to stream a Video within an Organization (R10.1,
  * R10.2). Evaluated by {@link AccessControl.can} in the Video's owning
- * Organization scope.
+ * Organization scope. This is a media-domain permission contract, defined in
+ * `@streetstudio/media`; it is re-exported here so playback consumers can wire
+ * their {@link AccessControl} without a separate media import.
  */
-export const VIEW_VIDEO_PERMISSION = "content:view_video";
+export { VIEW_VIDEO_PERMISSION };
 
 /**
  * The context of a playback request.
