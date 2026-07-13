@@ -1,7 +1,9 @@
 # Roadmap
 
-StreetStudio is developed in phases. The detailed, maintained roadmap lives at
-**[`docs/ROADMAP.md`](docs/ROADMAP.md)**; this root file is the top-level summary.
+StreetStudio is developed in phases. The founding vision and versioned release
+plan (0.1 → 1.0) live in [**VISION.md**](VISION.md); the detailed engineering
+roadmap lives at **[`docs/ROADMAP.md`](docs/ROADMAP.md)**; this root file is the
+top-level summary.
 
 ## Phase status
 

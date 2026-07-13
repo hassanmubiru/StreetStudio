@@ -34,6 +34,8 @@ Each package declares a single primary domain responsibility (`streetstudio.doma
 
 ## Documentation
 
+Start with the [**VISION**](VISION.md) — the founding vision, product strategy, and master development plan.
+
 The full documentation set lives under [`docs/`](docs/):
 
 - [ARCHITECTURE](docs/ARCHITECTURE.md) — monorepo layout, StreetJS consumption, boundaries, request lifecycle, runtime topology.
