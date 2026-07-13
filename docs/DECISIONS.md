@@ -155,7 +155,7 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
 
 ## ADR-0007: Recorder and player packaging — `recording` + `media`, not separate `recorder`/`player`
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0008
 - **Context:** The product brief sketches `packages/recorder` and
   `packages/player`. The implemented monorepo already ships the same
   capabilities under different names: capture + chunked/resumable/offline upload
