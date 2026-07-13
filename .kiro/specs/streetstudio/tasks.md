@@ -350,7 +350,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 32: Comment creation validates body and timestamp**
     - **Validates: Requirements 11.1, 11.2, 11.3, 11.8, 11.9**
 
-  - [ ] 20.3 Write property test for comment permission enforcement
+  - [-] 20.3 Write property test for comment permission enforcement
     - **Property 33: Comment permission is enforced**
     - **Validates: Requirements 11.7**
 
