@@ -47,6 +47,16 @@ export * from "./webhooks/index.js";
  */
 export * from "./http/index.js";
 
+/**
+ * Operational surface (Requirement 30): startup that validates required
+ * configuration and aborts with a named error on missing/invalid values
+ * (R30.3) while completing within the 60-second budget (R30.2), plus health and
+ * metrics exposed through the StreetJS health check and metrics interfaces, with
+ * health reflecting dependency reachability (R30.2, R30.4). Exposed through the
+ * API entry point for composition-root wiring.
+ */
+export * from "./ops/index.js";
+
 /** Domains wired into the API service, proving cross-package resolution. */
 export const WIRED_DOMAINS = [
   SHARED_DOMAIN,
