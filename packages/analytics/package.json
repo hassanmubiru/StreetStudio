@@ -18,7 +18,8 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@streetstudio/database": "*"
+    "@streetstudio/database": "*",
+    "@streetstudio/shared": "*"
   },
   "streetstudio": {
     "domain": "View events and aggregation."

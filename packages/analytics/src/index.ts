@@ -6,9 +6,21 @@
  */
 export const DOMAIN = "View events and aggregation." as const;
 
-/** Aggregate playback metrics for an organization time range. */
-export interface Metrics {
-  readonly totalViews: number;
-  readonly distinctViewers: number;
-  readonly totalWatchDuration: number;
-}
+// Analytics Service: view-event recording + organization-scoped aggregation.
+export { AnalyticsService } from "./service.js";
+export type {
+  Metrics,
+  TimeRange,
+  AnalyticsActor,
+  AnalyticsServiceDeps,
+  ViewEventStore,
+  VideoOrganizationResolver,
+  AnalyticsAuthorizer,
+  AnalyticsPermissionCheck,
+} from "./service.js";
+export {
+  repositoryViewEventStore,
+  repositoryVideoOrganizationResolver,
+  permissionAnalyticsAuthorizer,
+  ANALYTICS_READ_PERMISSION,
+} from "./service.js";

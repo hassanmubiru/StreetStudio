@@ -19,3 +19,8 @@ export const systemClock: Clock = {
     return new Date();
   },
 };
+
+/** Format a {@link Date} as an ISO-8601 timestamp string. */
+export function toIsoTimestamp(date: Date): import("@streetstudio/shared").IsoTimestamp {
+  return date.toISOString();
+}

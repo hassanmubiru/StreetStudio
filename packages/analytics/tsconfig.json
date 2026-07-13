@@ -7,6 +7,7 @@
   "include": ["src/**/*"],
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "dist"],
   "references": [
+    { "path": "../shared" },
     { "path": "../database" }
   ]
 }

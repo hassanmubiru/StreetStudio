@@ -53,3 +53,20 @@ export type {
   StorageWriteFailure,
   StorageWriteFailureReason,
 } from "./storage.js";
+
+// --- Streaming & Playback Service (task 17.1) ------------------------------
+export {
+  PlaybackService,
+  repositoryPlaybackStore,
+  repositoryShareCredentialResolver,
+  VIEW_VIDEO_PERMISSION,
+} from "./playback.js";
+export type {
+  PlaybackServiceDeps,
+  PlaybackStore,
+  PlaybackContext,
+  ShareCredentialResolver,
+  ResolvedShare,
+  StreamManifest,
+  ManifestRendition,
+} from "./playback.js";
