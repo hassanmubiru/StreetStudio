@@ -168,7 +168,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 8: Organization creation validity and administrator assignment**
     - **Validates: Requirements 4.1, 4.7**
 
-  - [ ] 10.4 Write property test for invitation expiry
+  - [-] 10.4 Write property test for invitation expiry
     - **Property 9: Invitations expire seven days after creation**
     - **Validates: Requirements 4.2, 4.8**
 
