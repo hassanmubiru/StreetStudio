@@ -149,3 +149,18 @@ export type {
   SearchPage,
   Cursor,
 } from "./search.js";
+
+// --- Developer Mode Assets Service (task 30.1) -----------------------------
+export {
+  DeveloperAssets,
+  repositoryDeveloperAssetStore,
+  CREATE_ASSET_PERMISSION,
+  DEV_ASSET_BODY_MIN_LENGTH,
+  DEV_ASSET_BODY_MAX_LENGTH,
+} from "./developer-assets.js";
+export type {
+  DeveloperAssetsDeps,
+  DeveloperAssetStore,
+  TerminalCapture,
+  ApiRecording,
+} from "./developer-assets.js";
