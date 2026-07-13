@@ -300,7 +300,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 25: Processing status events use only defined status values**
     - **Validates: Requirements 8.5**
 
-  - [ ] 16.4 Write property test for bounded processing failures
+  - [-] 16.4 Write property test for bounded processing failures
     - **Property 26: Processing failures are bounded and preserve the source**
     - **Validates: Requirements 8.6**
 
