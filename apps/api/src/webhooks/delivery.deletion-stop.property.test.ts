@@ -10,6 +10,7 @@ import {
   type WebhookDeliveryClient,
   type WebhookDeliveryRequest,
 } from "./delivery.js";
+import type { Uuid as UuidType } from "@streetstudio/shared";
 import {
   WebhookService,
   DEFAULT_SUPPORTED_EVENT_TYPES,
