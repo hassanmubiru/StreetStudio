@@ -262,7 +262,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 20: Chunk assembly round-trip reconstructs the original media**
     - **Validates: Requirements 7.3**
 
-  - [ ] 14.5 Write property test for bounded, non-destructive integrity failures
+  - [-] 14.5 Write property test for bounded, non-destructive integrity failures
     - **Property 21: Chunk integrity failures are bounded and non-destructive**
     - **Validates: Requirements 7.4, 7.5**
 
