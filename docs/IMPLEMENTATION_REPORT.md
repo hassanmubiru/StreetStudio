@@ -74,7 +74,10 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/database                      | 9   | 6     | 2    | Schema, repositories, append-only audit log     |
 | packages/auth                          | 10  | 17    | 12   | Auth, sessions, RBAC, API keys                  |
 | packages/organizations                 | 2   | 10    | 9    | Organizations, teams, membership, admin         |
-| packages/media                         | 9   | 31    | 23   | Videos, uploads, storage abstraction, sharing, dev-assets, reviews, KB |
+| packages/projects                      | 2   | 5     | 4    | Content hierarchy: projects, folders, workspaces |
+| packages/media                         | 6   | 17    | 13   | Videos, assets, uploads, sharing, dev-assets, reviews |
+| packages/storage                       | 2   | 5     | 3    | Storage abstraction + StorageProvider contract  |
+| packages/knowledge                     | 2   | 4     | 3    | Transcript indexing, summaries, doc links (knowledge base) |
 | packages/comments                      | 2   | 5     | 4    | Comments, threads, reactions, mentions          |
 | packages/search                        | 2   | 5     | 4    | Search + transcript search (authorized scope)   |
 | packages/player                        | 2   | 3     | 2    | Streaming/playback: ABR manifest with view-permission & share-credential gating |
