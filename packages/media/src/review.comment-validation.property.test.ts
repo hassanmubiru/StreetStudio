@@ -19,7 +19,7 @@ import {
   COMMENT_BODY_MIN_LENGTH,
   type CommentStore,
   type MentionNotifier,
-} from "./comment.js";
+} from "@streetstudio/comments";
 import {
   ReviewService,
   type CommentPoster,
