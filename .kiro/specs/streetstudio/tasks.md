@@ -164,19 +164,19 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - `updateSettings` validating atomically and retaining prior settings on failure; `removeMember` revoking access within 5s; reject removing the last Administrator; deny non-Administrator administrative actions; record successful administrative actions in the Audit Log
     - _Requirements: 26.1, 26.2, 26.4, 26.5, 26.6, 26.7_
 
-  - [-] 10.3 Write property test for organization creation and admin assignment
+  - [x] 10.3 Write property test for organization creation and admin assignment
     - **Property 8: Organization creation validity and administrator assignment**
     - **Validates: Requirements 4.1, 4.7**
 
-  - [-] 10.4 Write property test for invitation expiry
+  - [x] 10.4 Write property test for invitation expiry
     - **Property 9: Invitations expire seven days after creation**
     - **Validates: Requirements 4.2, 4.8**
 
-  - [ ] 10.5 Write property test for invitation acceptance validity
+  - [-] 10.5 Write property test for invitation acceptance validity
     - **Property 10: Invitation acceptance is valid only while pending and unexpired**
     - **Validates: Requirements 4.3, 4.9**
 
-  - [ ] 10.6 Write property test for team scoping
+  - [-] 10.6 Write property test for team scoping
     - **Property 11: Team creation and membership are organization-scoped**
     - **Validates: Requirements 4.4, 4.5**
 
@@ -205,15 +205,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - `createProject`/`createFolder` (names 1–255) scoped to org/project with create-permission gating; enforce folder nesting depth ≤10; `moveVideo` same-org only, preserving identity/comments/transcripts/permissions and rejecting cross-org moves; `createWorkspace`
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
-  - [-] 11.2 Write property test for project/folder validity and scoping
+  - [x] 11.2 Write property test for project/folder validity and scoping
     - **Property 13: Project and folder creation validity and scoping**
     - **Validates: Requirements 5.1, 5.2, 5.8**
 
-  - [ ] 11.3 Write property test for folder nesting depth bound
+  - [-] 11.3 Write property test for folder nesting depth bound
     - **Property 14: Folder nesting is bounded at depth 10**
     - **Validates: Requirements 5.3**
 
-  - [ ] 11.4 Write property test for video move preservation
+  - [-] 11.4 Write property test for video move preservation
     - **Property 15: Video moves preserve identity and associations within the organization**
     - **Validates: Requirements 5.4, 5.7**
 
@@ -229,11 +229,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Define `put`/`get`/`signUploadTarget`/`healthCheck`; route persistence exclusively through the interface; write ack within 30s or abort with `STORAGE_ERROR` recording provider id + timestamp; activation validates config/connectivity and retains prior provider on failure; signed targets valid 60–3600s (default 900), direct-to-storage ≤15 min, expired targets rejected
     - _Requirements: 9.1, 9.3, 9.4, 9.5, 9.6, 9.7, 29.3_
 
-  - [-] 13.2 Write property test for storage round-trip byte preservation
+  - [x] 13.2 Write property test for storage round-trip byte preservation
     - **Property 27: Storage round-trip preserves object bytes**
     - **Validates: Requirements 9.1**
 
-  - [ ] 13.3 Write property test for provider activation validation
+  - [-] 13.3 Write property test for provider activation validation
     - **Property 28: Storage provider activation validates configuration**
     - **Validates: Requirements 9.4**
 
@@ -241,7 +241,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 29: Signed upload credentials have bounded, secure expiry**
     - **Validates: Requirements 9.6, 9.7, 29.3**
 
-  - [-] 13.5 Write unit tests for storage write timeout/abort handling
+  - [x] 13.5 Write unit tests for storage write timeout/abort handling
     - Test the 30s no-ack abort and write-failure paths
     - _Requirements: 9.5_
 
