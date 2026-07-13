@@ -250,7 +250,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Accept ordered chunks 1 MB–100 MB, acknowledging each; integrity-check each chunk, rejecting failures without persisting and retrying ≤3 times before aborting and discarding partial chunks; resume within 24h from the chunk after the last ack without retransmission; expire idle sessions after 24h; assemble in order into the completed Video; emit upload-progress on each ack
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
 
-  - [-] 14.2 Write property test for chunk size validation and acknowledgment
+  - [ ] 14.2 Write property test for chunk size validation and acknowledgment
     - **Property 18: Chunk acceptance validates size and acknowledges each received chunk**
     - **Validates: Requirements 7.1**
 
