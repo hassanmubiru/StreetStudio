@@ -95,11 +95,15 @@ const noSleep: Sleeper = { sleep: async () => {} };
 
 const MAX_RETRIES = 5; // worker default: 1 initial + 5 retries = 6 attempts.
 
-// Deletion point, expressed as the number of delivery attempts allowed before
-// the subscription is deleted:
-//   0        -> delete before delivery begins (no attempt should ever be made)
-//   1..5     -> delete during the backoff that follows the Nth failed attempt,
-//               so the (N+1)th attempt observes the deletion and stops.
+// Number of delivery attempts the endpoint receives before the subscription is
+// deleted. The subscription is always enumerated by the delivery run (so an
+// outcome is produced), then removed via `service.delete` just before the
+// worker's pre-attempt re-read for attempt index `deleteAt`:
+//   0    -> deleted before the very first attempt (0 attempts made)
+//   1..5 -> deleted between retry attempts, after `deleteAt` failed attempts
+// In every case delivery must stop with a "deleted" reason and make no attempt
+// after the deletion. Capped at MAX_RETRIES so deletion always precedes the
+// final (6th) attempt, i.e. deletion — not exhaustion — is what stops delivery.
 const deleteAfterAttempts = fc.integer({ min: 0, max: MAX_RETRIES });
 
 const eventType = fc.constantFrom(...DEFAULT_SUPPORTED_EVENT_TYPES);
