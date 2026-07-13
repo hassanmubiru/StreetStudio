@@ -507,7 +507,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 70: Pull-request links require an enabled plugin and permission**
     - **Validates: Requirements 24.1, 24.4, 24.6**
 
-  - [ ] 31.3 Write property test for review comment validation
+  - [x] 31.3 Write property test for review comment validation
     - **Property 71: Review comments validate body and timestamp**
     - **Validates: Requirements 24.3, 24.5**
 
