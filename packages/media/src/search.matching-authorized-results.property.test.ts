@@ -12,7 +12,7 @@ import {
   type IndexedMatch,
   type SearchIndex,
 } from "./search.js";
-import { VIEW_VIDEO_PERMISSION } from "./playback.js";
+import { VIEW_VIDEO_PERMISSION } from "./permissions.js";
 
 /**
  * Property 42: Search returns only matching, authorized results.

@@ -16,7 +16,7 @@ import {
   type MentionNotifier,
   type ReactionTarget,
 } from "./comment.js";
-import { VIEW_VIDEO_PERMISSION } from "./playback.js";
+import { VIEW_VIDEO_PERMISSION } from "./permissions.js";
 
 /* -------------------------------------------------------------------------
  * Test doubles

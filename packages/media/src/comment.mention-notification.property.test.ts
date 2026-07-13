@@ -12,7 +12,7 @@ import {
   type CommentStore,
   type MentionNotifier,
 } from "./comment.js";
-import { VIEW_VIDEO_PERMISSION } from "./playback.js";
+import { VIEW_VIDEO_PERMISSION } from "./permissions.js";
 
 /**
  * Property 34: Mentions notify members with view access.
