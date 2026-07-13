@@ -74,7 +74,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 56: Audit queries are organization-scoped and ordered**
     - **Validates: Requirements 17.3, 17.5**
 
-- [ ] 5. Checkpoint - foundation
+- [x] 5. Checkpoint - foundation
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 6. Implement authentication and sessions
@@ -586,7 +586,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 87: Non-public endpoints deny unauthenticated access**
     - **Validates: Requirements 29.4**
 
-- [ ] 37. Wire the API_Service, REST/WebSocket controllers, and SDK
+- [x] 37. Wire the API_Service, REST/WebSocket controllers, and SDK
   - [x] 37.1 Assemble the API_Service host and controllers
     - Wire all domain services via StreetJS DI into REST controllers and the WebSocket gateway with the request lifecycle (rate limit → authenticate → validate → RBAC → service → audit); expose every Web_Client capability through a public REST/WebSocket/Webhook interface enforcing the same authorization as the equivalent Web_Client request
     - _Requirements: 20.1, 20.4, 20.5_
