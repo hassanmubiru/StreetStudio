@@ -258,11 +258,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 19: Interrupted uploads resume without retransmitting acknowledged chunks**
     - **Validates: Requirements 7.2**
 
-  - [-] 14.4 Write property test for chunk-assembly round-trip
+  - [x] 14.4 Write property test for chunk-assembly round-trip
     - **Property 20: Chunk assembly round-trip reconstructs the original media**
     - **Validates: Requirements 7.3**
 
-  - [-] 14.5 Write property test for bounded, non-destructive integrity failures
+  - [x] 14.5 Write property test for bounded, non-destructive integrity failures
     - **Property 21: Chunk integrity failures are bounded and non-destructive**
     - **Validates: Requirements 7.4, 7.5**
 
