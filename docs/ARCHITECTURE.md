@@ -61,7 +61,10 @@ StreetStudio/
 │   ├── database/      # Schema, migrations, repositories, audit log
 │   ├── auth/          # Authentication, sessions, RBAC, API keys
 │   ├── organizations/ # Organizations, teams, membership, invitations, admin
-│   ├── media/         # Videos, assets, storage abstraction, sharing, dev-assets, reviews, KB
+│   ├── projects/      # Content hierarchy: projects, folders, workspaces
+│   ├── media/         # Videos, assets, uploads, sharing, dev-assets, reviews
+│   ├── storage/       # Storage abstraction + StorageProvider contract (providers are plugins)
+│   ├── knowledge/     # Transcript indexing, summaries, doc links (knowledge base)
 │   ├── comments/      # Comments, threads, reactions, mentions
 │   ├── search/        # Search + transcript search (authorized scope)
 │   ├── player/        # Streaming/playback: ABR manifest with permission & share-credential gating
