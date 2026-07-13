@@ -236,7 +236,7 @@ export class HaConnectionManager<Client> {
       return 0;
     }
     const index = Math.min(attempt - 1, backoffMs.length - 1);
-    return backoffMs[index];
+    return backoffMs[index] ?? 0;
   }
 
   /**
