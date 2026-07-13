@@ -553,7 +553,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Store subscriptions only for supported event types with well-formed HTTPS URLs ≤2048 chars; deliver signed payloads within 30s; treat a >10s non-success as failed and retry ≤5 more times with non-decreasing backoff, then record failed; stop delivery within 60s of deletion
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7_
 
-  - [-] 35.2 Write property test for webhook registration validation
+  - [x] 35.2 Write property test for webhook registration validation
     - **Property 60: Webhook registration validates endpoint and event type**
     - **Validates: Requirements 19.1, 19.2**
 
