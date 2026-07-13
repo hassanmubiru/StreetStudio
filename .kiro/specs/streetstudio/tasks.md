@@ -350,7 +350,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 32: Comment creation validates body and timestamp**
     - **Validates: Requirements 11.1, 11.2, 11.3, 11.8, 11.9**
 
-  - [-] 20.3 Write property test for comment permission enforcement
+  - [x] 20.3 Write property test for comment permission enforcement
     - **Property 33: Comment permission is enforced**
     - **Validates: Requirements 11.7**
 
@@ -379,7 +379,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 39: Marking notifications read is ownership-checked**
     - **Validates: Requirements 12.3, 12.6**
 
-- [ ] 22. Implement the Realtime_Service gateway
+- [x] 22. Implement the Realtime_Service gateway
   - [x] 22.1 Implement the WebSocket gateway with Redis backplane
     - Implement `join`/`leave`/`emit` over StreetJS WebSockets with a Redis pub/sub backplane for cross-node fan-out; deliver presence-join/leave and typing/typing-stopped to other relevant connected members within 2s (never the originator); start typing on activity and stop after 5s inactivity; emit presence-departure within 5s on dropped connections; deliver live comments to concurrent viewers within 2s; discard events for members with no active connection without disrupting others; carry upload-progress, processing-status, live-comment, and notification events
     - _Requirements: 11.6, 12.2, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_
@@ -396,7 +396,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 41: Events for disconnected members are discarded harmlessly**
     - **Validates: Requirements 13.7**
 
-  - [-] 22.5 Write unit tests for typing-stop timer and dropped-connection departure
+  - [x] 22.5 Write unit tests for typing-stop timer and dropped-connection departure
     - Test the 5s typing-stop emission and dropped-connection presence-departure using in-memory transport/clock fakes
     - _Requirements: 13.5, 13.6_
 
