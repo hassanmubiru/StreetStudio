@@ -76,7 +76,15 @@ describe("createApiService wiring", () => {
       if (op.id === "projects.create") continue;
       container.register(op.id, () => Promise.resolve());
     }
-    expect(() => createApiService(config({ container }))).toThrow(/projects\.create/);
+    try {
+      createApiService(config({ container }));
+      expect.unreachable("expected a configuration error");
+    } catch (err) {
+      expect((err as { code?: string }).code).toBe("CONFIGURATION_INVALID");
+      expect(String((err as { details?: { reason?: string } }).details?.reason)).toContain(
+        "projects.create",
+      );
+    }
   });
 
   it("dispatches a REST request through the lifecycle to the resolved handler", async () => {

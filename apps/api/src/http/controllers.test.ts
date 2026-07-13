@@ -62,9 +62,15 @@ describe("RestRouter", () => {
 
   it("rejects duplicate route registrations", () => {
     const binding: OperationBinding = { operation: getVideos, handle: () => Promise.resolve() };
-    expect(() => new RestRouter([binding, binding], lifecycleDeps())).toThrow(
-      /Duplicate REST route/,
-    );
+    try {
+      new RestRouter([binding, binding], lifecycleDeps());
+      expect.unreachable("expected a duplicate-route error");
+    } catch (err) {
+      expect((err as { code?: string }).code).toBe("CONFIGURATION_INVALID");
+      expect(String((err as { details?: { reason?: string } }).details?.reason)).toContain(
+        "Duplicate REST route",
+      );
+    }
   });
 
   it("ignores non-REST bindings", () => {
