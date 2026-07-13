@@ -1,5 +1,9 @@
 # StreetStudio — Full Implementation Report
 
+> This is an engineering status report (the *what*). For the product strategy —
+> the *why users will love it* — see [`PRODUCT.md`](PRODUCT.md) and
+> [`../VISION.md`](../VISION.md).
+
 ## 1. Executive summary
 
 StreetStudio — an open-source asynchronous video collaboration platform built as
