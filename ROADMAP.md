@@ -9,7 +9,7 @@ StreetStudio is developed in phases. The detailed, maintained roadmap lives at
 | ----- | ----- | ------ |
 | 1 | Research, architecture, requirements, decision records | Done — see `.kiro/specs/streetstudio/{requirements,design}.md` and `docs/DECISIONS.md` |
 | 2 | Repository, infrastructure, CI, shared libraries | Done — monorepo, `docker/`, `infrastructure/`, `.github/workflows/ci.yml`, `packages/{shared,config}` |
-| 3 | Auth, database, storage, recording pipeline | Done — `packages/{auth,database,media,recording,processing}` |
+| 3 | Auth, database, storage, recording pipeline | Done — `packages/{auth,database,media,recorder,player,processing}` |
 | 4 | Editing, collaboration, AI | Backend done (comments, notifications, realtime, search, sharing, AI router); browser editor UI is future work |
 | 5 | Enterprise, scaling, plugins, API, SDK | Done — plugins, storage/integration plugins, webhooks, public API + SDK, HA operation |
 

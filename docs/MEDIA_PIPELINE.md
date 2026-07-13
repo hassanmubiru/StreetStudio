@@ -3,7 +3,7 @@
 This document describes the end-to-end media path: capture in the Recorder,
 chunked/resumable upload, and the background processing pipeline that produces
 thumbnails, previews, and adaptive-bitrate renditions. It spans
-`packages/recording`, `apps/api` (upload controller), `packages/media`, and
+`packages/recorder`, `apps/api` (upload controller), `packages/media`, and
 `packages/processing` (workers).
 
 ## Overview
@@ -19,7 +19,7 @@ Recorder (web/desktop) ──▶ Chunked upload ──▶ Storage_Provider (obje
                               Video marked "ready" ▸ realtime status events
 ```
 
-## 1. Recording (`packages/recording`)
+## 1. Recording (`packages/recorder`)
 
 Client-side capture plus the chunked/resumable upload client, consumed by
 `apps/web` and `apps/desktop`.
