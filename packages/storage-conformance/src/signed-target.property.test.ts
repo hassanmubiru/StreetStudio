@@ -76,7 +76,7 @@ describe("Feature: streetstudio, Property 29: Signed upload credentials have bou
       it("issues targets with validity capped to [60, 900]s (default 900) for any in-range ttl", async () => {
         await fc.assert(
           fc.asyncProperty(
-            fc.string({ minLength: 1, maxLength: 64 }),
+            safeKeyArb,
             issuedAtMsArb,
             fc.oneof(
               fc.integer({
@@ -133,7 +133,7 @@ describe("Feature: streetstudio, Property 29: Signed upload credentials have bou
       it("rejects any ttl outside [60, 3600] (or non-integer) with STORAGE_CONFIG_INVALID", async () => {
         await fc.assert(
           fc.asyncProperty(
-            fc.string({ minLength: 1, maxLength: 64 }),
+            safeKeyArb,
             issuedAtMsArb,
             fc.oneof(
               fc.integer({
@@ -176,7 +176,7 @@ describe("Feature: streetstudio, Property 29: Signed upload credentials have bou
       it("accepts a target before its expiry and rejects it at/after expiry for arbitrary presentation instants", async () => {
         await fc.assert(
           fc.asyncProperty(
-            fc.string({ minLength: 1, maxLength: 64 }),
+            safeKeyArb,
             issuedAtMsArb,
             fc.integer({
               min: SIGNED_UPLOAD_MIN_TTL_SECONDS,
