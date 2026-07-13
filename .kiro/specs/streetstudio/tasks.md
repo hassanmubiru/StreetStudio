@@ -628,12 +628,12 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Create README, ARCHITECTURE, ROADMAP, CONTRIBUTING, SECURITY, API, PLUGIN_GUIDE, MEDIA_PIPELINE, DEPLOYMENT, and DECISIONS files with content addressing each topic; document StreetJS gaps with external-issue references; record ADRs; document every public endpoint's request/response/auth/error formats; document public endpoints requiring no authentication
     - _Requirements: 1.4, 29.5, 31.1, 31.2, 31.3, 31.4_
 
-- [ ] 41. Establish continuous integration and coverage gating
+- [x] 41. Establish continuous integration and coverage gating
   - [x] 41.1 Configure the CI pipeline and test categories
     - Configure CI to execute unit, integration, contract, end-to-end, performance benchmark, load, and media pipeline categories (each with ≥1 executable test) reporting a single pass/fail within 30 min, indicating the failing category, distinguishing infrastructure from test failures, and failing below 80% line coverage; run the boundary and dependency-graph checks; verify behavior against real dependencies where reachable
     - _Requirements: 32.1, 32.2, 32.3, 32.4, 32.5, 32.6_
 
-  - [-] 41.2 Author end-to-end and performance/load/media-pipeline tests
+  - [x] 41.2 Author end-to-end and performance/load/media-pipeline tests
     - E2E flow (register → org → invite/accept → project/folder → record → chunked upload → pipeline → ready → playback → comment → mention → share access) driven exclusively through the public API/SDK; latency-budget benchmarks; concurrent-upload/realtime-fanout/webhook load tests; media pipeline transcode/thumbnail/preview tests
     - _Requirements: 32.1, 32.4_
 
