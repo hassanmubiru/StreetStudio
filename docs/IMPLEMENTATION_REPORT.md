@@ -49,8 +49,9 @@ convention) and each contains at least one executable, passing test.
 | media       | 1     | Transcode / thumbnail / preview / ABR renditions           |
 
 CI (`.github/workflows/ci.yml`) is a single job with a 30-minute budget (R32.2),
-real service containers (PostgreSQL 16, Redis 7, MinIO) for real-dependency
-verification (R32.4), per-category named steps so a failure identifies the
+official service containers (PostgreSQL 16, Redis 7) for real-dependency
+verification (R32.4) — object storage is exercised via in-memory/local providers
+and the storage-conformance suite — per-category named steps so a failure identifies the
 category (R32.3), an 80% line-coverage gate (R32.5), and an
 infrastructure-vs-test failure classifier (R32.6).
 
