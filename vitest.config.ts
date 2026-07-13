@@ -15,6 +15,10 @@ export default defineConfig({
     globals: true,
     environment: "node",
     setupFiles: ["./vitest.setup.ts"],
+    // A category may have no tests yet while task 41.2 authors its suite; an
+    // empty-but-wired category must not fail CI (R32.1). A category that DOES
+    // have tests still fails loudly when one of them fails.
+    passWithNoTests: true,
     include: [
       "apps/**/*.{test,spec}.ts",
       "packages/**/*.{test,spec}.ts"
