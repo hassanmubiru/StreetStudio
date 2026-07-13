@@ -275,7 +275,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 7.7**
 
 - [ ] 15. Implement the Recorder client capture and upload logic
-  - [ ] 15.1 Implement Recorder capture, controls, and offline upload
+  - [x] 15.1 Implement Recorder capture, controls, and offline upload
     - Capture screen/window/region with optional camera/microphone/system audio; continue without unsupported system audio and notify; abort and retain nothing on denied permission; cursor highlighting/drawing tools and keyboard shortcuts; pause/resume retaining pre-pause media; finalize ≤10s on stop and initiate upload; persist offline stops locally and upload with ≤5 retries on reconnect
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 6.11, 6.12_
 
