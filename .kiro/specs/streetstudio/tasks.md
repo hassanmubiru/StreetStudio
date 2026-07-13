@@ -417,7 +417,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 44: Search query length is validated**
     - **Validates: Requirements 14.5**
 
-  - [ ] 23.5 Write property test for bounded pagination
+  - [x] 23.5 Write property test for bounded pagination
     - **Property 45: Search results are paginated with a bounded page size**
     - **Validates: Requirements 14.6**
 
