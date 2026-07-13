@@ -441,3 +441,335 @@ function defaultTransport(): HttpTransport {
   }
   return fetchTransport(maybeFetch.bind(globalThis));
 }
+
+/* --------------------------------------------------------------------------
+ * Resource groups (mirror the public REST resources)
+ * ------------------------------------------------------------------------ */
+
+/** Authentication and current-session endpoints. */
+export class AuthResource {
+  constructor(private readonly http: HttpClient) {}
+
+  register(input: RegisterInput): Promise<MemberDto> {
+    return this.http.request("POST", "/auth/register", { body: input });
+  }
+  login(input: LoginInput): Promise<SessionDto> {
+    return this.http.request("POST", "/auth/login", { body: input });
+  }
+  logout(): Promise<void> {
+    return this.http.request("POST", "/auth/logout");
+  }
+  currentMember(): Promise<MemberDto> {
+    return this.http.request("GET", "/auth/me");
+  }
+}
+
+/** Organization, membership, role, and invitation endpoints. */
+export class OrganizationsResource {
+  constructor(private readonly http: HttpClient) {}
+
+  create(input: CreateOrganizationInput): Promise<OrganizationDto> {
+    return this.http.request("POST", "/organizations", { body: input });
+  }
+  list(): Promise<OrganizationDto[]> {
+    return this.http.request("GET", "/organizations");
+  }
+  get(id: Uuid): Promise<OrganizationDto> {
+    return this.http.request("GET", `/organizations/${id}`);
+  }
+  update(id: Uuid, input: UpdateOrganizationInput): Promise<OrganizationDto> {
+    return this.http.request("PATCH", `/organizations/${id}`, { body: input });
+  }
+  listMembers(id: Uuid): Promise<MembershipDto[]> {
+    return this.http.request("GET", `/organizations/${id}/members`);
+  }
+  listRoles(id: Uuid): Promise<RoleDto[]> {
+    return this.http.request("GET", `/organizations/${id}/roles`);
+  }
+  invite(id: Uuid, input: InviteMemberInput): Promise<InvitationDto> {
+    return this.http.request("POST", `/organizations/${id}/invitations`, {
+      body: input,
+    });
+  }
+}
+
+/** Project endpoints (organization-scoped via the scope header). */
+export class ProjectsResource {
+  constructor(private readonly http: HttpClient) {}
+
+  create(input: CreateProjectInput): Promise<ProjectDto> {
+    return this.http.request("POST", "/projects", { body: input });
+  }
+  list(): Promise<ProjectDto[]> {
+    return this.http.request("GET", "/projects");
+  }
+  get(id: Uuid): Promise<ProjectDto> {
+    return this.http.request("GET", `/projects/${id}`);
+  }
+  update(id: Uuid, input: UpdateProjectInput): Promise<ProjectDto> {
+    return this.http.request("PATCH", `/projects/${id}`, { body: input });
+  }
+  delete(id: Uuid): Promise<void> {
+    return this.http.request("DELETE", `/projects/${id}`);
+  }
+}
+
+/** Folder endpoints (hierarchical containers within a project). */
+export class FoldersResource {
+  constructor(private readonly http: HttpClient) {}
+
+  create(input: CreateFolderInput): Promise<FolderDto> {
+    return this.http.request("POST", "/folders", { body: input });
+  }
+  get(id: Uuid): Promise<FolderDto> {
+    return this.http.request("GET", `/folders/${id}`);
+  }
+  listByProject(projectId: Uuid): Promise<FolderDto[]> {
+    return this.http.request("GET", "/folders", { query: { projectId } });
+  }
+  move(id: Uuid, input: MoveFolderInput): Promise<FolderDto> {
+    return this.http.request("PATCH", `/folders/${id}`, { body: input });
+  }
+  delete(id: Uuid): Promise<void> {
+    return this.http.request("DELETE", `/folders/${id}`);
+  }
+}
+
+/** Video metadata, transcript, and summary endpoints. */
+export class VideosResource {
+  constructor(private readonly http: HttpClient) {}
+
+  list(query: ListVideosQuery = {}): Promise<VideoDto[]> {
+    return this.http.request("GET", "/videos", { query });
+  }
+  get(id: Uuid): Promise<VideoDto> {
+    return this.http.request("GET", `/videos/${id}`);
+  }
+  update(id: Uuid, input: UpdateVideoInput): Promise<VideoDto> {
+    return this.http.request("PATCH", `/videos/${id}`, { body: input });
+  }
+  delete(id: Uuid): Promise<void> {
+    return this.http.request("DELETE", `/videos/${id}`);
+  }
+  transcript(id: Uuid): Promise<TranscriptDto> {
+    return this.http.request("GET", `/videos/${id}/transcript`);
+  }
+  summary(id: Uuid): Promise<SummaryDto> {
+    return this.http.request("GET", `/videos/${id}/summary`);
+  }
+}
+
+/** Chunked, resumable upload session endpoints. */
+export class UploadsResource {
+  constructor(private readonly http: HttpClient) {}
+
+  create(input: CreateUploadInput): Promise<UploadSessionDto> {
+    return this.http.request("POST", "/uploads", { body: input });
+  }
+  get(id: Uuid): Promise<UploadSessionDto> {
+    return this.http.request("GET", `/uploads/${id}`);
+  }
+  complete(id: Uuid): Promise<UploadSessionDto> {
+    return this.http.request("POST", `/uploads/${id}/complete`);
+  }
+  abort(id: Uuid): Promise<UploadSessionDto> {
+    return this.http.request("POST", `/uploads/${id}/abort`);
+  }
+}
+
+/** Comment and reaction endpoints. */
+export class CommentsResource {
+  constructor(private readonly http: HttpClient) {}
+
+  list(videoId: Uuid): Promise<CommentDto[]> {
+    return this.http.request("GET", `/videos/${videoId}/comments`);
+  }
+  create(videoId: Uuid, input: CreateCommentInput): Promise<CommentDto> {
+    return this.http.request("POST", `/videos/${videoId}/comments`, {
+      body: input,
+    });
+  }
+  delete(id: Uuid): Promise<void> {
+    return this.http.request("DELETE", `/comments/${id}`);
+  }
+  react(input: ReactionInput): Promise<ReactionDto> {
+    return this.http.request("POST", "/reactions", { body: input });
+  }
+  unreact(input: ReactionInput): Promise<void> {
+    return this.http.request("DELETE", "/reactions", { body: input });
+  }
+}
+
+/** Playback and view-recording endpoints. */
+export class PlaybackResource {
+  constructor(private readonly http: HttpClient) {}
+
+  manifest(videoId: Uuid): Promise<PlaybackManifest> {
+    return this.http.request("GET", `/videos/${videoId}/playback`);
+  }
+  recordView(videoId: Uuid): Promise<void> {
+    return this.http.request("POST", `/videos/${videoId}/views`);
+  }
+}
+
+/** Full-text/transcript search endpoints. */
+export class SearchResource {
+  constructor(private readonly http: HttpClient) {}
+
+  videos(query: SearchQuery): Promise<VideoDto[]> {
+    return this.http.request("GET", "/search/videos", { query });
+  }
+}
+
+/** Share-link creation, revocation, and resolution endpoints. */
+export class SharingResource {
+  constructor(private readonly http: HttpClient) {}
+
+  create(videoId: Uuid, input: CreateShareLinkInput = {}): Promise<ShareLinkDto> {
+    return this.http.request("POST", `/videos/${videoId}/share-links`, {
+      body: input,
+    });
+  }
+  get(id: Uuid): Promise<ShareLinkDto> {
+    return this.http.request("GET", `/share-links/${id}`);
+  }
+  revoke(id: Uuid): Promise<void> {
+    return this.http.request("DELETE", `/share-links/${id}`);
+  }
+  /** Resolve a shared video via its public credential (no org scope). */
+  resolve(input: ResolveShareLinkInput): Promise<VideoDto> {
+    return this.http.request("POST", "/shared/resolve", { body: input });
+  }
+}
+
+/** Notification and preference endpoints. */
+export class NotificationsResource {
+  constructor(private readonly http: HttpClient) {}
+
+  list(query: ListNotificationsQuery = {}): Promise<NotificationDto[]> {
+    return this.http.request("GET", "/notifications", { query });
+  }
+  markRead(id: Uuid): Promise<NotificationDto> {
+    return this.http.request("POST", `/notifications/${id}/read`);
+  }
+  listPreferences(): Promise<NotificationPreferenceDto[]> {
+    return this.http.request("GET", "/notifications/preferences");
+  }
+  updatePreference(
+    input: UpdateNotificationPreferenceInput
+  ): Promise<NotificationPreferenceDto> {
+    return this.http.request("PUT", "/notifications/preferences", {
+      body: input,
+    });
+  }
+}
+
+/** Outbound webhook subscription endpoints. */
+export class WebhooksResource {
+  constructor(private readonly http: HttpClient) {}
+
+  create(input: CreateWebhookInput): Promise<WebhookDto> {
+    return this.http.request("POST", "/webhooks", { body: input });
+  }
+  list(): Promise<WebhookDto[]> {
+    return this.http.request("GET", "/webhooks");
+  }
+  delete(id: Uuid): Promise<void> {
+    return this.http.request("DELETE", `/webhooks/${id}`);
+  }
+}
+
+/** API-key management endpoints. Secret is revealed exactly once at creation. */
+export class ApiKeysResource {
+  constructor(private readonly http: HttpClient) {}
+
+  create(input: CreateApiKeyInput): Promise<ApiKeyRevealDto> {
+    return this.http.request("POST", "/api-keys", { body: input });
+  }
+  list(): Promise<ApiKeyDto[]> {
+    return this.http.request("GET", "/api-keys");
+  }
+  revoke(id: Uuid): Promise<void> {
+    return this.http.request("DELETE", `/api-keys/${id}`);
+  }
+}
+
+/** Organization-scoped analytics endpoints. */
+export class AnalyticsResource {
+  constructor(private readonly http: HttpClient) {}
+
+  metrics(query: MetricsQuery = {}): Promise<MetricsDto> {
+    return this.http.request("GET", "/analytics/metrics", { query });
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Client
+ * ------------------------------------------------------------------------ */
+
+/**
+ * Typed client for the public StreetStudio REST and WebSocket API.
+ *
+ * Every resource group mirrors a public REST resource and returns the shared
+ * wire DTO types, guaranteeing parity with the API_Service. Errors are surfaced
+ * uniformly as {@link AppError} using the shared error taxonomy.
+ */
+export class StreetStudioClient {
+  private readonly http: HttpClient;
+
+  readonly auth: AuthResource;
+  readonly organizations: OrganizationsResource;
+  readonly projects: ProjectsResource;
+  readonly folders: FoldersResource;
+  readonly videos: VideosResource;
+  readonly uploads: UploadsResource;
+  readonly comments: CommentsResource;
+  readonly playback: PlaybackResource;
+  readonly search: SearchResource;
+  readonly sharing: SharingResource;
+  readonly notifications: NotificationsResource;
+  readonly webhooks: WebhooksResource;
+  readonly apiKeys: ApiKeysResource;
+  readonly analytics: AnalyticsResource;
+
+  constructor(private readonly options: SdkClientOptions) {
+    this.http = new HttpClient(options);
+    this.auth = new AuthResource(this.http);
+    this.organizations = new OrganizationsResource(this.http);
+    this.projects = new ProjectsResource(this.http);
+    this.folders = new FoldersResource(this.http);
+    this.videos = new VideosResource(this.http);
+    this.uploads = new UploadsResource(this.http);
+    this.comments = new CommentsResource(this.http);
+    this.playback = new PlaybackResource(this.http);
+    this.search = new SearchResource(this.http);
+    this.sharing = new SharingResource(this.http);
+    this.notifications = new NotificationsResource(this.http);
+    this.webhooks = new WebhooksResource(this.http);
+    this.apiKeys = new ApiKeysResource(this.http);
+    this.analytics = new AnalyticsResource(this.http);
+  }
+
+  /**
+   * Open a realtime (WebSocket) connection for server-pushed events. Requires a
+   * {@link RealtimeTransport} to have been supplied in the options. The URL is
+   * derived from `baseUrl` with an `http(s)` → `ws(s)` scheme swap.
+   */
+  connectRealtime(handlers: RealtimeHandlers): RealtimeConnection {
+    const transport = this.options.realtimeTransport;
+    if (!transport) {
+      throw new AppError("CAPABILITY_UNAVAILABLE", {
+        details: { reason: "No realtime transport was configured." },
+      });
+    }
+    return transport.connect(this.realtimeUrl(), handlers);
+  }
+
+  private realtimeUrl(): string {
+    const base = this.options.baseUrl.replace(/\/+$/, "");
+    const wsBase = base.replace(/^http(s?):\/\//, "ws$1://");
+    const orgId = this.options.organizationId;
+    const path = `${wsBase}/realtime`;
+    return orgId ? `${path}?organizationId=${encodeURIComponent(orgId)}` : path;
+  }
+}
