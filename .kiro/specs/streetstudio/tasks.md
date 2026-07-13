@@ -309,7 +309,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Provide an ABR streaming manifest within 3s if and only if the Video is ready and the requester holds view permission (or a valid share credential); deny with the appropriate error and no manifest otherwise
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-  - [ ] 17.2 Write property test for playback state and authorization
+  - [-] 17.2 Write property test for playback state and authorization
     - **Property 30: Playback requires ready state and authorization**
     - **Validates: Requirements 10.1, 10.2, 10.3**
 
@@ -570,7 +570,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 19.7**
 
 - [ ] 36. Implement security middleware and defaults
-  - [ ] 36.1 Implement rate limiting, secret handling, and auth-required middleware
+  - [-] 36.1 Implement rate limiting, secret handling, and auth-required middleware
     - Enforce a default 100 requests/60s rolling per-client limit rejecting excess with retry-after; store all secrets encrypted via the StreetJS secret interface, never plaintext; deny unauthenticated/invalid-auth requests to non-public endpoints with no state change
     - _Requirements: 29.1, 29.2, 29.4_
 
