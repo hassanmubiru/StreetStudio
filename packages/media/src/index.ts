@@ -70,3 +70,23 @@ export type {
   StreamManifest,
   ManifestRendition,
 } from "./playback.js";
+
+// --- Sharing & Content Permissions (task 19.1) -----------------------------
+export {
+  ShareService,
+  ContentPermissionGuard,
+  Sha256PasscodeHasher,
+  repositoryShareStore,
+  SHARE_VIDEO_PERMISSION,
+  MAX_PASSCODE_ATTEMPTS,
+  SHARE_LOCK_DURATION_MS,
+} from "./share.js";
+export type {
+  ShareServiceDeps,
+  ShareStore,
+  ShareOptions,
+  ShareAccess,
+  PasscodeHasher,
+  ContentResourceType,
+  ContentResourceRef,
+} from "./share.js";
