@@ -180,7 +180,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 11: Team creation and membership are organization-scoped**
     - **Validates: Requirements 4.4, 4.5**
 
-  - [ ] 10.7 Write property test for cross-organization access denial
+  - [-] 10.7 Write property test for cross-organization access denial
     - **Property 12: Cross-organization access is denied**
     - **Validates: Requirements 4.6**
 
