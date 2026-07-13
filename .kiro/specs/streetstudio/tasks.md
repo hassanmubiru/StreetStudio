@@ -371,7 +371,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 37: Notification creation records required fields and respects preferences**
     - **Validates: Requirements 12.1, 12.4**
 
-  - [ ] 21.3 Write property test for notification delivery online and after reconnect
+  - [-] 21.3 Write property test for notification delivery online and after reconnect
     - **Property 38: Notification delivery online and after reconnect**
     - **Validates: Requirements 12.2, 12.5**
 
