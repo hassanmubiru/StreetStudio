@@ -388,7 +388,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 36: Live comment delivery to concurrent viewers**
     - **Validates: Requirements 11.6**
 
-  - [ ] 22.3 Write property test for presence/typing audience targeting
+  - [-] 22.3 Write property test for presence/typing audience targeting
     - **Property 40: Presence and typing events target the correct audience**
     - **Validates: Requirements 13.1, 13.2, 13.3**
 
@@ -540,7 +540,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 82: View events are recorded with required fields on playback**
     - **Validates: Requirements 28.1**
 
-  - [ ] 34.3 Write property test for analytics aggregation and org exclusion
+  - [-] 34.3 Write property test for analytics aggregation and org exclusion
     - **Property 83: Analytics aggregates match a reference computation and exclude other organizations**
     - **Validates: Requirements 28.2, 28.3**
 
