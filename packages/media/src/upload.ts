@@ -65,8 +65,8 @@ import type {
   VideoDto,
 } from "@streetstudio/shared";
 
-import type { ObjectStream } from "./storage.js";
-import { StorageRouter } from "./storage.js";
+import type { ObjectStream } from "@streetstudio/storage";
+import { StorageRouter } from "@streetstudio/storage";
 
 /** One mebibyte in bytes. */
 const ONE_MEBIBYTE = 1024 * 1024;

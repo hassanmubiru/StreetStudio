@@ -18,41 +18,10 @@ export interface AccessContext {
 /** Storage providers are supplied by plugins of this type. */
 export const STORAGE_PLUGIN_TYPE: PluginType = "storage";
 
-// --- Content Hierarchy Service (task 11.1) ---------------------------------
-export {
-  ContentService,
-  repositoryContentStore,
-  CREATE_PROJECT_PERMISSION,
-  CREATE_FOLDER_PERMISSION,
-  MAX_FOLDER_NESTING_DEPTH,
-  NAME_MIN_LENGTH,
-  NAME_MAX_LENGTH,
-} from "./content.js";
-export type {
-  ContentServiceDeps,
-  ContentStore,
-  FolderRef,
-} from "./content.js";
-
-// --- Storage Abstraction and Provider Contract (task 13.1) -----------------
-export {
-  StorageRouter,
-  STORAGE_WRITE_ACK_TIMEOUT_MS,
-  SIGNED_UPLOAD_MIN_TTL_SECONDS,
-  SIGNED_UPLOAD_MAX_TTL_SECONDS,
-  SIGNED_UPLOAD_DEFAULT_TTL_SECONDS,
-  DIRECT_UPLOAD_MAX_TTL_SECONDS,
-} from "./storage.js";
-export type {
-  StorageProvider,
-  ObjectStream,
-  PutResult,
-  SignedTarget,
-  StorageRouterOptions,
-  StorageFailureRecorder,
-  StorageWriteFailure,
-  StorageWriteFailureReason,
-} from "./storage.js";
+// The content hierarchy (projects/folders/workspaces) lives in
+// `@streetstudio/projects`; the storage abstraction and StorageProvider contract
+// live in `@streetstudio/storage` (providers ship as plugins). The media upload
+// service consumes the storage router from `@streetstudio/storage`.
 
 // --- Media-domain permission contracts -------------------------------------
 // Streaming & playback itself now lives in `@streetstudio/player`; the
