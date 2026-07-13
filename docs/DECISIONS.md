@@ -116,3 +116,69 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   published. Error handling is consistent and safe by construction. New error
   conditions must be added to the catalog rather than invented ad hoc, and the
   taxonomy is documented in [API.md](./API.md).
+
+---
+
+## ADR-0006: Desktop client runtime — Tauri over Electron (provisional)
+
+- **Status:** Proposed
+- **Context:** The Desktop_Client (`apps/desktop`) wraps the web client and adds
+  native capture (screen/window/region, system audio, global shortcuts). The
+  brief explicitly requires that Electron not be assumed by default and that the
+  runtime choice be justified on performance, security, maintenance, and
+  platform support.
+- **Decision:** Adopt **Tauri** as the provisional desktop runtime, pending a
+  capture-capability spike (below). Rationale:
+  - **Performance / footprint:** Tauri uses the OS WebView (WebView2 / WKWebView
+    / WebKitGTK) and a Rust core, yielding much smaller binaries and lower memory
+    than bundling Chromium + Node with Electron.
+  - **Security:** Tauri's capability/allowlist model and Rust core present a
+    smaller, more constrained attack surface; the web layer has no ambient Node
+    access by default.
+  - **Maintenance:** A thin native shell keeps most logic in the shared web/SDK
+    packages; the Rust surface is limited to capture and OS integration.
+  - **Platform support:** Windows/macOS/Linux are covered. The main risk is
+    WebView engine variance across platforms.
+- **Trade-offs / risks:** Electron offers a single bundled Chromium (uniform
+  rendering, mature `desktopCapturer`/screen APIs) and a larger ecosystem, at the
+  cost of size, memory, and a broader attack surface. Tauri's chief risk is the
+  maturity/uniformity of **native capture** (system audio, per-monitor/region
+  capture, global hotkeys) across WebView engines — this must be validated.
+- **Consequences:** Before committing, run a capture spike proving screen +
+  system-audio + region capture and global shortcuts on all three platforms via
+  Tauri (falling back to Electron only if a hard capability gap is found). Record
+  the spike outcome by superseding this ADR. Capture that cannot be done in the
+  WebView is exposed through a narrow native command surface, keeping the domain
+  logic in shared packages either way so the runtime remains swappable.
+
+---
+
+## ADR-0007: Recorder and player packaging — `recording` + `media`, not separate `recorder`/`player`
+
+- **Status:** Accepted
+- **Context:** The product brief sketches `packages/recorder` and
+  `packages/player`. The implemented monorepo already ships the same
+  capabilities under different names: capture + chunked/resumable/offline upload
+  live in **`packages/recording`**, and streaming/playback (manifest generation,
+  ABR, share-credential gating) lives inside **`packages/media`** alongside the
+  video/asset/storage/sharing domain it is tightly coupled to. The full suite
+  (753 tests) is green against this layout, with build-time boundary and acyclic
+  -graph enforcement.
+- **Decision:** Keep `packages/recording` as the recorder package and keep
+  playback within `packages/media` rather than renaming to `recorder` and
+  extracting a standalone `player` package. The names map one-to-one:
+  `recorder → packages/recording`, `player → packages/media` (playback module).
+- **Rationale / trade-offs:** A rename/extraction is a destructive change to a
+  fully-working, fully-tested build — it touches TypeScript project references,
+  cross-package imports, the dependency graph, and every affected test — for
+  purely cosmetic alignment with the sketch. Playback also shares types and
+  authorization with the rest of the media domain, so extracting it would add a
+  package boundary (and an extra edge in the graph) without a domain benefit.
+  Measured against the engineering principles (avoid unnecessary abstractions,
+  don't churn without justification, protect backward compatibility), the cost
+  outweighs the benefit today.
+- **Consequences:** Documentation refers to the recorder as `packages/recording`
+  and the player as the playback module of `packages/media`. If a standalone,
+  independently-consumable player (e.g. an embeddable player SDK) becomes a real
+  requirement, extract `packages/player` at that point behind its current
+  public types, and supersede this ADR.
