@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs/PRODUCT.md` — experience-centric product strategy addressing the
+  lead-architect review: positioning ("the asynchronous operating system for
+  software teams"), the Capture→Explain→Collaborate→Track→Resolve→Archive
+  lifecycle, the engineering knowledge graph, recorder markers, whole-workflow
+  engineering reviews, Developer Mode diagnostics, outcome-based analytics, and
+  an experience-based roadmap. Linked from README/VISION; the report now points
+  to it for the "why".
+- ADR-0010 (Proposed) — separate `knowledge`/`projects`/`storage` from `media`
+  and reserve a future `apps/mobile`, per the review's recommended layout.
+
+
 - Top-level project meta files: `LICENSE` (Apache-2.0), root `ARCHITECTURE.md`,
   `ROADMAP.md`, `CONTRIBUTING.md`, this `CHANGELOG.md`, and a `scripts/`
   directory (`scripts/check.sh` local CI gate).
