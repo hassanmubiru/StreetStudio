@@ -12,8 +12,8 @@ architectural boundary gates pass, and the entire test suite is green.
 | Tasks complete                   | 184 / 184 (100%)                          |
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
-| Apps / packages                  | 4 apps, 27 packages                       |
-| Source files / LOC (excl. tests) | 108 files, ~21,900 LOC                    |
+| Apps / packages                  | 4 apps, 28 packages                       |
+| Source files / LOC (excl. tests) | 110 files, ~21,900 LOC                    |
 | Test files / LOC                 | 160 files, ~32,600 LOC                    |
 | Full test run                    | 160 files, 753 passed, 1 skipped, 0 failed|
 | Documentation                    | 11 files (README + 10 under `docs/`)      |
@@ -69,8 +69,9 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/config                        | 12  | 8     | 4    | Config loading + boundary/graph tooling         |
 | packages/database                      | 9   | 6     | 2    | Schema, repositories, append-only audit log     |
 | packages/auth                          | 11  | 27    | 21   | Auth, sessions, RBAC, API keys                  |
-| packages/media                         | 11  | 44    | 33   | Videos, uploads, storage abstraction, sharing, playback, search, comments |
-| packages/recording                     | 5   | 2     | 1    | Recorder capture + offline upload client        |
+| packages/media                         | 11  | 41    | 31   | Videos, uploads, storage abstraction, comments, sharing, search |
+| packages/player                        | 2   | 3     | 2    | Streaming/playback: ABR manifest with view-permission & share-credential gating |
+| packages/recorder                      | 5   | 2     | 1    | Recorder capture + offline upload client        |
 | packages/processing                    | 2   | 5     | 3    | Media pipeline: transcode/thumbnail/preview     |
 | packages/notifications                 | 3   | 8     | 6    | Notifications + realtime event contracts        |
 | packages/plugins                       | 7   | 11    | 5    | Plugin_Manager, AI router, billing, isolation   |
