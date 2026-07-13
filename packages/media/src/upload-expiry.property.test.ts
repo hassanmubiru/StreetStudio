@@ -254,14 +254,15 @@ describe("Feature: streetstudio, Property 22: Upload sessions expire after 24 ho
   it("measures the 24h idle from the last acknowledged chunk (R7.6)", async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.integer({ min: 1, max: 5 }), // total chunks
+        fc.integer({ min: 2, max: 5 }), // total chunks (>= 2 leaves a next chunk)
         fc.integer({ min: 1, max: 4 }), // prefix acked before going idle
         idleMs, // idle since the last ack, straddling 24h
         validSize,
         async (total, prefixRequest, idle, size) => {
           const { service, chunks, clock } = harness();
-          // Keep at least one chunk after the prefix so a "next" chunk exists.
-          const prefix = Math.min(prefixRequest, total - 1 < 1 ? 1 : total - 1);
+          // Ack at least one but strictly fewer than total, so an unacked
+          // "next" chunk (index === prefix) always exists to attempt after idle.
+          const prefix = Math.min(prefixRequest, total - 1);
 
           const session = await service.initSession(ACTOR, {
             organizationId: ORG,
