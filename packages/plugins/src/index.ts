@@ -42,23 +42,8 @@ export { createPluginContext, guardCore, type AttemptSink } from "./isolation.js
 export { StreetPluginManager } from "./manager.js";
 export type { PluginManager, PluginManagerOptions } from "./manager.js";
 
-// AI Capability Router (routing only; no vendor implementation in core).
-export {
-  AI_CAPABILITIES,
-  AI_REJECT_BUDGET_MS,
-  AI_REQUEST_TIMEOUT_MS,
-  StreetAiRouter,
-  AiProviderRegistry,
-} from "./ai-router.js";
-export type {
-  AiCapability,
-  AiRequest,
-  AiResult,
-  AiProviderHandler,
-  AiProviderResolver,
-  AiRouter,
-  AiRouterOptions,
-} from "./ai-router.js";
+// The AI capability router lives in `@streetstudio/ai` (routing only; no vendor
+// implementation in core). AI providers are delivered as plugins of this system.
 
 // Billing Gateway (routing only; no vendor implementation in core).
 export {
