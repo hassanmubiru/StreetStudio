@@ -516,7 +516,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Index transcript text and make it searchable within scope within 30s; store AI-produced summaries of 1–10,000 chars associated with the Video; store documentation links of 1–2048 chars with edit permission up to 100 per Video, rejecting invalid/over-cap links
     - _Requirements: 25.1, 25.2, 25.3, 25.4, 25.5, 25.6_
 
-  - [ ] 32.2 Write property test for transcript indexing and search
+  - [x] 32.2 Write property test for transcript indexing and search
     - **Property 72: Transcript indexing makes content searchable within scope**
     - **Validates: Requirements 25.1**
 
