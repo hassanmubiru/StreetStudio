@@ -313,7 +313,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 30: Playback requires ready state and authorization**
     - **Validates: Requirements 10.1, 10.2, 10.3**
 
-  - [ ] 17.3 Write property test for share-credential playback
+  - [-] 17.3 Write property test for share-credential playback
     - **Property 31: Share-credential playback is granted only for valid credentials**
     - **Validates: Requirements 10.4, 10.5**
 
