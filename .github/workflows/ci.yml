@@ -1,0 +1,192 @@
+# =============================================================================
+# StreetStudio Continuous Integration (Requirement 32)
+#
+# One job produces a single overall pass/fail (R32.2) within a 30-minute budget
+# (`timeout-minutes: 30`). It runs the import-boundary and dependency-graph
+# gates, then every test category as its own named step so a failure clearly
+# indicates WHICH category failed (R32.3). Real dependencies (PostgreSQL, Redis,
+# S3-compatible object storage) are provided as service containers and wired via
+# environment variables so tests verify behavior against them where reachable
+# (R32.4); category tests skip/gate themselves when a dependency is unreachable.
+# A final coverage step fails the build below 80% line coverage (R32.5). The
+# classification step distinguishes an infrastructure/environment failure from a
+# test failure (R32.6).
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Only the latest run per ref needs to be green.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Build, gates, and all test categories
+    runs-on: ubuntu-latest
+    # R32.2: a single run reports pass/fail within 30 minutes of starting.
+    timeout-minutes: 30
+
+    # -------------------------------------------------------------------------
+    # Real dependencies (R32.4). Tests connect to these via the env vars below
+    # and verify against them where reachable rather than mocking.
+    # -------------------------------------------------------------------------
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: streetstudio
+          POSTGRES_PASSWORD: streetstudio
+          POSTGRES_DB: streetstudio
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U streetstudio -d streetstudio"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      # bitnami/minio starts the S3-compatible server automatically (GitHub
+      # service containers cannot override the image command/args), and creates
+      # the media bucket on boot via MINIO_DEFAULT_BUCKETS.
+      minio:
+        image: bitnami/minio:latest
+        env:
+          MINIO_ROOT_USER: streetstudio
+          MINIO_ROOT_PASSWORD: streetstudio-ci-secret
+          MINIO_DEFAULT_BUCKETS: streetstudio-media
+        ports:
+          - 9000:9000
+          - 9001:9001
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live || exit 1"
+          --health-interval 15s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Real-dependency wiring for tests that can reach these services (R32.4).
+      DATABASE_URL: postgres://streetstudio:streetstudio@localhost:5432/streetstudio
+      REDIS_URL: redis://localhost:6379
+      STORAGE_ENDPOINT: http://localhost:9000
+      STORAGE_REGION: us-east-1
+      STORAGE_BUCKET: streetstudio-media
+      STORAGE_ACCESS_KEY_ID: streetstudio
+      STORAGE_SECRET_ACCESS_KEY: streetstudio-ci-secret
+      STORAGE_FORCE_PATH_STYLE: "true"
+      # Minimal valid app config so services can start under test.
+      AUTH_JWT_SECRET: ci-only-jwt-secret-value-at-least-32-characters
+      INSTANCE_ID: 00000000-0000-4000-8000-000000000000
+      HTTP_PORT: "8080"
+      HTTP_PUBLIC_BASE_URL: http://localhost:8080
+
+    steps:
+      # -----------------------------------------------------------------------
+      # INFRASTRUCTURE / ENVIRONMENT SETUP (R32.6)
+      # A failure in any step up to and including "Mark infrastructure ready"
+      # is classified as an INFRASTRUCTURE failure, not a test failure.
+      # -----------------------------------------------------------------------
+      - name: "Infrastructure: checkout"
+        uses: actions/checkout@v4
+
+      - name: "Infrastructure: set up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: "Infrastructure: install dependencies"
+        run: npm ci
+
+      - name: "Infrastructure: build (tsc -b)"
+        run: npm run build
+
+      - name: "Mark infrastructure ready"
+        id: infra_ready
+        run: echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      # -----------------------------------------------------------------------
+      # STATIC GATES — import boundaries and dependency graph
+      # (R1.6, R2.6, R22.6, Properties 1 & 2)
+      # -----------------------------------------------------------------------
+      - name: "Gate: dependency graph (no cycles)"
+        run: npm run graph:check
+
+      - name: "Gate: import boundaries"
+        run: npm run boundary:check
+
+      # -----------------------------------------------------------------------
+      # TEST CATEGORIES (R32.1, R32.3)
+      # Each category runs as its own named step, so on failure the step name
+      # identifies exactly which category contained the failing test.
+      # -----------------------------------------------------------------------
+      - name: "Test category: unit"
+        run: npm run test:unit
+
+      - name: "Test category: integration"
+        run: npm run test:integration
+
+      - name: "Test category: contract"
+        run: npm run test:contract
+
+      - name: "Test category: end-to-end (e2e)"
+        run: npm run test:e2e
+
+      - name: "Test category: performance benchmark"
+        run: npm run test:perf
+
+      - name: "Test category: load"
+        run: npm run test:load
+
+      - name: "Test category: media pipeline"
+        run: npm run test:media
+
+      # -----------------------------------------------------------------------
+      # COVERAGE GATE (R32.5) — fails below 80% line coverage.
+      # -----------------------------------------------------------------------
+      - name: "Coverage gate (>= 80% lines)"
+        run: npm run test:coverage
+
+      # -----------------------------------------------------------------------
+      # FAILURE CLASSIFICATION (R32.6)
+      # Distinguishes an infrastructure/environment failure (setup did not reach
+      # the "infrastructure ready" marker) from a test/gate failure.
+      # -----------------------------------------------------------------------
+      - name: "Classify failure (infrastructure vs test)"
+        if: failure()
+        run: |
+          if [ "${{ steps.infra_ready.outputs.ready }}" != "true" ]; then
+            echo "::error title=Infrastructure failure::CI could not complete due to an infrastructure or environment error (setup/dependencies/build). This is NOT a test failure. (R32.6)"
+            {
+              echo "## ❌ Infrastructure failure";
+              echo "The run failed before the environment was ready (checkout, Node setup, \`npm ci\`, or build).";
+              echo "This is classified as an **infrastructure/environment** failure, not a test failure (R32.6).";
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error title=Test failure::A gate or test category failed. See the failing 'Gate:' or 'Test category:' step above for the category. (R32.3)"
+            {
+              echo "## ❌ Test failure";
+              echo "The environment was ready, so this is a **test** failure (R32.3).";
+              echo "The failing **Gate:** or **Test category:** step above identifies which category failed.";
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: "Report success"
+        if: success()
+        run: echo "## ✅ All gates and test categories passed (coverage >= 80%)" >> "$GITHUB_STEP_SUMMARY"
