@@ -35,6 +35,18 @@ export * from "./security/index.js";
  */
 export * from "./webhooks/index.js";
 
+/**
+ * HTTP surface (Requirement 20): the public operation catalog, the shared
+ * request lifecycle (rate limit → authenticate → validate → RBAC → service →
+ * audit), the REST controllers and WebSocket gateway, and the composition root
+ * that wires every domain service through the StreetJS DI seam. Every
+ * Web_Client capability is exposed through a public REST/WebSocket/Webhook
+ * interface enforcing the same authorization as the equivalent Web_Client
+ * request (R20.1, R20.4, R20.5). Exposed through the API entry point for
+ * composition-root wiring.
+ */
+export * from "./http/index.js";
+
 /** Domains wired into the API service, proving cross-package resolution. */
 export const WIRED_DOMAINS = [
   SHARED_DOMAIN,
