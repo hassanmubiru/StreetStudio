@@ -441,12 +441,12 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Test that core-modification attempts are denied and recorded
     - _Requirements: 21.6, 21.7_
 
-- [ ] 26. Implement storage provider plugins
+- [x] 26. Implement storage provider plugins
   - [x] 26.1 Implement Local, S3, R2, Azure Blob, GCS, and MinIO storage provider plugins
     - Implement each provider against the StorageProvider interface as a plugin; no provider imported into core
     - _Requirements: 9.2_
 
-  - [-] 26.2 Write the shared storage-provider conformance suite
+  - [x] 26.2 Write the shared storage-provider conformance suite
     - Run the round-trip and signed-target properties (Properties 27, 29) against every provider plugin, against real backends where reachable and MinIO/local otherwise
     - _Requirements: 9.1, 9.6_
 
