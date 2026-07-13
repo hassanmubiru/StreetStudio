@@ -164,7 +164,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - `updateSettings` validating atomically and retaining prior settings on failure; `removeMember` revoking access within 5s; reject removing the last Administrator; deny non-Administrator administrative actions; record successful administrative actions in the Audit Log
     - _Requirements: 26.1, 26.2, 26.4, 26.5, 26.6, 26.7_
 
-  - [ ] 10.3 Write property test for organization creation and admin assignment
+  - [-] 10.3 Write property test for organization creation and admin assignment
     - **Property 8: Organization creation validity and administrator assignment**
     - **Validates: Requirements 4.1, 4.7**
 
@@ -442,7 +442,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 21.6, 21.7_
 
 - [ ] 26. Implement storage provider plugins
-  - [ ] 26.1 Implement Local, S3, R2, Azure Blob, GCS, and MinIO storage provider plugins
+  - [x] 26.1 Implement Local, S3, R2, Azure Blob, GCS, and MinIO storage provider plugins
     - Implement each provider against the StorageProvider interface as a plugin; no provider imported into core
     - _Requirements: 9.2_
 
