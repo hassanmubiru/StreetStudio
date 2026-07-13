@@ -58,6 +58,7 @@ console.log("ok: event for disconnected member discarded harmlessly");
 nodeB.disconnect("cB"); // bob drops without leave
 const aliceBefore = t1.eventsFor("cA").length;
 timer.advance(5000);
+await flush();
 assert.equal(typesOf(t1, "cA").at(-1), "presence-leave", "alice sees bob departure after drop");
 assert.ok(t1.eventsFor("cA").length > aliceBefore);
 console.log("ok: dropped connection emits presence-departure within 5s");
