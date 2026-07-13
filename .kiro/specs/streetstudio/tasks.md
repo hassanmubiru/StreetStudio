@@ -574,7 +574,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Enforce a default 100 requests/60s rolling per-client limit rejecting excess with retry-after; store all secrets encrypted via the StreetJS secret interface, never plaintext; deny unauthenticated/invalid-auth requests to non-public endpoints with no state change
     - _Requirements: 29.1, 29.2, 29.4_
 
-  - [ ] 36.2 Write property test for rate limiting
+  - [-] 36.2 Write property test for rate limiting
     - **Property 85: Rate limiting rejects excess requests with retry guidance**
     - **Validates: Requirements 29.1**
 
