@@ -264,7 +264,7 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
 
 ## ADR-0010: Separate `knowledge` (and `projects`, `storage`) from `media`
 
-- **Status:** Proposed
+- **Status:** Accepted (executed)
 - **Context:** A lead-architect product review observed that **knowledge and
   media evolve differently**: media is bytes, renditions, and playback;
   knowledge is the graph of transcripts, summaries, decisions, links, comments,
