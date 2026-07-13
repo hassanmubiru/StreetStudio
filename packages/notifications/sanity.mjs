@@ -40,9 +40,11 @@ assert.deepEqual(typesOf(t2, "cB"), [], "author bob excluded from live comment")
 console.log("ok: live comment to concurrent viewers, author excluded");
 
 // --- Typing start then auto-stop after inactivity window ---
+const flush = () => new Promise((r) => setImmediate(r));
 await nodeA.startTyping("alice", "V"); // bob should see typing-start
 assert.equal(typesOf(t2, "cB").at(-1), "typing-start", "bob sees typing-start");
-timer.advance(5000); // inactivity -> typing-stop
+timer.advance(5000); // inactivity -> typing-stop (async, fire-and-forget)
+await flush();
 assert.equal(typesOf(t2, "cB").at(-1), "typing-stop", "bob sees typing-stop after 5s");
 console.log("ok: typing start + auto-stop after 5s inactivity");
 
