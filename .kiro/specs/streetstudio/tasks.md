@@ -304,7 +304,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 26: Processing failures are bounded and preserve the source**
     - **Validates: Requirements 8.6**
 
-- [ ] 17. Implement streaming and playback
+- [x] 17. Implement streaming and playback
   - [x] 17.1 Implement PlaybackService manifest generation
     - Provide an ABR streaming manifest within 3s if and only if the Video is ready and the requester holds view permission (or a valid share credential); deny with the appropriate error and no manifest otherwise
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
@@ -313,7 +313,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 30: Playback requires ready state and authorization**
     - **Validates: Requirements 10.1, 10.2, 10.3**
 
-  - [-] 17.3 Write property test for share-credential playback
+  - [x] 17.3 Write property test for share-credential playback
     - **Property 31: Share-credential playback is granted only for valid credentials**
     - **Validates: Requirements 10.4, 10.5**
 
@@ -384,7 +384,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Implement `join`/`leave`/`emit` over StreetJS WebSockets with a Redis pub/sub backplane for cross-node fan-out; deliver presence-join/leave and typing/typing-stopped to other relevant connected members within 2s (never the originator); start typing on activity and stop after 5s inactivity; emit presence-departure within 5s on dropped connections; deliver live comments to concurrent viewers within 2s; discard events for members with no active connection without disrupting others; carry upload-progress, processing-status, live-comment, and notification events
     - _Requirements: 11.6, 12.2, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_
 
-  - [-] 22.2 Write property test for live comment delivery
+  - [x] 22.2 Write property test for live comment delivery
     - **Property 36: Live comment delivery to concurrent viewers**
     - **Validates: Requirements 11.6**
 
@@ -536,7 +536,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Record a view event scoped to the member's organization within 5s on playback start (Video id, member id, timestamp); aggregate total views, distinct viewers, and total watch duration for a valid time range within 5s, Administrator-only, excluding other organizations; reject invalid ranges
     - _Requirements: 28.1, 28.2, 28.3, 28.4, 28.5_
 
-  - [-] 34.2 Write property test for view-event recording
+  - [x] 34.2 Write property test for view-event recording
     - **Property 82: View events are recorded with required fields on playback**
     - **Validates: Requirements 28.1**
 
