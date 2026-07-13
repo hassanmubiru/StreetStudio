@@ -44,10 +44,20 @@ describe("Property 86: Secrets are never persisted in plaintext", () => {
           expect(persisted).not.toBeNull();
           const ciphertext = persisted as string;
 
-          // Never byte-equal to the plaintext...
+          // Never byte-equal to the plaintext (holds for every input).
           expect(ciphertext).not.toBe(plaintext);
-          // ...and never textually contains the plaintext.
-          expect(ciphertext.includes(plaintext)).toBe(false);
+
+          // ...and never textually contains the plaintext. The AES-GCM cipher
+          // emits `"<ivHex>:<tagHex>:<cipherHex>"`, whose alphabet is lowercase
+          // hex plus ":". A plaintext composed solely of those characters can be
+          // a coincidental substring without any leak, so the containment check
+          // is applied only when the plaintext has a character outside that
+          // alphabet — where a substring match would be genuine leakage. This
+          // still flags an identity/broken cipher, whose output would equal (and
+          // thus contain) the plaintext.
+          if (/[^0-9a-f:]/.test(plaintext)) {
+            expect(ciphertext.includes(plaintext)).toBe(false);
+          }
 
           // reveal() round-trips back to the original plaintext.
           const revealed = await manager.reveal(key);
