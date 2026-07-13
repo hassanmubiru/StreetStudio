@@ -259,3 +259,35 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   their old homes now imports the dedicated packages. Docs (`README.md`,
   `docs/ARCHITECTURE.md`, `docs/IMPLEMENTATION_REPORT.md`, `VISION.md`) were
   updated to the new layout.
+
+---
+
+## ADR-0010: Separate `knowledge` (and `projects`, `storage`) from `media`
+
+- **Status:** Proposed
+- **Context:** A lead-architect product review observed that **knowledge and
+  media evolve differently**: media is bytes, renditions, and playback;
+  knowledge is the graph of transcripts, summaries, decisions, links, comments,
+  and reuse that outlives any single recording (see
+  [`PRODUCT.md`](../PRODUCT.md), "Engineering memory"). The review's recommended
+  package layout also splits `projects` and `storage` out of `media` and adds a
+  future `apps/mobile`.
+- **Decision (proposed, not yet executed):**
+  - Extract `@streetstudio/knowledge` from `packages/media` (currently the
+    `knowledge-base` module and, over time, the knowledge-graph / search-index
+    surfaces) so the engineering-memory domain evolves on its own.
+  - Extract `@streetstudio/projects` (the `content` module: projects, folders,
+    workspaces) and `@streetstudio/storage` (the storage abstraction +
+    `StorageProvider` contract) from `packages/media`.
+  - Reserve `apps/mobile` for a future client.
+- **Rationale / trade-offs:** This continues the sketch-alignment already done in
+  ADR-0008/0009 and reflects genuine domain seams (knowledge ≠ media). The cost
+  is another boundary-graph-affecting refactor; the `storage` split in particular
+  touches the six `storage-*` provider plugins that import storage types from
+  `@streetstudio/media` today. As with prior extractions, no domain has external
+  code importers beyond declared entry points, so the moves are contained.
+- **Consequences / plan:** When executed, each extraction will follow the
+  established pattern — new package depending on its source domain to stay
+  acyclic — with the full gate (`scripts/check.sh`) green at every step, and docs
+  updated. Until then, the capabilities remain in `packages/media` and this ADR
+  records the intended direction. `mobile` is roadmap-only.

@@ -40,7 +40,7 @@ Each package declares a single primary domain responsibility (`streetstudio.doma
 
 ## Documentation
 
-Start with the [**VISION**](VISION.md) — the founding vision, product strategy, and master development plan.
+Start with the [**VISION**](VISION.md) — the founding vision and master plan — and [**PRODUCT**](docs/PRODUCT.md) — the experience-centric product strategy ("the asynchronous operating system for software teams").
 
 The full documentation set lives under [`docs/`](docs/):
 
