@@ -595,11 +595,11 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Provide typed client methods for every public REST and WebSocket operation; support lockstep release with contract changes and the 90-day deprecation window for breaking changes
     - _Requirements: 20.2, 20.3, 20.6_
 
-  - [ ] 37.3 Write contract test for API/SDK parity
+  - [-] 37.3 Write contract test for API/SDK parity
     - **Property 64: Public API parity and SDK coverage**
     - **Validates: Requirements 20.1, 20.2**
 
-  - [ ] 37.4 Write property test for public-API authorization parity
+  - [-] 37.4 Write property test for public-API authorization parity
     - **Property 65: Public API authorization matches web equivalents**
     - **Validates: Requirements 20.4, 20.5**
 
@@ -619,17 +619,17 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Provide `docker/` container images/compose and `infrastructure/` deployment configuration for self-hosting
     - _Requirements: 30.1_
 
-  - [ ] 39.4 Write integration tests for startup/health/metrics and HA reconnection
+  - [-] 39.4 Write integration tests for startup/health/metrics and HA reconnection
     - Test startup/health/metrics wiring and PostgreSQL HA / Redis Cluster node-loss reconnection against real dependencies where reachable
     - _Requirements: 30.2, 30.4, 30.5, 30.6_
 
 - [ ] 40. Author project documentation
-  - [ ] 40.1 Create the required documentation set
+  - [-] 40.1 Create the required documentation set
     - Create README, ARCHITECTURE, ROADMAP, CONTRIBUTING, SECURITY, API, PLUGIN_GUIDE, MEDIA_PIPELINE, DEPLOYMENT, and DECISIONS files with content addressing each topic; document StreetJS gaps with external-issue references; record ADRs; document every public endpoint's request/response/auth/error formats; document public endpoints requiring no authentication
     - _Requirements: 1.4, 29.5, 31.1, 31.2, 31.3, 31.4_
 
 - [ ] 41. Establish continuous integration and coverage gating
-  - [ ] 41.1 Configure the CI pipeline and test categories
+  - [-] 41.1 Configure the CI pipeline and test categories
     - Configure CI to execute unit, integration, contract, end-to-end, performance benchmark, load, and media pipeline categories (each with ≥1 executable test) reporting a single pass/fail within 30 min, indicating the failing category, distinguishing infrastructure from test failures, and failing below 80% line coverage; run the boundary and dependency-graph checks; verify behavior against real dependencies where reachable
     - _Requirements: 32.1, 32.2, 32.3, 32.4, 32.5, 32.6_
 
