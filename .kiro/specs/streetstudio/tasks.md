@@ -237,7 +237,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 28: Storage provider activation validates configuration**
     - **Validates: Requirements 9.4**
 
-  - [ ] 13.4 Write property test for signed upload credential expiry
+  - [-] 13.4 Write property test for signed upload credential expiry
     - **Property 29: Signed upload credentials have bounded, secure expiry**
     - **Validates: Requirements 9.6, 9.7, 29.3**
 
