@@ -362,7 +362,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 35: Reactions are idempotent per type, member, and target**
     - **Validates: Requirements 11.5**
 
-- [ ] 21. Implement notifications
+- [x] 21. Implement notifications
   - [x] 21.1 Implement NotificationService (create, markRead, deliverPending)
     - Create a notification within 5s recording event type, source resource, and timestamp, respecting member preferences; mark-read only for owned notifications recording a read timestamp, rejecting others with no change; retain undelivered notifications and deliver within 5s of reconnect
     - _Requirements: 12.1, 12.3, 12.4, 12.5, 12.6_
@@ -375,7 +375,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 38: Notification delivery online and after reconnect**
     - **Validates: Requirements 12.2, 12.5**
 
-  - [-] 21.4 Write property test for ownership-checked mark-read
+  - [x] 21.4 Write property test for ownership-checked mark-read
     - **Property 39: Marking notifications read is ownership-checked**
     - **Validates: Requirements 12.3, 12.6**
 
