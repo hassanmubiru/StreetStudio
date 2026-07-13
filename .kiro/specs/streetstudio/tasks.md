@@ -342,7 +342,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 15.5, 15.6, 15.7**
 
 - [ ] 20. Implement comments, mentions, threads, and reactions
-  - [-] 20.1 Implement CommentService (post, reply, react, mention)
+  - [x] 20.1 Implement CommentService (post, reply, react, mention)
     - Store comments/replies only when body is 1–5000 chars and any timestamp is 0–duration (nested under parent for replies, associated with playback position when supplied); enforce comment permission; record at most one reaction of each type per member/target; create a mention notification within 2s for a mentioned member with view access
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.7, 11.8, 11.9_
 
