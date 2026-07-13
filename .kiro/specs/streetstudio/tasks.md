@@ -325,7 +325,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Generate globally unique share credentials; deny access at/after expiry or once revoked with no change to the Video; grant passcode-protected access only on matching passcode and lock the link ≥15 min after 5 consecutive incorrect attempts; enforce content permission on every Video/Asset/Comment/Folder read or modify with no change on denial
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7_
 
-  - [-] 19.2 Write property test for globally unique share credentials
+  - [x] 19.2 Write property test for globally unique share credentials
     - **Property 46: Share credentials are globally unique**
     - **Validates: Requirements 15.1**
 
@@ -346,7 +346,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Store comments/replies only when body is 1–5000 chars and any timestamp is 0–duration (nested under parent for replies, associated with playback position when supplied); enforce comment permission; record at most one reaction of each type per member/target; create a mention notification within 2s for a mentioned member with view access
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.7, 11.8, 11.9_
 
-  - [-] 20.2 Write property test for comment body/timestamp validation
+  - [x] 20.2 Write property test for comment body/timestamp validation
     - **Property 32: Comment creation validates body and timestamp**
     - **Validates: Requirements 11.1, 11.2, 11.3, 11.8, 11.9**
 
@@ -388,7 +388,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 36: Live comment delivery to concurrent viewers**
     - **Validates: Requirements 11.6**
 
-  - [-] 22.3 Write property test for presence/typing audience targeting
+  - [x] 22.3 Write property test for presence/typing audience targeting
     - **Property 40: Presence and typing events target the correct audience**
     - **Validates: Requirements 13.1, 13.2, 13.3**
 
