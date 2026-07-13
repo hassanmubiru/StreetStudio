@@ -548,7 +548,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 84: Analytics access is Administrator-only with validated ranges**
     - **Validates: Requirements 28.4, 28.5**
 
-- [ ] 35. Implement webhooks
+- [x] 35. Implement webhooks
   - [x] 35.1 Implement WebhookService (register, delete) and signed worker delivery
     - Store subscriptions only for supported event types with well-formed HTTPS URLs ≤2048 chars; deliver signed payloads within 30s; treat a >10s non-success as failed and retry ≤5 more times with non-decreasing backoff, then record failed; stop delivery within 60s of deletion
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7_
@@ -561,15 +561,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 61: Webhook deliveries are signed and verifiable**
     - **Validates: Requirements 19.4**
 
-  - [-] 35.4 Write property test for bounded delivery retries with backoff
+  - [x] 35.4 Write property test for bounded delivery retries with backoff
     - **Property 62: Webhook delivery retries are bounded with backoff**
     - **Validates: Requirements 19.5, 19.6**
 
-  - [-] 35.5 Write property test for delivery stop on deletion
+  - [x] 35.5 Write property test for delivery stop on deletion
     - **Property 63: Deleting a webhook stops deliveries**
     - **Validates: Requirements 19.7**
 
-- [ ] 36. Implement security middleware and defaults
+- [x] 36. Implement security middleware and defaults
   - [x] 36.1 Implement rate limiting, secret handling, and auth-required middleware
     - Enforce a default 100 requests/60s rolling per-client limit rejecting excess with retry-after; store all secrets encrypted via the StreetJS secret interface, never plaintext; deny unauthenticated/invalid-auth requests to non-public endpoints with no state change
     - _Requirements: 29.1, 29.2, 29.4_
@@ -582,7 +582,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 86: Secrets are never persisted in plaintext**
     - **Validates: Requirements 29.2**
 
-  - [-] 36.4 Write property test for non-public endpoint authentication
+  - [x] 36.4 Write property test for non-public endpoint authentication
     - **Property 87: Non-public endpoints deny unauthenticated access**
     - **Validates: Requirements 29.4**
 
@@ -591,7 +591,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Wire all domain services via StreetJS DI into REST controllers and the WebSocket gateway with the request lifecycle (rate limit → authenticate → validate → RBAC → service → audit); expose every Web_Client capability through a public REST/WebSocket/Webhook interface enforcing the same authorization as the equivalent Web_Client request
     - _Requirements: 20.1, 20.4, 20.5_
 
-  - [-] 37.2 Implement the SDK client
+  - [x] 37.2 Implement the SDK client
     - Provide typed client methods for every public REST and WebSocket operation; support lockstep release with contract changes and the 90-day deprecation window for breaking changes
     - _Requirements: 20.2, 20.3, 20.6_
 
