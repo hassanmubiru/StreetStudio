@@ -400,7 +400,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Test the 5s typing-stop emission and dropped-connection presence-departure using in-memory transport/clock fakes
     - _Requirements: 13.5, 13.6_
 
-- [ ] 23. Implement search and transcript search
+- [x] 23. Implement search and transcript search
   - [x] 23.1 Implement SearchService with authorized scoping and pagination
     - Return, within 3s, Videos/Assets whose indexed text matches a 1–500 char query within the member's authorized scope; include transcript matches with matching playback position; validate query length rejecting empty/>500; page results at ≤100 with a retrieval cursor; return empty set on no matches
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
@@ -409,7 +409,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 42: Search returns only matching, authorized results**
     - **Validates: Requirements 14.1, 14.4**
 
-  - [-] 23.3 Write property test for transcript playback positions
+  - [x] 23.3 Write property test for transcript playback positions
     - **Property 43: Transcript matches include playback position**
     - **Validates: Requirements 14.2**
 
@@ -489,12 +489,12 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Implement each integration against the plugin contract; source-control integrations (GitHub/GitLab) expose repository/pull-request access used by Engineering Reviews
     - _Requirements: 21.8, 24.2_
 
-- [ ] 30. Implement Developer Mode assets
+- [x] 30. Implement Developer Mode assets
   - [x] 30.1 Implement DeveloperAssets attachments
     - Attach code snippet/markdown (1–100,000 chars), terminal recording, and API recording as Assets when Developer Mode is enabled; reject out-of-range lengths and reject all developer attachments with "Developer Mode required" when disabled, leaving the Video unchanged
     - _Requirements: 23.1, 23.2, 23.3, 23.4, 23.5, 23.6_
 
-  - [-] 30.2 Write property test for developer asset validation and gating
+  - [x] 30.2 Write property test for developer asset validation and gating
     - **Property 69: Developer assets validate length and require Developer Mode**
     - **Validates: Requirements 23.1, 23.3, 23.5, 23.6**
 
