@@ -200,7 +200,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 78: An organization always retains at least one Administrator**
     - **Validates: Requirements 26.6**
 
-- [ ] 11. Implement content hierarchy (projects, folders, workspaces)
+- [x] 11. Implement content hierarchy (projects, folders, workspaces)
   - [x] 11.1 Implement ContentService for projects, folders, workspaces, and video moves
     - `createProject`/`createFolder` (names 1–255) scoped to org/project with create-permission gating; enforce folder nesting depth ≤10; `moveVideo` same-org only, preserving identity/comments/transcripts/permissions and rejecting cross-org moves; `createWorkspace`
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
@@ -217,7 +217,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 15: Video moves preserve identity and associations within the organization**
     - **Validates: Requirements 5.4, 5.7**
 
-  - [-] 11.5 Write property test for create-permission enforcement
+  - [x] 11.5 Write property test for create-permission enforcement
     - **Property 16: Create permission is required for projects and folders**
     - **Validates: Requirements 5.6**
 
