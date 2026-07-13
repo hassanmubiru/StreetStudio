@@ -633,7 +633,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Configure CI to execute unit, integration, contract, end-to-end, performance benchmark, load, and media pipeline categories (each with ≥1 executable test) reporting a single pass/fail within 30 min, indicating the failing category, distinguishing infrastructure from test failures, and failing below 80% line coverage; run the boundary and dependency-graph checks; verify behavior against real dependencies where reachable
     - _Requirements: 32.1, 32.2, 32.3, 32.4, 32.5, 32.6_
 
-  - [ ] 41.2 Author end-to-end and performance/load/media-pipeline tests
+  - [-] 41.2 Author end-to-end and performance/load/media-pipeline tests
     - E2E flow (register → org → invite/accept → project/folder → record → chunked upload → pipeline → ready → playback → comment → mention → share access) driven exclusively through the public API/SDK; latency-budget benchmarks; concurrent-upload/realtime-fanout/webhook load tests; media pipeline transcode/thumbnail/preview tests
     - _Requirements: 32.1, 32.4_
 
