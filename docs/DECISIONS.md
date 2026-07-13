@@ -286,8 +286,14 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   touches the six `storage-*` provider plugins that import storage types from
   `@streetstudio/media` today. As with prior extractions, no domain has external
   code importers beyond declared entry points, so the moves are contained.
-- **Consequences / plan:** When executed, each extraction will follow the
-  established pattern — new package depending on its source domain to stay
-  acyclic — with the full gate (`scripts/check.sh`) green at every step, and docs
-  updated. Until then, the capabilities remain in `packages/media` and this ADR
-  records the intended direction. `mobile` is roadmap-only.
+- **Consequences (executed):** `@streetstudio/projects` (content hierarchy),
+  `@streetstudio/storage` (StorageProvider contract + router), and
+  `@streetstudio/knowledge` (transcript indexing, summaries, doc links) were
+  extracted from `packages/media`. Dependency directions stay acyclic:
+  `storage → {auth, shared}`; `projects`/`knowledge` → `{auth, database, shared}`;
+  `media → storage` (the upload service uses the storage router). The six
+  `storage-*` provider plugins and the `storage-conformance` suite were repointed
+  from `@streetstudio/media` to `@streetstudio/storage` (imports, manifests, and
+  project references). The full gate stayed green (build, `graph:check`,
+  `boundary:check`; 161 test files, 759 passed, 1 skipped; coverage 84.91%), and
+  the monorepo is now 37 packages. `apps/mobile` remains roadmap-only.
