@@ -13,6 +13,7 @@
     { "path": "./packages/storage-minio" },
     { "path": "./packages/storage-azure-blob" },
     { "path": "./packages/storage-gcs" },
+    { "path": "./packages/storage-conformance" },
     { "path": "./packages/processing" },
     { "path": "./packages/notifications" },
     { "path": "./packages/recording" },
