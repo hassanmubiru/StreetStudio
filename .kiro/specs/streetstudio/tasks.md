@@ -250,15 +250,15 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Accept ordered chunks 1 MB–100 MB, acknowledging each; integrity-check each chunk, rejecting failures without persisting and retrying ≤3 times before aborting and discarding partial chunks; resume within 24h from the chunk after the last ack without retransmission; expire idle sessions after 24h; assemble in order into the completed Video; emit upload-progress on each ack
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
 
-  - [ ] 14.2 Write property test for chunk size validation and acknowledgment
+  - [-] 14.2 Write property test for chunk size validation and acknowledgment
     - **Property 18: Chunk acceptance validates size and acknowledges each received chunk**
     - **Validates: Requirements 7.1**
 
-  - [ ] 14.3 Write property test for resumable uploads without retransmission
+  - [-] 14.3 Write property test for resumable uploads without retransmission
     - **Property 19: Interrupted uploads resume without retransmitting acknowledged chunks**
     - **Validates: Requirements 7.2**
 
-  - [ ] 14.4 Write property test for chunk-assembly round-trip
+  - [-] 14.4 Write property test for chunk-assembly round-trip
     - **Property 20: Chunk assembly round-trip reconstructs the original media**
     - **Validates: Requirements 7.3**
 
@@ -342,7 +342,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Validates: Requirements 15.5, 15.6, 15.7**
 
 - [ ] 20. Implement comments, mentions, threads, and reactions
-  - [ ] 20.1 Implement CommentService (post, reply, react, mention)
+  - [-] 20.1 Implement CommentService (post, reply, react, mention)
     - Store comments/replies only when body is 1–5000 chars and any timestamp is 0–duration (nested under parent for replies, associated with playback position when supplied); enforce comment permission; record at most one reaction of each type per member/target; create a mention notification within 2s for a mentioned member with view access
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.7, 11.8, 11.9_
 
