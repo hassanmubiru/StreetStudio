@@ -176,7 +176,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 10: Invitation acceptance is valid only while pending and unexpired**
     - **Validates: Requirements 4.3, 4.9**
 
-  - [-] 10.6 Write property test for team scoping
+  - [x] 10.6 Write property test for team scoping
     - **Property 11: Team creation and membership are organization-scoped**
     - **Validates: Requirements 4.4, 4.5**
 
