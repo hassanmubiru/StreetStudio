@@ -1,0 +1,38 @@
+# Build context excludes for StreetStudio container images.
+# The Docker build context is the repository root; keep it lean and never
+# ship local secrets, build output, or dependency trees into the image.
+
+# Dependencies (reinstalled deterministically inside the image from lockfile)
+node_modules/
+**/node_modules/
+
+# Build output (produced inside the image by `tsc -b`)
+dist/
+**/dist/
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Test / coverage
+coverage/
+**/coverage/
+
+# Env & secrets — never bake real configuration into an image
+.env
+.env.*
+!.env.example
+
+# Local Docker artifacts
+docker/.env
+docker-compose.override.yml
+
+# Editor / OS
+.DS_Store
+*.log
+
+# VCS & specs (not needed at runtime)
+.git/
+.gitignore
+.kiro/
+
+# Docs sites source not required by API/worker runtime images
+**/*.md
