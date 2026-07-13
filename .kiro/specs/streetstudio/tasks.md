@@ -213,7 +213,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 14: Folder nesting is bounded at depth 10**
     - **Validates: Requirements 5.3**
 
-  - [-] 11.4 Write property test for video move preservation
+  - [x] 11.4 Write property test for video move preservation
     - **Property 15: Video moves preserve identity and associations within the organization**
     - **Validates: Requirements 5.4, 5.7**
 
@@ -233,7 +233,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 27: Storage round-trip preserves object bytes**
     - **Validates: Requirements 9.1**
 
-  - [-] 13.3 Write property test for provider activation validation
+  - [x] 13.3 Write property test for provider activation validation
     - **Property 28: Storage provider activation validates configuration**
     - **Validates: Requirements 9.4**
 
