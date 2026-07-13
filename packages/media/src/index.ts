@@ -106,38 +106,9 @@ export type {
   StorageRouterChunkStorageOptions,
 } from "./upload.js";
 
-// --- Comments, Threads, Reactions & Mentions Service (task 20.1) -----------
-export {
-  CommentService,
-  repositoryCommentStore,
-  POST_COMMENT_PERMISSION,
-  COMMENT_BODY_MIN_LENGTH,
-  COMMENT_BODY_MAX_LENGTH,
-  MENTION_EVENT_TYPE,
-} from "./comment.js";
-export type {
-  CommentServiceDeps,
-  CommentStore,
-  ReactionTarget,
-  MentionNotifier,
-} from "./comment.js";
-
-// --- Search & Transcript Search Service (task 23.1) ------------------------
-export {
-  SearchService,
-  SEARCH_QUERY_MIN_LENGTH,
-  SEARCH_QUERY_MAX_LENGTH,
-  SEARCH_MAX_PAGE_SIZE,
-  VIEW_ASSET_PERMISSION,
-} from "./search.js";
-export type {
-  SearchServiceDeps,
-  SearchIndex,
-  IndexedMatch,
-  SearchHit,
-  SearchPage,
-  Cursor,
-} from "./search.js";
+// Comments live in `@streetstudio/comments`; search lives in
+// `@streetstudio/search`. Both build on the media-domain permission contracts
+// exported above (`VIEW_VIDEO_PERMISSION`).
 
 // --- Developer Mode Assets Service (task 30.1) -----------------------------
 export {

@@ -61,10 +61,10 @@ import type {
 } from "@streetstudio/database";
 import { AppError } from "@streetstudio/shared";
 import type { InvitationStatus, IsoTimestamp, Uuid } from "@streetstudio/shared";
-import { ROLE_MANAGEMENT_PERMISSION } from "./access-control.js";
-import { systemClock, type Clock } from "./clock.js";
-import type { AuthContext } from "./service.js";
-import { toIsoTimestamp } from "./tokens.js";
+import { ROLE_MANAGEMENT_PERMISSION } from "@streetstudio/auth";
+import { systemClock, type Clock } from "@streetstudio/auth";
+import type { AuthContext } from "@streetstudio/auth";
+import { toIsoTimestamp } from "@streetstudio/auth";
 
 /** Maximum length of an Organization name (Requirement 4.1, 4.7). */
 export const MAX_ORG_NAME_LENGTH = 200;

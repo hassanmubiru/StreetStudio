@@ -39,7 +39,7 @@
 import type { AccessControl, AuthContext, ResourceRef } from "@streetstudio/auth";
 import { AppError } from "@streetstudio/shared";
 
-import { VIEW_VIDEO_PERMISSION } from "./permissions.js";
+import { VIEW_VIDEO_PERMISSION } from "@streetstudio/media";
 
 /** Minimum length, in characters, of a search query (R14.5). Empty is rejected. */
 export const SEARCH_QUERY_MIN_LENGTH = 1;

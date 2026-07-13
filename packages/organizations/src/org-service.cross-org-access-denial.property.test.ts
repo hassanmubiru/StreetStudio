@@ -11,8 +11,8 @@ import type {
 } from "@streetstudio/database";
 import type { InvitationStatus, Uuid } from "@streetstudio/shared";
 import { OrgService, type OrgStore } from "./org-service.js";
-import type { AuthContext } from "./service.js";
-import type { Clock } from "./clock.js";
+import type { AuthContext } from "@streetstudio/auth";
+import type { Clock } from "@streetstudio/auth";
 
 /**
  * Property 12: Cross-organization access is denied.

@@ -16,8 +16,8 @@ import {
   type OrgSettings,
   type OrgStore,
 } from "./org-service.js";
-import type { AuthContext } from "./service.js";
-import type { Clock } from "./clock.js";
+import type { AuthContext } from "@streetstudio/auth";
+import type { Clock } from "@streetstudio/auth";
 
 /**
  * Property 75: Organization settings updates are validated atomically.

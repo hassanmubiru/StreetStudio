@@ -12,7 +12,7 @@ import {
   type IndexedMatch,
   type SearchIndex,
 } from "./search.js";
-import { VIEW_VIDEO_PERMISSION } from "./permissions.js";
+import { VIEW_VIDEO_PERMISSION } from "@streetstudio/media";
 
 /**
  * Property 42: Search returns only matching, authorized results.

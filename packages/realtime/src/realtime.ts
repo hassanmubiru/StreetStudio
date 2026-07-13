@@ -40,7 +40,7 @@
  */
 import { systemClock, type Clock } from "@streetstudio/auth";
 import type { NotificationDto } from "@streetstudio/shared";
-import type { NotificationEmitter } from "./notification-service.js";
+import type { NotificationEmitter } from "@streetstudio/notifications";
 
 /** Realtime event kinds delivered over the WebSocket gateway (R13.4). */
 export type RealtimeEventType =

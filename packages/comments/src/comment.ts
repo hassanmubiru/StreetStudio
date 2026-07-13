@@ -56,7 +56,7 @@ import {
 import { AppError } from "@streetstudio/shared";
 import type { CommentDto, ReactionTargetType, Uuid } from "@streetstudio/shared";
 
-import { VIEW_VIDEO_PERMISSION } from "./permissions.js";
+import { VIEW_VIDEO_PERMISSION } from "@streetstudio/media";
 
 /**
  * Permission a Role must grant to post a comment or reply, or to react, on a

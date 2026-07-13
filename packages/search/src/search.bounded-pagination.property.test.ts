@@ -15,7 +15,7 @@ import {
   type SearchHit,
   type SearchIndex,
 } from "./search.js";
-import { VIEW_VIDEO_PERMISSION } from "./permissions.js";
+import { VIEW_VIDEO_PERMISSION } from "@streetstudio/media";
 
 /**
  * Property 45: Search results are paginated with a bounded page size.
