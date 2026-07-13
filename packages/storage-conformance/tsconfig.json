@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "dist"],
+  "references": [
+    { "path": "../media" },
+    { "path": "../plugins" },
+    { "path": "../storage-local" },
+    { "path": "../storage-s3" },
+    { "path": "../storage-r2" },
+    { "path": "../storage-minio" },
+    { "path": "../storage-azure-blob" },
+    { "path": "../storage-gcs" }
+  ]
+}
