@@ -603,7 +603,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 65: Public API authorization matches web equivalents**
     - **Validates: Requirements 20.4, 20.5**
 
-- [ ] 38. Checkpoint - API surface
+- [x] 38. Checkpoint - API surface
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 39. Implement self-hosting, deployment, and HA operation
