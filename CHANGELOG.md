@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New `@streetstudio/player` package: streaming/playback (`PlaybackService`)
   extracted from `@streetstudio/media` into an independently-consumable package
   (ADR-0008).
+- `VISION.md` — founding vision, product strategy, and master development plan,
+  with a reconciliation appendix mapping the target package sketch to the
+  implemented layout.
+- `examples/` directory — SDK quickstart and Docker Compose self-hosting guide,
+  both driven exclusively through the public API/SDK surface.
 
 ### Changed
 
