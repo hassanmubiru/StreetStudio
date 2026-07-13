@@ -375,7 +375,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 38: Notification delivery online and after reconnect**
     - **Validates: Requirements 12.2, 12.5**
 
-  - [ ] 21.4 Write property test for ownership-checked mark-read
+  - [-] 21.4 Write property test for ownership-checked mark-read
     - **Property 39: Marking notifications read is ownership-checked**
     - **Validates: Requirements 12.3, 12.6**
 
