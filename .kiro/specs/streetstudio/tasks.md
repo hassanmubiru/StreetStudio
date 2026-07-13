@@ -520,7 +520,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 72: Transcript indexing makes content searchable within scope**
     - **Validates: Requirements 25.1**
 
-  - [ ] 32.3 Write property test for summary storage bounds
+  - [x] 32.3 Write property test for summary storage bounds
     - **Property 73: Summaries are stored within bounds and associated**
     - **Validates: Requirements 25.2**
 
