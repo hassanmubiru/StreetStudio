@@ -44,6 +44,7 @@ Start with the [**VISION**](VISION.md) — the founding vision and master plan �
 
 The full documentation set lives under [`docs/`](docs/):
 
+- [PRODUCT](docs/PRODUCT.md) — experience-centric product strategy: positioning, lifecycle, knowledge graph, roadmap.
 - [ARCHITECTURE](docs/ARCHITECTURE.md) — monorepo layout, StreetJS consumption, boundaries, request lifecycle, runtime topology.
 - [ROADMAP](docs/ROADMAP.md) — direction and planned work.
 - [CONTRIBUTING](docs/CONTRIBUTING.md) — dev setup, boundary rules, test strategy, review expectations.
