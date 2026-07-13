@@ -346,7 +346,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Store comments/replies only when body is 1–5000 chars and any timestamp is 0–duration (nested under parent for replies, associated with playback position when supplied); enforce comment permission; record at most one reaction of each type per member/target; create a mention notification within 2s for a mentioned member with view access
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.7, 11.8, 11.9_
 
-  - [ ] 20.2 Write property test for comment body/timestamp validation
+  - [-] 20.2 Write property test for comment body/timestamp validation
     - **Property 32: Comment creation validates body and timestamp**
     - **Validates: Requirements 11.1, 11.2, 11.3, 11.8, 11.9**
 
