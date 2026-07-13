@@ -341,7 +341,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 49: Passcode-protected share access and lockout**
     - **Validates: Requirements 15.5, 15.6, 15.7**
 
-- [ ] 20. Implement comments, mentions, threads, and reactions
+- [x] 20. Implement comments, mentions, threads, and reactions
   - [x] 20.1 Implement CommentService (post, reply, react, mention)
     - Store comments/replies only when body is 1–5000 chars and any timestamp is 0–duration (nested under parent for replies, associated with playback position when supplied); enforce comment permission; record at most one reaction of each type per member/target; create a mention notification within 2s for a mentioned member with view access
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.7, 11.8, 11.9_
@@ -354,7 +354,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - **Property 33: Comment permission is enforced**
     - **Validates: Requirements 11.7**
 
-  - [-] 20.4 Write property test for mention notifications
+  - [x] 20.4 Write property test for mention notifications
     - **Property 34: Mentions notify members with view access**
     - **Validates: Requirements 11.4**
 
