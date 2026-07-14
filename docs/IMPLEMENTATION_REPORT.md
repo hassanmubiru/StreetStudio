@@ -1,15 +1,25 @@
-# StreetStudio — Full Implementation Report
+# StreetStudio — Reference-Build Report
 
-> This is an engineering status report (the *what*). For the product strategy —
-> the *why users will love it* — see [`PRODUCT.md`](PRODUCT.md) and
-> [`../VISION.md`](../VISION.md).
+> **Scope & provenance (read first).** This report describes the **spec-driven
+> reference build in this workspace** — domain logic and the API assembled behind
+> StreetJS adapter seams and exercised with in-memory fakes. Every metric below
+> was **measured here** (`npm run status` for counts; `npm test` /
+> `npm run test:coverage` for pass/coverage) on the date of the run — they are
+> real, not hand-written. What this report does **not** claim: it is not a
+> *published product*. The separate published StreetStudio repository, npm
+> releases, real `@streetjs/*` runtime packages, real infrastructure, and shipping
+> UI clients **do not exist yet**. For live per-area status see
+> [`../STATUS.md`](../STATUS.md); for the phased plan see
+> [`../IMPLEMENTATION-PLAN.md`](../IMPLEMENTATION-PLAN.md); for the *why*, see
+> [`PRODUCT.md`](PRODUCT.md) and [`../VISION.md`](../VISION.md).
 
 ## 1. Executive summary
 
-StreetStudio — an open-source asynchronous video collaboration platform built as
-the flagship application on the **StreetJS** framework — is fully implemented and
-verified. Every task in the spec is complete, the monorepo builds cleanly, all
-architectural boundary gates pass, and the entire test suite is green.
+Within the reference build, the spec is fully implemented and verified: every
+task in the plan is complete, the monorepo builds cleanly, all architectural
+boundary/consumption gates pass, and the entire test suite is green — measured in
+this workspace. Runtime integration against published `@streetjs/*` packages and
+the UI clients remain **planned** (see `STATUS.md` / `IMPLEMENTATION-PLAN.md`).
 
 | Dimension                        | Result                                    |
 | -------------------------------- | ----------------------------------------- |
