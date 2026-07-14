@@ -31,7 +31,10 @@ Build incrementally — never all 40 packages at once. Each phase lands a thin,
 tested vertical slice, updates `STATUS.md` from measured results, and only then
 moves on.
 
-## Phases
+## Reference-build phases (high level)
+
+Phases 1–9 are the reference build (complete in this workspace); phases 10–14
+are productionization, detailed in the **Productionization roadmap** below.
 
 | Phase | Scope | Status |
 | ----- | ----- | ------ |
