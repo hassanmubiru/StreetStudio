@@ -5,12 +5,21 @@
  * {@link HttpTransport}). No backend logic lives here.
  */
 import type {
+  CommentDto,
   FolderDto,
+  NotificationDto,
   OrganizationDto,
   ProjectDto,
+  SummaryDto,
+  TranscriptDto,
   VideoDto,
 } from "@streetstudio/shared";
 import type { Uuid } from "@streetstudio/shared";
+import type {
+  ListNotificationsQuery,
+  PlaybackManifest,
+  SearchQuery,
+} from "@streetstudio/sdk";
 import type { DashboardSession } from "./session.js";
 
 /** The data backing the workspace/home screen. */
