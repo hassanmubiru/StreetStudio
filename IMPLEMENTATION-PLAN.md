@@ -68,7 +68,8 @@ are productionization, detailed in the **Productionization roadmap** below.
 | `packages/comments`, `search`, `notifications`, `realtime`, `knowledge` | Collaboration + knowledge | In reference build |
 | `packages/plugins`, `ai`, `integrations`, `storage-*`, `integration-*` | Extensibility | In reference build |
 | `packages/analytics`, `sdk` | Analytics + client library | In reference build |
-| `packages/ui`, `types`, `timeline`, `editor` | Client models / shared UI | Model/scaffold only |
+| `packages/timeline`, `editor` | Client models (timeline + edit reducer) | Implemented & tested (no UI) |
+| `packages/ui`, `types` | Shared UI components / product type aliases | Model/scaffold only |
 | `apps/api` | API_Service host | In reference build (seam-level) |
 | `apps/dashboard`, `apps/desktop`, `apps/recorder-extension` | Clients | Scaffold only |
 | `apps/docs` | Documentation site | Scaffold only |
