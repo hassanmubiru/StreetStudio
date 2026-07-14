@@ -31,6 +31,20 @@ differentiators:
 
 The full experience-centric strategy lives in [`PRODUCT.md`](PRODUCT.md).
 
+## Reference build snapshot
+
+*The 20-second view (measured in this workspace; see the sections below for detail).*
+
+- Backend specification: **complete** (reference build)
+- **184** specification tasks implemented & verified
+- **32 / 32** requirements satisfied
+- **88** correctness properties verified
+- **759** passing tests (1 skipped)
+- **84.91%** line coverage
+- Independent StreetJS consumer (published packages only)
+- UI clients remain **scaffolds**
+- Production deployment **not yet begun**
+
 ## 1. Executive summary
 
 Within this reference implementation, all planned specification items have been
@@ -68,6 +82,11 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Real `@streetjs` runtime integration | Planned       |
 | Community                           | Not started     |
 | Current version                     | 0.1.0-dev       |
+
+Conversely, within this reference build the domain model, API surface, package
+boundaries, plugin architecture, and verification pipeline are considered
+**stable** — the areas that remain open are runtime integration and the UI, not
+the core design.
 
 For live, measured per-area progress see [`../STATUS.md`](../STATUS.md); for the
 phased plan see [`../IMPLEMENTATION-PLAN.md`](../IMPLEMENTATION-PLAN.md).
