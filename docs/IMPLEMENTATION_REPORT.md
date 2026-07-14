@@ -396,9 +396,10 @@ Under `docs/`: `PRODUCT.md` (experience-centric strategy), `ARCHITECTURE.md`,
 report. At the repo root: `VISION.md` (founding vision + master plan),
 `README.md` (StreetJS consumption policy + gap register), `CHANGELOG.md`,
 `LICENSE` (Apache-2.0), and `examples/` (SDK quickstart, self-hosting). `API.md`
-documents every public endpoint's method/path/auth/error formats and explicitly
+documents the current public API (method/path/auth/error formats) and explicitly
 lists the three no-authentication endpoints (`POST /auth/register`,
-`POST /auth/login`, `POST /shared/resolve`).
+`POST /auth/login`, `POST /shared/resolve`); it is maintained from the
+`PUBLIC_OPERATIONS` catalog, with the API↔SDK contract test guarding drift.
 
 ## 11. Architectural Evolution (ADRs)
 
@@ -466,7 +467,7 @@ repository, published `@streetjs/*` runtime packages, and real infrastructure.
 
 ## 14. Productionization phase
 
-The reference implementation is feature-complete with respect to its
+The reference implementation implements and verifies every item in its
 specification. The next stage is productionization. Maturity ladder:
 
 ```
