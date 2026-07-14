@@ -65,6 +65,8 @@ Each package declares a single primary domain responsibility (`streetstudio.doma
 
 Start with the [**VISION**](VISION.md) — the founding vision and master plan — and [**PRODUCT**](docs/PRODUCT.md) — the experience-centric product strategy ("the asynchronous operating system for software teams").
 
+Track reality in [**STATUS**](STATUS.md) (live, measured progress) and [**IMPLEMENTATION-PLAN**](IMPLEMENTATION-PLAN.md) (the phased master spec). This repository is a **spec-driven reference build**, not a published release — see the scope note in those docs.
+
 The full documentation set lives under [`docs/`](docs/):
 
 - [PRODUCT](docs/PRODUCT.md) — experience-centric product strategy: positioning, lifecycle, knowledge graph, roadmap.
