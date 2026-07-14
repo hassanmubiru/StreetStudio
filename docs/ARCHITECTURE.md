@@ -49,10 +49,11 @@ and never vendored into this repository (Requirement 1).
 ```
 StreetStudio/
 ├── apps/
-│   ├── api/         # API_Service: REST + WebSocket + Webhook host (StreetJS app)
-│   ├── web/         # Web_Client (browser SPA)
-│   ├── desktop/     # Desktop_Client (wraps web + native capture)
-│   └── docs/        # Documentation site
+│   ├── api/                # API_Service: REST + WebSocket + Webhook host (StreetJS app)
+│   ├── dashboard/          # Dashboard web application (Web_Client SPA)
+│   ├── desktop/            # Desktop_Client (wraps dashboard + native capture)
+│   ├── recorder-extension/ # Browser recorder extension (toolbar capture + upload)
+│   └── docs/               # Documentation site
 ├── packages/
 │   ├── ui/            # Shared UI components (web + desktop)
 │   ├── sdk/           # Public client library (REST + WebSocket)
