@@ -69,6 +69,10 @@ upgrades. StreetStudio is therefore both a real application and the primary
 consumer of the StreetJS framework. This contract is enforced by
 `npm run streetjs:check` (see [`DECISIONS.md`](DECISIONS.md), ADR-0011).
 
+During early development, temporary compatibility adapters may be used until the
+equivalent StreetJS packages are published. These adapters are replaced through
+normal package upgrades rather than repository coupling (see ADR-0012).
+
 ## 3. Verification results
 
 All commands run from the workspace root (`/…/StreetStudio`).
