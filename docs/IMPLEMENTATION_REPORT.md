@@ -43,7 +43,7 @@ integration against published `@streetjs/*` packages and the UI clients remain
 
 | Dimension                        | Result                                    |
 | -------------------------------- | ----------------------------------------- |
-| Reference-build specification tasks completed | 184 / 184                    |
+| Reference-build specification tasks implemented and verified | 184 / 184     |
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
 | Apps / packages                  | 5 apps, 40 packages                       |
@@ -53,7 +53,7 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Line coverage                    | 84.91%                                    |
 | Documentation                    | 11 files under `docs/` + root docs        |
 
-## 2. Project status
+## 2. Current maturity
 
 | Area                                | State           |
 | ----------------------------------- | --------------- |
@@ -363,10 +363,10 @@ behind adapter seams with in-memory fakes; running them against real
 - **Self-hosting & HA (R30).** Startup validates required config and aborts
   naming every offending value; health and metrics are exposed via StreetJS
   interfaces (health reflects dependency reachability); the service operates
-  is designed to operate against PostgreSQL HA and Redis Cluster through StreetJS
-  runtime adapters, reconnecting on primary/node loss without operator restart.
-  Container/compose and deployment config live under `docker/` and
-  `infrastructure/`.
+  verifies HA behaviour (reconnect on primary/node loss without operator restart)
+  through StreetJS adapter seams and in-memory fakes. Production HA depends on the
+  corresponding StreetJS runtime implementations. Container/compose and deployment
+  config live under `docker/` and `infrastructure/`.
 
 ## 10. Documentation set (Requirement 31)
 
@@ -446,8 +446,8 @@ repository, published `@streetjs/*` runtime packages, and real infrastructure.
 
 ## 14. Productionization phase
 
-The reference build already exists; the next stage is productionization. Maturity
-ladder:
+The reference implementation is feature-complete with respect to its
+specification. The next stage is productionization. Maturity ladder:
 
 ```
 Reference Build ✔
