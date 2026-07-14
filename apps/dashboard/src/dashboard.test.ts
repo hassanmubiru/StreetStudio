@@ -12,6 +12,22 @@ import {
   searchVideos,
 } from "./flows.js";
 import { UploadController, uploadProgress } from "./uploads.js";
+import {
+  createShareLink,
+  revokeShareLink,
+  resolveSharedVideo,
+  shareLinkState,
+  isShareLinkActive,
+} from "./sharing.js";
+import {
+  addReaction,
+  removeReaction,
+  toggleReaction,
+  summarizeReactions,
+} from "./reactions.js";
+import { EditSessionController } from "./editing.js";
+import type { ReactionDto } from "@streetstudio/shared";
+import type { Timeline } from "@streetstudio/timeline";
 
 /**
  * A scripted in-memory transport: matches `METHOD path` (path without the base
