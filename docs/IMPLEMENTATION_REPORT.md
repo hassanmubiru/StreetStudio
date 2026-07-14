@@ -13,6 +13,24 @@
 > [`../IMPLEMENTATION-PLAN.md`](../IMPLEMENTATION-PLAN.md); for the *why*, see
 > [`PRODUCT.md`](PRODUCT.md) and [`../VISION.md`](../VISION.md).
 
+## Why StreetStudio exists
+
+StreetStudio is not intended to be another screen recorder. Its goal is to become
+the reference application that proves StreetJS can power large, production-grade
+software while offering capabilities not available in proprietary platforms. Core
+differentiators:
+
+- Fully self-hostable
+- Plugin-first architecture
+- AI provider independence (no vendor lock-in)
+- Organization ownership of all data
+- API-first platform (UI/API parity)
+- Workflow automation
+- Built on published StreetJS packages
+- Open governance
+
+The full experience-centric strategy lives in [`PRODUCT.md`](PRODUCT.md).
+
 ## 1. Executive summary
 
 Within this reference implementation, all planned specification items have been
