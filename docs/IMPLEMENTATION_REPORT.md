@@ -380,7 +380,27 @@ and the monorepo now matches the vision/target layout. The `@streetjs/*` package
 migration (ADR-0012) is a documented backlog gated on those packages being
 published. `apps/mobile` is reserved on the roadmap (not scaffolded).
 
-## 11. Known follow-ups
+## 12. Current limitations
+
+By design, this reference implementation intentionally does **not** include the
+following. These are planned production concerns, not defects, and are tracked in
+[`../IMPLEMENTATION-PLAN.md`](../IMPLEMENTATION-PLAN.md):
+
+- a production dashboard application,
+- a production desktop application,
+- a production browser extension,
+- a production mobile application,
+- a public SaaS offering,
+- published npm packages,
+- production monitoring/observability,
+- customer workloads,
+- production infrastructure.
+
+The reference implementation exercises the domain logic and API behind StreetJS
+adapter seams with in-memory fakes; the items above depend on the standalone
+repository, published `@streetjs/*` runtime packages, and real infrastructure.
+
+## 13. Known follow-ups
 
 - The StreetJS gap-register issue URLs in `README.md` are intentional placeholders
   (`https://github.com/streetjs/streetjs/issues/NNN`) — replace each with the real
