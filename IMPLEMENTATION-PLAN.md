@@ -71,7 +71,8 @@ are productionization, detailed in the **Productionization roadmap** below.
 | `packages/timeline`, `editor` | Client models (timeline + edit reducer) | Implemented & tested (no UI) |
 | `packages/ui`, `types` | Shared UI components / product type aliases | Model/scaffold only |
 | `apps/api` | API_Service host | In reference build (seam-level) |
-| `apps/dashboard`, `apps/desktop`, `apps/recorder-extension` | Clients | Scaffold only |
+| `apps/dashboard` | Web_Client SPA | Client logic (session/flows) implemented & tested; no UI |
+| `apps/desktop`, `apps/recorder-extension` | Clients | Scaffold only |
 | `apps/docs` | Documentation site | Scaffold only |
 | `apps/mobile` | Mobile client | Planned (not scaffolded) |
 
