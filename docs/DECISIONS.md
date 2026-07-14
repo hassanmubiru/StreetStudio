@@ -470,3 +470,48 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   still holds; this repo simply continues to host tested client-side logic until
   the standalone repo exists. The governing rule (no new backend work unless
   driven by real usage or StreetJS evolution) remains in force.
+
+---
+
+## ADR-0015: Adopt the StreetStudio production charter as the governing standard
+
+- **Status:** Accepted
+- **Context:** The owner has set a production charter for StreetStudio: the
+  product must be built with real infrastructure and real persisted data, with
+  no mock data, placeholder implementations, stub services, or simulated
+  infrastructure outside isolated automated tests. This raises the bar for all
+  future work. A factual clarification accompanies the decision: this workspace
+  (`/StreetStudio`) is still, physically, the reference build — the standalone
+  product repository has **not** been created here, `@streetjs/*` runtime
+  packages are **not** published, and no live PostgreSQL/Redis/object-storage/
+  FFmpeg/WebSocket or UI/native runtimes are provisioned in this workspace.
+  Declaring the mission does not, by itself, change those facts.
+- **Decision:** Adopt the production charter as the governing standard against
+  which all new work is evaluated, with two owner amendments:
+  1. **In-memory implementations are allowed only inside automated tests.**
+     Production code must use real infrastructure (PostgreSQL, Redis, S3/R2/GCS/
+     Azure/MinIO, FFmpeg, WebSockets, SMTP, OpenTelemetry/Prometheus).
+  2. **Never recreate StreetJS inside StreetStudio.** If a required framework
+     capability is not yet published as a `@streetjs/*` package, **pause that
+     feature and record the missing dependency** — do not implement framework
+     functionality in the product repository (promotion-first, per ADR-0011).
+
+  Two boundaries are held explicitly, because the charter itself requires them:
+  - Where a real implementation needs a dependency that is not present
+    (published package, provisioned service, UI runtime), **stop and name the
+    dependency** instead of inventing an implementation or fabricating data.
+  - The charter's "only document implemented functionality; do not exaggerate
+    implementation status" rule is binding. The existing **measured**
+    reference-build artifacts (the report, `STATUS.md`, metrics) are accurate and
+    will **not** be relabeled as production/shipped. Progress is reported from
+    real build/test/coverage outputs, never hand-edited.
+- **Consequences:** Future contributions are judged against the production
+  charter rather than reference-build goals. In practice, until the standalone
+  repository exists, `@streetjs/*` runtime packages are published, and real
+  infrastructure/UI runtimes are provisioned, most production **feature** work is
+  gated: the correct action is to stop and record the blocking dependency (per
+  the charter's own rule) rather than produce production-shaped code that is
+  actually a fake. The full charter is recorded in
+  [`PRODUCTION_CHARTER.md`](PRODUCTION_CHARTER.md). This ADR governs alongside —
+  and where stricter, above — the prior "governing rule"; it does not retroactively
+  reclassify completed reference-build work.
