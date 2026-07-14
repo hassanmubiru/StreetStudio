@@ -87,7 +87,7 @@ are productionization, detailed in the **Productionization roadmap** below.
 
 ## Productionization roadmap (post-reference-build)
 
-The reference implementation is feature-complete with respect to its
+The reference implementation implements and verifies every item in its
 specification. Work now shifts from *specification implementation* to *product
 development*. The phases below expand phases 10–14 above into the delivery
 sequence; most execute in the **standalone repository**, not this workspace.
