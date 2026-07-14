@@ -10,6 +10,8 @@
     { "path": "../../packages/shared" },
     { "path": "../../packages/ui" },
     { "path": "../../packages/sdk" },
-    { "path": "../../packages/recorder" }
+    { "path": "../../packages/recorder" },
+    { "path": "../../packages/timeline" },
+    { "path": "../../packages/editor" }
   ]
 }
