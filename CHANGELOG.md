@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Repository frozen as the reference build (ADR-0013).** This repo is now a
+  historical engineering reference; active product development moves to the
+  independent `streetstudio` repository (consuming only published StreetJS
+  packages). Changes here are limited to keeping it building or tracking StreetJS
+  evolution. README and STATUS.md carry the freeze banner.
+
 ### Added
 
 - Client-model implementation (product-development phase, no backend changes):
