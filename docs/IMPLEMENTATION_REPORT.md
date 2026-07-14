@@ -102,11 +102,10 @@ published StreetJS packages. It never:
 
 New framework capabilities are developed inside StreetJS, released
 independently, and then adopted by StreetStudio through versioned package
-upgrades. StreetStudio is therefore both a real application and the primary
-consumer of the StreetJS framework. StreetStudio is intended to become the
-primary reference consumer of StreetJS (there are no published StreetJS runtime
-packages yet). This contract is enforced by `npm run streetjs:check` (see
-[`DECISIONS.md`](DECISIONS.md), ADR-0011).
+upgrades. StreetStudio is intended to become the primary reference consumer of
+StreetJS (there are no published StreetJS runtime packages yet). This contract is
+enforced by `npm run streetjs:check` (see [`DECISIONS.md`](DECISIONS.md),
+ADR-0011).
 
 During early development, temporary compatibility adapters may be used until the
 equivalent StreetJS packages are published. These adapters are replaced through
@@ -381,7 +380,7 @@ behind adapter seams with in-memory fakes; running them against real
   Plugin_Manager isolates plugins, bounds load/activation timing, and preserves
   prior state on failure.
 
-- **Self-hosting & HA (R30).** Startup validates required config and aborts
+- **Self-hosting architecture & HA verification (R30).** Startup validates required config and aborts
   naming every offending value; health and metrics are exposed via StreetJS
   interfaces (health reflects dependency reachability); the service operates
   verifies HA behaviour (reconnect on primary/node loss without operator restart)
