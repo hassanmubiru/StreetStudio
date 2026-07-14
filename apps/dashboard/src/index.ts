@@ -27,3 +27,6 @@ export type {
   CommentThread,
   NotificationInbox,
 } from "./flows.js";
+
+export { UploadController, uploadProgress } from "./uploads.js";
+export type { UploadProgress } from "./uploads.js";
