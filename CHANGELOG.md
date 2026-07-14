@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Productionization roadmap in `IMPLEMENTATION-PLAN.md` — the 10-phase delivery
+  sequence (standalone repo → StreetJS integration → dashboard → recorder →
+  media → infrastructure → plugin ecosystem → mobile → UX → public preview) with
+  deliverables, plus a **governing rule** marking the shift from specification
+  implementation to product development (no new backend work unless driven by
+  real usage or StreetJS evolution).
 - Honest status/spec split (documentation discipline): new `STATUS.md` (live,
   measured per-area progress with a scope caveat), `IMPLEMENTATION-PLAN.md` (the
   phased master spec, sections marked Planned / In reference build / Shipped),
