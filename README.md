@@ -4,7 +4,23 @@ Open-source asynchronous collaboration platform for video/screen recording, revi
 
 ## StreetJS consumption policy
 
-StreetStudio consumes StreetJS **exclusively** through published package versions or local package links. It never modifies StreetJS source, contains no StreetJS source in this repository, and never imports StreetJS internals — only StreetJS public package entry points. StreetJS references are declared in package manifests as published-version dependencies (`@streetjs/core`); there are zero filesystem references into the StreetJS repository.
+> **StreetStudio is built exclusively on the public, versioned API surface of
+> StreetJS. It does not import framework internals, use local path references, or
+> depend on unpublished framework changes. If StreetStudio requires a reusable
+> capability that StreetJS does not provide, that capability is developed and
+> released in StreetJS first, then consumed by StreetStudio as a normal
+> dependency.**
+
+Concretely: StreetJS is consumed only as published, versioned npm packages
+(`streetjs`, `@streetjs/*`) — **no symlinks, git submodules, workspace
+references, `file:`/`link:` specifiers, GitHub-URL dependencies, `../streetjs`
+imports, or framework-internal imports.** StreetStudio treats StreetJS exactly
+like any external customer would (Laravel/Django/Spring Boot/ASP.NET Core), which
+is what makes it a *credible* real-world validation of the framework rather than
+an example app living inside it. The contract is enforced in CI by
+`npm run streetjs:check` and the import boundary analyzer, and documented in
+[`docs/DECISIONS.md`](docs/DECISIONS.md) (ADR-0011). It never modifies StreetJS
+source and contains no StreetJS source in this repository.
 
 ## Monorepo layout
 
