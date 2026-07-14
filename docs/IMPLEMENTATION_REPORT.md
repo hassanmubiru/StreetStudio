@@ -88,7 +88,7 @@ The single skipped test is the intentional reachability-gated real-dependency
 ops check; it skips gracefully when no live PostgreSQL/Redis endpoint is present
 and runs when `STREETSTUDIO_IT_DATABASE_URL` / `STREETSTUDIO_IT_REDIS_URL` are set.
 
-## 3. CI test categories (Requirement 32.1)
+## 4. CI test categories (Requirement 32.1)
 
 All seven mandated categories are wired in `vitest.workspace.ts` (by file-name
 convention) and each contains at least one executable, passing test.
@@ -110,7 +110,7 @@ and the storage-conformance suite — per-category named steps so a failure iden
 category (R32.3), an 80% line-coverage gate (R32.5), and an
 infrastructure-vs-test failure classifier (R32.6).
 
-## 4. Per-package matrix
+## 5. Per-package matrix
 
 `src` counts exclude test files. `prop` = property-based test files.
 
@@ -162,7 +162,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/integration-notion            | 1   | 1     | 0    | Notion integration plugin                       |
 | packages/integration-microsoft-teams   | 1   | 1     | 0    | Microsoft Teams integration plugin              |
 
-## 5. Task breakdown (42 top-level tasks, all complete)
+## 6. Task breakdown (42 top-level specification tasks)
 
 Foundation & tooling
 - 1. Establish monorepo structure and boundary tooling
@@ -220,7 +220,7 @@ Public surface, deployment, docs, CI
 - 41. Establish continuous integration and coverage gating
 - 42. Final checkpoint — full suite
 
-## 6. Requirements coverage (32 / 32)
+## 7. Requirements coverage (32 / 32)
 
 | #   | Requirement                                          |
 | --- | ---------------------------------------------------- |
@@ -257,7 +257,7 @@ Public surface, deployment, docs, CI
 | 31  | Documentation                                        |
 | 32  | Testing and Continuous Integration                   |
 
-## 7. Correctness properties (88 / 88, each with a fast-check test ≥100 runs)
+## 8. Correctness properties (88 / 88, each with a fast-check test ≥100 runs)
 
 Auth & boundaries (1–7): import-boundary enforcement; acyclic graph; registration
 without plaintext passwords; short-lived tokens+sessions; non-disclosing auth;
@@ -303,7 +303,7 @@ view-event fields; analytics reference match + org exclusion; admin-only analyti
 ranges; rate-limit rejection + retry guidance; secrets never plaintext;
 non-public endpoints deny anonymous; startup names every invalid config value.
 
-## 8. Architecture highlights
+## 9. Architecture highlights
 
 - **StreetJS boundary integrity (R1, R2).** StreetJS is consumed only through
   `@streetjs/core` public entry points behind structural adapter seams. A custom
@@ -339,7 +339,7 @@ non-public endpoints deny anonymous; startup names every invalid config value.
   without operator restart. Container/compose and deployment config live under
   `docker/` and `infrastructure/`.
 
-## 9. Documentation set (Requirement 31)
+## 10. Documentation set (Requirement 31)
 
 Under `docs/`: `PRODUCT.md` (experience-centric strategy), `ARCHITECTURE.md`,
 `API.md`, `SECURITY.md`, `DECISIONS.md` (11 ADRs), `PLUGIN_GUIDE.md`,
@@ -351,7 +351,7 @@ documents every public endpoint's method/path/auth/error formats and explicitly
 lists the three no-authentication endpoints (`POST /auth/register`,
 `POST /auth/login`, `POST /shared/resolve`).
 
-## 10. Governance & structural evolution (ADRs 0006–0011)
+## 11. Architectural Evolution (ADRs)
 
 After the initial 184-task build, the layout was aligned to the founding vision
 and hardened, each step gated green by `scripts/check.sh`:
