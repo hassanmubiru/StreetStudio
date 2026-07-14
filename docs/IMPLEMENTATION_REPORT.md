@@ -321,9 +321,17 @@ and hardened, each step gated green by `scripts/check.sh`:
 - **ADR-0011** — StreetJS is consumed only as published, versioned packages
   (promotion-first); enforced by the `streetjs:check` gate.
 
-The package count grew from 28 → **37** as domains became first-class, and the
-monorepo now matches the vision sketch one-to-one. `apps/mobile` is reserved on
-the roadmap (not scaffolded).
+- **ADR-0012** (Proposed) — target framework-consumption map: the granular
+  `@streetjs/*` packages StreetStudio will consume as StreetJS publishes them
+  (migration backlog), plus the refined product-side layout. The product-side
+  layout was executed: `web` renamed to `dashboard`; new `apps/recorder-extension`
+  and `packages/{types,timeline,editor}`; a root `street.config.ts` composition
+  template.
+
+The package count grew from 28 → **40** (5 apps) as domains became first-class,
+and the monorepo now matches the vision/target layout. The `@streetjs/*` package
+migration (ADR-0012) is a documented backlog gated on those packages being
+published. `apps/mobile` is reserved on the roadmap (not scaffolded).
 
 ## 11. Known follow-ups
 
