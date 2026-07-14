@@ -29,7 +29,8 @@ Documentation                    ████████░░  80%
 Backend domain + API (ref build) ████████░░  80%   implemented & tested behind seams
 SDK (typed client)               ████████░░  80%   not yet run against a live server
 Client models (editor/timeline)  ██████░░░░  60%   model + reducer/ops implemented & tested; no UI
-Dashboard (web UI runtime)       ░░░░░░░░░░   0%   scaffold entry only
+Dashboard client logic           ████░░░░░░  40%   session/scope + use-case flows implemented & tested; no UI
+Dashboard (web UI runtime)       ░░░░░░░░░░   0%   not built
 Desktop client                   ░░░░░░░░░░   0%   scaffold entry only
 Recorder extension               ░░░░░░░░░░   0%   scaffold entry only
 Real @streetjs/* runtime         ░░░░░░░░░░   0%   blocked on published packages (ADR-0012)
@@ -44,13 +45,13 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
 | ------------------- | ------ |
 | Apps                | 5      |
 | Packages            | 40     |
-| Source files        | 127    |
-| Source LOC          | 22,525 |
-| Test files          | 164    |
-| Property-test files | 88     |
-| Test LOC            | 33,094 |
-| Tests               | 773 passing, 1 skipped |
-| Line coverage       | 84.99% |
+| Source files        | 129    |
+| Source LOC          | 22,743 |
+| Test files          | 165    |
+| Property-test files | 89     |
+| Test LOC            | 33,195 |
+| Tests               | 778 passing, 1 skipped |
+| Line coverage       | 85.05% |
 | build / graph / boundary / streetjs gates | passing |
 
 *Regenerate the counts with `npm run status`; regenerate pass/coverage with
@@ -64,8 +65,11 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   PostgreSQL/Redis/object storage, or a real AI provider.
 - **SDK** is a complete typed client mirroring the operation catalog, but has not
   been exercised end-to-end against a live deployed server.
-- **Clients** (`dashboard`, `desktop`, `recorder-extension`) and client models
-  (`editor`, `timeline`, `types`, `ui`) are scaffolds/model types — no UI runtime.
+- **Dashboard** now has client-side application logic (session/credential/scope
+  management + use-case flows over the SDK), verified with an in-memory transport;
+  its UI rendering layer is still unbuilt. The other clients (`desktop`,
+  `recorder-extension`) and client models (`editor`, `timeline`, `types`, `ui`)
+  are scaffolds/model types — no UI runtime.
 - **`@streetjs/*` integration** cannot progress until those packages are
   published (promotion-first, ADR-0011/0012); today only `@streetjs/core` is
   referenced, through seams.
