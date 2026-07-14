@@ -113,6 +113,9 @@ jobs:
       - name: "Gate: import boundaries"
         run: npm run boundary:check
 
+      - name: "Gate: StreetJS consumption contract (published packages only)"
+        run: npm run streetjs:check
+
       # -----------------------------------------------------------------------
       # TEST CATEGORIES (R32.1, R32.3)
       # Each category runs as its own named step, so on failure the step name
