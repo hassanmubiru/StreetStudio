@@ -25,7 +25,7 @@ integration against published `@streetjs/*` packages and the UI clients remain
 
 | Dimension                        | Result                                    |
 | -------------------------------- | ----------------------------------------- |
-| Specification tasks implemented  | 184 / 184 (100%)                          |
+| Reference-build specification tasks completed | 184 / 184                    |
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
 | Apps / packages                  | 5 apps, 40 packages                       |
@@ -43,10 +43,10 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Standalone repository               | Planned         |
 | Published npm packages              | Not published   |
 | Production deployment               | Not deployed    |
-| Dashboard application               | Scaffold        |
-| Desktop application                 | Scaffold        |
-| Browser extension                   | Scaffold        |
-| Mobile application                  | Planned         |
+| Dashboard shell                     | Scaffold        |
+| Desktop shell                       | Scaffold        |
+| Browser extension shell             | Scaffold        |
+| Mobile client                       | Planned         |
 | Real `@streetjs` runtime integration | Planned       |
 | Community                           | Not started     |
 | Current version                     | 0.1.0-dev       |
@@ -341,9 +341,10 @@ behind adapter seams with in-memory fakes; running them against real
 - **Self-hosting & HA (R30).** Startup validates required config and aborts
   naming every offending value; health and metrics are exposed via StreetJS
   interfaces (health reflects dependency reachability); the service operates
-  against PostgreSQL HA and Redis Cluster and reconnects on primary/node loss
-  without operator restart. Container/compose and deployment config live under
-  `docker/` and `infrastructure/`.
+  is designed to operate against PostgreSQL HA and Redis Cluster through StreetJS
+  runtime adapters, reconnecting on primary/node loss without operator restart.
+  Container/compose and deployment config live under `docker/` and
+  `infrastructure/`.
 
 ## 10. Documentation set (Requirement 31)
 
@@ -400,7 +401,9 @@ following. These are planned production concerns, not defects, and are tracked i
 - published npm packages,
 - production monitoring/observability,
 - customer workloads,
-- production infrastructure.
+- production infrastructure,
+- and **no production UX validation has been performed yet** — the largest
+  remaining product risk is the user experience, not the backend.
 
 The reference implementation exercises the domain logic and API behind StreetJS
 adapter seams with in-memory fakes; the items above depend on the standalone
