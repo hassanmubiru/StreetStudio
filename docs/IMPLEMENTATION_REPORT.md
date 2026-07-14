@@ -15,22 +15,25 @@
 
 ## 1. Executive summary
 
-Within the reference build, the spec is fully implemented and verified: every
-task in the plan is complete, the monorepo builds cleanly, all architectural
-boundary/consumption gates pass, and the entire test suite is green — measured in
-this workspace. Runtime integration against published `@streetjs/*` packages and
-the UI clients remain **planned** (see `STATUS.md` / `IMPLEMENTATION-PLAN.md`).
+Within this reference implementation, all planned specification items have been
+implemented and verified using the project's build, test, and analysis pipeline.
+This report reflects the state of the reference implementation only. It is not a
+claim that StreetStudio has been released as a production product. Runtime
+integration against published `@streetjs/*` packages and the UI clients remain
+**planned** (see [`../STATUS.md`](../STATUS.md) and
+[`../IMPLEMENTATION-PLAN.md`](../IMPLEMENTATION-PLAN.md)).
 
 | Dimension                        | Result                                    |
 | -------------------------------- | ----------------------------------------- |
-| Tasks complete                   | 184 / 184 (100%)                          |
+| Specification tasks implemented  | 184 / 184 (100%)                          |
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
 | Apps / packages                  | 5 apps, 40 packages                       |
-| Source files / LOC (excl. tests) | 124 files, ~22,200 LOC                    |
-| Test files / LOC                 | 160 files, ~32,600 LOC                    |
-| Full test run                    | 160 files, 753 passed, 1 skipped, 0 failed|
-| Documentation                    | 11 files (README + 10 under `docs/`)      |
+| Source files / LOC (excl. tests) | 124 files, ~22,350 LOC                    |
+| Test files / LOC                 | 161 files, ~32,850 LOC                    |
+| Full test run                    | 161 files, 759 passed, 1 skipped, 0 failed|
+| Line coverage                    | 84.91%                                    |
+| Documentation                    | 11 files under `docs/` + root docs        |
 
 ## 2. Verification results
 
