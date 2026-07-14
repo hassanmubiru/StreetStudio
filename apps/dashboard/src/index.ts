@@ -1,7 +1,15 @@
 /**
  * @streetstudio/dashboard
  *
- * Dashboard web application entry point (the Web_Client SPA). Composes shared
- * UI, the SDK, and the recording client.
+ * Dashboard web application (the Web_Client SPA). This package hosts the
+ * client-side application logic — session/credential/scope management and
+ * use-case flows — that the UI renders. It talks to the API exclusively through
+ * `@streetstudio/sdk`; there is no backend logic here.
  */
 export const DOMAIN = "Dashboard web application (the Web_Client SPA)." as const;
+
+export { DashboardSession } from "./session.js";
+export type { DashboardSessionOptions } from "./session.js";
+
+export { loadWorkspace, openProject, listFolderVideos } from "./flows.js";
+export type { Workspace, ProjectView } from "./flows.js";

@@ -45,21 +45,28 @@ export async function loadWorkspace(session: DashboardSession): Promise<Workspac
 export interface ProjectView {
   readonly project: ProjectDto;
   readonly folders: readonly FolderDto[];
-  readonly videos: readonly VideoDto[];
 }
 
 /**
- * Open a project screen: the project, its folders, and its videos, fetched
- * concurrently through the SDK.
+ * Open a project screen: the project and its folders, fetched concurrently
+ * through the SDK. Videos are listed per folder via {@link listFolderVideos}
+ * (the public list surface filters by folder, not project).
  */
 export async function openProject(
   session: DashboardSession,
   projectId: Uuid,
 ): Promise<ProjectView> {
-  const [project, folders, videos] = await Promise.all([
+  const [project, folders] = await Promise.all([
     session.api.projects.get(projectId),
     session.api.folders.listByProject(projectId),
-    session.api.videos.list({ projectId }),
   ]);
-  return { project, folders, videos };
+  return { project, folders };
+}
+
+/** List the videos in a folder (paginated by the SDK's list query). */
+export function listFolderVideos(
+  session: DashboardSession,
+  folderId: Uuid,
+): Promise<VideoDto[]> {
+  return session.api.videos.list({ folderId });
 }
