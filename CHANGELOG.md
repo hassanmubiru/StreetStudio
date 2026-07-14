@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- ADR-0012 (Proposed) — target framework-consumption map and promotion backlog:
+  the granular `@streetjs/*` packages StreetStudio will consume as StreetJS
+  publishes them, the product-specific packages that stay, the refined app/package
+  layout, and the independent release strategy. Migration is incremental and
+  gated on each `@streetjs/*` package being published.
 - StreetJS consumption contract (ADR-0011) codified and **enforced**: a new
   `npm run streetjs:check` gate (`scripts/check-streetjs-consumption.mjs`) fails
   the build on any non-registry StreetJS dependency specifier
