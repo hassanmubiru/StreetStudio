@@ -31,6 +31,7 @@ or individually:
 npm run build
 npm run graph:check      # dependency graph must stay acyclic
 npm run boundary:check   # no disallowed StreetJS-internal / cross-package / vendor imports
+npm run streetjs:check   # StreetJS consumed only as published, versioned packages (ADR-0011)
 npm test
 ```
 
