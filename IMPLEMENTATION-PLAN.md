@@ -83,3 +83,97 @@ are productionization, detailed in the **Productionization roadmap** below.
 3. `build`, `graph:check`, `boundary:check`, `streetjs:check` all green.
 4. Coverage ≥ 80% lines.
 5. `STATUS.md` regenerated from measured results; `CHANGELOG.md` updated.
+
+## Productionization roadmap (post-reference-build)
+
+The reference implementation is feature-complete with respect to its
+specification. Work now shifts from *specification implementation* to *product
+development*. The phases below expand phases 10–14 above into the delivery
+sequence; most execute in the **standalone repository**, not this workspace.
+
+### Phase 1 — Split into a real project
+
+Create the standalone StreetStudio repository (preserve git history if possible);
+set up independent CI/CD; publish `v0.1.0-dev`; establish releases, issue
+tracking, and project boards.
+**Deliverable:** StreetStudio exists as an independent project.
+
+### Phase 2 — Complete the StreetJS integration
+
+Replace every compatibility adapter with published StreetJS packages as they
+become available, subsystem by subsystem: Core, Configuration, HTTP, Routing,
+Auth, RBAC, Storage, Realtime, WebSocket, Jobs, Metrics, Health, Plugin runtime.
+Then remove the compatibility layer entirely.
+**Deliverable:** no compatibility adapters remain (`streetjs:check` still green).
+
+### Phase 3 — Build the Dashboard
+
+The largest remaining feature. Implement, using the SDK exclusively:
+authentication, organization selector, projects, folder tree, upload UI, video
+browser, player, comments, search, notifications, admin pages, settings, plugin
+management, analytics, responsive layout.
+**Deliverable:** a usable web application.
+
+### Phase 4 — Recorder
+
+Browser extension: screen/window/tab capture, microphone, camera, offline queue,
+chunk uploads, resume uploads. Desktop: native capture, system audio, background
+recording, auto-update, crash recovery.
+**Deliverable:** real recording clients.
+
+### Phase 5 — Media
+
+Replace the reference (in-memory) implementations with a production pipeline:
+FFmpeg pipeline, thumbnail generation, preview generation, HLS/DASH, adaptive
+bitrate, waveforms, metadata extraction, processing queues.
+**Deliverable:** production media pipeline.
+
+### Phase 6 — Infrastructure
+
+Deploy against real services: PostgreSQL, Redis, S3/R2/MinIO, background workers,
+reverse proxy, TLS, Docker, Kubernetes, backup/restore, monitoring, logging,
+tracing.
+**Deliverable:** self-hostable production deployment.
+
+### Phase 7 — Plugin ecosystem
+
+Finish the plugin model: storage plugins, AI providers, billing providers,
+integrations, developer SDK, marketplace, plugin documentation, version
+compatibility, isolation, signing, permissions.
+**Deliverable:** a complete, extensible plugin ecosystem.
+
+### Phase 8 — Mobile
+
+Native client: view recordings, upload, notifications, comments, sharing,
+offline mode.
+**Deliverable:** mobile client.
+
+### Phase 9 — UX
+
+The biggest remaining risk. User testing, usability studies, performance
+optimization, accessibility, keyboard shortcuts, onboarding, documentation
+videos.
+**Deliverable:** validated, accessible user experience.
+
+### Phase 10 — Public preview
+
+With the above in place: release Developer Preview, collect issues, iterate →
+Beta → v1.0 → hosted cloud offering.
+**Deliverable:** public releases along the maturity ladder.
+
+## Governing rule: specification-complete → product development
+
+From this point forward, the project is treated as **specification-complete for
+the reference build**. Therefore:
+
+- Do **not** invent new backend work unless it is driven by **real usage** or by
+  **StreetJS evolution**.
+- Future effort is primarily: building the clients, integrating published
+  `@streetjs/*` packages, validating against real infrastructure, and improving
+  the user experience based on testing.
+- New reusable framework capabilities are promoted into StreetJS first, released,
+  then consumed here (ADR-0011/0012) — never re-implemented as StreetStudio
+  backend.
+
+This shifts the project from specification implementation to product
+development, which is the natural next stage.
