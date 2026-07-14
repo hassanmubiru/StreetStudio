@@ -297,3 +297,55 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   project references). The full gate stayed green (build, `graph:check`,
   `boundary:check`; 161 test files, 759 passed, 1 skipped; coverage 84.91%), and
   the monorepo is now 37 packages. `apps/mobile` remains roadmap-only.
+
+---
+
+## ADR-0011: Consume StreetJS only as published, versioned packages (promotion-first)
+
+- **Status:** Accepted
+- **Context:** StreetStudio is StreetJS's flagship production application, but the
+  strongest proof of a framework is an *independent* application that uses it the
+  way any external customer would — not an example app living inside the
+  framework repo. Local path references, submodules, or workspace links to
+  StreetJS would blur that separation and let StreetStudio depend on unpublished
+  framework changes.
+- **Decision:** StreetStudio is built **exclusively on the public, versioned API
+  surface of StreetJS**:
+  - StreetJS is consumed only as published npm packages (`streetjs`,
+    `@streetjs/*`) with registry semver ranges. **No** symlinks, git submodules,
+    workspace references, `file:`/`link:`/`portal:`/`workspace:` specifiers,
+    `git`/URL dependencies, `../streetjs` imports, or framework-internal
+    (deep-path) imports.
+  - **Promotion-first golden rule:** if StreetStudio needs a reusable capability
+    StreetJS lacks (auth, storage, uploads, queues, realtime, plugin infra, etc.),
+    that capability is designed and released **in StreetJS first**, then consumed
+    here as a normal dependency upgrade — never implemented as a StreetStudio
+    package that duplicates a framework concern.
+  - **Ownership split.** *StreetJS* owns broadly-reusable infrastructure (HTTP,
+    routing, auth/authz, PostgreSQL/PG-HA, Redis/Cluster, queues, WebSockets/SSE,
+    uploads, object storage, plugin system, config, CLI, observability,
+    resilience, scheduling, validation, security middleware, rate limiting,
+    caching, OpenAPI, test utilities). *StreetStudio* owns product-specific
+    concerns (recording workflows, workspace/video organization, timeline
+    editing, comments/discussions, knowledge base, AI prompts/workflows, team
+    collaboration, branding, pricing/billing decisions, UI/UX, and its business
+    logic).
+- **Enforcement:** `npm run streetjs:check`
+  (`scripts/check-streetjs-consumption.mjs`) fails the build on any non-registry
+  StreetJS dependency specifier or any path/URL/deep-scoped StreetJS import; it
+  runs in `scripts/check.sh` and as a CI gate alongside `graph:check` and
+  `boundary:check`. Today the sole StreetJS reference is `@streetjs/core` as an
+  optional peer dependency (registry semver), reached only through structural
+  adapter seams.
+- **Repository layout (intended):** StreetJS and StreetStudio live in **separate
+  repositories** (`…/streetjs`, `…/streetstudio`). The desktop and mobile clients
+  may either be separate repos (`StreetStudio-Desktop`, `StreetStudio-Mobile`) or
+  live in the StreetStudio monorepo if that suits the release process — but in all
+  cases they consume the same published StreetJS APIs. `apps/mobile` remains
+  roadmap-only (ADR-0010).
+- **Consequences:** The separation stays clean and verifiable; StreetJS is forced
+  to remain a genuine general-purpose framework; and "has anyone built something
+  real on StreetJS?" has an honest answer — StreetStudio, on released packages
+  only. The trade-off is that a capability gap requires a StreetJS release cycle
+  before StreetStudio can adopt it; gaps are tracked in the README StreetJS gap
+  register with external issue links until then.
