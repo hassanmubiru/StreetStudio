@@ -11,6 +11,7 @@ import {
   loadNotifications,
   searchVideos,
 } from "./flows.js";
+import { UploadController, uploadProgress } from "./uploads.js";
 
 /**
  * A scripted in-memory transport: matches `METHOD path` (path without the base
