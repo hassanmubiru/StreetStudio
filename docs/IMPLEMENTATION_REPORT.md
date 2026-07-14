@@ -26,12 +26,16 @@ architectural boundary gates pass, and the entire test suite is green.
 
 All commands run from the workspace root (`/…/StreetStudio`).
 
-| Gate                        | Command                  | Result                                          |
-| --------------------------- | ------------------------ | ----------------------------------------------- |
-| Build (project references)  | `npm run build`          | PASS (exit 0)                                   |
-| Dependency-graph acyclicity | `npm run graph:check`    | PASS — "Package dependency graph is acyclic."   |
-| Import boundaries           | `npm run boundary:check` | PASS — 109 files scanned, 0 violations          |
-| Full test suite             | `npm test`               | PASS — 160 files, 753 passed / 1 skipped        |
+| Gate                        | Command                    | Result                                          |
+| --------------------------- | -------------------------- | ----------------------------------------------- |
+| Build (project references)  | `npm run build`            | PASS (exit 0)                                   |
+| Dependency-graph acyclicity | `npm run graph:check`      | PASS — "Package dependency graph is acyclic."   |
+| Import boundaries           | `npm run boundary:check`   | PASS — 121 files scanned, 0 violations          |
+| StreetJS consumption (ADR-0011) | `npm run streetjs:check` | PASS — published, versioned packages only       |
+| Full test suite             | `npm test`                 | PASS — 161 files, 759 passed / 1 skipped        |
+| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 84.91% lines                             |
+
+All six gates run together via `scripts/check.sh` (and in CI).
 
 The single skipped test is the intentional reachability-gated real-dependency
 ops check; it skips gracefully when no live PostgreSQL/Redis endpoint is present
