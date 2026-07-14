@@ -444,16 +444,35 @@ repository, published `@streetjs/*` runtime packages, and real infrastructure.
   containers and gates gracefully elsewhere; broaden it as live environments
   become available.
 
-## 14. Next milestone
+## 14. Productionization phase
 
-**Phase 1**
+The reference build already exists; the next stage is productionization. Maturity
+ladder:
+
+```
+Reference Build ✔
+      ↓
+Standalone Repository
+      ↓
+Framework Integration   (consume published @streetjs/* packages)
+      ↓
+Developer Preview
+      ↓
+Public Beta
+      ↓
+v1.0
+      ↓
+Hosted Cloud
+```
+
+Immediate next steps:
 
 - Create the standalone StreetStudio repository.
 - Publish `v0.1.0-dev`.
 - Consume released StreetJS packages.
-- Replace in-memory adapters with runtime implementations.
+- Replace in-memory / compatibility adapters with runtime implementations.
 - Begin dashboard implementation.
-- Prepare the first public preview.
+- Prepare the first public preview (and begin production UX validation).
 
 ---
 
