@@ -11,5 +11,19 @@ export const DOMAIN = "Dashboard web application (the Web_Client SPA)." as const
 export { DashboardSession } from "./session.js";
 export type { DashboardSessionOptions } from "./session.js";
 
-export { loadWorkspace, openProject, listFolderVideos } from "./flows.js";
-export type { Workspace, ProjectView } from "./flows.js";
+export {
+  loadWorkspace,
+  openProject,
+  listFolderVideos,
+  openVideo,
+  threadComments,
+  loadNotifications,
+  searchVideos,
+} from "./flows.js";
+export type {
+  Workspace,
+  ProjectView,
+  VideoPage,
+  CommentThread,
+  NotificationInbox,
+} from "./flows.js";
