@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Honest status/spec split (documentation discipline): new `STATUS.md` (live,
+  measured per-area progress with a scope caveat), `IMPLEMENTATION-PLAN.md` (the
+  phased master spec, sections marked Planned / In reference build / Shipped),
+  and `scripts/status.mjs` + `npm run status` (measured static counts — no
+  hand-edited metrics). The former "Implementation Report" was reframed as a
+  **Reference-Build Report** with an explicit scope/provenance banner: its
+  metrics are measured in this workspace, and it is not a published product.
+
 - Product-side layout aligned to the target (ADR-0012): renamed `apps/web` →
   `apps/dashboard`; added `apps/recorder-extension` and `packages/{types,
   timeline, editor}`; added a root `street.config.ts` composition template. Now
