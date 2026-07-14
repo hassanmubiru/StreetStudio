@@ -33,9 +33,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   client-side upload-session state machine (create → track `ackedChunks`
   progress → complete/abort) with a pure `uploadProgress` derivation; it drives
   the SDK's upload surface and composes (does not duplicate) the recorder's
-  byte-level chunk/queue/retry logic. Talks to the API exclusively through
-  `@streetstudio/sdk`; verified with an in-memory scripted transport (19 tests).
-  No UI rendering layer yet. Suite now 165 files, 792 passing, 85.26% coverage.
+  byte-level chunk/queue/retry logic. Adds sharing flows (`createShareLink`,
+  `resolveSharedVideo`, `revokeShareLink`, plus a pure `shareLinkState` /
+  `isShareLinkActive` derivation), reaction flows (`addReaction`,
+  `removeReaction`, `toggleReaction`, plus a pure `summarizeReactions` tally),
+  and `EditSessionController` — an undo/redo-capable edit-session over the pure
+  `@streetstudio/editor` reducer and `@streetstudio/timeline` model (now direct
+  dashboard dependencies). Talks to the API exclusively through
+  `@streetstudio/sdk`; verified with an in-memory scripted transport (28 tests).
+  No UI rendering layer yet. Suite now 165 files, 801 passing, 85.47% coverage.
 
 - Client-model implementation (product-development phase, no backend changes):
   `@streetstudio/timeline` gains pure helper ops (`totalDuration`, `clipCount`,
