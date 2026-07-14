@@ -39,8 +39,8 @@ The full experience-centric strategy lives in [`PRODUCT.md`](PRODUCT.md).
 - **184** specification tasks implemented & verified
 - **32 / 32** requirements satisfied
 - **88** correctness properties verified
-- **759** passing tests (1 skipped)
-- **84.91%** line coverage
+- **773** passing tests (1 skipped)
+- **84.99%** line coverage
 - Independent StreetJS consumer (published packages only)
 - UI clients remain **scaffolds**
 - Production deployment **not yet begun**
