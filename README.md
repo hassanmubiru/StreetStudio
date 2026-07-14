@@ -1,4 +1,14 @@
-# StreetStudio
+# StreetStudio — Reference Build (frozen)
+
+> **This repository is the frozen reference build** (ADR-0013): the
+> specification-driven implementation that validated the domain model, API,
+> package boundaries, and correctness properties. It is a historical engineering
+> reference, **not** the active product. New product development happens in the
+> independent `streetstudio` repository, which consumes only published StreetJS
+> packages. Changes here are limited to keeping it building or tracking StreetJS
+> evolution — no new product features. See [`STATUS.md`](STATUS.md),
+> [`IMPLEMENTATION-PLAN.md`](IMPLEMENTATION-PLAN.md), and
+> [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 Open-source asynchronous collaboration platform for video/screen recording, review, and knowledge sharing. StreetStudio is the flagship application built on the **StreetJS** framework.
 

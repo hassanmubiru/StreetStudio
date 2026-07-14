@@ -1,5 +1,9 @@
 # StreetStudio — Status
 
+- **Repository state:** **Frozen reference build** (ADR-0013) — historical
+  engineering reference; active product development has moved to the independent
+  `streetstudio` repository. Changes here are limited to keeping it building or
+  tracking StreetJS evolution.
 - **Version:** 0.1.0-dev
 - **Architecture:** Approved
 - **Product design:** Approved
