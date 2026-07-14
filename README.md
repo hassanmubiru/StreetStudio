@@ -103,6 +103,27 @@ and records the gap here with a reference to an external StreetJS issue
 When you discover a new StreetJS weakness, add a row here (with an external issue
 reference) rather than patching StreetJS.
 
+### Framework-capability promotion candidates (ADR-0012)
+
+Separately from the feature gaps above, several StreetStudio packages currently
+implement **framework-level** concerns in-repo as pre-framework stand-ins,
+because the corresponding granular `@streetjs/*` packages are not published yet.
+Each is a *promotion candidate*: once StreetJS ships the package, StreetStudio
+will consume it and retire the stand-in (promotion-first, ADR-0011/0012).
+
+| Capability | Stand-in today | Target package |
+| ---------- | -------------- | -------------- |
+| Authentication / sessions / RBAC | `packages/auth` | `@streetjs/auth` |
+| PostgreSQL access + repositories | `packages/database` | `@streetjs/postgres` |
+| Object storage abstraction | `packages/storage` | `@streetjs/storage` (+ `@streetjs/s3`/`@streetjs/r2`) |
+| WebSocket realtime transport | `packages/realtime` | `@streetjs/websocket` + `@streetjs/events` |
+| Background jobs / queues | `packages/processing` workers | `@streetjs/jobs` |
+| Plugin system | `packages/plugins` | (part of `streetjs`) |
+| Rate limiting / security defaults | `apps/api/security` | `@streetjs/rate-limit` |
+
+These stand-ins sit behind adapter seams, so each migration is a localized swap.
+See [`docs/DECISIONS.md`](docs/DECISIONS.md) ADR-0012 for the full map.
+
 ## Development
 
 ```bash
