@@ -9,13 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Repository frozen as the reference build (ADR-0013).** This repo is now a
-  historical engineering reference; active product development moves to the
-  independent `streetstudio` repository (consuming only published StreetJS
-  packages). Changes here are limited to keeping it building or tracking StreetJS
-  evolution. README and STATUS.md carry the freeze banner.
+- **Freeze lifted for client-side work (ADR-0014, supersedes ADR-0013).** The
+  reference build stays the source of truth for the domain model and API, but
+  feasible client-side domain/model logic that consumes only the public SDK
+  surface is now built and tested here. ADR-0013's full freeze is superseded;
+  README and STATUS.md reflect the active client-side implementation state. Work
+  that still requires a separate repository, npm publishing, real infrastructure,
+  UI/native runtimes, or unpublished `@streetjs/*` packages remains out of scope.
+- **Repository frozen as the reference build (ADR-0013, superseded by ADR-0014).**
+  Recorded for history: the repo was briefly declared a frozen historical
+  reference before the freeze was narrowed to allow client-side logic here.
 
 ### Added
+
+- Dashboard client-side application logic (client work under ADR-0014, no backend
+  changes): `@streetstudio/dashboard` gains `DashboardSession` (credential/scope
+  management over the SDK — bearer/API-key auth, active-organization scoping,
+  best-effort sign-out) and read-oriented use-case flows (`loadWorkspace`,
+  `openProject`, `listFolderVideos`). Talks to the API exclusively through
+  `@streetstudio/sdk`; verified with an in-memory scripted transport. No UI
+  rendering layer yet. Suite now 165 files, 778 passing, 85.05% coverage.
 
 - Client-model implementation (product-development phase, no backend changes):
   `@streetstudio/timeline` gains pure helper ops (`totalDuration`, `clipCount`,
