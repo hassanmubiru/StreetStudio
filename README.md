@@ -1,12 +1,12 @@
-# StreetStudio — Reference Build (frozen)
+# StreetStudio — Reference Build
 
-> **This repository is the frozen reference build** (ADR-0013): the
-> specification-driven implementation that validated the domain model, API,
-> package boundaries, and correctness properties. It is a historical engineering
-> reference, **not** the active product. New product development happens in the
-> independent `streetstudio` repository, which consumes only published StreetJS
-> packages. Changes here are limited to keeping it building or tracking StreetJS
-> evolution — no new product features. See [`STATUS.md`](STATUS.md),
+> **This is the reference build** — the specification-driven implementation that
+> validated the domain model, API, package boundaries, and correctness
+> properties. It is **active for client-side implementation** (ADR-0014):
+> SDK-driven application logic and client models (dashboard flows, editor,
+> timeline, player) are being built and tested here. Product work that needs the
+> standalone repo, published `@streetjs/*` packages, real infrastructure, or
+> native/UI runtimes still happens elsewhere. See [`STATUS.md`](STATUS.md),
 > [`IMPLEMENTATION-PLAN.md`](IMPLEMENTATION-PLAN.md), and
 > [`docs/DECISIONS.md`](docs/DECISIONS.md).
 

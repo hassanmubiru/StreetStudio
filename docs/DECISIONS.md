@@ -446,3 +446,27 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   The measured state at freeze: 5 apps / 40 packages, 184 specification tasks
   implemented & verified, 88 correctness properties, 773 passing tests (1
   skipped), 84.99% line coverage — all gates green.
+
+---
+
+## ADR-0014: Lift the freeze — continue feasible client-side implementation in this workspace
+
+- **Status:** Accepted (supersedes ADR-0013)
+- **Context:** ADR-0013 froze this repository pending a standalone product repo.
+  The owner then chose to continue building the parts of the product that are
+  genuinely implementable in this workspace now — without external infrastructure
+  or unpublished `@streetjs/*` packages — rather than wait. Creating the
+  standalone repo, publishing packages, deploying infrastructure, and building
+  native/UI runtimes remain outside this workspace.
+- **Decision:** Lift the freeze for **client-side domain/model logic** only.
+  Permitted here: SDK-driven application logic (over an injectable/in-memory
+  transport), `editor`/`timeline`/`player` client models, and SDK-level tests.
+  Still out of scope (per ADR-0011/0012 and the governing rule): new backend
+  work, real infrastructure, native desktop/mobile runtimes, and consuming
+  unpublished `@streetjs/*` packages.
+- **Consequences:** The README/STATUS freeze banners are replaced with an
+  "active — client-side implementation" note. The three-artifact separation
+  (StreetJS framework / future StreetStudio product repo / this reference build)
+  still holds; this repo simply continues to host tested client-side logic until
+  the standalone repo exists. The governing rule (no new backend work unless
+  driven by real usage or StreetJS evolution) remains in force.
