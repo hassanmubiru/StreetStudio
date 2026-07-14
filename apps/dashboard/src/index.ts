@@ -30,3 +30,22 @@ export type {
 
 export { UploadController, uploadProgress } from "./uploads.js";
 export type { UploadProgress } from "./uploads.js";
+
+export {
+  createShareLink,
+  revokeShareLink,
+  resolveSharedVideo,
+  shareLinkState,
+  isShareLinkActive,
+} from "./sharing.js";
+export type { ShareLinkState } from "./sharing.js";
+
+export {
+  addReaction,
+  removeReaction,
+  toggleReaction,
+  summarizeReactions,
+} from "./reactions.js";
+export type { ReactionTarget, ReactionTally } from "./reactions.js";
+
+export { EditSessionController } from "./editing.js";
