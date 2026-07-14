@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { HttpRequest, HttpResponse, HttpTransport } from "@streetstudio/sdk";
+import type { CommentDto } from "@streetstudio/shared";
 import { DashboardSession } from "./session.js";
 import {
   loadWorkspace,
@@ -104,5 +105,98 @@ describe("dashboard flows", () => {
     expect(videos).toEqual([video]);
     // the folderId filter is carried on the query string
     expect(transport.requests.at(-1)!.url).toContain(`folderId=${folder.id}`);
+  });
+
+  const video = { id: "44444444-4444-4444-4444-444444444444", organizationId: org.id, folderId: folder.id, title: "Demo", durationSeconds: 42, status: "ready", developerMode: false, createdAt: "2026-01-01T00:00:00.000Z" };
+
+  it("openVideo aggregates video, comments and playback; transcript/summary are best-effort", async () => {
+    const comment = { id: "55555555-5555-5555-5555-555555555555", videoId: video.id, authorId: org.id, body: "Nice", createdAt: "2026-01-01T00:00:00.000Z" };
+    const manifest = { videoId: video.id, renditions: [{ id: "66666666-6666-6666-6666-666666666666", videoId: video.id, quality: "720p", bitrate: 2_500_000 }] };
+    // No transcript/summary routes → those calls 404 and degrade to undefined.
+    const transport = new ScriptedTransport({
+      [`GET /videos/${video.id}`]: video,
+      [`GET /videos/${video.id}/comments`]: [comment],
+      [`GET /videos/${video.id}/playback`]: manifest,
+    });
+    const session = new DashboardSession({ baseUrl: BASE, transport, auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+
+    const page = await openVideo(session, video.id);
+    expect(page.video).toEqual(video);
+    expect(page.comments).toEqual([comment]);
+    expect(page.playback).toEqual(manifest);
+    expect(page.transcript).toBeUndefined();
+    expect(page.summary).toBeUndefined();
+  });
+
+  it("openVideo includes transcript and summary when present", async () => {
+    const transcript = { id: "77777777-7777-7777-7777-777777777777", videoId: video.id, segments: [{ start: 0, end: 1, text: "hi" }] };
+    const summary = { id: "88888888-8888-8888-8888-888888888888", videoId: video.id, body: "A demo.", sourcePluginId: "99999999-9999-9999-9999-999999999999" };
+    const transport = new ScriptedTransport({
+      [`GET /videos/${video.id}`]: video,
+      [`GET /videos/${video.id}/comments`]: [],
+      [`GET /videos/${video.id}/playback`]: { videoId: video.id, renditions: [] },
+      [`GET /videos/${video.id}/transcript`]: transcript,
+      [`GET /videos/${video.id}/summary`]: summary,
+    });
+    const session = new DashboardSession({ baseUrl: BASE, transport, auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+
+    const page = await openVideo(session, video.id);
+    expect(page.transcript).toEqual(transcript);
+    expect(page.summary).toEqual(summary);
+  });
+
+  it("openVideo rejects when a required call fails", async () => {
+    // Only comments is routed; the required video.get 404s.
+    const transport = new ScriptedTransport({ [`GET /videos/${video.id}/comments`]: [] });
+    const session = new DashboardSession({ baseUrl: BASE, transport, auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+    await expect(openVideo(session, video.id)).rejects.toBeTruthy();
+  });
+
+  it("searchVideos short-circuits blank queries and forwards trimmed ones", async () => {
+    const transport = new ScriptedTransport({ "GET /search/videos": [video] });
+    const session = new DashboardSession({ baseUrl: BASE, transport, auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+
+    expect(await searchVideos(session, "   ")).toEqual([]);
+    expect(transport.requests).toHaveLength(0);
+
+    const results = await searchVideos(session, "  demo  ", { limit: 10 });
+    expect(results).toEqual([video]);
+    const url = transport.requests.at(-1)!.url;
+    expect(url).toContain("q=demo");
+    expect(url).toContain("limit=10");
+  });
+
+  it("loadNotifications derives an unread count from readAt", async () => {
+    const read = { id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", memberId: org.id, eventType: "comment.created", sourceResourceId: video.id, createdAt: "2026-01-01T00:00:00.000Z", readAt: "2026-01-02T00:00:00.000Z" };
+    const unread = { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", memberId: org.id, eventType: "mention.created", sourceResourceId: video.id, createdAt: "2026-01-03T00:00:00.000Z" };
+    const transport = new ScriptedTransport({ "GET /notifications": [read, unread] });
+    const session = new DashboardSession({ baseUrl: BASE, transport, auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+
+    const inbox = await loadNotifications(session);
+    expect(inbox.notifications).toHaveLength(2);
+    expect(inbox.unreadCount).toBe(1);
+  });
+});
+
+describe("threadComments", () => {
+  const at = (n: number) => `2026-01-0${n}T00:00:00.000Z`;
+  const root1: CommentDto = { id: "c1", videoId: "v", authorId: "a", body: "root1", createdAt: at(1) };
+  const root2: CommentDto = { id: "c2", videoId: "v", authorId: "a", body: "root2", createdAt: at(2) };
+  const reply1: CommentDto = { id: "c3", videoId: "v", authorId: "a", body: "reply1", parentCommentId: "c1", createdAt: at(3) };
+  const reply2: CommentDto = { id: "c4", videoId: "v", authorId: "a", body: "reply2", parentCommentId: "c1", createdAt: at(4) };
+
+  it("groups replies under roots, preserving input order", () => {
+    const threads = threadComments([root1, root2, reply1, reply2]);
+    expect(threads.map((t) => t.comment.id)).toEqual(["c1", "c2"]);
+    expect(threads[0]!.replies.map((r) => r.id)).toEqual(["c3", "c4"]);
+    expect(threads[1]!.replies).toEqual([]);
+  });
+
+  it("drops replies whose parent is not in view", () => {
+    const orphan: CommentDto = { id: "c5", videoId: "v", authorId: "a", body: "orphan", parentCommentId: "missing", createdAt: at(5) };
+    const threads = threadComments([root1, orphan]);
+    expect(threads).toHaveLength(1);
+    expect(threads[0]!.comment.id).toBe("c1");
+    expect(threads[0]!.replies).toEqual([]);
   });
 });
