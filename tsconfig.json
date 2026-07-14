@@ -39,8 +39,9 @@
     { "path": "./packages/integration-jira" },
     { "path": "./packages/integration-linear" },
     { "path": "./apps/api" },
-    { "path": "./apps/web" },
+    { "path": "./apps/dashboard" },
     { "path": "./apps/desktop" },
-    { "path": "./apps/docs" }
+    { "path": "./apps/docs" },
+    { "path": "./apps/recorder-extension" }
   ]
 }
