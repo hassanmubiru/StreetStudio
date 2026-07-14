@@ -141,6 +141,10 @@ StreetStudio stays independent and consumes **only** StreetJS public APIs/packag
    cycle, roadmap, and community, serving as StreetJS's real-world proof of
    scalability and developer experience.
 
+This is codified and enforced: see ADR-0011 in [`DECISIONS.md`](DECISIONS.md) and
+the `npm run streetjs:check` CI gate (published, versioned packages only — no
+path/link/workspace/git/url references or framework-internal imports).
+
 ## What this does not change
 
 The technical foundations already in place remain correct and are the enablers

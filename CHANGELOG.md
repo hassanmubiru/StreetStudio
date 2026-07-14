@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- StreetJS consumption contract (ADR-0011) codified and **enforced**: a new
+  `npm run streetjs:check` gate (`scripts/check-streetjs-consumption.mjs`) fails
+  the build on any non-registry StreetJS dependency specifier
+  (`file:`/`link:`/`workspace:`/`git`/url) or any path/deep-scoped StreetJS
+  import. Wired into `scripts/check.sh` and CI; the README consumption policy was
+  tightened (no local package links) and the promotion-first rule documented.
 - `docs/PRODUCT.md` — experience-centric product strategy addressing the
   lead-architect review: positioning ("the asynchronous operating system for
   software teams"), the Capture→Explain→Collaborate→Track→Resolve→Archive
