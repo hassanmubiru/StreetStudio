@@ -330,9 +330,10 @@ the roadmap (not scaffolded).
 - The StreetJS gap-register issue URLs in `README.md` are intentional placeholders
   (`https://github.com/streetjs/streetjs/issues/NNN`) — replace each with the real
   upstream issue link once filed.
-- Client apps (`apps/web`, `apps/desktop`, `apps/docs`) and `packages/ui` are
-  scaffolded entry points; UI build-out is future work beyond this backend/spec
-  scope.
+- Client apps (`apps/dashboard`, `apps/desktop`, `apps/recorder-extension`,
+  `apps/docs`) and the client packages (`ui`, `types`, `timeline`, `editor`) are
+  scaffolds/model-only entry points; UI/runtime build-out is future work beyond
+  this backend/spec scope.
 - Real-dependency integration coverage runs opportunistically in CI via service
   containers and gates gracefully elsewhere; broaden it as live environments
   become available.
