@@ -118,10 +118,10 @@ All commands run from the workspace root (`/…/StreetStudio`).
 | --------------------------- | -------------------------- | ----------------------------------------------- |
 | Build (project references)  | `npm run build`            | PASS (exit 0)                                   |
 | Dependency-graph acyclicity | `npm run graph:check`      | PASS — "Package dependency graph is acyclic."   |
-| Import boundaries           | `npm run boundary:check`   | PASS — 121 files scanned, 0 violations          |
+| Import boundaries           | `npm run boundary:check`   | PASS — 128 files scanned, 0 violations          |
 | StreetJS consumption (ADR-0011) | `npm run streetjs:check` | PASS — published, versioned packages only       |
-| Full test suite             | `npm test`                 | PASS — 161 files, 759 passed / 1 skipped        |
-| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 84.91% lines                             |
+| Full test suite             | `npm test`                 | PASS — 164 files, 773 passed / 1 skipped        |
+| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 84.99% lines                             |
 
 All six gates run together via `scripts/check.sh` (and in CI).
 
@@ -175,8 +175,8 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/comments                      | 2   | 5     | 4    | Comments, threads, reactions, mentions          |
 | packages/search                        | 2   | 5     | 4    | Search + transcript search (authorized scope)   |
 | packages/player                        | 2   | 3     | 2    | Streaming/playback: ABR manifest with view-permission & share-credential gating |
-| packages/timeline                      | 1   | 0     | 0    | Timeline model: tracks, clips, creator markers  |
-| packages/editor                        | 1   | 0     | 0    | Browser editor model (trim/split/merge/crop/…)  |
+| packages/timeline                      | 2   | 1     | 0    | Timeline model + ops (tracks, clips, markers)   |
+| packages/editor                        | 3   | 2     | 1    | Browser editor model + reducer (trim/split/merge/speed) |
 | packages/recorder                      | 5   | 2     | 1    | Recorder capture + offline upload client        |
 | packages/processing                    | 2   | 5     | 3    | Media pipeline: transcode/thumbnail/preview     |
 | packages/notifications                 | 2   | 4     | 3    | Notifications + event contracts                 |
