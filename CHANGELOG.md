@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Client-model implementation (product-development phase, no backend changes):
+  `@streetstudio/timeline` gains pure helper ops (`totalDuration`, `clipCount`,
+  `sortedMarkers`, `withMarker`), and `@streetstudio/editor` gains a
+  non-destructive reducer (`applyEdit`/`applyEdits`) for trim/split/merge/speed
+  with crop/caption/annotate as render-time overlays. Covered by unit tests plus
+  a fast-check property test. Suite now 164 files, 773 passing, 84.99% coverage.
 - Productionization roadmap in `IMPLEMENTATION-PLAN.md` — the 10-phase delivery
   sequence (standalone repo → StreetJS integration → dashboard → recorder →
   media → infrastructure → plugin ecosystem → mobile → UX → public preview) with
