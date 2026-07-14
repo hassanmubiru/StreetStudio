@@ -35,7 +35,41 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Line coverage                    | 84.91%                                    |
 | Documentation                    | 11 files under `docs/` + root docs        |
 
-## 2. Verification results
+## 2. Project status
+
+| Area                                | State           |
+| ----------------------------------- | --------------- |
+| Reference implementation            | ✔ Complete      |
+| Standalone repository               | Planned         |
+| Published npm packages              | Not published   |
+| Production deployment               | Not deployed    |
+| Dashboard application               | Scaffold        |
+| Desktop application                 | Scaffold        |
+| Browser extension                   | Scaffold        |
+| Mobile application                  | Planned         |
+| Real `@streetjs` runtime integration | Planned       |
+| Community                           | Not started     |
+| Current version                     | 0.1.0-dev       |
+
+For live, measured per-area progress see [`../STATUS.md`](../STATUS.md); for the
+phased plan see [`../IMPLEMENTATION-PLAN.md`](../IMPLEMENTATION-PLAN.md).
+
+### StreetJS relationship
+
+StreetStudio is developed in an independent repository and consumes only
+published StreetJS packages. It never:
+
+- imports StreetJS source files,
+- references the StreetJS repository (by filesystem path or otherwise), or
+- depends on unpublished framework internals.
+
+New framework capabilities are developed inside StreetJS, released
+independently, and then adopted by StreetStudio through versioned package
+upgrades. StreetStudio is therefore both a real application and the primary
+consumer of the StreetJS framework. This contract is enforced by
+`npm run streetjs:check` (see [`DECISIONS.md`](DECISIONS.md), ADR-0011).
+
+## 3. Verification results
 
 All commands run from the workspace root (`/…/StreetStudio`).
 
