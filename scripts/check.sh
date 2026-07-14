@@ -28,6 +28,7 @@ echo "Repo: $ROOT"
 run npm run build
 run npm run graph:check
 run npm run boundary:check
+run npm run streetjs:check
 run npm test
 
 echo ""
