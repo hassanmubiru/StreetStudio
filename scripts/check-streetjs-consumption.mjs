@@ -63,7 +63,13 @@ for (const pkgPath of walk(ROOT, (f) => f.endsWith("package.json"))) {
 // --- 2. Source imports -------------------------------------------------------
 // Reject relative/URL imports that mention streetjs, and deep @streetjs/* paths.
 const IMPORT_RE = /(?:import|export)[^"']*?from\s*["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)/g;
-const codeFiles = walk(ROOT, (f) => /\.(ts|tsx|mts|cts|js|mjs|cjs)$/.test(f));
+// Test/spec files legitimately contain fixture strings of disallowed imports
+// (they exercise the boundary analyzer), so — like the boundary analyzer — the
+// source-import scan skips them. The manifest scan above still covers all files.
+const codeFiles = walk(
+  ROOT,
+  (f) => /\.(ts|tsx|mts|cts|js|mjs|cjs)$/.test(f) && !/\.(test|spec)\.[cm]?[jt]sx?$/.test(f),
+);
 for (const file of codeFiles) {
   const text = readFileSync(file, "utf8");
   let m;
