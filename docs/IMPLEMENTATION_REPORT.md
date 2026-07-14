@@ -87,6 +87,8 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/comments                      | 2   | 5     | 4    | Comments, threads, reactions, mentions          |
 | packages/search                        | 2   | 5     | 4    | Search + transcript search (authorized scope)   |
 | packages/player                        | 2   | 3     | 2    | Streaming/playback: ABR manifest with view-permission & share-credential gating |
+| packages/timeline                      | 1   | 0     | 0    | Timeline model: tracks, clips, creator markers  |
+| packages/editor                        | 1   | 0     | 0    | Browser editor model (trim/split/merge/crop/…)  |
 | packages/recorder                      | 5   | 2     | 1    | Recorder capture + offline upload client        |
 | packages/processing                    | 2   | 5     | 3    | Media pipeline: transcode/thumbnail/preview     |
 | packages/notifications                 | 2   | 4     | 3    | Notifications + event contracts                 |
