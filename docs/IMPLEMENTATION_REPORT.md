@@ -305,6 +305,12 @@ non-public endpoints deny anonymous; startup names every invalid config value.
 
 ## 9. Architecture highlights
 
+The following describe the design realized in the reference implementation.
+Behaviours involving live infrastructure (e.g. HA reconnection) are exercised
+behind adapter seams with in-memory fakes; running them against real
+`@streetjs/*` runtime packages and infrastructure is planned production work
+(see §12 and [`../IMPLEMENTATION-PLAN.md`](../IMPLEMENTATION-PLAN.md)).
+
 - **StreetJS boundary integrity (R1, R2).** StreetJS is consumed only through
   `@streetjs/core` public entry points behind structural adapter seams. A custom
   static analyzer (`packages/config`) fails the build on any disallowed import —
