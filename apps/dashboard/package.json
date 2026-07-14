@@ -13,7 +13,9 @@
     "@streetstudio/shared": "*",
     "@streetstudio/ui": "*",
     "@streetstudio/sdk": "*",
-    "@streetstudio/recorder": "*"
+    "@streetstudio/recorder": "*",
+    "@streetstudio/timeline": "*",
+    "@streetstudio/editor": "*"
   },
   "streetstudio": {
     "domain": "Dashboard web application (the Web_Client SPA)."
