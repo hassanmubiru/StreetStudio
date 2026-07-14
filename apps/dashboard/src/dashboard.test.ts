@@ -1,7 +1,15 @@
 import { describe, it, expect } from "vitest";
 import type { HttpRequest, HttpResponse, HttpTransport } from "@streetstudio/sdk";
 import { DashboardSession } from "./session.js";
-import { loadWorkspace, openProject, listFolderVideos } from "./flows.js";
+import {
+  loadWorkspace,
+  openProject,
+  listFolderVideos,
+  openVideo,
+  threadComments,
+  loadNotifications,
+  searchVideos,
+} from "./flows.js";
 
 /**
  * A scripted in-memory transport: matches `METHOD path` (path without the base
