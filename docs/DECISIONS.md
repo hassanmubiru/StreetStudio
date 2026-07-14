@@ -410,3 +410,39 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   published first (ADR-0011 promotion-first). Until then the in-repo stand-ins
   remain and are recorded in the README StreetJS gap register. No code changes
   accompany this ADR.
+
+---
+
+## ADR-0013: Freeze the reference build; move product development to a standalone repository
+
+- **Status:** Accepted
+- **Context:** The reference implementation has served its purpose — it validated
+  the domain model, API surface, package boundaries, plugin architecture, and the
+  correctness properties, all measured by the build/test/analysis pipeline.
+  Adding more specification documents now yields diminishing returns; the
+  remaining work (dashboard, clients, real infrastructure, published-`@streetjs/*`
+  integration, UX) is **product engineering**, and ADR-0011/0012 require it to
+  happen against published StreetJS packages in an independent repository.
+- **Decision:** Freeze this repository as the **reference build**. It is a
+  historical engineering reference documenting the verified domain model and
+  tests. New feature development happens in a **separate, independent
+  `streetstudio` repository** (its own layout with `pnpm`/`turbo`, apps
+  `api`/`dashboard`/`desktop`/`recorder-extension`/`docs`/`mobile`, and packages),
+  which references this workspace only through **published npm packages** — never
+  by path, submodule, or copied source.
+  - Changes to this reference repo are limited to: keeping it building, and
+    updates required as StreetJS evolves. No new product features are added here.
+  - The productionization sequence lives in
+    [`../IMPLEMENTATION-PLAN.md`](../IMPLEMENTATION-PLAN.md); the governing rule
+    (no new backend work unless driven by real usage or StreetJS evolution) stays
+    in force.
+- **Consequences:** Three clean, independent artifacts:
+  - **StreetJS** — the reusable framework (separate repository).
+  - **StreetStudio** — the real application built on published StreetJS packages
+    (new, active repository).
+  - **Reference build** — this repository: the archived, specification-driven
+    implementation that validated the design (frozen).
+
+  The measured state at freeze: 5 apps / 40 packages, 184 specification tasks
+  implemented & verified, 88 correctness properties, 773 passing tests (1
+  skipped), 84.99% line coverage — all gates green.
