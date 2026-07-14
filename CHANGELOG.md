@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Product-side layout aligned to the target (ADR-0012): renamed `apps/web` →
+  `apps/dashboard`; added `apps/recorder-extension` and `packages/{types,
+  timeline, editor}`; added a root `street.config.ts` composition template. Now
+  5 apps / 40 packages.
 - ADR-0012 (Proposed) — target framework-consumption map and promotion backlog:
   the granular `@streetjs/*` packages StreetStudio will consume as StreetJS
   publishes them, the product-specific packages that stay, the refined app/package
