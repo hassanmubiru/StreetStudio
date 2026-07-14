@@ -26,14 +26,16 @@ source and contains no StreetJS source in this repository.
 
 ```
 apps/
-  api/       API_Service: REST + WebSocket + Webhook host (StreetJS app)
-  web/       Web_Client (browser SPA)
-  desktop/   Desktop_Client (wraps web + native capture)
-  docs/      Documentation site
+  api/                API_Service: REST + WebSocket + Webhook host (StreetJS app)
+  dashboard/          Dashboard web application (Web_Client SPA)
+  desktop/            Desktop_Client (wraps dashboard + native capture)
+  recorder-extension/ Browser recorder extension (toolbar capture + upload)
+  docs/               Documentation site
 packages/
-  ui/            Shared UI components (web + desktop)
+  ui/            Shared UI components (dashboard + desktop)
   sdk/           Public client library (REST + WebSocket)
-  shared/        Cross-cutting types, DTOs, errors, constants
+  shared/        Cross-cutting framework/wire types, DTOs, errors, constants
+  types/         Product-level shared type aliases (client packages)
   config/        Config schema + loading via StreetJS config
   database/      Schema, migrations, repositories, audit log
   auth/          Authentication, sessions, RBAC, API keys
