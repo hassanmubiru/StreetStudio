@@ -413,7 +413,19 @@ repository, published `@streetjs/*` runtime packages, and real infrastructure.
   containers and gates gracefully elsewhere; broaden it as live environments
   become available.
 
+## 14. Next milestone
+
+**Phase 1**
+
+- Create the standalone StreetStudio repository.
+- Publish `v0.1.0-dev`.
+- Consume released StreetJS packages.
+- Replace in-memory adapters with runtime implementations.
+- Begin dashboard implementation.
+- Prepare the first public preview.
+
 ---
 
-*Generated from the StreetStudio spec at
-`.kiro/specs/streetstudio/` — all metrics reflect the verified repository state.*
+*Metrics in this report are measured from this workspace's reference
+implementation (`npm run status` for counts; `npm test` / `npm run test:coverage`
+for pass/coverage). See [`../STATUS.md`](../STATUS.md) for live status.*
