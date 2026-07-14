@@ -116,6 +116,12 @@ browser, player, comments, search, notifications, admin pages, settings, plugin
 management, analytics, responsive layout.
 **Deliverable:** a usable web application.
 
+*Started (client logic, ADR-0014):* the transport-agnostic client-side layer is
+implemented and tested in this workspace — `DashboardSession` (credential/scope
+management, sign-out) and the read-oriented use-case flows (`loadWorkspace`,
+`openProject`, `listFolderVideos`) over the SDK, verified with an in-memory
+transport. The UI rendering layer remains unbuilt.
+
 ### Phase 4 — Recorder
 
 Browser extension: screen/window/tab capture, microphone, camera, offline queue,
