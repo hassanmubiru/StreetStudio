@@ -349,3 +349,64 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   only. The trade-off is that a capability gap requires a StreetJS release cycle
   before StreetStudio can adopt it; gaps are tracked in the README StreetJS gap
   register with external issue links until then.
+
+---
+
+## ADR-0012: Target framework-consumption map and promotion backlog
+
+- **Status:** Proposed (target architecture; migration is incremental and gated
+  on StreetJS publishing the corresponding packages)
+- **Context:** ADR-0011 established that StreetStudio consumes StreetJS only as
+  published, versioned packages (promotion-first). The lead-architect direction
+  refines the *end state*: StreetStudio should consume a family of granular
+  `@streetjs/*` packages for all broadly-reusable infrastructure, and own only
+  product-specific concerns — mirroring Laravel→Forge/Vapor/Nova,
+  Rails→GitLab, Next.js→Vercel. Two facts constrain execution today:
+  1. The granular `@streetjs/*` packages do **not exist yet**; the only StreetJS
+     dependency available is `@streetjs/core` (optional peer), reached through
+     structural adapter seams.
+  2. Consequently, some current StreetStudio packages implement framework-level
+     concerns in-repo *as a pre-framework stand-in*, behind those same seams.
+- **Decision (target):** As StreetJS publishes each capability, migrate
+  StreetStudio to consume it and retire the in-repo stand-in. Target map:
+
+  | Capability                    | Target package        | Today in StreetStudio                         |
+  | ----------------------------- | --------------------- | --------------------------------------------- |
+  | Core framework (HTTP/routing/DI/config) | `streetjs`, `@streetjs/cli` | `@streetjs/core` seam + `apps/api`, `packages/config` |
+  | Authentication / sessions / JWT | `@streetjs/auth`     | `packages/auth`                               |
+  | PostgreSQL (+ HA)             | `@streetjs/postgres`  | `packages/database`                           |
+  | Redis (+ Cluster) / cache     | `@streetjs/redis`, `@streetjs/cache` | `packages/database` adapters       |
+  | WebSockets                    | `@streetjs/websocket` | `packages/realtime` transport seam            |
+  | Events                        | `@streetjs/events`    | `packages/notifications`/`realtime` contracts |
+  | Background jobs / queues       | `@streetjs/jobs`      | `packages/processing` worker seam             |
+  | Object storage                | `@streetjs/storage`, `@streetjs/s3`, `@streetjs/r2` | `packages/storage` + `storage-*` plugins |
+  | Media utilities               | `@streetjs/media`     | `packages/processing`                         |
+  | Email                         | `@streetjs/sendgrid`  | notification delivery seam                    |
+  | Billing                       | `@streetjs/stripe`    | `packages/plugins` billing gateway            |
+  | Rate limiting / security      | `@streetjs/rate-limit`| `apps/api/security`                           |
+  | Observability / logging        | `@streetjs/otel`, `@streetjs/logger` | (seams; not yet built)         |
+  | Plugin system                 | (part of `streetjs`)  | `packages/plugins`                            |
+
+  **Stays in StreetStudio (product-specific, never promoted):** recording
+  workflows, workspace/video organization (`projects`), timeline editing,
+  comments/discussions, knowledge base, AI prompts/workflows, team collaboration,
+  branding, pricing/billing *decisions*, UI/UX, and StreetStudio business logic.
+
+- **Refined layout (target).** Apps: `api`, `dashboard` (today `web`), `desktop`,
+  `recorder-extension`, `docs`. Product packages: `sdk`, `ui`, `player`,
+  `editor`, `timeline`, `shared`, `types`. A root `street.config.ts` assembles the
+  StreetJS building blocks. `apps/mobile` remains roadmap-only (ADR-0010).
+- **Release strategy.** StreetJS and StreetStudio keep independent version lines;
+  StreetStudio pins compatible StreetJS versions and upgrades deliberately after
+  testing (`npm update` → build → test → deploy), never depending on unpublished
+  framework changes.
+- **Why the seams matter now.** Because every framework touchpoint is already a
+  narrow structural adapter seam (not a hard `@streetjs/core` import), each future
+  migration is a localized swap: point the seam at the real `@streetjs/*` package
+  and delete the stand-in — with `streetjs:check`, `boundary:check`, and
+  `graph:check` guarding every step.
+- **Consequences:** This ADR is the migration backlog, not an immediate refactor.
+  Executing any row requires the corresponding `@streetjs/*` package to be
+  published first (ADR-0011 promotion-first). Until then the in-repo stand-ins
+  remain and are recorded in the README StreetJS gap register. No code changes
+  accompany this ADR.
