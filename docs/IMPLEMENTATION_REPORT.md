@@ -70,10 +70,12 @@ infrastructure-vs-test failure classifier (R32.6).
 | Package / app                          | src | tests | prop | Primary responsibility                          |
 | -------------------------------------- | --- | ----- | ---- | ----------------------------------------------- |
 | apps/api                               | 19  | 25    | 8    | REST + WebSocket + Webhook host, security, ops  |
-| apps/web                               | 1   | 0     | 0    | Web_Client (browser SPA) entry                  |
-| apps/desktop                           | 1   | 0     | 0    | Desktop_Client (web + native capture) entry     |
+| apps/dashboard                         | 1   | 0     | 0    | Dashboard web application (Web_Client SPA) entry |
+| apps/desktop                           | 1   | 0     | 0    | Desktop_Client (wraps dashboard + native capture) entry |
+| apps/recorder-extension                | 1   | 0     | 0    | Browser recorder extension entry                |
 | apps/docs                              | 1   | 0     | 0    | Documentation site entry                        |
-| packages/shared                        | 6   | 3     | 0    | Error taxonomy, wire DTOs, generators           |
+| packages/shared                        | 6   | 3     | 0    | Framework/wire types, DTOs, errors, generators  |
+| packages/types                         | 1   | 0     | 0    | Product-level shared type aliases               |
 | packages/config                        | 12  | 8     | 4    | Config loading + boundary/graph tooling         |
 | packages/database                      | 9   | 6     | 2    | Schema, repositories, append-only audit log     |
 | packages/auth                          | 10  | 17    | 12   | Auth, sessions, RBAC, API keys                  |
