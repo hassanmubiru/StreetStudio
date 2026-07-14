@@ -1,0 +1,33 @@
+{
+  "name": "streetstudio",
+  "version": "0.1.0-dev",
+  "private": true,
+  "description": "StreetStudio — asynchronous video-collaboration platform built on the StreetJS framework.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "boundary:check": "turbo run boundary:check",
+    "graph:check": "turbo run graph:check",
+    "streetjs:check": "node scripts/check-streetjs-consumption.mjs",
+    "dev:infra": "docker compose -f docker/docker-compose.yml up -d",
+    "dev:infra:down": "docker compose -f docker/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.13.0",
+    "fast-check": "^3.23.1",
+    "turbo": "^2.2.3",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}
