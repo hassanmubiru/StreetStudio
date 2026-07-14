@@ -297,3 +297,134 @@ describe("UploadController", () => {
     await expect(controller.refresh()).rejects.toThrow(/No active upload session/);
   });
 });
+
+describe("sharing flows", () => {
+  const videoId = "44444444-4444-4444-4444-444444444444";
+  const shareId = "dddddddd-dddd-dddd-dddd-dddddddddddd";
+
+  it("creates and revokes share links, and resolves a shared video", async () => {
+    const link = { id: shareId, videoId, credential: "cred-abc", passcodeProtected: true };
+    const video = { id: videoId, organizationId: org.id, title: "Shared", durationSeconds: 10, status: "ready", developerMode: false, createdAt: "2026-01-01T00:00:00.000Z" };
+    const transport = new ScriptedTransport({
+      [`POST /videos/${videoId}/share-links`]: link,
+      [`DELETE /share-links/${shareId}`]: {},
+      "POST /shared/resolve": video,
+    });
+    const session = new DashboardSession({ baseUrl: BASE, transport, auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+
+    expect(await createShareLink(session, videoId, { passcode: "1234" })).toEqual(link);
+    await revokeShareLink(session, shareId);
+
+    const resolved = await resolveSharedVideo(session, "cred-abc", "1234");
+    expect(resolved).toEqual(video);
+    const body = JSON.parse(transport.requests.at(-1)!.body!);
+    expect(body).toEqual({ credential: "cred-abc", passcode: "1234" });
+  });
+
+  it("derives share-link state with revoked → expired → locked → active precedence", () => {
+    const now = Date.parse("2026-06-01T00:00:00.000Z");
+    const base = { id: shareId, videoId, credential: "c", passcodeProtected: false };
+
+    expect(shareLinkState({ ...base, revokedAt: "2026-05-01T00:00:00.000Z" }, now)).toBe("revoked");
+    expect(shareLinkState({ ...base, expiresAt: "2026-05-01T00:00:00.000Z" }, now)).toBe("expired");
+    expect(shareLinkState({ ...base, lockedUntil: "2026-07-01T00:00:00.000Z" }, now)).toBe("locked");
+    expect(shareLinkState(base, now)).toBe("active");
+    expect(isShareLinkActive(base, now)).toBe(true);
+    // revoked wins even if not yet expired
+    expect(shareLinkState({ ...base, revokedAt: "2026-05-01T00:00:00.000Z", expiresAt: "2026-12-01T00:00:00.000Z" }, now)).toBe("revoked");
+  });
+});
+
+describe("reaction flows", () => {
+  const target = { targetType: "comment" as const, targetId: "55555555-5555-5555-5555-555555555555" };
+
+  it("adds and removes reactions through the SDK", async () => {
+    const reaction = { targetType: target.targetType, targetId: target.targetId, memberId: org.id, type: "thumbsup" };
+    const transport = new ScriptedTransport({ "POST /reactions": reaction, "DELETE /reactions": {} });
+    const session = new DashboardSession({ baseUrl: BASE, transport, auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+
+    expect(await addReaction(session, target, "thumbsup")).toEqual(reaction);
+    await removeReaction(session, target, "thumbsup");
+    const body = JSON.parse(transport.requests.at(-1)!.body!);
+    expect(body).toEqual({ targetType: "comment", targetId: target.targetId, type: "thumbsup" });
+  });
+
+  it("toggleReaction adds when inactive and removes when active", async () => {
+    const transport = new ScriptedTransport({ "POST /reactions": { targetType: "comment", targetId: target.targetId, memberId: org.id, type: "heart" }, "DELETE /reactions": {} });
+    const session = new DashboardSession({ baseUrl: BASE, transport, auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+
+    expect(await toggleReaction(session, target, "heart", false)).toBe(true);
+    expect(await toggleReaction(session, target, "heart", true)).toBe(false);
+  });
+
+  it("summarizeReactions tallies by type, orders by count then name, flags mine", () => {
+    const me = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+    const other = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+    const t = target.targetType;
+    const id = target.targetId;
+    const reactions: ReactionDto[] = [
+      { targetType: t, targetId: id, memberId: me, type: "thumbsup" },
+      { targetType: t, targetId: id, memberId: other, type: "thumbsup" },
+      { targetType: t, targetId: id, memberId: other, type: "heart" },
+    ];
+    const summary = summarizeReactions(reactions, me);
+    expect(summary).toEqual([
+      { type: "thumbsup", count: 2, reactedByMe: true },
+      { type: "heart", count: 1, reactedByMe: false },
+    ]);
+    // without a memberId nothing is flagged as mine
+    expect(summarizeReactions(reactions).every((s) => !s.reactedByMe)).toBe(true);
+  });
+});
+
+describe("EditSessionController", () => {
+  const timeline: Timeline = {
+    durationSeconds: 10,
+    tracks: [{ id: "screen", kind: "screen", clips: [{ id: "c1", startSeconds: 0, endSeconds: 10 }] }],
+    markers: [],
+  };
+
+  it("applies operations and recomputes the result timeline", () => {
+    const ctrl = new EditSessionController(timeline);
+    expect(ctrl.canUndo).toBe(false);
+    ctrl.apply({ op: "trim", startSeconds: 2, endSeconds: 8 });
+    expect(ctrl.operations).toHaveLength(1);
+    expect(ctrl.result.durationSeconds).toBe(6);
+    expect(ctrl.canUndo).toBe(true);
+  });
+
+  it("supports undo/redo and clears redo on a new apply", () => {
+    const ctrl = new EditSessionController(timeline);
+    ctrl.apply({ op: "speed", factor: 2 });
+    expect(ctrl.result.durationSeconds).toBe(5);
+
+    ctrl.undo();
+    expect(ctrl.operations).toHaveLength(0);
+    expect(ctrl.result.durationSeconds).toBe(10);
+    expect(ctrl.canRedo).toBe(true);
+
+    ctrl.redo();
+    expect(ctrl.result.durationSeconds).toBe(5);
+
+    // a fresh apply after undo discards the redo branch
+    ctrl.undo();
+    ctrl.apply({ op: "trim", startSeconds: 0, endSeconds: 4 });
+    expect(ctrl.canRedo).toBe(false);
+    expect(ctrl.result.durationSeconds).toBe(4);
+  });
+
+  it("rejects an invalid operation without recording it", () => {
+    const ctrl = new EditSessionController(timeline);
+    expect(() => ctrl.apply({ op: "trim", startSeconds: 5, endSeconds: 5 })).toThrow(RangeError);
+    expect(ctrl.operations).toHaveLength(0);
+    expect(ctrl.result.durationSeconds).toBe(10);
+  });
+
+  it("reset returns to the source timeline", () => {
+    const ctrl = new EditSessionController(timeline);
+    ctrl.apply({ op: "trim", startSeconds: 1, endSeconds: 9 }).reset();
+    expect(ctrl.operations).toHaveLength(0);
+    expect(ctrl.canUndo).toBe(false);
+    expect(ctrl.result).toEqual(timeline);
+  });
+});
