@@ -120,9 +120,14 @@ management, analytics, responsive layout.
 implemented and tested in this workspace — `DashboardSession` (credential/scope
 management, sign-out); the read-oriented use-case flows (`loadWorkspace`,
 `openProject`, `listFolderVideos`, `openVideo`, `threadComments`,
-`loadNotifications`, `searchVideos`); and `UploadController` (upload-session
-lifecycle: create → track chunk-ack progress → complete/abort) over the SDK,
-verified with an in-memory transport. The UI rendering layer remains unbuilt.
+`loadNotifications`, `searchVideos`); `UploadController` (upload-session
+lifecycle: create → track chunk-ack progress → complete/abort); the sharing
+flows (`createShareLink`/`resolveSharedVideo`/`revokeShareLink` + a pure
+`shareLinkState`); the reaction flows (`addReaction`/`removeReaction`/
+`toggleReaction` + `summarizeReactions`); and `EditSessionController` (undo/redo
+over the pure `@streetstudio/editor` reducer) — all over the SDK / client
+models, verified with an in-memory transport. The UI rendering layer remains
+unbuilt.
 
 ### Phase 4 — Recorder
 
