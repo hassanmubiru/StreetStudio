@@ -16,8 +16,8 @@ architectural boundary gates pass, and the entire test suite is green.
 | Tasks complete                   | 184 / 184 (100%)                          |
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
-| Apps / packages                  | 4 apps, 37 packages                       |
-| Source files / LOC (excl. tests) | 120 files, ~21,900 LOC                    |
+| Apps / packages                  | 5 apps, 40 packages                       |
+| Source files / LOC (excl. tests) | 124 files, ~22,200 LOC                    |
 | Test files / LOC                 | 160 files, ~32,600 LOC                    |
 | Full test run                    | 160 files, 753 passed, 1 skipped, 0 failed|
 | Documentation                    | 11 files (README + 10 under `docs/`)      |
