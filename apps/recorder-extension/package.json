@@ -1,0 +1,20 @@
+{
+  "name": "@streetstudio/recorder-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser recorder extension: capture and upload from the browser toolbar.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@streetstudio/shared": "*",
+    "@streetstudio/sdk": "*",
+    "@streetstudio/recorder": "*"
+  },
+  "streetstudio": {
+    "domain": "Browser recorder extension: capture and upload from the browser toolbar."
+  }
+}
