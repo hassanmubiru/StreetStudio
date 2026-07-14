@@ -415,7 +415,7 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
 
 ## ADR-0013: Freeze the reference build; move product development to a standalone repository
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0014
 - **Context:** The reference implementation has served its purpose — it validated
   the domain model, API surface, package boundaries, plugin architecture, and the
   correctness properties, all measured by the build/test/analysis pipeline.
