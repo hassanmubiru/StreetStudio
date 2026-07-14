@@ -37,3 +37,11 @@ export interface Timeline {
   readonly tracks: readonly Track[];
   readonly markers: readonly Marker[];
 }
+
+// --- Pure helper operations ------------------------------------------------
+export {
+  totalDuration,
+  clipCount,
+  sortedMarkers,
+  withMarker,
+} from "./ops.js";
