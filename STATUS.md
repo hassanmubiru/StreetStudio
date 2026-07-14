@@ -45,13 +45,13 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
 | ------------------- | ------ |
 | Apps                | 5      |
 | Packages            | 40     |
-| Source files        | 130    |
-| Source LOC          | 23,009 |
+| Source files        | 133    |
+| Source LOC          | 23,271 |
 | Test files          | 165    |
 | Property-test files | 89     |
-| Test LOC            | 33,378 |
-| Tests               | 792 passing, 1 skipped |
-| Line coverage       | 85.26% |
+| Test LOC            | 33,525 |
+| Tests               | 801 passing, 1 skipped |
+| Line coverage       | 85.47% |
 | build / graph / boundary / streetjs gates | passing |
 
 *Regenerate the counts with `npm run status`; regenerate pass/coverage with

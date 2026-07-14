@@ -61,10 +61,10 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
 | Apps / packages                  | 5 apps, 40 packages                       |
-| Source files / LOC (excl. tests) | 130 files, ~23,000 LOC                    |
-| Test files / LOC                 | 165 files, ~33,400 LOC                    |
-| Full test run                    | 165 files, 792 passed, 1 skipped, 0 failed|
-| Line coverage                    | 85.26%                                    |
+| Source files / LOC (excl. tests) | 133 files, ~23,300 LOC                    |
+| Test files / LOC                 | 165 files, ~33,500 LOC                    |
+| Full test run                    | 165 files, 801 passed, 1 skipped, 0 failed|
+| Line coverage                    | 85.47%                                    |
 | Documentation                    | 11 files under `docs/` + root docs        |
 
 ## 2. Current maturity
@@ -120,10 +120,10 @@ All commands run from the workspace root (`/…/StreetStudio`).
 | --------------------------- | -------------------------- | ----------------------------------------------- |
 | Build (project references)  | `npm run build`            | PASS (exit 0)                                   |
 | Dependency-graph acyclicity | `npm run graph:check`      | PASS — "Package dependency graph is acyclic."   |
-| Import boundaries           | `npm run boundary:check`   | PASS — 131 files scanned, 0 violations          |
+| Import boundaries           | `npm run boundary:check`   | PASS — 134 files scanned, 0 violations          |
 | StreetJS consumption (ADR-0011) | `npm run streetjs:check` | PASS — published, versioned packages only       |
-| Full test suite             | `npm test`                 | PASS — 165 files, 792 passed / 1 skipped        |
-| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 85.26% lines                             |
+| Full test suite             | `npm test`                 | PASS — 165 files, 801 passed / 1 skipped        |
+| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 85.47% lines                             |
 
 All six gates run together via `scripts/check.sh` (and in CI).
 
@@ -160,7 +160,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | Package / app                          | src | tests | prop | Primary responsibility                          |
 | -------------------------------------- | --- | ----- | ---- | ----------------------------------------------- |
 | apps/api                               | 19  | 25    | 8    | REST + WebSocket + Webhook host, security, ops  |
-| apps/dashboard                         | 4   | 1     | 0    | Web_Client SPA: client-side session/scope, use-case flows + upload orchestration over the SDK |
+| apps/dashboard                         | 7   | 1     | 0    | Web_Client SPA: session/scope, use-case flows, upload orchestration, sharing, reactions + edit-session over the SDK |
 | apps/desktop                           | 1   | 0     | 0    | Desktop_Client (wraps dashboard + native capture) entry |
 | apps/recorder-extension                | 1   | 0     | 0    | Browser recorder extension entry                |
 | apps/docs                              | 1   | 0     | 0    | Documentation site entry                        |
