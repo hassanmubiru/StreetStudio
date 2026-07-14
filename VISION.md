@@ -336,6 +336,14 @@ The top-level `examples/` directory from the sketch is now present
 **Licensing:** the sketch left MIT/Apache to owner decision; the repository ships
 **Apache-2.0** (`LICENSE`, and every `package.json`).
 
+The **target end state** (ADR-0012) goes further: StreetStudio consumes a family
+of granular `@streetjs/*` packages (`@streetjs/auth`, `@streetjs/postgres`,
+`@streetjs/websocket`, `@streetjs/storage`, `@streetjs/jobs`, …) for all
+broadly-reusable infrastructure, retiring the in-repo framework stand-ins as
+StreetJS publishes each one. That migration is promotion-first (ADR-0011) and
+incremental; today the only available StreetJS dependency is `@streetjs/core`,
+reached through adapter seams that make each future swap localized.
+
 The package layout now matches the sketch one-to-one: `organizations`,
 `comments`, `search`, `realtime`, `ai`, and `integrations` were extracted into
 standalone packages (ADR-0009), and `examples/` was added. Following the
