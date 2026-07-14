@@ -57,7 +57,8 @@ StreetStudio/
 ├── packages/
 │   ├── ui/            # Shared UI components (web + desktop)
 │   ├── sdk/           # Public client library (REST + WebSocket)
-│   ├── shared/        # Cross-cutting types, DTOs, errors, constants
+│   ├── shared/        # Cross-cutting framework/wire types, DTOs, errors, constants
+│   ├── types/         # Product-level shared type aliases (client packages)
 │   ├── config/        # Config schema + loading via StreetJS config; boundary tooling
 │   ├── database/      # Schema, migrations, repositories, audit log
 │   ├── auth/          # Authentication, sessions, RBAC, API keys
@@ -69,6 +70,8 @@ StreetStudio/
 │   ├── comments/      # Comments, threads, reactions, mentions
 │   ├── search/        # Search + transcript search (authorized scope)
 │   ├── player/        # Streaming/playback: ABR manifest with permission & share-credential gating
+│   ├── timeline/      # Timeline model: tracks, clips, creator markers
+│   ├── editor/        # Browser editor model: trim/split/merge/crop/speed/captions/annotations
 │   ├── recorder/      # Recorder capture + chunked/resumable upload client
 │   ├── processing/    # Media pipeline: transcode, thumbnail, preview
 │   ├── notifications/ # Notifications + event contracts
