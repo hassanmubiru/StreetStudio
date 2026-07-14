@@ -103,8 +103,10 @@ published StreetJS packages. It never:
 New framework capabilities are developed inside StreetJS, released
 independently, and then adopted by StreetStudio through versioned package
 upgrades. StreetStudio is therefore both a real application and the primary
-consumer of the StreetJS framework. This contract is enforced by
-`npm run streetjs:check` (see [`DECISIONS.md`](DECISIONS.md), ADR-0011).
+consumer of the StreetJS framework. StreetStudio is intended to become the
+primary reference consumer of StreetJS (there are no published StreetJS runtime
+packages yet). This contract is enforced by `npm run streetjs:check` (see
+[`DECISIONS.md`](DECISIONS.md), ADR-0011).
 
 During early development, temporary compatibility adapters may be used until the
 equivalent StreetJS packages are published. These adapters are replaced through
