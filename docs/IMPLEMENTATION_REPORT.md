@@ -61,10 +61,10 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
 | Apps / packages                  | 5 apps, 40 packages                       |
-| Source files / LOC (excl. tests) | 127 files, ~22,500 LOC                    |
-| Test files / LOC                 | 164 files, ~33,100 LOC                    |
-| Full test run                    | 164 files, 773 passed, 1 skipped, 0 failed|
-| Line coverage                    | 84.99%                                    |
+| Source files / LOC (excl. tests) | 129 files, ~22,700 LOC                    |
+| Test files / LOC                 | 165 files, ~33,200 LOC                    |
+| Full test run                    | 165 files, 778 passed, 1 skipped, 0 failed|
+| Line coverage                    | 85.05%                                    |
 | Documentation                    | 11 files under `docs/` + root docs        |
 
 ## 2. Current maturity
@@ -75,7 +75,8 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Standalone repository               | Planned         |
 | Published npm packages              | Not published   |
 | Production deployment               | Not deployed    |
-| Dashboard shell                     | Scaffold        |
+| Dashboard client logic (session/flows) | ✔ Implemented (no UI) |
+| Dashboard UI rendering              | Not built       |
 | Desktop shell                       | Scaffold        |
 | Browser extension shell             | Scaffold        |
 | Mobile client                       | Planned         |
@@ -119,10 +120,10 @@ All commands run from the workspace root (`/…/StreetStudio`).
 | --------------------------- | -------------------------- | ----------------------------------------------- |
 | Build (project references)  | `npm run build`            | PASS (exit 0)                                   |
 | Dependency-graph acyclicity | `npm run graph:check`      | PASS — "Package dependency graph is acyclic."   |
-| Import boundaries           | `npm run boundary:check`   | PASS — 128 files scanned, 0 violations          |
+| Import boundaries           | `npm run boundary:check`   | PASS — 130 files scanned, 0 violations          |
 | StreetJS consumption (ADR-0011) | `npm run streetjs:check` | PASS — published, versioned packages only       |
-| Full test suite             | `npm test`                 | PASS — 164 files, 773 passed / 1 skipped        |
-| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 84.99% lines                             |
+| Full test suite             | `npm test`                 | PASS — 165 files, 778 passed / 1 skipped        |
+| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 85.05% lines                             |
 
 All six gates run together via `scripts/check.sh` (and in CI).
 
@@ -137,7 +138,7 @@ convention) and each contains at least one executable, passing test.
 
 | Category    | Files | Coverage focus                                             |
 | ----------- | ----- | ---------------------------------------------------------- |
-| unit        | 158   | Per-module behaviour incl. all 88 property tests + client models |
+| unit        | 159   | Per-module behaviour incl. all 88 property tests + client models & dashboard flows |
 | integration | 1     | Ops surface wired end-to-end (startup→health→metrics→HA)   |
 | contract    | 1     | API↔SDK one-for-one parity (Property 64)                   |
 | e2e         | 1     | Full journey via the public API/SDK only (R32.4)           |
@@ -159,7 +160,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | Package / app                          | src | tests | prop | Primary responsibility                          |
 | -------------------------------------- | --- | ----- | ---- | ----------------------------------------------- |
 | apps/api                               | 19  | 25    | 8    | REST + WebSocket + Webhook host, security, ops  |
-| apps/dashboard                         | 1   | 0     | 0    | Dashboard web application (Web_Client SPA) entry |
+| apps/dashboard                         | 3   | 1     | 0    | Web_Client SPA: client-side session/scope + use-case flows over the SDK |
 | apps/desktop                           | 1   | 0     | 0    | Desktop_Client (wraps dashboard + native capture) entry |
 | apps/recorder-extension                | 1   | 0     | 0    | Browser recorder extension entry                |
 | apps/docs                              | 1   | 0     | 0    | Documentation site entry                        |
@@ -457,10 +458,12 @@ repository, published `@streetjs/*` runtime packages, and real infrastructure.
 - The StreetJS gap-register issue URLs in `README.md` are intentional placeholders
   (`https://github.com/streetjs/streetjs/issues/NNN`) — replace each with the real
   upstream issue link once filed.
-- Client apps (`apps/dashboard`, `apps/desktop`, `apps/recorder-extension`,
-  `apps/docs`) and the client packages (`ui`, `types`, `timeline`, `editor`) are
-  scaffolds/model-only entry points; UI/runtime build-out is future work beyond
-  this backend/spec scope.
+- `apps/dashboard` now carries client-side application logic (session/credential/
+  scope management and use-case flows over the SDK), verified with an in-memory
+  transport; its UI rendering layer is still unbuilt. The remaining client apps
+  (`apps/desktop`, `apps/recorder-extension`, `apps/docs`) and the client packages
+  (`ui`, `types`, `timeline`, `editor`) are scaffolds/model-only entry points;
+  UI/runtime build-out is future work beyond this backend/spec scope.
 - Real-dependency integration coverage runs opportunistically in CI via service
   containers and gates gracefully elsewhere; broaden it as live environments
   become available.
