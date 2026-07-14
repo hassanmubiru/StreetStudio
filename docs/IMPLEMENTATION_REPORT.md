@@ -290,15 +290,38 @@ non-public endpoints deny anonymous; startup names every invalid config value.
 
 ## 9. Documentation set (Requirement 31)
 
-Under `docs/`: `ARCHITECTURE.md`, `API.md`, `SECURITY.md`, `DECISIONS.md` (5
-ADRs), `PLUGIN_GUIDE.md`, `MEDIA_PIPELINE.md`, `DEPLOYMENT.md`, `CONTRIBUTING.md`,
-`ROADMAP.md`, plus this report. The root `README.md` carries the StreetJS
-consumption policy and the StreetJS gap register. `API.md` documents every public
-endpoint's method/path/auth/error formats and explicitly lists the three
-no-authentication endpoints (`POST /auth/register`, `POST /auth/login`,
-`POST /shared/resolve`).
+Under `docs/`: `PRODUCT.md` (experience-centric strategy), `ARCHITECTURE.md`,
+`API.md`, `SECURITY.md`, `DECISIONS.md` (11 ADRs), `PLUGIN_GUIDE.md`,
+`MEDIA_PIPELINE.md`, `DEPLOYMENT.md`, `CONTRIBUTING.md`, `ROADMAP.md`, plus this
+report. At the repo root: `VISION.md` (founding vision + master plan),
+`README.md` (StreetJS consumption policy + gap register), `CHANGELOG.md`,
+`LICENSE` (Apache-2.0), and `examples/` (SDK quickstart, self-hosting). `API.md`
+documents every public endpoint's method/path/auth/error formats and explicitly
+lists the three no-authentication endpoints (`POST /auth/register`,
+`POST /auth/login`, `POST /shared/resolve`).
 
-## 10. Known follow-ups
+## 10. Governance & structural evolution (ADRs 0006–0011)
+
+After the initial 184-task build, the layout was aligned to the founding vision
+and hardened, each step gated green by `scripts/check.sh`:
+
+- **ADR-0006** — desktop runtime: Tauri over Electron (provisional, pending a
+  native-capture spike).
+- **ADR-0007 → superseded by ADR-0008** — `recording` renamed to `recorder`;
+  playback extracted into a standalone `player` package.
+- **ADR-0009** — extracted `organizations`, `comments`, `search`, `realtime`,
+  `ai`, and a new `integrations` framework package.
+- **ADR-0010** — separated `projects`, `storage`, and `knowledge` from `media`
+  (knowledge evolves independently of media bytes); the six `storage-*` plugins
+  repointed to `@streetstudio/storage`.
+- **ADR-0011** — StreetJS is consumed only as published, versioned packages
+  (promotion-first); enforced by the `streetjs:check` gate.
+
+The package count grew from 28 → **37** as domains became first-class, and the
+monorepo now matches the vision sketch one-to-one. `apps/mobile` is reserved on
+the roadmap (not scaffolded).
+
+## 11. Known follow-ups
 
 - The StreetJS gap-register issue URLs in `README.md` are intentional placeholders
   (`https://github.com/streetjs/streetjs/issues/NNN`) — replace each with the real
