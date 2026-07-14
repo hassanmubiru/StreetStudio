@@ -28,7 +28,8 @@
     "test:coverage": "vitest run --coverage",
     "boundary:check": "vite-node packages/config/src/boundary/bin.ts",
     "graph:check": "tsc -b packages/config && node packages/config/dist/dependency-graph.cli.js",
-    "streetjs:check": "node scripts/check-streetjs-consumption.mjs"
+    "streetjs:check": "node scripts/check-streetjs-consumption.mjs",
+    "status": "node scripts/status.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",
