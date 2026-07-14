@@ -118,10 +118,11 @@ management, analytics, responsive layout.
 
 *Started (client logic, ADR-0014):* the transport-agnostic client-side layer is
 implemented and tested in this workspace — `DashboardSession` (credential/scope
-management, sign-out) and the read-oriented use-case flows (`loadWorkspace`,
+management, sign-out); the read-oriented use-case flows (`loadWorkspace`,
 `openProject`, `listFolderVideos`, `openVideo`, `threadComments`,
-`loadNotifications`, `searchVideos`) over the SDK, verified with an in-memory
-transport. The UI rendering layer remains unbuilt.
+`loadNotifications`, `searchVideos`); and `UploadController` (upload-session
+lifecycle: create → track chunk-ack progress → complete/abort) over the SDK,
+verified with an in-memory transport. The UI rendering layer remains unbuilt.
 
 ### Phase 4 — Recorder
 
