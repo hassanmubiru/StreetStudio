@@ -25,10 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dashboard client-side application logic (client work under ADR-0014, no backend
   changes): `@streetstudio/dashboard` gains `DashboardSession` (credential/scope
   management over the SDK — bearer/API-key auth, active-organization scoping,
-  best-effort sign-out) and read-oriented use-case flows (`loadWorkspace`,
-  `openProject`, `listFolderVideos`). Talks to the API exclusively through
-  `@streetstudio/sdk`; verified with an in-memory scripted transport. No UI
-  rendering layer yet. Suite now 165 files, 778 passing, 85.05% coverage.
+  best-effort sign-out) and read-oriented use-case flows: `loadWorkspace`,
+  `openProject`, `listFolderVideos`, `openVideo` (video + comments + playback,
+  with best-effort transcript/summary), the pure `threadComments` grouper,
+  `loadNotifications` (list + derived unread count), and `searchVideos` (blank
+  queries short-circuit without a round-trip). Talks to the API exclusively
+  through `@streetstudio/sdk`; verified with an in-memory scripted transport (12
+  tests). No UI rendering layer yet. Suite now 165 files, 785 passing, 85.17%
+  coverage.
 
 - Client-model implementation (product-development phase, no backend changes):
   `@streetstudio/timeline` gains pure helper ops (`totalDuration`, `clipCount`,

@@ -29,7 +29,7 @@ Documentation                    ████████░░  80%
 Backend domain + API (ref build) ████████░░  80%   implemented & tested behind seams
 SDK (typed client)               ████████░░  80%   not yet run against a live server
 Client models (editor/timeline)  ██████░░░░  60%   model + reducer/ops implemented & tested; no UI
-Dashboard client logic           ████░░░░░░  40%   session/scope + use-case flows implemented & tested; no UI
+Dashboard client logic           █████░░░░░  50%   session/scope + workspace/project/video/search/notification flows; no UI
 Dashboard (web UI runtime)       ░░░░░░░░░░   0%   not built
 Desktop client                   ░░░░░░░░░░   0%   scaffold entry only
 Recorder extension               ░░░░░░░░░░   0%   scaffold entry only
