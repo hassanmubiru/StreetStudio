@@ -35,7 +35,7 @@ The full experience-centric strategy lives in [`PRODUCT.md`](PRODUCT.md).
 
 *The 20-second view (measured in this workspace; see the sections below for detail).*
 
-- Backend specification: **complete** (reference build)
+- Reference backend specification: **implemented & verified**
 - **184** specification tasks implemented & verified
 - **32 / 32** requirements satisfied
 - **88** correctness properties verified
@@ -71,7 +71,7 @@ integration against published `@streetjs/*` packages and the UI clients remain
 
 | Area                                | State           |
 | ----------------------------------- | --------------- |
-| Reference implementation            | ✔ Complete      |
+| Reference implementation            | ✔ Implemented & verified |
 | Standalone repository               | Planned         |
 | Published npm packages              | Not published   |
 | Production deployment               | Not deployed    |
@@ -85,8 +85,8 @@ integration against published `@streetjs/*` packages and the UI clients remain
 
 Conversely, within this reference build the domain model, API surface, package
 boundaries, plugin architecture, and verification pipeline are considered
-**stable** — the areas that remain open are runtime integration and the UI, not
-the core design.
+**stable within the reference implementation** — the areas that remain open are
+runtime integration and the UI, not the core design.
 
 For live, measured per-area progress see [`../STATUS.md`](../STATUS.md); for the
 phased plan see [`../IMPLEMENTATION-PLAN.md`](../IMPLEMENTATION-PLAN.md).
