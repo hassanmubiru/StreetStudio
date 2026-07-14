@@ -48,7 +48,7 @@ convention) and each contains at least one executable, passing test.
 
 | Category    | Files | Coverage focus                                             |
 | ----------- | ----- | ---------------------------------------------------------- |
-| unit        | 154   | Per-module behaviour incl. all 88 property tests           |
+| unit        | 155   | Per-module behaviour incl. all 88 property tests           |
 | integration | 1     | Ops surface wired end-to-end (startup→health→metrics→HA)   |
 | contract    | 1     | API↔SDK one-for-one parity (Property 64)                   |
 | e2e         | 1     | Full journey via the public API/SDK only (R32.4)           |
