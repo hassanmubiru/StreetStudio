@@ -201,3 +201,83 @@ describe("threadComments", () => {
     expect(threads[0]!.replies).toEqual([]);
   });
 });
+
+describe("uploadProgress", () => {
+  const base = { id: "u1", organizationId: org.id, videoId: "v1", expiresAt: "2026-02-01T00:00:00.000Z" };
+
+  it("derives fraction/percent and flags for an in-progress session", () => {
+    const p = uploadProgress({ ...base, totalChunks: 4, ackedChunks: 1, status: "open" });
+    expect(p.fraction).toBeCloseTo(0.25);
+    expect(p.percent).toBe(25);
+    expect(p.allChunksAcked).toBe(false);
+    expect(p.isTerminal).toBe(false);
+  });
+
+  it("flags a fully-acked, completed session as terminal", () => {
+    const p = uploadProgress({ ...base, totalChunks: 3, ackedChunks: 3, status: "completed" });
+    expect(p.percent).toBe(100);
+    expect(p.allChunksAcked).toBe(true);
+    expect(p.isTerminal).toBe(true);
+  });
+
+  it("guards against a zero total-chunk count", () => {
+    const p = uploadProgress({ ...base, totalChunks: 0, ackedChunks: 0, status: "open" });
+    expect(p.fraction).toBe(0);
+    expect(p.percent).toBe(0);
+    expect(p.allChunksAcked).toBe(false);
+  });
+});
+
+describe("UploadController", () => {
+  const sid = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+  const open = { id: sid, organizationId: org.id, videoId: "v1", totalChunks: 3, ackedChunks: 0, expiresAt: "2026-02-01T00:00:00.000Z", status: "open" };
+
+  it("has no current session or progress before begin()", () => {
+    const session = new DashboardSession({ baseUrl: BASE, transport: new ScriptedTransport({}), auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+    const controller = new UploadController(session);
+    expect(controller.current).toBeUndefined();
+    expect(controller.progress).toBeUndefined();
+  });
+
+  it("drives create → refresh → complete and derives progress along the way", async () => {
+    const transport = new ScriptedTransport({
+      "POST /uploads": open,
+      [`GET /uploads/${sid}`]: { ...open, ackedChunks: 3, lastAckAt: "2026-01-05T00:00:00.000Z" },
+      [`POST /uploads/${sid}/complete`]: { ...open, ackedChunks: 3, status: "completed" },
+    });
+    const session = new DashboardSession({ baseUrl: BASE, transport, auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+    const controller = new UploadController(session);
+
+    await controller.begin({ title: "Demo", totalChunks: 3 });
+    expect(controller.progress!.percent).toBe(0);
+    expect(controller.progress!.allChunksAcked).toBe(false);
+
+    await controller.refresh();
+    expect(controller.progress!.allChunksAcked).toBe(true);
+    expect(controller.progress!.isTerminal).toBe(false);
+
+    const done = await controller.complete();
+    expect(done.status).toBe("completed");
+    expect(controller.progress!.isTerminal).toBe(true);
+  });
+
+  it("aborts the active session", async () => {
+    const transport = new ScriptedTransport({
+      "POST /uploads": open,
+      [`POST /uploads/${sid}/abort`]: { ...open, status: "aborted" },
+    });
+    const session = new DashboardSession({ baseUrl: BASE, transport, auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+    const controller = new UploadController(session);
+
+    await controller.begin({ title: "Demo", totalChunks: 3 });
+    const aborted = await controller.abort();
+    expect(aborted.status).toBe("aborted");
+    expect(controller.progress!.isTerminal).toBe(true);
+  });
+
+  it("throws when a lifecycle call is made before begin()", async () => {
+    const session = new DashboardSession({ baseUrl: BASE, transport: new ScriptedTransport({}), auth: { kind: "bearer", token: "t" }, organizationId: org.id });
+    const controller = new UploadController(session);
+    await expect(controller.refresh()).rejects.toThrow(/No active upload session/);
+  });
+});
