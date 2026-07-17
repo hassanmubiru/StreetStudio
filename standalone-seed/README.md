@@ -41,3 +41,8 @@ infrastructure, real persisted data, no placeholders or fakes outside automated
 tests, and — critically — **never recreate StreetJS**. If a required
 `@streetjs/*` package is not yet published, pause that feature and record the
 dependency.
+
+The composition doctrine and the concrete list of `@streetjs/*` packages (and the
+API surface each must expose) are in
+[`docs/FRAMEWORK_CONTRACT.md`](docs/FRAMEWORK_CONTRACT.md). StreetJS provides the
+platform; StreetStudio composes it and provides the product.
