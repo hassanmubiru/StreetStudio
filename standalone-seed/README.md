@@ -31,6 +31,7 @@ lives here only so you can copy it into a fresh, independent repository.
 | `.env.example` | Environment variable names (no secrets). |
 | `.gitignore`, `.nvmrc` | Standard repo hygiene. |
 | `MIGRATION.md` | Step-by-step plan to populate the repo from the reference build. |
+| `docs/FRAMEWORK_CONTRACT.md` | Composition doctrine + the `@streetjs/*` packages/APIs StreetStudio consumes. |
 
 ## Governing standard
 
