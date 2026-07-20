@@ -580,3 +580,36 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   relabeled as production. Physical blockers are unchanged: `@streetjs/*` runtime
   packages are still unpublished and no live infra/UI runtime exists here, so real
   feature work stays gated (record-and-pause) until those land.
+
+---
+
+## ADR-0019: StreetJS is published; adopt the real framework API
+
+- **Status:** Accepted (supersedes the speculative framework-requirements)
+- **Context:** Earlier planning assumed StreetJS was unpublished and that
+  StreetStudio would consume a granular package map (`@streetjs/http`,
+  `@streetjs/auth`, `@streetjs/rbac`, `@streetjs/runtime`, `@streetjs/plugins`),
+  captured in `docs/framework-requirements/` and an issue-filing script. A check
+  against npm disproved this: `streetjs@1.2.7` (MIT,
+  `github.com/hassanmubiru/StreetJS`) is published and batteries-included, with
+  `@streetjs/*` meta-packages (`database`, `storage`, `media`, `realtime`,
+  `queue`, `cache`, `events`, `search`, `config`, `metrics`, `security`,
+  `health`, `integrations`, `orm`, `cli`). `@streetjs/core` is a deprecated shim
+  for `streetjs`. The assumed `@streetjs/http`/`auth`/`rbac`/`runtime`/`plugins`
+  packages **do not exist** — those capabilities live inside `streetjs`
+  (`streetApp`, `@Controller`/`@Injectable`/`container`, `streetjs/security` with
+  `JwtService`/`authMiddleware`/`requireRoles`, `streetjs/pool`·`/repository`·
+  `/migrations`, `streetjs/websocket`, etc.).
+- **Decision:** Adopt the **real published framework API**. Retire the speculative
+  `docs/framework-requirements/` specs and `scripts/file-framework-issues.sh`
+  (they described a taxonomy that does not exist). Rewrite
+  [`FRAMEWORK_CONTRACT.md`](FRAMEWORK_CONTRACT.md) to the real surface and update
+  the dependency register in [`PRODUCTIONIZATION.md`](PRODUCTIONIZATION.md) and the
+  charter's blocker list to reflect that the framework is published.
+- **Consequences:** Real backend work is **unblocked** and no longer gated on
+  "publishing packages." Productionization becomes: enable decorator metadata in
+  tsconfig; provision real Postgres/Redis/object storage/FFmpeg (via `docker/`);
+  and replace the in-memory adapter seams with `streetjs` + `@streetjs/*`, one
+  vertical slice at a time (ADR-0017), with integration tests against real infra.
+  The measured reference-build report remains accurate for what is still
+  seam-backed vs. adopted.

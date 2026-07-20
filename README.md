@@ -97,9 +97,8 @@ StreetJS:
 
 - [PRODUCTION_CHARTER](docs/PRODUCTION_CHARTER.md) — the production bar: real infrastructure and data, no fakes outside tests, never recreate StreetJS.
 - [ENGINEERING_PRINCIPLES](docs/ENGINEERING_PRINCIPLES.md) — domain-first architecture, rich models, feature-oriented APIs, vertical-slice delivery, per-slice definition of done.
-- [FRAMEWORK_CONTRACT](docs/FRAMEWORK_CONTRACT.md) — composition doctrine and the `@streetjs/*` packages/APIs StreetStudio consumes.
-- [framework-requirements/](docs/framework-requirements/) — issue-ready capability specs, one per `@streetjs/*` package (file them with [`scripts/file-framework-issues.sh`](scripts/file-framework-issues.sh)).
-- [PRODUCTIONIZATION](docs/PRODUCTIONIZATION.md) — the phased plan from seam-backed reference build to real infrastructure, with a live dependency register.
+- [FRAMEWORK_CONTRACT](docs/FRAMEWORK_CONTRACT.md) — the real (published) StreetJS API StreetStudio consumes and the composition doctrine.
+- [PRODUCTIONIZATION](docs/PRODUCTIONIZATION.md) — the phased plan from seam-backed reference build to real infrastructure, with a dependency register verified against npm.
 
 Copy-pasteable [examples](examples/) show the public API/SDK in action (SDK quickstart, self-hosting).
 
