@@ -105,18 +105,19 @@ Every contribution must compile, pass tests, satisfy linting and type checking,
 maintain architecture boundaries (`graph:check`, `boundary:check`,
 `streetjs:check`), maintain security and performance, and avoid duplication.
 
-## Known blocking dependencies (as of adoption)
+## Known blocking dependencies (verified against npm)
 
-Recorded per the missing-dependency rule. These gate production execution and
-must be resolved (elsewhere) before the corresponding work can proceed honestly:
-
-1. **Published `@streetjs/*` runtime packages.** Real HTTP host, auth runtime,
-   storage drivers, realtime, jobs, metrics, and health depend on these. Only
-   `@streetjs/core ^0.1.0` is currently referenced (optional peer, behind seams).
-2. **Provisioned infrastructure.** No live PostgreSQL/Redis/object-storage/FFmpeg
-   /SMTP endpoints are available in this workspace; production code cannot run
-   against real services here. (CI exercises services opportunistically via
-   containers and skips otherwise.)
+1. **StreetJS framework — PUBLISHED (no longer a blocker).** `streetjs@1.2.7`
+   (MIT) plus the `@streetjs/*` meta-packages are on npm and provide HTTP, DI,
+   routing, auth/sessions/JWT, RBAC primitives, native PostgreSQL driver + pool +
+   repositories + migrations, cache, realtime/SSE, storage, media, queue, events,
+   search, metrics, and health. Real backend work is therefore **unblocked**;
+   adopt the real API (see [`FRAMEWORK_CONTRACT.md`](FRAMEWORK_CONTRACT.md)),
+   replacing the in-memory seams. There is no `@streetjs/http`/`auth`/`rbac`
+   package — those live inside `streetjs`.
+2. **Provisioned infrastructure.** Real PostgreSQL/Redis/object-storage/FFmpeg/SMTP
+   must be running to build and integration-test production code honestly. Start
+   them locally via `docker/`; CI runs them as service containers.
 3. **UI and native runtimes/toolchains.** No web app runtime, Tauri toolchain,
    browser-extension build target, or iOS/Android toolchains are set up here, so
    the real client applications cannot be built in this workspace.
