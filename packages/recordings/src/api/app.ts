@@ -5,10 +5,13 @@
  * no framework reimplementation.
  */
 import "reflect-metadata";
-import { streetApp, container, PgPool, type StreetHttpApp } from "streetjs";
+import { streetApp, container, PgPool } from "streetjs";
 import { RecordingRepository } from "../persistence/recording-repository.js";
 import { RecordingService, type Clock } from "../application/recording-service.js";
 import { RecordingsController } from "./recordings-controller.js";
+
+/** The concrete app type returned by `streetApp` (exposes `.server`). */
+type RecordingsApp = ReturnType<typeof streetApp>;
 
 /**
  * Build the RecordingService over a live pool and register it so the controller
