@@ -77,9 +77,10 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   its UI rendering layer is still unbuilt. The other clients (`desktop`,
   `recorder-extension`) and client models (`editor`, `timeline`, `types`, `ui`)
   are scaffolds/model types — no UI runtime.
-- **`@streetjs/*` integration** cannot progress until those packages are
-  published (promotion-first, ADR-0011/0012); today only `@streetjs/core` is
-  referenced, through seams.
+- **`@streetjs/*` integration** is now unblocked — the framework is published
+  (`streetjs@1.2.7` + meta-packages). Adoption proceeds slice by slice
+  (recordings first); see [`docs/FRAMEWORK_CONTRACT.md`](docs/FRAMEWORK_CONTRACT.md)
+  and [`docs/PRODUCTIONIZATION.md`](docs/PRODUCTIONIZATION.md).
 
 ## Next
 
