@@ -5,13 +5,26 @@
  * no framework reimplementation.
  */
 import "reflect-metadata";
-import { streetApp, container, PgPool } from "streetjs";
+import { streetApp, container, PgPool, JwtService, authMiddleware } from "streetjs";
 import { RecordingRepository } from "../persistence/recording-repository.js";
 import { RecordingService, type Clock } from "../application/recording-service.js";
 import { RecordingsController } from "./recordings-controller.js";
 
 /** The concrete app type returned by `streetApp` (exposes `.server`). */
 type RecordingsApp = ReturnType<typeof streetApp>;
+
+/** Options for {@link createRecordingsApp}. */
+export interface RecordingsAppOptions {
+  /**
+   * JWT signing secret. A verified `Authorization: Bearer <token>` populates the
+   * authenticated member (`ctx.user`, `sub` = member id). Required — the API
+   * authenticates every request.
+   */
+  readonly jwtSecret: string;
+  readonly port?: number;
+  readonly host?: string;
+  readonly clock?: Clock;
+}
 
 /**
  * Build the RecordingService over a live pool and register it so the controller
