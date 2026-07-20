@@ -515,3 +515,68 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   [`PRODUCTION_CHARTER.md`](PRODUCTION_CHARTER.md). This ADR governs alongside —
   and where stricter, above — the prior "governing rule"; it does not retroactively
   reclassify completed reference-build work.
+
+---
+
+## ADR-0016: Domain-first architecture for the product
+
+- **Status:** Accepted
+- **Context:** As the flagship StreetJS application, StreetStudio should read as
+  an intentionally designed product, not a technology-layered scaffold.
+  Organizing by technical layer (`controllers/`, `services/`, `models/`) scatters
+  business rules and hides each module's purpose.
+- **Decision:** Organize by **business domain**. Each domain is its own package
+  (`recordings`, `reviews`, `sharing`, `projects`, `organizations`, `comments`,
+  `notifications`, `search`, `analytics`, `billing`, `knowledge`) owning its API,
+  application/use-case logic, rich domain model, persistence, events, and tests.
+  Each package `README.md` answers: why it exists, what problem it solves, what it
+  exposes publicly, and what it depends on. Business rules live on domain objects
+  (e.g. `Recording.publish()`, `canEdit()`), not in the API layer. Public surface
+  is `index.ts` only. Full rationale in
+  [`ENGINEERING_PRINCIPLES.md`](ENGINEERING_PRINCIPLES.md).
+- **Consequences:** Clear per-domain ownership and testability; feature-oriented
+  APIs instead of generic CRUD; product vocabulary (`Recording`, `Review`,
+  `Share`) kept separate from framework plumbing terms. The existing packages are
+  reshaped toward this layout as they are productionized (ADR-0017), not in a
+  single rewrite.
+
+---
+
+## ADR-0017: Vertical-slice delivery
+
+- **Status:** Accepted
+- **Context:** Empty packages and "for later" scaffolds make a codebase look
+  generated and defer proof that anything works end-to-end.
+- **Decision:** Deliver in **complete vertical slices** (domain → persistence →
+  API → SDK → tests), each functional end-to-end before the next begins. Order:
+  Recordings, Uploads, Playback, Review comments, Sharing, Workspaces, Search,
+  Notifications. A slice may be **gated** on an unpublished `@streetjs/*` package;
+  if so, record the dependency and pause it — never write a placeholder. Each
+  slice meets the definition of done in
+  [`ENGINEERING_PRINCIPLES.md`](ENGINEERING_PRINCIPLES.md).
+- **Consequences:** Every merged slice is demonstrably working; progress is honest
+  and measurable; framework dependencies surface early and explicitly rather than
+  being mocked over.
+
+---
+
+## ADR-0018: This repository is the StreetStudio product repository
+
+- **Status:** Accepted (clarifies ADR-0013/0014)
+- **Context:** Earlier ADRs (0013 freeze, 0014 lift) spoke of a *separate*
+  "standalone StreetStudio product repository" to be created later, and a
+  `standalone-seed/` directory was built on that assumption. In fact this
+  repository's git remote is `github.com/hassanmubiru/StreetStudio` on `main` —
+  it **is** the StreetStudio product repo. There is no separate repo to create.
+- **Decision:** Treat this repository as the StreetStudio product repo. Consolidate
+  the seed's governance into the real `docs/` tree: `PRODUCTION_CHARTER.md`,
+  `ENGINEERING_PRINCIPLES.md`, `FRAMEWORK_CONTRACT.md`,
+  `framework-requirements/`, `PRODUCTIONIZATION.md`, and `examples/`; retire the
+  `standalone-seed/` directory. The current npm + `tsc` toolchain and CI are kept;
+  a pnpm + Turborepo move is optional and deferred (see `PRODUCTIONIZATION.md`).
+- **Consequences:** The three-artifact separation collapses to two — StreetJS
+  (framework) and StreetStudio (this product repo). The measured **reference-build
+  report** remains accurate for what is still in-memory-seam vs. real; it is not
+  relabeled as production. Physical blockers are unchanged: `@streetjs/*` runtime
+  packages are still unpublished and no live infra/UI runtime exists here, so real
+  feature work stays gated (record-and-pause) until those land.
