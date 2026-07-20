@@ -21,19 +21,22 @@ import { RecordingStateError, type Actor } from "../domain/recording.js";
 
 /**
  * Resolve the acting member from the authenticated principal (`ctx.user`, set by
- * StreetJS auth middleware once JWT is wired) or, failing that, the explicit
- * organization/member scoping headers. Throws 401 when neither is present.
+ * the StreetJS JWT auth middleware — `sub` = member id) and the active
+ * organization scope (`X-Organization-Id`). A member may belong to several
+ * organizations, so the scope is a per-request header, not a token claim.
+ * Throws 401 when the request is unauthenticated or unscoped.
  */
 function requireActor(ctx: StreetContext): Actor {
+  if (!ctx.user) {
+    throw new UnauthorizedException("Authentication required.");
+  }
   const org = ctx.headers["x-organization-id"];
-  if (ctx.user && org) {
-    return { memberId: ctx.user.id as Uuid, organizationId: org as Uuid };
+  if (!org) {
+    throw new UnauthorizedException(
+      "An active organization (X-Organization-Id) is required.",
+    );
   }
-  const member = ctx.headers["x-member-id"];
-  if (org && member) {
-    return { memberId: member as Uuid, organizationId: org as Uuid };
-  }
-  throw new UnauthorizedException("Authentication required.");
+  return { memberId: ctx.user.id as Uuid, organizationId: org as Uuid };
 }
 
 function requireId(ctx: StreetContext): Uuid {

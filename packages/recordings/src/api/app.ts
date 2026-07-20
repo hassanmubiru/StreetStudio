@@ -36,16 +36,22 @@ export function registerRecordings(pool: PgPool, clock?: Clock): RecordingServic
   return service;
 }
 
-/** Create a StreetJS app serving the Recordings API, backed by `pool`. */
+/**
+ * Create a StreetJS app serving the Recordings API, backed by `pool`. A JWT auth
+ * middleware verifies the bearer token on every request (populating `ctx.user`);
+ * the controller derives the acting member from it and the organization scope
+ * from the `X-Organization-Id` header.
+ */
 export function createRecordingsApp(
   pool: PgPool,
-  options?: { port?: number; host?: string; clock?: Clock },
+  options: RecordingsAppOptions,
 ): RecordingsApp {
-  registerRecordings(pool, options?.clock);
+  registerRecordings(pool, options.clock);
   const app = streetApp({
-    port: options?.port ?? 3000,
-    host: options?.host ?? "0.0.0.0",
+    port: options.port ?? 3000,
+    host: options.host ?? "0.0.0.0",
   });
+  app.use(authMiddleware(new JwtService(options.jwtSecret)));
   app.registerController(RecordingsController);
   return app;
 }
