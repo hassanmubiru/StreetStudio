@@ -28,27 +28,25 @@ effect of a feature slice.
 
 ---
 
-## Phase 0 — Repository bootstrap (this seed)
+## Phase 0 — Local infrastructure
 
-- [ ] Create the empty `streetstudio` repository and copy in this seed.
-- [ ] `pnpm install`; confirm `pnpm build` / `pnpm test` run on the empty graph.
-- [ ] Bring over `scripts/check-streetjs-consumption.mjs` and `scripts/status.mjs`
-      from the reference build (referenced by `package.json`).
-- [ ] Start local infra: `pnpm dev:infra` (PostgreSQL, Redis, MinIO, MailHog).
+- [ ] Provision real local infra (PostgreSQL, Redis, S3-compatible storage such
+      as MinIO, SMTP such as MailHog) via Docker Compose (`docker/`).
 - [ ] Copy `.env.example` → `.env`; generate `SESSION_SECRET` / `JWT_SIGNING_KEY`
       with `openssl rand -base64 48`.
+- [ ] Confirm the gates run green: `scripts/check.sh`.
 
-> **Shape as you migrate.** Reorganize code into the domain-first layout from
-> [`docs/ENGINEERING_PRINCIPLES.md`](docs/ENGINEERING_PRINCIPLES.md) as it moves
-> over — each domain package owning `domain/`, `application/`, `api/`,
-> `persistence/`, `events/`, and tests, with a `README.md` answering the four
-> questions. Deliver in complete **vertical slices** (principle 8), not empty
-> packages. The phases below are the infrastructure sequence a slice depends on.
+> **Shape as you build.** Reorganize code toward the domain-first layout in
+> [`ENGINEERING_PRINCIPLES.md`](ENGINEERING_PRINCIPLES.md) — each domain package
+> owning `domain/`, `application/`, `api/`, `persistence/`, `events/`, and tests,
+> with a `README.md` answering the four questions. Deliver complete **vertical
+> slices** (principle 8), not empty packages. The phases below are the
+> infrastructure sequence a slice depends on.
 
 ## Phase 1 — Portable domain & tooling (mostly ✅)
 
-These are pure logic / types / tooling with no infrastructure coupling and move
-with little change:
+These are pure logic / types / tooling with no infrastructure coupling and are
+already production-shaped:
 
 - [ ] ✅ `packages/shared` (DTOs, error taxonomy, generators, identifiers)
 - [ ] ✅ `packages/types`
