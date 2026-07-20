@@ -15,10 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `canView` invariants), a use-case service, a **real PostgreSQL** repository over
   the native StreetJS `PgPool` (parameterized SQL + idempotent schema), and a
   **real HTTP API** (`@Controller`/`@Get`/`@Post` via `streetApp`) for
-  create/list/get/publish/archive. Verified by unit + fast-check property tests
-  and an **integration test against a real Postgres** (repository round-trips +
-  a full create→publish→archive HTTP journey, plus 401/404 cases) that runs when
-  `STREETSTUDIO_IT_DATABASE_URL` is set and skips otherwise. No fakes.
+  create/list/get/publish/archive. **Real JWT authentication** via StreetJS
+  `JwtService` + `authMiddleware` (verified `Authorization: Bearer` → `ctx.user`,
+  `sub` = member id; organization scope via `X-Organization-Id`). Verified by
+  unit + fast-check property tests and an **integration test against a real
+  Postgres** that mints a real JWT and exercises the full create→publish→archive
+  HTTP journey plus 401 (unauthenticated) and 404 (cross-organization) cases;
+  it runs when `STREETSTUDIO_IT_DATABASE_URL` is set and skips otherwise. No fakes.
 - Verified StreetJS is **published** (`streetjs@1.2.7` + `@streetjs/*`
   meta-packages) and adopted the real API: rewrote `docs/FRAMEWORK_CONTRACT.md`,
   corrected the dependency register and charter, added ADR-0019, and retired the
