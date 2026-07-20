@@ -39,8 +39,9 @@ The full experience-centric strategy lives in [`PRODUCT.md`](PRODUCT.md).
 - **184** specification tasks implemented & verified
 - **32 / 32** requirements satisfied
 - **88** correctness properties verified
-- **801** passing tests (1 skipped)
-- **85.47%** line coverage
+- **810** passing tests (5 skipped — the DB-gated integration tests)
+- **83.95%** line coverage
+- **First real slice on published StreetJS:** `@streetstudio/recordings` (real HTTP + Postgres)
 - Independent StreetJS consumer (published packages only)
 - Dashboard **client-side logic** (session/flows) implemented; UI rendering layers remain unbuilt
 - Production deployment **not yet begun**
