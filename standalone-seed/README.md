@@ -34,6 +34,8 @@ lives here only so you can copy it into a fresh, independent repository.
 | `docs/FRAMEWORK_CONTRACT.md` | Composition doctrine + the `@streetjs/*` packages/APIs StreetStudio consumes. |
 | `docs/ENGINEERING_PRINCIPLES.md` | Domain-first architecture, rich models, vertical-slice delivery, per-slice DoD. |
 | `docs/framework-requirements/` | Issue-ready capability specs for each `@streetjs/*` package. |
+| `docs/examples/recordings-package-README.md` | Template README for the first domain package (Recordings). |
+| `scripts/file-framework-issues.sh` | Files the 18 framework specs as StreetJS issues (`gh`/`glab`). |
 
 ## Governing standard
 
