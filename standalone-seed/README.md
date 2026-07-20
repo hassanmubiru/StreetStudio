@@ -36,6 +36,8 @@ lives here only so you can copy it into a fresh, independent repository.
 | `docs/framework-requirements/` | Issue-ready capability specs for each `@streetjs/*` package. |
 | `docs/examples/recordings-package-README.md` | Template README for the first domain package (Recordings). |
 | `scripts/file-framework-issues.sh` | Files the 18 framework specs as StreetJS issues (`gh`/`glab`). |
+| `CONTRIBUTING.md` | Ground rules + definition of done for contributors. |
+| `docs/adr/` | Foundational ADRs (StreetJS boundary, domain-first, vertical slices). |
 
 ## Governing standard
 
