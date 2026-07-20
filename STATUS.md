@@ -46,14 +46,14 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
 | Metric              | Value  |
 | ------------------- | ------ |
 | Apps                | 5      |
-| Packages            | 40     |
-| Source files        | 133    |
-| Source LOC          | 23,271 |
-| Test files          | 165    |
+| Packages            | 41     |
+| Source files        | 140    |
+| Source LOC          | 23,804 |
+| Test files          | 167    |
 | Property-test files | 89     |
-| Test LOC            | 33,525 |
-| Tests               | 801 passing, 1 skipped |
-| Line coverage       | 85.47% |
+| Test LOC            | 33,754 |
+| Tests               | 810 passing, 5 skipped |
+| Line coverage       | 83.95% |
 | build / graph / boundary / streetjs gates | passing |
 
 *Regenerate the counts with `npm run status`; regenerate pass/coverage with
@@ -61,10 +61,15 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
 
 ## What "80%" means here (honest caveats)
 
-- **Backend + API** domain logic is implemented and covered by the property/
-  contract/integration suite, but it runs against **in-memory fakes behind
-  adapter seams** — it is not yet wired to a real StreetJS HTTP runtime, real
-  PostgreSQL/Redis/object storage, or a real AI provider.
+- **`@streetstudio/recordings` is real** — it runs on the published `streetjs`
+  (HTTP/DI + native PostgreSQL driver) against a **real Postgres**, proven by an
+  integration test (repository round-trips + a full create→publish→archive HTTP
+  journey). Coverage of its persistence/API files depends on that integration
+  test, which runs when `STREETSTUDIO_IT_DATABASE_URL` is set (CI Postgres
+  service) and skips otherwise — hence the small drop in global line coverage.
+- **The other backend packages** are still the reference implementation running
+  against **in-memory fakes behind adapter seams**; each will be de-seamed onto
+  the real framework as its own slice (ADR-0017).
 - **SDK** is a complete typed client mirroring the operation catalog, but has not
   been exercised end-to-end against a live deployed server.
 - **Dashboard** now has client-side application logic (session/credential/scope
