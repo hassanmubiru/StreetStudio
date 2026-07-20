@@ -30,6 +30,7 @@
     { "path": "./packages/processing" },
     { "path": "./packages/notifications" },
     { "path": "./packages/recorder" },
+    { "path": "./packages/recordings" },
     { "path": "./packages/analytics" },
     { "path": "./packages/sdk" },
     { "path": "./packages/ui" },
