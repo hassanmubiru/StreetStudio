@@ -27,15 +27,16 @@ Architecture & ADRs              ██████████ 100%
 Product design                   ██████████ 100%
 Spec (requirements/design/tasks) ██████████ 100%
 Documentation                    ████████░░  80%
-Backend domain + API (ref build) ████████░░  80%   implemented & tested behind seams
+Backend domain + API (ref build) ████████░░  80%   implemented & tested behind in-memory seams
+Recordings (real, on StreetJS)   ██░░░░░░░░  20%   1st real slice: domain+persistence+HTTP on real streetjs+Postgres
 SDK (typed client)               ████████░░  80%   not yet run against a live server
 Client models (editor/timeline)  ██████░░░░  60%   model + reducer/ops implemented & tested; no UI
 Dashboard client logic           ██████░░░░  65%   session/scope, workspace/video/search/notification flows, uploads, sharing, reactions, edit-session; no UI
 Dashboard (web UI runtime)       ░░░░░░░░░░   0%   not built
 Desktop client                   ░░░░░░░░░░   0%   scaffold entry only
 Recorder extension               ░░░░░░░░░░   0%   scaffold entry only
-Real @streetjs/* runtime         ░░░░░░░░░░   0%   blocked on published packages (ADR-0012)
-Published repo + npm releases    ░░░░░░░░░░   0%   not created
+De-seam remaining pkgs → StreetJS █░░░░░░░░░  10%   recordings done; others pending per-slice adoption
+Published repo + npm releases    ░░░░░░░░░░   0%   not released
 ```
 
 ## Measured metrics (this workspace)
