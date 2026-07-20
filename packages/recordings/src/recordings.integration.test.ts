@@ -70,11 +70,14 @@ suite("recordings persistence + HTTP (real Postgres)", () => {
   });
 
   describe("HTTP journey", () => {
+    const JWT_SECRET = "integration-test-secret-at-least-32-characters";
     let app: ReturnType<typeof createRecordingsApp>;
     let base: string;
+    let token: string;
 
     beforeAll(async () => {
-      app = createRecordingsApp(pool, { port: 0, host: "127.0.0.1" });
+      token = new JwtService(JWT_SECRET).sign({ sub: owner, roles: [] });
+      app = createRecordingsApp(pool, { jwtSecret: JWT_SECRET, port: 0, host: "127.0.0.1" });
       await app.listen(0, "127.0.0.1");
       const addr = app.server.address() as AddressInfo;
       base = `http://127.0.0.1:${addr.port}`;
@@ -86,8 +89,8 @@ suite("recordings persistence + HTTP (real Postgres)", () => {
 
     const headers = () => ({
       "content-type": "application/json",
+      authorization: `Bearer ${token}`,
       "x-organization-id": org,
-      "x-member-id": owner,
     });
 
     it("create → get → publish → archive over real HTTP", async () => {
