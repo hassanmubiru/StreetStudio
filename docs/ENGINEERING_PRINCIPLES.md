@@ -3,14 +3,14 @@
 StreetStudio is the flagship application for StreetJS. It must read like a mature,
 intentionally designed product — not a collection of demos or generated code. The
 framework (StreetJS) provides infrastructure; StreetStudio expresses a coherent
-domain model and user experience. These principles govern how the standalone repo
-is built. They complement the
-[production charter](../../docs/PRODUCTION_CHARTER.md) (copy into the new repo's
-`docs/` during migration) and the [framework contract](FRAMEWORK_CONTRACT.md).
+domain model and user experience. These principles govern how this repo is built.
+They complement the [production charter](PRODUCTION_CHARTER.md) and the
+[framework contract](FRAMEWORK_CONTRACT.md).
 
-> Note on scope: these are go-forward principles for the **standalone product
-> repository**. The reference build is not retro-restructured; the migration
-> reshapes code into this layout as it moves over (see `../MIGRATION.md`).
+> Note on scope: these are go-forward principles. Existing reference-build code
+> (assembled behind StreetJS adapter seams with in-memory fakes) is reshaped into
+> this layout as it is productionized, slice by slice (see
+> [`PRODUCTIONIZATION.md`](PRODUCTIONIZATION.md)).
 
 ## 1. Domain-first architecture
 
