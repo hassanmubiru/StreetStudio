@@ -1,11 +1,21 @@
-# Migration plan — reference build → standalone StreetStudio product repo
+# Productionization plan — StreetStudio
 
-This is the ordered plan for populating the standalone repository from the
-reference build and turning it into a real, deployable product. Every step is
-governed by the [production charter](../docs/PRODUCTION_CHARTER.md): real
-infrastructure and data only; no placeholders or fakes outside automated tests;
-**never recreate StreetJS** — if a required `@streetjs/*` package is not
-published, pause that feature and record the dependency.
+This repository **is** the StreetStudio product repo
+(`github.com/hassanmubiru/StreetStudio`). This is the ordered plan for turning its
+current state — domain logic and an API assembled behind StreetJS adapter seams
+with in-memory fakes — into a real, deployable product. Every step is governed by
+the [production charter](PRODUCTION_CHARTER.md): real infrastructure and data
+only; no placeholders or fakes outside automated tests; **never recreate
+StreetJS** — if a required `@streetjs/*` package is not published, pause that
+feature and record the dependency.
+
+## Toolchain
+
+Current: npm workspaces + `tsc -b` + vitest, with the `build` / `graph:check` /
+`boundary:check` / `streetjs:check` / coverage gates (`scripts/check.sh`). A move
+to pnpm + Turborepo is an optional future step; it is **not** applied yet because
+the current toolchain works and the gates pass. Do not switch toolchains as a side
+effect of a feature slice.
 
 ## Legend
 
