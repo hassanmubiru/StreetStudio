@@ -1,23 +1,24 @@
 # StreetStudio — Status
 
-- **Repository state:** **Active — client-side implementation** (ADR-0014).
-  Reference build validated; now building tested client-side logic (dashboard
-  flows, editor, timeline, player) here. Backend, real infrastructure, native/UI
-  runtimes, and unpublished `@streetjs/*` integration remain out of scope for
-  this workspace.
+- **Repository state:** **Active — productionizing on published StreetJS**
+  (ADR-0018/0019). The framework is published (`streetjs@1.2.7` + `@streetjs/*`),
+  so real product slices are now built on it. The **first real vertical slice —
+  `@streetstudio/recordings`** — runs on the real StreetJS HTTP/DI + a native
+  PostgreSQL driver against a real Postgres (verified by an integration test).
+  The remaining reference-build packages still run behind in-memory seams pending
+  their own de-seam slices; UI/native client runtimes are still not set up here.
 - **Version:** 0.1.0-dev
 - **Architecture:** Approved
 - **Product design:** Approved
-- **Kind of build:** Spec-driven **reference build** in this workspace (domain
-  logic + API assembled behind StreetJS adapter seams, exercised with in-memory
-  fakes). This is **not** a published product.
+- **Kind of build:** Transitioning from a spec-driven **reference build** (domain
+  logic + API behind in-memory StreetJS seams) to **real product code on the
+  published framework**, slice by slice (ADR-0017). Not a published release.
 
 > **Scope & provenance.** The figures below are *measured* from this workspace —
 > static counts via `npm run status`, and pass/coverage via `npm test` /
-> `npm run test:coverage`. They describe the reference build that lives here.
-> The **published** StreetStudio (a separate GitHub repository, npm releases,
-> real `@streetjs/*` runtime packages, and shipping UI clients) does **not exist
-> yet**; see [`IMPLEMENTATION-PLAN.md`](IMPLEMENTATION-PLAN.md) and ADR-0011/0012.
+> `npm run test:coverage`. StreetJS itself **is published** (`streetjs`,
+> `@streetjs/*`); this repo is the StreetStudio product repo (ADR-0018). What does
+> not exist yet: shipping UI/native clients and a public release.
 
 ## Overall progress
 
