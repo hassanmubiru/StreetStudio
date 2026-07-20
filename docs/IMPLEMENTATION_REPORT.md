@@ -181,7 +181,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/timeline                      | 2   | 1     | 0    | Timeline model + ops (tracks, clips, markers)   |
 | packages/editor                        | 3   | 2     | 1    | Browser editor model + reducer (trim/split/merge/speed) |
 | packages/recorder                      | 5   | 2     | 1    | Recorder capture + offline upload client        |
-| packages/recordings **(real)**         | 8   | 2     | 1    | Recording lifecycle on **published StreetJS** (real HTTP + Postgres); first de-seamed slice |
+| packages/recordings **(real)**         | 7   | 2     | 1    | Recording lifecycle on **published StreetJS** (real HTTP + Postgres); first de-seamed slice |
 | packages/processing                    | 2   | 5     | 3    | Media pipeline: transcode/thumbnail/preview     |
 | packages/notifications                 | 2   | 4     | 3    | Notifications + event contracts                 |
 | packages/realtime                      | 2   | 4     | 3    | Realtime gateway: presence, typing, fan-out     |
