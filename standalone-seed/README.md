@@ -32,6 +32,8 @@ lives here only so you can copy it into a fresh, independent repository.
 | `.gitignore`, `.nvmrc` | Standard repo hygiene. |
 | `MIGRATION.md` | Step-by-step plan to populate the repo from the reference build. |
 | `docs/FRAMEWORK_CONTRACT.md` | Composition doctrine + the `@streetjs/*` packages/APIs StreetStudio consumes. |
+| `docs/ENGINEERING_PRINCIPLES.md` | Domain-first architecture, rich models, vertical-slice delivery, per-slice DoD. |
+| `docs/framework-requirements/` | Issue-ready capability specs for each `@streetjs/*` package. |
 
 ## Governing standard
 

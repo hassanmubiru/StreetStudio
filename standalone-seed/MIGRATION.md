@@ -28,6 +28,13 @@ published, pause that feature and record the dependency.
 - [ ] Copy `.env.example` → `.env`; generate `SESSION_SECRET` / `JWT_SIGNING_KEY`
       with `openssl rand -base64 48`.
 
+> **Shape as you migrate.** Reorganize code into the domain-first layout from
+> [`docs/ENGINEERING_PRINCIPLES.md`](docs/ENGINEERING_PRINCIPLES.md) as it moves
+> over — each domain package owning `domain/`, `application/`, `api/`,
+> `persistence/`, `events/`, and tests, with a `README.md` answering the four
+> questions. Deliver in complete **vertical slices** (principle 8), not empty
+> packages. The phases below are the infrastructure sequence a slice depends on.
+
 ## Phase 1 — Portable domain & tooling (mostly ✅)
 
 These are pure logic / types / tooling with no infrastructure coupling and move
