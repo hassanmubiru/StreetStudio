@@ -70,7 +70,7 @@ suite("recordings persistence + HTTP (real Postgres)", () => {
   });
 
   describe("HTTP journey", () => {
-    let app: StreetHttpApp;
+    let app: ReturnType<typeof createRecordingsApp>;
     let base: string;
 
     beforeAll(async () => {
