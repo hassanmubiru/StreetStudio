@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { AddressInfo } from "node:net";
 import { randomUUID } from "node:crypto";
-import { PgPool, container, type StreetHttpApp } from "streetjs";
+import { PgPool, container } from "streetjs";
 import { ensureRecordingsSchema } from "./persistence/schema.js";
 import { RecordingRepository } from "./persistence/recording-repository.js";
 import { Recording, type Actor } from "./domain/recording.js";

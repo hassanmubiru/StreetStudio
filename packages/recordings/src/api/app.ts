@@ -27,7 +27,7 @@ export function registerRecordings(pool: PgPool, clock?: Clock): RecordingServic
 export function createRecordingsApp(
   pool: PgPool,
   options?: { port?: number; host?: string; clock?: Clock },
-): StreetHttpApp {
+): RecordingsApp {
   registerRecordings(pool, options?.clock);
   const app = streetApp({
     port: options?.port ?? 3000,
