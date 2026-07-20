@@ -135,19 +135,35 @@ already production-shaped:
 
 ---
 
-## Dependency register (update as you go)
+## Dependency register (verified against npm)
 
-Record every 🧱 blocker here with the package/service that unblocks it, so the
-"stop and record" rule leaves a durable trail rather than a fake implementation.
+The StreetJS framework is **published** (`streetjs@1.2.7` + `@streetjs/*`
+meta-packages). The backend capabilities are therefore **available now** — they
+are consumed from `streetjs` (subpaths) and `@streetjs/*`, not blocked. The
+remaining work is integration (replace in-memory seams with the real API) and
+provisioning real infra + client runtimes.
 
-| Blocked capability | Required dependency | Status |
-| ------------------ | ------------------- | ------ |
-| HTTP host / routing / middleware | `@streetjs/http`, `@streetjs/core` (published) | Not published |
-| Auth & session runtime, RBAC | `@streetjs/auth` (+ RBAC) (published) | Not published |
-| Realtime gateway (WS) | `@streetjs/realtime` / `@streetjs/websocket` (published) | Not published |
-| Background jobs/queues | `@streetjs/jobs` (published) or a real queue | Decide / not published |
-| Plugin runtime (dynamic load) | `@streetjs/plugins` (published) | Not published |
-| Web dashboard UI | chosen web framework + toolchain | Not set up |
-| Desktop client | Tauri toolchain | Not set up |
-| Browser extension | extension build target | Not set up |
-| Mobile clients | iOS/Android toolchains | Not set up |
+| Capability | Provided by (published) | Status |
+| ---------- | ----------------------- | ------ |
+| HTTP host / routing / middleware / DI | `streetjs` (`streetApp`, `@Controller`, `container`), `streetjs/http`, `streetjs/router` | Available — adopt |
+| Auth, sessions, JWT, API keys, RBAC primitives | `streetjs/security`, `streetjs/session`, `streetjs` (`JwtService`, `authMiddleware`, `requireRoles`) | Available — adopt |
+| PostgreSQL, pool, repositories, migrations, HA | `streetjs/pool`·`/repository`·`/migrations`·`/pg-ha`, `@streetjs/database` | Available — adopt |
+| Cache (+ Redis cluster) | `streetjs/cache`, `streetjs/redis-cluster`, `@streetjs/cache` | Available — adopt |
+| Realtime (WS) + SSE | `streetjs/websocket`, `streetjs/sse`, `@streetjs/realtime` | Available — adopt |
+| Object storage | `@streetjs/storage` | Available — adopt |
+| Media (transcode/thumbnail/HLS) | `@streetjs/media` | Available — adopt |
+| Search | `@streetjs/search` | Available — adopt |
+| Queue / jobs | `@streetjs/queue` | Available — adopt |
+| Events | `@streetjs/events` | Available — adopt |
+| Metrics / health / telemetry | `@streetjs/metrics`, `@streetjs/health`, `streetjs/telemetry` | Available — adopt |
+| Integrations framework | `@streetjs/integrations` | Available — adopt |
+| ORM (optional) | `@streetjs/orm` | Available — optional |
+| Web dashboard UI | chosen web framework + toolchain | Not set up in this repo |
+| Desktop client | Tauri toolchain | Not set up in this repo |
+| Browser extension | extension build target | Not set up in this repo |
+| Mobile clients | iOS/Android toolchains | Not set up in this repo |
+| Real infra to run/test against | PostgreSQL, Redis, object storage, FFmpeg | Provision via `docker/` |
+
+> Note: there is **no** `@streetjs/http` / `@streetjs/auth` / `@streetjs/rbac` /
+> `@streetjs/runtime` / `@streetjs/plugins` package — those capabilities live
+> inside `streetjs` (see [`FRAMEWORK_CONTRACT.md`](FRAMEWORK_CONTRACT.md)).
