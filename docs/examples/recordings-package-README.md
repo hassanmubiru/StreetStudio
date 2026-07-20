@@ -83,11 +83,12 @@ test/            # unit + property + contract + integration
       deny-by-default.
 - [ ] `build`, `graph:check`, `boundary:check`, `streetjs:check`, coverage — green.
 - [ ] No placeholder/mock production code; blockers recorded in the dependency
-      register (`../MIGRATION.md`).
+      register (`../PRODUCTIONIZATION.md`).
 
 ## Blocked on (record, don't fake)
 
 This slice cannot be completed until the composing `@streetjs/*` packages are
 published — at minimum `@streetjs/core`, `@streetjs/database`, `@streetjs/http`,
 `@streetjs/rbac`, and (for the media path) `@streetjs/media`/`@streetjs/storage`.
-See `../framework-requirements/` and the dependency register in `../MIGRATION.md`.
+See `../framework-requirements/` and the dependency register in
+`../PRODUCTIONIZATION.md`.
