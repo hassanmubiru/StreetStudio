@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **First real product slice on the published StreetJS framework:**
+  `@streetstudio/recordings` (ADR-0018/0019). Domain-first package with a rich,
+  immutable `Recording` model (draft → published → archived, with `canEdit`/
+  `canView` invariants), a use-case service, a **real PostgreSQL** repository over
+  the native StreetJS `PgPool` (parameterized SQL + idempotent schema), and a
+  **real HTTP API** (`@Controller`/`@Get`/`@Post` via `streetApp`) for
+  create/list/get/publish/archive. Verified by unit + fast-check property tests
+  and an **integration test against a real Postgres** (repository round-trips +
+  a full create→publish→archive HTTP journey, plus 401/404 cases) that runs when
+  `STREETSTUDIO_IT_DATABASE_URL` is set and skips otherwise. No fakes.
+- Verified StreetJS is **published** (`streetjs@1.2.7` + `@streetjs/*`
+  meta-packages) and adopted the real API: rewrote `docs/FRAMEWORK_CONTRACT.md`,
+  corrected the dependency register and charter, added ADR-0019, and retired the
+  speculative `docs/framework-requirements/` specs + issue-filing script (they
+  assumed a package taxonomy that does not exist).
+- Enabled `experimentalDecorators` + `emitDecoratorMetadata` in
+  `tsconfig.base.json` (required by StreetJS `@Controller`/`@Injectable`). Suite
+  now 167 test files, 810 passing (5 skipped: the DB-gated integration tests),
+  83.95% line coverage, 41 packages.
+
 ### Changed
 
 - **Freeze lifted for client-side work (ADR-0014, supersedes ADR-0013).** The
