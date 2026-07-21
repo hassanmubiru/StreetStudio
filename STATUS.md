@@ -50,13 +50,13 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
 | ------------------- | ------ |
 | Apps                | 5      |
 | Packages            | 44     |
-| Source files        | 166    |
-| Source LOC          | 25,820 |
-| Test files          | 181    |
+| Source files        | 167    |
+| Source LOC          | 25,958 |
+| Test files          | 182    |
 | Property-test files | 89     |
-| Test LOC            | 35,151 |
-| Tests               | 871 passing with a DB (integration tests skip without one) |
-| Line coverage       | 85.94% (DB-backed, as CI runs); ~82% no-DB local |
+| Test LOC            | 35,278 |
+| Tests               | 876 passing with a DB (integration tests skip without one) |
+| Line coverage       | 86.05% (DB-backed, as CI runs); ~82% no-DB local |
 | build / graph / boundary / streetjs gates | passing |
 
 *Regenerate the counts with `npm run status`; regenerate pass/coverage with
@@ -74,7 +74,7 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   (Argon2id) + JWT issuance, and all three slices authenticate through its shared
   `requireActor`/`jwtAuth` helpers. Those integration tests run when
   `STREETSTUDIO_IT_DATABASE_URL` is set (CI Postgres service) and skip otherwise.
-  Measured: with a DB line coverage is **85.91%**; without a DB (integration
+  Measured: with a DB line coverage is **86.05%**; without a DB (integration
   skipped) it is **~82%**. Both clear the 80% gate. `scripts/check.sh` runs the
   coverage gate and enables the integration tests automatically when the env var
   is set.
