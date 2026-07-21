@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Third real product slice: `@streetstudio/playback`** — authorized byte-range
+  streaming of a completed upload's assembled object. A `PlaybackService`
+  composes `@streetjs/storage` (real bytes) and the uploads repository
+  (authorization: the object must belong to a completed upload in the actor's
+  org), plus a pure, property-tested `parseRange` HTTP `Range` parser. The
+  JWT-authenticated HTTP endpoint streams full (200), partial (206), and
+  unsatisfiable (416) responses with correct `Accept-Ranges`/`Content-Range`.
+  Verified by unit + fast-check property tests and an **integration test against
+  real Postgres + real object storage** (create a real completed upload, then
+  stream it back: full body, partial + suffix ranges, 416, cross-org 404, 401).
+- **CI/coverage now reflects real execution:** `scripts/check.sh` runs the
+  coverage gate and enables the DB-gated integration tests when
+  `STREETSTUDIO_IT_DATABASE_URL` is set (CI always sets it). Measured coverage
+  is **85.75%** with a DB (the figure CI reports) vs ~82% in a no-DB local run.
+
 - **Second real product slice: `@streetstudio/uploads`** — chunked/resumable
   upload sessions on the published StreetJS framework + `@streetjs/storage`.
   Rich, immutable `UploadSession` domain (pending → completed / aborted; idempotent
