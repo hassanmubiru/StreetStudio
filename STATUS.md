@@ -31,6 +31,7 @@ Backend domain + API (ref build) ████████░░  80%   implement
 Recordings (real, on StreetJS)   ███░░░░░░░  25%   1st real slice: domain+persistence+HTTP+JWT auth on real streetjs+Postgres
 Uploads (real, on StreetJS)      ███░░░░░░░  25%   2nd real slice: chunked upload sessions + real object storage (assembled bytes verified)
 Playback (real, on StreetJS)     ███░░░░░░░  25%   3rd real slice: authorized byte-range streaming of completed uploads (200/206/416)
+Identity (real, on StreetJS)     ████░░░░░░  40%   real register/login (Argon2id) + JWT issuance; shared auth helpers reused by all slices
 SDK (typed client)               ████████░░  80%   not yet run against a live server
 Client models (editor/timeline)  ██████░░░░  60%   model + reducer/ops implemented & tested; no UI
 Dashboard client logic           ██████░░░░  65%   session/scope, workspace/video/search/notification flows, uploads, sharing, reactions, edit-session; no UI
