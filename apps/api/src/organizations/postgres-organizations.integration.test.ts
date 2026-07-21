@@ -7,9 +7,8 @@
  * tables), not the standalone direct-`PgPool` `postgresOrgStore` from the
  * original de-seam. DB-gated like the other repointing tests.
  */
-import { testDbUrl } from "@streetstudio/database/testing";
-import { PgPool } from "@streetjs/postgres";
 import { newUuid } from "@streetstudio/database";
+import { PgPool } from "streetjs";
 import type { AuthContext } from "@streetstudio/auth";
 import {
   ensureCanonicalSchema,
@@ -17,35 +16,29 @@ import {
 } from "../persistence/postgres-database.js";
 import { assemblePostgresOrganizations } from "./postgres-organizations.js";
 
+const DATABASE_URL = process.env["STREETSTUDIO_IT_DATABASE_URL"];
+const suite = DATABASE_URL ? describe : describe.skip;
+
 /**
  * DB-gated integration test: Organizations repointing.
  * 
  * Runs when `STREETSTUDIO_IT_DATABASE_URL` is set; skips otherwise.
  * Proves organizations operations flow through the canonical repository layer.
  */
-describe("Organizations postgres repointing", () => {
-  const pool = new PgPool(testDbUrl());
+suite("Organizations postgres repointing", () => {
+  const pool = new PgPool(DATABASE_URL!);
   
   beforeAll(async () => {
-    if (!pool.databaseUrl) return;
+    if (!DATABASE_URL) return;
     await pool.initialize();
     await ensureCanonicalSchema(pool);
   });
 
   afterAll(async () => {
-    if (pool.databaseUrl) await pool.end();
-  });
-
-  // Skip if no test database URL
-  beforeEach(() => {
-    if (!pool.databaseUrl) {
-      console.log("Skipping: no STREETSTUDIO_IT_DATABASE_URL");
-      return;
-    }
+    if (DATABASE_URL) await pool.end();
   });
 
   it("creates organizations through the canonical repository layer", async () => {
-    if (!pool.databaseUrl) return;
     
     const repos = assemblePostgresRepositories(pool);
     
@@ -79,7 +72,6 @@ describe("Organizations postgres repointing", () => {
   });
 
   it("enforces FK constraints via the canonical schema", async () => {
-    if (!pool.databaseUrl) return;
 
     const svc = assemblePostgresOrganizations(pool);
     
