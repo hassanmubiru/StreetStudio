@@ -697,8 +697,14 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
 
 ## ADR-0021: Standardize on the `SqlClient` repository layer as the single store of record; retire the direct-`PgPool` adapters after convergence
 
-- **Status:** Accepted (decision recorded; retirement is sequenced and not yet
-  executed — no code deleted)
+- **Status:** Accepted — steps 1–2 foundation executed (canonical schema proven
+  on real Postgres and a real `SqlClient` repository layer wired at the `apps/api`
+  composition root via `ensureCanonicalSchema`/`assemblePostgresRepositories`,
+  verified by a DB-gated integration test: idempotent migrations, entity
+  round-trip through the canonical singular/FK'd tables, and real FK enforcement).
+  Steps 3–5 (repoint each domain's production default, reclassify/remove
+  superseded direct-`PgPool` adapters, confirm the in-memory client is test-only)
+  are sequenced next. No code deleted.
 - **Context:** The domain-by-domain de-seam (ADR-0020, tracked as spec task 43)
   added a real `postgres<Domain>Store` adapter beside each domain's in-memory
   default, each composing the published `streetjs` `PgPool` directly with its own
