@@ -21,6 +21,7 @@
  */
 import type { Uuid } from "@streetstudio/shared";
 import type { SqlClient, SqlRow, SqlValue } from "./sql.js";
+import { getTable, type SqlColumnType } from "./schema.js";
 import type {
   ApiKeyRecord,
   AssetRecord,
