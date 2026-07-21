@@ -65,8 +65,8 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
 | Apps / packages                  | 5 apps, 44 packages                       |
 | Source files / LOC (excl. tests) | 165 files, ~25,700 LOC                    |
-| Test files / LOC                 | 180 files, ~35,000 LOC                    |
-| Full test run (with a DB)        | 180 files, 868 passed, 0 skipped, 0 failed|
+| Test files / LOC                 | 181 files, ~35,200 LOC                    |
+| Full test run (with a DB)        | 181 files, 871 passed, 0 skipped, 0 failed|
 | Line coverage                    | 85.94% (DB-backed) / ~82% (no-DB)         |
 | Documentation                    | 11 files under `docs/` + root docs        |
 
