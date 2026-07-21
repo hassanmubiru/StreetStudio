@@ -39,6 +39,12 @@ export type {
 export { systemClock } from "./clock.js";
 export type { Clock } from "./clock.js";
 
+// Production authenticator adapter over the real @streetstudio/auth AuthService
+// (auth de-seam, ADR-0020): connects the lifecycle authenticate stage to real
+// token verification against the real session store.
+export { authServiceAuthenticator } from "./auth-service-authenticator.js";
+export type { AccessTokenVerifier } from "./auth-service-authenticator.js";
+
 // Secret storage via the StreetJS secret interface (R29.2), owned by
 // @streetstudio/config and surfaced here for the composition root.
 export {
