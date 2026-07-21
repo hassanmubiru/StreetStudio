@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Store-of-record convergence kickoff (ADR-0021):** the API composition root
+  gains a canonical persistence assembly — `apps/api/src/persistence/postgres-database.ts`
+  (`streetPgPoolClient`, `ensureCanonicalSchema`, `assemblePostgresRepositories`)
+  — that wires a real StreetJS `PgPool` into the `@streetstudio/database`
+  `SqlClient` repository layer driven by the single canonical schema
+  (`runMigrations` over `SCHEMA`). A DB-gated integration test proves, on real
+  Postgres, that the canonical schema builds and is idempotent (applied then
+  skipped), that the repository layer round-trips entities through the canonical
+  singular, FK-constrained tables (`member`, `session`, …), and that real foreign
+  keys are enforced (an orphan `session` insert is rejected). This is the real
+  store-of-record path domain services will be repointed onto; no existing seam
+  was removed.
+
 - **Notifications de-seam — `NotificationService` on real Postgres:**
   `@streetstudio/notifications` gains real PostgreSQL `NotificationStore` +
   `NotificationPreferenceStore` adapters (`postgresNotificationStore`,
