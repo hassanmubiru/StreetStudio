@@ -15,6 +15,7 @@
     "@streetstudio/database": "*",
     "@streetstudio/auth": "*",
     "@streetstudio/media": "*",
+    "@streetstudio/comments": "*",
     "@streetstudio/processing": "*",
     "@streetstudio/notifications": "*",
     "@streetstudio/realtime": "*",
