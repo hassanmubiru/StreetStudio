@@ -613,3 +613,36 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   vertical slice at a time (ADR-0017), with integration tests against real infra.
   The measured reference-build report remains accurate for what is still
   seam-backed vs. adopted.
+
+---
+
+## ADR-0020: De-seam the legacy `packages/auth` onto real StreetJS + `@streetstudio/identity`
+
+- **Status:** Proposed (incremental migration; foundation in place)
+- **Context:** The reference-build `packages/auth` implements authentication,
+  sessions, RBAC, and API keys behind in-memory adapter seams. With StreetJS
+  published, real auth now exists two ways: the framework's own
+  `streetjs/security` + `auth/*` (JWT, sessions, RBAC, API keys, refresh tokens)
+  and the product's `@streetstudio/identity` (real Argon2id registration/login,
+  JWT issuance, and the shared `requireADtor`/`jwtAuth` helpers, backed by real
+  PostgreSQL). The new real slices (recordings, uploads, playback) already
+  authenticate through `@streetstudio/identity` — they never touch the legacy
+  seam-based `packages/auth`.
+- **Decision:** De-seam `packages/auth` **incrementally**, keeping all gates green
+  at every step, rather than in one high-risk rewrite:
+  1. Point new/authenticated product surfaces at `@streetstudio/identity` (done
+     for recordings/uploads/playback).
+  2. Migrate the member/session/API-key stores from in-memory to real PostgreSQL
+     (reuse `@streetstudio/identity`'s member store; add real session + API-key
+     stores over `streetjs` `auth/session-store` and `auth/api-keys`).
+  3. Rewire the remaining `packages/auth` consumers (e.g. `apps/api`) onto the
+     real implementation one dependent at a time, updating each dependent's tests
+     to run against real Postgres.
+  4. Retire the in-memory auth seams once no consumer depends on them.
+- **Consequences:** This is a **wide-blast-radius migration** (auth is consumed
+  across the reference build), so it is executed as its own sequence of small,
+  independently-verifiable slices — not appended to unrelated work — to avoid
+  destabilizing the suite. Until it completes, the legacy `packages/auth` remains
+  the reference implementation for its consumers, while all *new* product auth is
+  real (`@streetstudio/identity`). Tracked in
+  [`PRODUCTIONIZATION.md`](PRODUCTIONIZATION.md).
