@@ -70,11 +70,14 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   against a **real Postgres** and **real object storage**. Proven by integration
   tests: recordings (create→publish→archive), uploads (begin→upload-parts→
   complete, verifying assembled bytes), and playback (authorized 200/206/416
-  byte-range streaming). Those tests run when `STREETSTUDIO_IT_DATABASE_URL` is
-  set (CI Postgres service) and skip otherwise. Measured: with a DB line coverage
-  is **85.75%**; without a DB (integration skipped) it is **~82%**. Both clear the
-  80% gate. `scripts/check.sh` runs the coverage gate and enables the integration
-  tests automatically when the env var is set.
+  byte-range streaming). `@streetstudio/identity` adds real registration/login
+  (Argon2id) + JWT issuance, and all three slices authenticate through its shared
+  `requireActor`/`jwtAuth` helpers. Those integration tests run when
+  `STREETSTUDIO_IT_DATABASE_URL` is set (CI Postgres service) and skip otherwise.
+  Measured: with a DB line coverage is **85.91%**; without a DB (integration
+  skipped) it is **~82%**. Both clear the 80% gate. `scripts/check.sh` runs the
+  coverage gate and enables the integration tests automatically when the env var
+  is set.
 - **The other backend packages** are still the reference implementation running
   against **in-memory fakes behind adapter seams**; each will be de-seamed onto
   the real framework as its own slice (ADR-0017).
