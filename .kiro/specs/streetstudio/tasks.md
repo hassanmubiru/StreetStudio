@@ -706,9 +706,9 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Completed and verified against real Postgres
     - _Requirements: 1.5, 14.1_
 
-  - [ ] 43.12 De-seam the Notifications domain onto Postgres
-    - Implement a real Postgres notification store behind the existing notifications store port beside the in-memory adapter; export from the package index; add a DB-gated integration test against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
-    - Not started
+  - [x] 43.12 De-seam the Notifications domain onto Postgres
+    - `postgresNotificationStore` + `postgresNotificationPreferenceStore` (`ensureNotificationsSchema`) implement the notifications store ports over `notifications`/`notification_preferences` tables, beside the in-memory adapters; `save` is a real in-place `UPDATE` of the `read_at`/`delivered_at` columns; exported from the package index; a DB-gated `*.integration.test.ts` runs the real `NotificationService` against real Postgres (create + preference suppression, ownership-checked mark-read, exactly-once deliver-pending); `"streetjs": "^1.2.7"` added; all six gates green; measured docs updated
+    - Completed and verified against real Postgres
     - _Requirements: 1.5, 12.1_
 
   - [ ] 43.13 Codify the per-domain de-seam checklist convention
