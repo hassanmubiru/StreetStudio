@@ -62,12 +62,16 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
 
 ## What "80%" means here (honest caveats)
 
-- **`@streetstudio/recordings` is real** — it runs on the published `streetjs`
-  (HTTP/DI + native PostgreSQL driver) against a **real Postgres**, proven by an
-  integration test (repository round-trips + a full create→publish→archive HTTP
-  journey). Coverage of its persistence/API files depends on that integration
-  test, which runs when `STREETSTUDIO_IT_DATABASE_URL` is set (CI Postgres
-  service) and skips otherwise — hence the small drop in global line coverage.
+- **`@streetstudio/recordings` and `@streetstudio/uploads` are real** — they run
+  on the published `streetjs` (HTTP/DI + native PostgreSQL driver + JWT auth) and,
+  for uploads, `@streetjs/storage`, against a **real Postgres** and **real object
+  storage**. Proven by integration tests: recordings does a create→publish→archive
+  HTTP journey; uploads does begin→upload-parts→complete and verifies the
+  assembled object's bytes in storage. Those tests run when
+  `STREETSTUDIO_IT_DATABASE_URL` is set (CI Postgres service) and skip otherwise,
+  so the persistence/API files show low coverage in the default (no-DB) run —
+  hence global line coverage sits just above the 80% floor locally and is higher
+  in CI where the integration tests execute.
 - **The other backend packages** are still the reference implementation running
   against **in-memory fakes behind adapter seams**; each will be de-seamed onto
   the real framework as its own slice (ADR-0017).
