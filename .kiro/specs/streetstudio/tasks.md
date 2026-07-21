@@ -691,9 +691,9 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Completed and verified against real Postgres
     - _Requirements: 1.5, 5.1, 5.2, 5.4_
 
-  - [ ] 43.9 De-seam the Comments domain onto Postgres
-    - `postgresCommentStore` (over `comments`/`reactions`/`videos` tables, with reaction idempotency enforced via `ON CONFLICT DO NOTHING`) is created behind the existing store port beside the in-memory adapter; **still remaining**: export it from the package index, add the DB-gated `*.integration.test.ts` against real Postgres, add `"streetjs": "^1.2.7"`, run all six gates, and update measured docs
-    - In progress — not fully verified yet
+  - [x] 43.9 De-seam the Comments domain onto Postgres
+    - `postgresCommentStore` (over `comments`/`reactions`/`videos` tables, with reaction idempotency enforced via a composite primary key + `ON CONFLICT DO NOTHING`) sits behind the existing store port beside the in-memory adapter; exported from the package index; a DB-gated `*.integration.test.ts` runs the real `CommentService` against real Postgres (post/validate/reply/reaction idempotency); `"streetjs": "^1.2.7"` added; all six gates green; measured docs updated
+    - Completed and verified against real Postgres
     - _Requirements: 1.5, 11.1, 11.3, 11.5_
 
   - [ ] 43.10 De-seam the Media persistence domain onto Postgres
