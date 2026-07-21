@@ -19,7 +19,8 @@
     "@streetstudio/notifications": "*",
     "@streetstudio/realtime": "*",
     "@streetstudio/plugins": "*",
-    "@streetstudio/analytics": "*"
+    "@streetstudio/analytics": "*",
+    "streetjs": "^1.2.7"
   },
   "peerDependencies": {
     "@streetjs/core": "^0.1.0"
