@@ -68,11 +68,51 @@ export function toFieldName(column: string): string {
   return column.replace(/_([a-z0-9])/g, (_, ch: string) => ch.toUpperCase());
 }
 
-/** Map a raw row (snake_case columns) into a camelCase record. */
-function mapRow<TRecord>(row: SqlRow): TRecord {
+/**
+ * Coerce a raw column value to the JS type its {@link SqlColumnType} implies.
+ *
+ * SQL drivers differ in how they represent values on the wire: the StreetJS
+ * `PgPool` driver returns `boolean` columns as `"t"`/`"f"` strings, may return
+ * numeric columns as strings, and may return `jsonb` as an unparsed string,
+ * whereas the in-memory test client returns native JS types. This coercion
+ * normalizes both to the record field types, and is a **no-op** when the value
+ * is already the correct JS type — so it is safe for both the real driver and
+ * the in-memory client. `null` is preserved.
+ */
+function coerceValue(type: SqlColumnType | undefined, value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return value;
+  }
+  switch (type) {
+    case "boolean":
+      if (typeof value === "boolean") return value;
+      return value === "t" || value === "true" || value === "1" || value === 1;
+    case "integer":
+    case "smallint":
+    case "bigint":
+      return typeof value === "number" ? value : Number(value);
+    case "jsonb":
+      return typeof value === "string" ? (JSON.parse(value) as unknown) : value;
+    case "timestamptz":
+      // Normalize a driver-returned Date to an ISO string (records carry
+      // IsoTimestamp strings); leave already-string values untouched.
+      return value instanceof Date ? value.toISOString() : value;
+    default:
+      // uuid / text / citext and any unknown type pass through unchanged.
+      return value;
+  }
+}
+
+/**
+ * Map a raw row (snake_case columns) into a camelCase record, coercing each
+ * column to the JS type implied by the table's schema when `table` is known.
+ */
+function mapRow<TRecord>(row: SqlRow, table?: string): TRecord {
+  const definition = table === undefined ? undefined : getTable(table);
   const out: Record<string, unknown> = {};
   for (const [column, value] of Object.entries(row)) {
-    out[toFieldName(column)] = value;
+    const columnType = definition?.columns.find((c) => c.name === column)?.type;
+    out[toFieldName(column)] = coerceValue(columnType, value);
   }
   return out as TRecord;
 }
