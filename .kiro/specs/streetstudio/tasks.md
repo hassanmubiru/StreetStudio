@@ -711,9 +711,9 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Completed and verified against real Postgres
     - _Requirements: 1.5, 12.1_
 
-  - [ ] 43.13 Codify the per-domain de-seam checklist convention
-    - Capture the repeatable pattern as a documented convention: add the real store adapter beside the in-memory one (same store port) → export from the package index → add a DB-gated `*.integration.test.ts` → run all six gates (build, `graph:check`, `boundary:check`, `streetjs:check`, `test`, `test:coverage` ≥80% lines) → update `STATUS.md`, `docs/IMPLEMENTATION_REPORT.md`, and `CHANGELOG.md` with **freshly measured** numbers gathered via `npm run status` / `npm test` / `test:coverage`
-    - Not started
+  - [x] 43.13 Codify the per-domain de-seam checklist convention
+    - The repeatable pattern is documented as the "De-seam playbook (per-domain convention)" section in `docs/PRODUCTIONIZATION.md`: add the real store adapter beside the in-memory one (same store port) → ship idempotent `ensure*Schema` reusing shared convergence tables → export from the package index → add `"streetjs": "^1.2.7"` → add a DB-gated `*.integration.test.ts` → run all six gates (build, `graph:check`, `boundary:check`, `streetjs:check`, `test`, `test:coverage` ≥80% lines) → update `STATUS.md`, `docs/IMPLEMENTATION_REPORT.md`, `CHANGELOG.md`, and the spec `tasks.md` with **freshly measured** numbers gathered via `npm run status` / `npm test` / `test:coverage`
+    - Completed
     - _Requirements: 1.5, 2.5_
 
   - [ ] 43.14 (Deferred, high blast radius) Retire the in-memory `repository*Store` seams
