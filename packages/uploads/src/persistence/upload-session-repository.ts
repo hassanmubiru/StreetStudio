@@ -75,4 +75,24 @@ export class UploadSessionRepository {
     const row = rows[0] as Row | undefined;
     return row ? mapRow(row) : null;
   }
+
+  /**
+   * Find a **completed** upload session by its object key within an organization.
+   * Used to authorize playback of an assembled object (the object belongs to the
+   * org that completed the upload).
+   */
+  async findCompletedByObjectKey(
+    organizationId: Uuid,
+    objectKey: string,
+  ): Promise<UploadSession | null> {
+    const { rows } = await this.pool.query(
+      `SELECT * FROM upload_sessions
+        WHERE organization_id = $1 AND object_key = $2 AND status = 'completed'
+        ORDER BY completed_at DESC
+        LIMIT 1`,
+      [organizationId, objectKey],
+    );
+    const row = rows[0] as Row | undefined;
+    return row ? mapRow(row) : null;
+  }
 }
