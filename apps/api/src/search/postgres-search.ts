@@ -6,32 +6,32 @@
  *
  * The `SearchService` reaches persistence only through its pluggable
  * {@link SearchIndex} port, so repointing is a wiring change: its production
- * default now uses `repositorySearchIndex` bound to the real `PgPool`-backed
- * repositories (canonical singular, FK-constrained `video`/`transcript` tables).
- * The standalone direct-`PgPool` `postgresSearchIndex` adapter is retained as
- * integration proof / reference DDL.
+ * default now uses `postgresSearchIndex` bound to the real `PgPool` but
+ * operating against the canonical schema (singular, FK-constrained
+ * `video`/`transcript` tables) instead of the standalone schema. The search
+ * queries run directly against the canonical tables provisioned by
+ * `ensureCanonicalSchema`.
  */
 import { PgPool } from "streetjs";
 import type { AccessControl } from "@streetstudio/auth";
 import {
   SearchService,
-  repositorySearchIndex,
+  postgresSearchIndex,
 } from "@streetstudio/search";
-import { assemblePostgresRepositories } from "../persistence/postgres-database.js";
 
 /**
- * Build the real `SearchService` on the canonical repository layer from a live
- * `PgPool` and the RBAC evaluator. The schema is provisioned once at startup
- * via `ensureCanonicalSchema`; authorized-scope filtering stays in the service
- * layer (R14.4).
+ * Build the real `SearchService` on the canonical schema from a live `PgPool`
+ * and the RBAC evaluator. The schema is provisioned once at startup via
+ * `ensureCanonicalSchema`; authorized-scope filtering stays in the service
+ * layer (R14.4). The search adapter queries the canonical video/transcript
+ * tables directly for efficient text search.
  */
 export function assemblePostgresSearch(
   pool: PgPool,
   access: AccessControl,
 ): SearchService {
-  const repositories = assemblePostgresRepositories(pool);
   return new SearchService({
-    index: repositorySearchIndex(repositories),
+    index: postgresSearchIndex(pool),
     access,
   });
 }
