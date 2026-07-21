@@ -235,12 +235,6 @@ function defaultGenerateSecret(): string {
   return randomBytes(TOKEN_SECRET_BYTES).toString("base64url");
 }
 
-/** The parsed components of a presented invitation token. */
-interface ParsedToken {
-  readonly organizationId: Uuid;
-  readonly invitationId: Uuid;
-}
-
 export class OrgService {
   private readonly store: OrgStore;
   private readonly clock: Clock;
