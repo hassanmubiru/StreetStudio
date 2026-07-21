@@ -56,6 +56,16 @@ export {
 } from "./stores.js";
 export type { AuthStores, MemberStore, SessionStore } from "./stores.js";
 
+// --- Real PostgreSQL store adapters (auth de-seam, ADR-0020) ---------------
+export {
+  ensureAuthSchema,
+  postgresAuthStores,
+  postgresMemberStore,
+  postgresSessionStore,
+  AUTH_MEMBERS_TABLE_DDL,
+  AUTH_SESSIONS_TABLE_DDL,
+} from "./postgres-stores.js";
+
 // --- Clock -----------------------------------------------------------------
 export { systemClock } from "./clock.js";
 export type { Clock } from "./clock.js";
