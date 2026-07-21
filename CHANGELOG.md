@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Fourth real product slice: `@streetstudio/identity`** — real member
+  registration and login with **Argon2id** password hashing (via the standard
+  `argon2` library — the framework does not expose password hashing), real
+  PostgreSQL member store, and **JWT issuance** through the StreetJS `JwtService`.
+  Public `POST /auth/register` and `POST /auth/login` endpoints (non-disclosing:
+  unknown email and wrong password both return 401; duplicate email → 409). Also
+  provides the shared auth helpers `jwtAuth(secret)` and `requireActor(ctx)`, and
+  **`@streetstudio/recordings`, `uploads`, and `playback` were de-duplicated to
+  authenticate through them** (removing their copy-pasted `requireActor`/JWT
+  wiring). Verified by unit + fast-check property tests (Argon2id round-trip,
+  email/password policy) and an integration test against real Postgres
+  (register→login over HTTP, verifiable token, 409/401 cases).
+
 - **Third real product slice: `@streetstudio/playback`** — authorized byte-range
   streaming of a completed upload's assembled object. A `PlaybackService`
   composes `@streetjs/storage` (real bytes) and the uploads repository
