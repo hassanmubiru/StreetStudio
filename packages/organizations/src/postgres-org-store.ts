@@ -114,7 +114,14 @@ function mapTeam(row: Row): TeamRecord {
   };
 }
 
-/** An {@link OrgStore} backed by real PostgreSQL. */
+/**
+ * An {@link OrgStore} backed by real PostgreSQL.
+ * 
+ * **ADR-0021 Note**: This direct-PgPool adapter is retained as an integration
+ * test utility and reference schema. Production code should use the canonical
+ * repository layer via `repositoryOrgStore(assemblePostgresRepositories(pool))`,
+ * which is wired up in `assemblePostgresOrganizations`.
+ */
 export function postgresOrgStore(pool: PgPool): OrgStore {
   const one = async (sql: string, params: unknown[]): Promise<Row | undefined> => {
     const { rows } = await pool.query(sql, params);
