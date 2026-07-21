@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ADR-0021 completion: Repository seams retirement:** Completed store-of-record
+  convergence by repointing the final organizations domain to the canonical
+  repository layer (`assemblePostgresOrganizations`) and reclassifying 
+  direct-PgPool adapters as integration test utilities. All domains now use
+  the canonical `@streetstudio/database` repository layer in production via
+  their respective `assemblePostgres*` functions, with in-memory clients
+  confined to unit/property tests. The "repository seams" retirement refers to
+  completing this convergence, not removing the repository pattern itself.
+
 - **Store-of-record repoint: media pipeline on the canonical repository layer
   (ADR-0021, step 3):** `apps/api/src/processing/postgres-processing.ts`
   (`assemblePostgresMediaPipeline`) wires the real `MediaPipeline` onto the
