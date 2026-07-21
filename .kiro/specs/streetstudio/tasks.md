@@ -696,9 +696,9 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Completed and verified against real Postgres
     - _Requirements: 1.5, 11.1, 11.3, 11.5_
 
-  - [ ] 43.10 De-seam the Media persistence domain onto Postgres
-    - Implement real Postgres store adapters for `videos`/`assets`/`renditions` behind the existing media store ports beside the in-memory adapters (reusing the shared `videos` table via idempotent DDL); export from the package index; add a DB-gated integration test against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
-    - Not started
+  - [x] 43.10 De-seam the Media persistence domain onto Postgres
+    - `postgresProcessingStore` (`ensureProcessingSchema`) implements the `ProcessingStore` port over the shared `videos` table plus `assets`/`renditions`, behind the existing store port beside the in-memory adapter; `setVideoStatus` is a real in-place `UPDATE` preserving `source_object_key` (R8.6); exported from the package index; a DB-gated `*.integration.test.ts` runs the real `MediaPipeline` against real Postgres (enqueue→queued, success→1 thumbnail/1 preview/3 renditions→ready, exhausted transcoder→failed with source retained); `"streetjs": "^1.2.7"` added; all six gates green; measured docs updated
+    - Completed and verified against real Postgres
     - _Requirements: 1.5, 8.2, 8.4, 8.7, 9.1_
 
   - [ ] 43.11 De-seam the Search domain onto a real Postgres/index-backed adapter
