@@ -22,3 +22,10 @@ export type {
   SearchPage,
   Cursor,
 } from "./search.js";
+
+// --- Real PostgreSQL search index (de-seam, task 43.11) --------------------
+export {
+  ensureSearchSchema,
+  postgresSearchIndex,
+  SEARCH_TABLES_DDL,
+} from "./postgres-search-index.js";
