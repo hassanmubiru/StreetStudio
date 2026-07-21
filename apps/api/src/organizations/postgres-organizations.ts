@@ -14,7 +14,7 @@
  * in-memory default, verified by a DB-gated integration test. The canonical schema
  * is provisioned once at startup via `ensureCanonicalSchema`.
  */
-import type { PgPool } from "@streetjs/postgres";
+import type { PgPool } from "streetjs";
 import {
   OrgService,
   repositoryOrgStore,
