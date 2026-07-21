@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Auth de-seam step 2 (ADR-0020):** the real `AuthService` core is verified
+  end-to-end on the **real PostgreSQL stores** — an integration test wires
+  `AuthService` with `postgresAuthStores` + `Argon2idPasswordHasher` +
+  `HmacAccessTokenIssuer` against real Postgres and exercises register → login →
+  verify-token → logout (token rejected after logout), plus uniform
+  duplicate-registration and wrong-password rejection. Confirms the auth core
+  runs on real infrastructure, not seams.
+
 - **Auth de-seam step 1 (ADR-0020):** `@streetstudio/auth` gains **real
   PostgreSQL** `MemberStore`/`SessionStore` adapters (`postgresAuthStores`,
   `ensureAuthSchema`) over the StreetJS `PgPool`, satisfying the same ports the
