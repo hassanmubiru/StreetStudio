@@ -666,8 +666,10 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
 - **Decision:** De-seam `packages/auth` onto the real framework **incrementally**,
   not in a single big-bang refactor, because the blast radius is wide and the
   suite must stay green at every step. Sequence:
-  1. Back the member/credential store with real PostgreSQL (reuse
-     `@streetstudio/identity`'s `MemberRepository` / schema).
+  1. **[done]** Back the member/session store with real PostgreSQL —
+     `postgresAuthStores`/`ensureAuthSchema` in `@streetstudio/auth`, reading the
+     shared `members` table and an `auth_sessions` table; verified by an
+     integration test against real Postgres.
   2. Replace session/refresh-token/API-key seams with `streetjs`
      `auth/session-store`, `auth/refresh-tokens`, `auth/api-keys` against Postgres.
   3. Replace RBAC evaluation with `streetjs` `auth/rbac` (`RbacService`,
