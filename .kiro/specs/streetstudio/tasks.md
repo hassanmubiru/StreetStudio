@@ -717,8 +717,8 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - _Requirements: 1.5, 2.5_
 
   - [ ] 43.14 (Deferred, high blast radius) Retire the in-memory `repository*Store` seams
-    - **Deferred and high-risk.** Once no consumer depends on any in-memory `repository*Store` adapter, remove the seams in a deliberate, separate migration — NOT a quick delete. This is intentionally sequenced last because removing the in-memory adapters changes the fallback path relied on by existing green tests; it must be planned and verified on its own with all six gates green
-    - Deferred — not started
+    - **Deferred and high-risk; now planned in ADR-0021.** Investigation established that the `repository*Store` adapters are NOT fakes — they delegate to `@streetstudio/database`'s `SqlClient` repository layer, which issues real SQL; the "in-memory" part is only the injected test client. ADR-0021 records the decision to converge on the `SqlClient` repository layer as the single store of record (retaining the direct-`PgPool` adapters as integration proof / reference schema) and defines the sequenced, gated retirement plan: (1) unify schema/DDL, (2) wire a real Postgres `SqlClient` at each composition root, (3) point each domain's production default at the real repository path one domain at a time, (4) reclassify/delete superseded direct-`PgPool` adapters, (5) confirm the in-memory client survives only as a test double. NOT a quick delete; each step keeps all six gates green. No code deleted yet.
+    - Deferred — plan recorded (ADR-0021); execution not started
     - _Requirements: 1.5, 2.5_
 
 ---
