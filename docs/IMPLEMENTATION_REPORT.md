@@ -178,7 +178,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/storage                       | 2   | 5     | 3    | Storage abstraction + StorageProvider contract  |
 | packages/knowledge                     | 2   | 4     | 3    | Transcript indexing, summaries, doc links (knowledge base) |
 | packages/comments                      | 3   | 6     | 4    | Comments, threads, reactions, mentions (real Postgres store) |
-| packages/search                        | 2   | 5     | 4    | Search + transcript search (authorized scope)   |
+| packages/search                        | 3   | 6     | 4    | Search + transcript search (authorized scope; real Postgres index) |
 | packages/player                        | 2   | 3     | 2    | Streaming/playback: ABR manifest with view-permission & share-credential gating |
 | packages/timeline                      | 2   | 1     | 0    | Timeline model + ops (tracks, clips, markers)   |
 | packages/editor                        | 3   | 2     | 1    | Browser editor model + reducer (trim/split/merge/speed) |
@@ -188,7 +188,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/playback **(real)**           | 4   | 2     | 1    | Authorized byte-range streaming of completed uploads on **published StreetJS** (200/206/416; real infra) |
 | packages/identity **(real)**           | 8   | 2     | 1    | Real register/login (Argon2id) + JWT issuance on **published StreetJS**; shared `requireActor`/`jwtAuth` helpers |
 | packages/processing                    | 3   | 6     | 3    | Media pipeline: transcode/thumbnail/preview (real Postgres store: videos/assets/renditions) |
-| packages/notifications                 | 2   | 4     | 3    | Notifications + event contracts                 |
+| packages/notifications                 | 3   | 5     | 3    | Notifications + event contracts (real Postgres store) |
 | packages/realtime                      | 2   | 4     | 3    | Realtime gateway: presence, typing, fan-out     |
 | packages/plugins                       | 6   | 8     | 4    | Plugin_Manager, billing, isolation              |
 | packages/ai                            | 2   | 3     | 1    | AI capability router (routing only)             |
