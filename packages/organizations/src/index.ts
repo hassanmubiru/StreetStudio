@@ -19,13 +19,13 @@ export {
   INVITATION_TTL_MS,
   MAX_ORG_NAME_LENGTH,
   MAX_TEAM_NAME_LENGTH,
-} from "./org-service.js";
+} from "./application/org-service.js";
 export type {
   AdminAuditRecorder,
   OrgServiceDeps,
   OrgSettings,
   OrgStore,
-} from "./org-service.js";
+} from "./application/org-service.js";
 
 // Real PostgreSQL store adapter (de-seam onto real infrastructure; shares the
 // roles/memberships tables with the auth RBAC store).

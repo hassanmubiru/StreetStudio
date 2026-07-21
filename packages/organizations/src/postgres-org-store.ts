@@ -21,7 +21,7 @@ import type {
   TeamRecord,
 } from "@streetstudio/database";
 import type { InvitationStatus, IsoTimestamp, Uuid } from "@streetstudio/shared";
-import type { OrgStore } from "./org-service.js";
+import type { OrgStore } from "./application/org-service.js";
 
 type Row = Record<string, string | null>;
 
