@@ -679,9 +679,12 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
      backs the deny-by-default `RbacAccessControl` (organization-scoped
      `roles`/`memberships`), verified against real Postgres. (Adopting `streetjs`
      `auth/rbac` primitives where they add value remains optional.)
-  4. Migrate consumers one at a time to the real auth + identity helpers, updating
-     each package's tests to run against real Postgres (DB-gated), keeping all six
-     gates green per step.
+  4. **[apps/api wiring done]** Migrate consumers to the real auth. `apps/api`
+     has `assemblePostgresAuth` — a concrete, config-driven assembly of the real
+     `AuthService` authenticator + real RBAC `AccessControl` — verified driving
+     both lifecycle stages (authenticate + RBAC) on real Postgres via the real
+     `createApiService`. Remaining consumers migrate the same way, one at a time,
+     DB-gated, gates green per step.
   5. Remove the in-memory seams once no consumer depends on them.
 - **Consequences:** New product slices already use real auth (via identity), so
   this ADR concerns the **legacy reference-build auth**, not new work. Until the
