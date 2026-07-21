@@ -61,20 +61,15 @@ suite("Canonical Postgres persistence (store of record)", () => {
     expect(rerun.applied).not.toContain("0001");
 
     // The canonical singular tables exist (spot-check a representative set).
+    const expected = ["comment", "member", "notification", "organization", "session", "video"];
+    const placeholders = expected.map((_, i) => `$${i + 1}`).join(", ");
     const { rows } = await pool.query(
       `SELECT table_name FROM information_schema.tables
-       WHERE table_schema = 'public' AND table_name = ANY($1)`,
-      [["member", "session", "organization", "video", "comment", "notification"]],
+       WHERE table_schema = 'public' AND table_name IN (${placeholders})`,
+      expected,
     );
     const names = (rows as Array<{ table_name: string }>).map((r) => r.table_name).sort();
-    expect(names).toEqual([
-      "comment",
-      "member",
-      "notification",
-      "organization",
-      "session",
-      "video",
-    ]);
+    expect(names).toEqual(expected);
   });
 
   it("round-trips entities through the canonical repository layer on real Postgres", async () => {
