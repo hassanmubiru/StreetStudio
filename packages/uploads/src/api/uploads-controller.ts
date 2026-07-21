@@ -14,23 +14,12 @@ import {
   Put,
   container,
   BadRequestException,
-  UnauthorizedException,
   type StreetContext,
 } from "streetjs";
 import type { Uuid } from "@streetstudio/shared";
+import { requireActor } from "@streetstudio/identity";
 import { UploadService } from "../application/upload-service.js";
-import { UploadStateError, type Actor } from "../domain/upload-session.js";
-
-function requireActor(ctx: StreetContext): Actor {
-  if (!ctx.user) {
-    throw new UnauthorizedException("Authentication required.");
-  }
-  const org = ctx.headers["x-organization-id"];
-  if (!org) {
-    throw new UnauthorizedException("An active organization (X-Organization-Id) is required.");
-  }
-  return { memberId: ctx.user.id as Uuid, organizationId: org as Uuid };
-}
+import { UploadStateError } from "../domain/upload-session.js";
 
 function requireId(ctx: StreetContext): Uuid {
   const id = ctx.params["id"];
