@@ -4,7 +4,8 @@
  * and mounts the controller.
  */
 import "reflect-metadata";
-import { streetApp, container, PgPool, JwtService, authMiddleware } from "streetjs";
+import { streetApp, container, PgPool } from "streetjs";
+import { jwtAuth } from "@streetstudio/identity";
 import type { Storage } from "@streetjs/storage";
 import { UploadSessionRepository } from "@streetstudio/uploads";
 import { PlaybackService } from "../application/playback-service.js";
