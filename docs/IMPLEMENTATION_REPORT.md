@@ -123,10 +123,10 @@ All commands run from the workspace root (`/…/StreetStudio`).
 | --------------------------- | -------------------------- | ----------------------------------------------- |
 | Build (project references)  | `npm run build`            | PASS (exit 0)                                   |
 | Dependency-graph acyclicity | `npm run graph:check`      | PASS — "Package dependency graph is acyclic."   |
-| Import boundaries           | `npm run boundary:check`   | PASS — 168 files scanned, 0 violations          |
+| Import boundaries           | `npm run boundary:check`   | PASS — 169 files scanned, 0 violations          |
 | StreetJS consumption (ADR-0011) | `npm run streetjs:check` | PASS — published, versioned packages only       |
-| Full test suite             | `npm test`                 | PASS — 182 files, 876 passed / 0 skipped (DB-backed) |
-| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 86.05% lines (DB-backed); ~82% no-DB     |
+| Full test suite             | `npm test`                 | PASS — 183 files, 879 passed / 0 skipped (DB-backed) |
+| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 86.13% lines (DB-backed); ~82% no-DB     |
 
 All six gates run together via `scripts/check.sh` (and in CI).
 
