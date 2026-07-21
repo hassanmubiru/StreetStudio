@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Auth de-seam — API authenticate stage on the real auth core (ADR-0020):**
+  `apps/api` gains a production `authServiceAuthenticator` that bridges the
+  request-lifecycle authenticate stage to the real `AuthService.verifyAccessToken`
+  (real token + session-store check). A DB-gated integration test proves it
+  against real Postgres: a member registered/logged-in through the real auth core
+  gets a real token the API authenticates; missing → unauthenticated, garbage →
+  invalid, and a token is invalid after its session is logged out.
+
 - **Auth de-seam — real `AuthService` verified on real stores (ADR-0020):** the
   real `AuthService` core is verified end-to-end on the **real PostgreSQL
   stores** — an integration test wires
