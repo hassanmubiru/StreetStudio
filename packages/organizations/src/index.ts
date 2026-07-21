@@ -26,3 +26,11 @@ export type {
   OrgSettings,
   OrgStore,
 } from "./org-service.js";
+
+// Real PostgreSQL store adapter (de-seam onto real infrastructure; shares the
+// roles/memberships tables with the auth RBAC store).
+export {
+  ensureOrganizationsSchema,
+  postgresOrgStore,
+  ORGANIZATIONS_TABLE_DDL,
+} from "./postgres-org-store.js";
