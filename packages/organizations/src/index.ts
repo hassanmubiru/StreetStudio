@@ -33,4 +33,4 @@ export {
   ensureOrganizationsSchema,
   postgresOrgStore,
   ORGANIZATIONS_TABLE_DDL,
-} from "./postgres-org-store.js";
+} from "./infrastructure/postgres-org-store.js";
