@@ -29,7 +29,7 @@ function mapRow(row: Row): UploadSession {
     ownerId: row["owner_id"] as Uuid,
     objectKey: row["object_key"] as string,
     totalParts: Number(row["total_parts"]),
-    receivedParts: parseParts(row["received_parts"]),
+    receivedParts: parseParts(row["received_parts"] ?? null),
     status: row["status"] as UploadStatus,
     createdAt: new Date(row["created_at"] as string).toISOString() as IsoTimestamp,
     ...(toIso(row["completed_at"] ?? null) ? { completedAt: toIso(row["completed_at"] ?? null)! } : {}),
