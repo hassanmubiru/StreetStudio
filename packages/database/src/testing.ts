@@ -76,6 +76,9 @@ export class InMemorySqlClient implements SqlClient {
     if (/^select\b/i.test(trimmed)) {
       return this.select(trimmed, params) as SqlQueryResult<TRow>;
     }
+    if (/^update\b/i.test(trimmed)) {
+      return this.update(trimmed, params) as SqlQueryResult<TRow>;
+    }
     if (/^delete\b/i.test(trimmed)) {
       return this.delete(trimmed, params) as SqlQueryResult<TRow>;
     }
