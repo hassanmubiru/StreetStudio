@@ -15,7 +15,6 @@
  * is provisioned once at startup via `ensureCanonicalSchema`.
  */
 import type { PgPool } from "@streetjs/postgres";
-import type { AccessControl } from "@streetstudio/auth";
 import {
   OrgService,
   repositoryOrgStore,
@@ -30,13 +29,9 @@ import { assemblePostgresRepositories } from "../persistence/postgres-database.j
  * same `repositoryOrgStore` over the `@streetstudio/database` canonical layer.
  * The service logic is identical; only the persistence target changes.
  */
-export function assemblePostgresOrganizations(
-  pool: PgPool,
-  access: AccessControl,
-): OrgService {
+export function assemblePostgresOrganizations(pool: PgPool): OrgService {
   const repositories = assemblePostgresRepositories(pool);
   return new OrgService({
     store: repositoryOrgStore(repositories),
-    access,
   });
 }

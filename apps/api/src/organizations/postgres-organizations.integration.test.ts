@@ -58,13 +58,7 @@ describe("Organizations postgres repointing", () => {
       createdAt: new Date(),
     });
 
-    // Mock access control that allows everything for this test
-    const allowAll = {
-      can: async () => true,
-      assignRole: async () => {},
-    };
-
-    const svc = assemblePostgresOrganizations(pool, allowAll);
+    const svc = assemblePostgresOrganizations(pool);
     const actor: AuthContext = { memberId, organizationId: null };
 
     // Create an organization through the canonical layer
@@ -87,8 +81,7 @@ describe("Organizations postgres repointing", () => {
   it("enforces FK constraints via the canonical schema", async () => {
     if (!pool.databaseUrl) return;
 
-    const allowAll = { can: async () => true, assignRole: async () => {} };
-    const svc = assemblePostgresOrganizations(pool, allowAll);
+    const svc = assemblePostgresOrganizations(pool);
     
     // Try to create organization with non-existent member
     const fakeActor: AuthContext = { memberId: newUuid(), organizationId: null };
