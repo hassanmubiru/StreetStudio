@@ -624,7 +624,7 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   published, real auth now exists two ways: the framework's own
   `streetjs/security` + `auth/*` (JWT, sessions, RBAC, API keys, refresh tokens)
   and the product's `@streetstudio/identity` (real Argon2id registration/login,
-  JWT issuance, and the shared `requireADtor`/`jwtAuth` helpers, backed by real
+  JWT issuance, and the shared `requireActor`/`jwtAuth` helpers, backed by real
   PostgreSQL). The new real slices (recordings, uploads, playback) already
   authenticate through `@streetstudio/identity` — they never touch the legacy
   seam-based `packages/auth`.
@@ -646,3 +646,39 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   the reference implementation for its consumers, while all *new* product auth is
   real (`@streetstudio/identity`). Tracked in
   [`PRODUCTIONIZATION.md`](PRODUCTIONIZATION.md).
+
+---
+
+## ADR-0020: De-seam the legacy `packages/auth` onto real StreetJS auth (planned, incremental)
+
+- **Status:** Proposed (planned migration; foundation delivered)
+- **Context:** The reference-build `packages/auth` implements authentication,
+  sessions, RBAC, and API keys behind **in-memory adapter seams**, and is
+  consumed (directly or transitively) across much of the reference build
+  (`apps/api` and many domain packages) with tests that assume its in-memory
+  behavior. The published framework now provides the real primitives
+  (`streetjs` `JwtService`, `authMiddleware`, `auth/session-store`,
+  `auth/refresh-tokens`, `auth/rbac`, `auth/api-keys`) and the new
+  **`@streetstudio/identity`** package provides real registration/login (Argon2id)
+  + JWT issuance + shared `requireActor`/`jwtAuth` helpers, already adopted by the
+  `recordings`, `uploads`, and `playback` slices.
+- **Decision:** De-seam `packages/auth` onto the real framework **incrementally**,
+  not in a single big-bang refactor, because the blast radius is wide and the
+  suite must stay green at every step. Sequence:
+  1. Back the member/credential store with real PostgreSQL (reuse
+     `@streetstudio/identity`'s `MemberRepository` / schema).
+  2. Replace session/refresh-token/API-key seams with `streetjs`
+     `auth/session-store`, `auth/refresh-tokens`, `auth/api-keys` against Postgres.
+  3. Replace RBAC evaluation with `streetjs` `auth/rbac` (`RbacService`,
+     `requireRoles`), keeping StreetStudio's role/permission **policy** as product
+     config.
+  4. Migrate consumers one at a time to the real auth + identity helpers, updating
+     each package's tests to run against real Postgres (DB-gated), keeping all six
+     gates green per step.
+  5. Remove the in-memory seams once no consumer depends on them.
+- **Consequences:** New product slices already use real auth (via identity), so
+  this ADR concerns the **legacy reference-build auth**, not new work. Until the
+  migration runs, `packages/auth` remains the seam-based reference implementation
+  (accurately labeled as such in the report). No fakes are added; the migration is
+  tracked here and in [`PRODUCTIONIZATION.md`](PRODUCTIONIZATION.md), and executed
+  as its own focused effort.
