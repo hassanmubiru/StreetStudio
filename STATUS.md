@@ -38,7 +38,7 @@ Dashboard client logic           ██████░░░░  65%   session/s
 Dashboard (web UI runtime)       ░░░░░░░░░░   0%   not built
 Desktop client                   ░░░░░░░░░░   0%   scaffold entry only
 Recorder extension               ░░░░░░░░░░   0%   scaffold entry only
-De-seam remaining pkgs → StreetJS ███░░░░░░░  30%   recordings/uploads/playback/identity real; auth de-seam steps 1–2 done — real AuthService core on real Postgres (ADR-0020)
+De-seam remaining pkgs → StreetJS ███░░░░░░░  30%   recordings/uploads/playback/identity real; auth: step 1 (real Postgres stores) + real AuthService verified end-to-end on them (ADR-0020)
 Published repo + npm releases    ░░░░░░░░░░   0%   not released
 ```
 
