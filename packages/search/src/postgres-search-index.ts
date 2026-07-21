@@ -107,7 +107,7 @@ export function postgresSearchIndex(pool: PgPool): SearchIndex {
 
       for (const r of transcriptRes.rows as Row[]) {
         const id = r["video_id"] as string;
-        const segments = parseSegments(r["segments"]);
+        const segments = parseSegments(r["segments"] ?? null);
         const match = segments.find((s) => s.text.toLowerCase().includes(lowered));
         const entry = byId.get(id) ?? {
           organizationId: r["organization_id"] as Uuid,
