@@ -12,32 +12,12 @@ import {
   Post,
   container,
   BadRequestException,
-  UnauthorizedException,
   type StreetContext,
 } from "streetjs";
 import type { Uuid } from "@streetstudio/shared";
+import { requireActor } from "@streetstudio/identity";
 import { RecordingService } from "../application/recording-service.js";
-import { RecordingStateError, type Actor } from "../domain/recording.js";
-
-/**
- * Resolve the acting member from the authenticated principal (`ctx.user`, set by
- * the StreetJS JWT auth middleware — `sub` = member id) and the active
- * organization scope (`X-Organization-Id`). A member may belong to several
- * organizations, so the scope is a per-request header, not a token claim.
- * Throws 401 when the request is unauthenticated or unscoped.
- */
-function requireActor(ctx: StreetContext): Actor {
-  if (!ctx.user) {
-    throw new UnauthorizedException("Authentication required.");
-  }
-  const org = ctx.headers["x-organization-id"];
-  if (!org) {
-    throw new UnauthorizedException(
-      "An active organization (X-Organization-Id) is required.",
-    );
-  }
-  return { memberId: ctx.user.id as Uuid, organizationId: org as Uuid };
-}
+import { RecordingStateError } from "../domain/recording.js";
 
 function requireId(ctx: StreetContext): Uuid {
   const id = ctx.params["id"];
