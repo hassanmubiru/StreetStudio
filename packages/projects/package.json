@@ -13,7 +13,8 @@
   "dependencies": {
     "@streetstudio/shared": "*",
     "@streetstudio/auth": "*",
-    "@streetstudio/database": "*"
+    "@streetstudio/database": "*",
+    "streetjs": "^1.2.7"
   },
   "streetstudio": { "domain": "Content hierarchy: projects, folders, and workspaces." }
 }
