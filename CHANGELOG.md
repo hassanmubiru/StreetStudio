@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Store-of-record repoint: comments on the canonical repository layer
+  (ADR-0021, step 3):** `apps/api/src/comments/postgres-comments.ts`
+  (`assemblePostgresComments`) wires the real `CommentService` onto the
+  `@streetstudio/database` repository layer (canonical singular, FK-constrained
+  `comment`/`reaction`/`video` tables) instead of the standalone direct-`PgPool`
+  adapter. A DB-gated integration test seeds the FK object graph
+  (organization → video, author member) and proves post + timestamp, reply
+  nesting, body/timestamp validation, and reaction idempotency on the canonical
+  path.
+
 - **Store-of-record repoint: notifications on the canonical repository layer
   (ADR-0021, step 3):** `apps/api/src/notifications/postgres-notifications.ts`
   (`assemblePostgresNotifications`) wires the real `NotificationService` onto the
