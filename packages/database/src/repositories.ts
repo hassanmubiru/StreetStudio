@@ -158,7 +158,7 @@ class BaseRepository<TRecord extends object> {
   }
 
   protected map(row: SqlRow): TRecord {
-    return mapRow<TRecord>(row);
+    return mapRow<TRecord>(row, this.table);
   }
 }
 
