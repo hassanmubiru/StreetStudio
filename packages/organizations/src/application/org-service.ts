@@ -118,47 +118,6 @@ function isWellFormedEmail(email: string): boolean {
 }
 
 /**
- * Organization settings payload. A free-form JSON object; individual keys are
- * not constrained by this service. Structural validation (R26.5) lives in
- * {@link isValidOrgSettings} and can be replaced with a domain-specific
- * validator via {@link OrgServiceDeps.validateOrgSettings}.
- */
-export type OrgSettings = Record<string, unknown>;
-
-/**
- * Default structural validator for Organization settings. Accepts a plain,
- * JSON-serializable object and rejects everything else — non-objects, arrays,
- * and objects carrying values that do not survive a JSON round-trip (functions,
- * `undefined`, cyclic references). This makes {@link OrgService.updateSettings}
- * validation atomic: a settings payload is either wholly acceptable and
- * persisted, or rejected with nothing stored (R26.1, R26.5).
- */
-export function isValidOrgSettings(settings: unknown): settings is OrgSettings {
-  if (
-    typeof settings !== "object" ||
-    settings === null ||
-    Array.isArray(settings)
-  ) {
-    return false;
-  }
-  let serialized: string | undefined;
-  try {
-    serialized = JSON.stringify(settings);
-  } catch {
-    return false; // cyclic or otherwise non-serializable
-  }
-  if (serialized === undefined) return false;
-  // A dropped top-level key (function/undefined/symbol value) means the object
-  // would not round-trip faithfully — treat it as invalid rather than silently
-  // mutating the caller's payload.
-  const roundTripped = JSON.parse(serialized) as Record<string, unknown>;
-  return (
-    Object.keys(roundTripped).length ===
-    Object.keys(settings as Record<string, unknown>).length
-  );
-}
-
-/**
  * Narrow recorder seam for the Audit Log used to record successful
  * administrative actions (R26.7). Structurally compatible with the
  * `AuditLog.append` surface exposed by `@streetstudio/database`, so the
