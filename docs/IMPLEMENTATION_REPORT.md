@@ -64,10 +64,10 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
 | Apps / packages                  | 5 apps, 44 packages                       |
-| Source files / LOC (excl. tests) | 160 files, ~25,100 LOC                    |
-| Test files / LOC                 | 173 files, ~34,300 LOC                    |
-| Full test run (with a DB)        | 173 files, 850 passed, 0 skipped, 0 failed|
-| Line coverage                    | 85.91% (DB-backed) / ~82% (no-DB)         |
+| Source files / LOC (excl. tests) | 161 files, ~25,200 LOC                    |
+| Test files / LOC                 | 174 files, ~34,400 LOC                    |
+| Full test run (with a DB)        | 174 files, 852 passed, 0 skipped, 0 failed|
+| Line coverage                    | 86.00% (DB-backed) / ~82% (no-DB)         |
 | Documentation                    | 11 files under `docs/` + root docs        |
 
 ## 2. Current maturity
