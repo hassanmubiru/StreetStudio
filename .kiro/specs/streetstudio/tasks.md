@@ -650,7 +650,7 @@ StreetJS is consumed only through its public package entry points. Every cross-p
 >
 > **Convergence principle:** shared tables (`members`, `roles`, `memberships`, `videos`) are reused across packages via idempotent `CREATE TABLE IF NOT EXISTS` DDL so domains share one store of record rather than diverging per package.
 
-- [ ] 43. Migrate in-memory store seams to real PostgreSQL adapters (de-seam)
+- [~] 43. Migrate in-memory store seams to real PostgreSQL adapters (de-seam)
   - [x] 43.1 Add real Postgres store + JWT auth to the Recordings domain
     - Implement a real PostgreSQL store adapter behind the recordings store port beside the existing in-memory `repository*Store`; export it from the package index; add JWT-authenticated service wiring; add a DB-gated `*.integration.test.ts` proving the real service runs against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
     - Completed and verified against real Postgres
