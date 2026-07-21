@@ -60,7 +60,14 @@ function mapNotification(row: Row): NotificationRecord {
   };
 }
 
-/** A {@link NotificationStore} backed by real PostgreSQL. */
+/**
+ * A {@link NotificationStore} backed by real PostgreSQL.
+ * 
+ * **ADR-0021 Note**: This direct-PgPool adapter is retained as an integration
+ * test utility and reference schema. Production code should use the canonical
+ * repository layer via `repositoryNotificationStore(assemblePostgresRepositories(pool))`,
+ * which is wired up in `assemblePostgresNotifications`.
+ */
 export function postgresNotificationStore(pool: PgPool): NotificationStore {
   return {
     async insert(record: NotificationRecord): Promise<NotificationRecord> {
