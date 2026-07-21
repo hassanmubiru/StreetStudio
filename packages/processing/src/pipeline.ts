@@ -517,13 +517,12 @@ export class MediaPipeline {
  * `@streetstudio/database`.
  *
  * Videos use the tenant-scoped repository; Assets and Renditions use the global
- * (id-keyed) repositories. Because the Video repository exposes no in-place
- * update, {@link ProcessingStore.setVideoStatus} repoints a Video by deleting
- * and re-inserting it with the new `status`, preserving its id,
- * `organizationId`, `sourceObjectKey`, and every other field (the same
- * soft-update pattern used by the content, RBAC, and API-key stores). Retaining
- * `sourceObjectKey` across a transition to `failed` is what preserves the
- * original source media (R8.6).
+ * (id-keyed) repositories. {@link ProcessingStore.setVideoStatus} uses the Video
+ * repository's in-place `update`, preserving the Video's id, `organizationId`,
+ * `sourceObjectKey`, and every other field — and, crucially, its identity, so
+ * the FK-owned Assets/Renditions persisted during processing are never
+ * cascade-deleted. Retaining `sourceObjectKey` across a transition to `failed`
+ * is what preserves the original source media (R8.6).
  */
 export function repositoryProcessingStore(
   repositories: Pick<Repositories, "videos" | "assets" | "renditions">,
