@@ -21,3 +21,9 @@ export type {
   ReactionTarget,
   MentionNotifier,
 } from "./comment.js";
+
+export {
+  ensureCommentsSchema,
+  postgresCommentStore,
+  COMMENTS_TABLES_DDL,
+} from "./postgres-comment-store.js";
