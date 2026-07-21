@@ -21,6 +21,14 @@ export type {
   NotificationPreferenceStore,
 } from "./notification-service.js";
 
+// --- Real PostgreSQL persistence (de-seam, task 43.12) ---------------------
+export {
+  ensureNotificationsSchema,
+  postgresNotificationStore,
+  postgresNotificationPreferenceStore,
+  NOTIFICATIONS_TABLES_DDL,
+} from "./postgres-notification-store.js";
+
 // The Realtime_Service gateway lives in `@streetstudio/realtime`; it consumes
 // the notification contracts (`NotificationEmitter`, `NotificationDto`) exported
 // above.
