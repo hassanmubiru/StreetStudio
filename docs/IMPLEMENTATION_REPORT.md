@@ -125,7 +125,7 @@ All commands run from the workspace root (`/…/StreetStudio`).
 | Dependency-graph acyclicity | `npm run graph:check`      | PASS — "Package dependency graph is acyclic."   |
 | Import boundaries           | `npm run boundary:check`   | PASS — 162 files scanned, 0 violations          |
 | StreetJS consumption (ADR-0011) | `npm run streetjs:check` | PASS — published, versioned packages only       |
-| Full test suite             | `npm test`                 | PASS — 178 files, 862 passed / 0 skipped (DB-backed) |
+| Full test suite             | `npm test`                 | PASS — 179 files, 865 passed / 0 skipped (DB-backed) |
 | Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 86.13% lines (DB-backed); ~82% no-DB     |
 
 All six gates run together via `scripts/check.sh` (and in CI).
@@ -162,7 +162,7 @@ infrastructure-vs-test failure classifier (R32.6).
 
 | Package / app                          | src | tests | prop | Primary responsibility                          |
 | -------------------------------------- | --- | ----- | ---- | ----------------------------------------------- |
-| apps/api                               | 20  | 27    | 8    | REST + WebSocket + Webhook host, security, ops (+ real `AuthService`-backed authenticate stage & real RBAC lifecycle stage, verified on real Postgres — ADR-0020) |
+| apps/api                               | 21  | 28    | 8    | REST + WebSocket + Webhook host, security, ops (+ `assemblePostgresAuth` wiring real `AuthService` authenticate & real RBAC lifecycle stages, verified on real Postgres — ADR-0020) |
 | apps/dashboard                         | 7   | 1     | 0    | Web_Client SPA: session/scope, use-case flows, upload orchestration, sharing, reactions + edit-session over the SDK |
 | apps/desktop                           | 1   | 0     | 0    | Desktop_Client (wraps dashboard + native capture) entry |
 | apps/recorder-extension                | 1   | 0     | 0    | Browser recorder extension entry                |
