@@ -65,8 +65,8 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Apps / packages                  | 5 apps, 42 packages                       |
 | Source files / LOC (excl. tests) | 147 files, ~24,400 LOC                    |
 | Test files / LOC                 | 169 files, ~34,000 LOC                    |
-| Full test run                    | 169 files, 818 passed, 9 skipped, 0 failed|
-| Line coverage                    | 81.98%                                    |
+| Full test run (with a DB)        | 169 files, 826 passed, 1 skipped, 0 failed|
+| Line coverage                    | 85.76% (DB-backed) / 81.98% (no-DB)       |
 | Documentation                    | 11 files under `docs/` + root docs        |
 
 ## 2. Current maturity
@@ -124,8 +124,8 @@ All commands run from the workspace root (`/…/StreetStudio`).
 | Dependency-graph acyclicity | `npm run graph:check`      | PASS — "Package dependency graph is acyclic."   |
 | Import boundaries           | `npm run boundary:check`   | PASS — 148 files scanned, 0 violations          |
 | StreetJS consumption (ADR-0011) | `npm run streetjs:check` | PASS — published, versioned packages only       |
-| Full test suite             | `npm test`                 | PASS — 169 files, 818 passed / 9 skipped        |
-| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 81.98% lines                             |
+| Full test suite             | `npm test`                 | PASS — 169 files, 826 passed / 1 skipped (DB-backed) |
+| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 85.76% lines (DB-backed); 81.98% no-DB   |
 
 All six gates run together via `scripts/check.sh` (and in CI).
 
