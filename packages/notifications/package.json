@@ -22,7 +22,8 @@
     "@streetstudio/database": "*",
     "@streetstudio/auth": "*",
     "@streetstudio/media": "*",
-    "@streetstudio/plugins": "*"
+    "@streetstudio/plugins": "*",
+    "streetjs": "^1.2.7"
   },
   "streetstudio": {
     "domain": "Notifications and realtime event contracts."
