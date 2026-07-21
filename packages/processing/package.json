@@ -20,7 +20,8 @@
   "dependencies": {
     "@streetstudio/shared": "*",
     "@streetstudio/database": "*",
-    "@streetstudio/auth": "*"
+    "@streetstudio/auth": "*",
+    "streetjs": "^1.2.7"
   },
   "streetstudio": {
     "domain": "Media processing pipeline: transcode, thumbnail, and preview generation."
