@@ -671,61 +671,6 @@ export class OrgService {
   }
 }
 
-/* ---------------------------- token helpers ---------------------------- */
-
-/**
- * Build an invitation token from its parts. The organization and invitation
- * ids are base64url-encoded (so they cannot collide with the `.` delimiter) and
- * the random secret is appended last. Embedding the ids lets
- * {@link OrgService.acceptInvitation} locate the tenant-scoped Invitation
- * without a cross-organization scan; security rests on the random secret, which
- * is compared against the stored token in constant time.
- */
-function formatToken(
-  organizationId: Uuid,
-  invitationId: Uuid,
-  secret: string,
-): string {
-  return [
-    INVITATION_TOKEN_PREFIX,
-    Buffer.from(organizationId, "utf8").toString("base64url"),
-    Buffer.from(invitationId, "utf8").toString("base64url"),
-    secret,
-  ].join(".");
-}
-
-/** Parse an invitation token, returning null for any malformed input. */
-function parseToken(token: unknown): ParsedToken | null {
-  if (typeof token !== "string") return null;
-  const parts = token.split(".");
-  if (parts.length !== 4) return null;
-  const [prefix, orgB64, invB64, secret] = parts as [
-    string,
-    string,
-    string,
-    string,
-  ];
-  if (prefix !== INVITATION_TOKEN_PREFIX || secret.length === 0) return null;
-  const organizationId = decodeSegment(orgB64);
-  const invitationId = decodeSegment(invB64);
-  if (organizationId === null || invitationId === null) return null;
-  return { organizationId, invitationId };
-}
-
-/** Decode a base64url id segment, returning null when it is empty/invalid. */
-function decodeSegment(segment: string): string | null {
-  if (segment.length === 0) return null;
-  const decoded = Buffer.from(segment, "base64url").toString("utf8");
-  return decoded.length > 0 ? decoded : null;
-}
-
-/** Constant-time comparison of a presented token against the stored token. */
-function tokensMatch(stored: string, presented: string): boolean {
-  const a = Buffer.from(stored, "utf8");
-  const b = Buffer.from(presented, "utf8");
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 /* ---------------------------- repository adapter ----------------------- */
 
 /**
