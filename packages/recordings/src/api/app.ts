@@ -52,7 +52,7 @@ export function createRecordingsApp(
     port: options.port ?? 3000,
     host: options.host ?? "0.0.0.0",
   });
-  app.use(authMiddleware(new JwtService(options.jwtSecret)));
+  app.use(jwtAuth(options.jwtSecret));
   app.registerController(RecordingsController);
   return app;
 }
