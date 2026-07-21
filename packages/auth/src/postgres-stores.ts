@@ -54,7 +54,7 @@ function mapMember(row: Row): MemberRecord {
   return {
     id: row["id"] as Uuid,
     email: row["email"] as string,
-    passwordHash: row["password_hash"],
+    passwordHash: row["password_hash"] ?? null,
     createdAt: iso(row["created_at"] as string),
   };
 }
