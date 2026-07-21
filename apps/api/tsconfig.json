@@ -12,6 +12,7 @@
     { "path": "../../packages/database" },
     { "path": "../../packages/auth" },
     { "path": "../../packages/media" },
+    { "path": "../../packages/comments" },
     { "path": "../../packages/processing" },
     { "path": "../../packages/notifications" },
     { "path": "../../packages/plugins" },
