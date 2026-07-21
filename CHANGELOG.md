@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Auth de-seam — concrete `apps/api` Postgres auth assembly (ADR-0020):**
+  `assemblePostgresAuth(pool, jwtSecret)` + `ensureApiAuthSchema(pool)` build the
+  real `AuthService` (Argon2id + HMAC over real member/session stores), the
+  lifecycle authenticator, and the deny-by-default RBAC `AccessControl` over the
+  real roles/memberships store — the production wiring the abstract composition
+  root was designed to receive. A DB-gated integration test drives the real
+  `createApiService` through **both** lifecycle stages against real Postgres:
+  a registered+granted member's real token authenticates and is authorized;
+  an unauthenticated request is rejected at the authenticate stage; and an
+  authenticated member with no membership is denied (audited) at the RBAC stage.
+
 - **Auth de-seam — API RBAC lifecycle stage on real Postgres (ADR-0020):** a
   DB-gated integration test runs the API request lifecycle's RBAC stage with the
   real deny-by-default `RbacAccessControl` backed by real Postgres — a member
