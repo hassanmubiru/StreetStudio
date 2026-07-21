@@ -187,7 +187,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/uploads **(real)**            | 7   | 2     | 1    | Chunked upload sessions on **published StreetJS** + `@streetjs/storage` (real Postgres + real object storage) |
 | packages/playback **(real)**           | 4   | 2     | 1    | Authorized byte-range streaming of completed uploads on **published StreetJS** (200/206/416; real infra) |
 | packages/identity **(real)**           | 8   | 2     | 1    | Real register/login (Argon2id) + JWT issuance on **published StreetJS**; shared `requireActor`/`jwtAuth` helpers |
-| packages/processing                    | 2   | 5     | 3    | Media pipeline: transcode/thumbnail/preview     |
+| packages/processing                    | 3   | 6     | 3    | Media pipeline: transcode/thumbnail/preview (real Postgres store: videos/assets/renditions) |
 | packages/notifications                 | 2   | 4     | 3    | Notifications + event contracts                 |
 | packages/realtime                      | 2   | 4     | 3    | Realtime gateway: presence, typing, fan-out     |
 | packages/plugins                       | 6   | 8     | 4    | Plugin_Manager, billing, isolation              |
