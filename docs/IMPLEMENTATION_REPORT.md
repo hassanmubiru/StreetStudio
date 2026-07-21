@@ -64,10 +64,10 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
 | Apps / packages                  | 5 apps, 44 packages                       |
-| Source files / LOC (excl. tests) | 173 files, ~26,556 LOC                    |
-| Test files / LOC                 | 188 files, ~36,053 LOC                    |
-| Full test run (with a DB)        | 188 files, 891 passed, 0 skipped, 0 failed|
-| Line coverage                    | 86.35% (DB-backed) / ~82% (no-DB)         |
+| Source files / LOC (excl. tests) | 174 files, ~26,692 LOC                    |
+| Test files / LOC                 | 189 files, ~36,180 LOC                    |
+| Full test run (with a DB)        | 189 files, 892 passed, 0 skipped, 0 failed|
+| Line coverage                    | 85.92% (DB-backed) / ~82% (no-DB)         |
 | Documentation                    | 11 files under `docs/` + root docs        |
 
 ## 2. Current maturity
@@ -123,10 +123,10 @@ All commands run from the workspace root (`/…/StreetStudio`).
 | --------------------------- | -------------------------- | ----------------------------------------------- |
 | Build (project references)  | `npm run build`            | PASS (exit 0)                                   |
 | Dependency-graph acyclicity | `npm run graph:check`      | PASS — "Package dependency graph is acyclic."   |
-| Import boundaries           | `npm run boundary:check`   | PASS — 174 files scanned, 0 violations          |
+| Import boundaries           | `npm run boundary:check`   | PASS — 175 files scanned, 0 violations          |
 | StreetJS consumption (ADR-0011) | `npm run streetjs:check` | PASS — published, versioned packages only       |
-| Full test suite             | `npm test`                 | PASS — 188 files, 891 passed / 0 skipped (DB-backed) |
-| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 86.35% lines (DB-backed); ~82% no-DB     |
+| Full test suite             | `npm test`                 | PASS — 189 files, 892 passed / 0 skipped (DB-backed) |
+| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 85.92% lines (DB-backed); ~82% no-DB     |
 
 All six gates run together via `scripts/check.sh` (and in CI).
 

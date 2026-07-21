@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Store-of-record repoint: media pipeline on the canonical repository layer
+  (ADR-0021, step 3):** `apps/api/src/processing/postgres-processing.ts`
+  (`assemblePostgresMediaPipeline`) wires the real `MediaPipeline` onto the
+  `@streetstudio/database` repository layer (canonical singular, FK-constrained
+  `video`/`asset`/`rendition` tables). A DB-gated integration test proves a
+  successful run persists 1 thumbnail + 1 preview + 3 renditions and transitions
+  the video to `ready` **without cascade-deleting** those children.
+
+### Changed
+
+- **Repository layer gains in-place `update`:** `GlobalRepository`/
+  `TenantRepository` now expose an `update(record)` that issues a real SQL
+  `UPDATE` (scoped by `organization_id` for tenant repositories), and the
+  in-memory test client interprets `UPDATE ... SET ... WHERE`. `MediaPipeline`'s
+  `setVideoStatus` uses it instead of delete-then-insert, so a status transition
+  preserves the video's identity and never cascade-deletes its FK-owned
+  assets/renditions on the canonical schema (surfaced by the ADR-0021 repoint).
+
 - **Store-of-record repoint: comments on the canonical repository layer
   (ADR-0021, step 3):** `apps/api/src/comments/postgres-comments.ts`
   (`assemblePostgresComments`) wires the real `CommentService` onto the
