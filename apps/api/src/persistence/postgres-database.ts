@@ -32,7 +32,7 @@ import {
 export function streetPgPoolClient(pool: PgPool): SqlClient {
   return streetSqlClient({
     query: (text, params) =>
-      pool.query(text, params as readonly unknown[]) as ReturnType<
+      pool.query(text, params ? [...params] : []) as ReturnType<
         Parameters<typeof streetSqlClient>[0]["query"]
       >,
   });
