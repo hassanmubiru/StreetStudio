@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Second real product slice: `@streetstudio/uploads`** — chunked/resumable
+  upload sessions on the published StreetJS framework + `@streetjs/storage`.
+  Rich, immutable `UploadSession` domain (pending → completed / aborted; idempotent
+  part receipt; complete only when all parts present), a use-case service that
+  writes parts and **assembles the real object** in storage on completion, a real
+  PostgreSQL repository (`received_parts` as JSONB), and a JWT-authenticated HTTP
+  API (begin / upload-part / complete / abort / status; part bytes as base64
+  JSON). Verified by unit + fast-check property tests and an **integration test
+  against real Postgres + real object storage** (local-file driver): a full
+  begin→upload→complete HTTP journey that checks the assembled object's bytes,
+  plus incomplete-complete (400), abort, and 401. Provider-agnostic — swap to
+  S3/R2/MinIO by config. No fakes.
+
 - **First real product slice on the published StreetJS framework:**
   `@streetstudio/recordings` (ADR-0018/0019). Domain-first package with a rich,
   immutable `Recording` model (draft → published → archived, with `canEdit`/

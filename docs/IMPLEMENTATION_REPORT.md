@@ -62,11 +62,11 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Reference-build specification tasks implemented and verified | 184 / 184     |
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
-| Apps / packages                  | 5 apps, 41 packages                       |
-| Source files / LOC (excl. tests) | 140 files, ~23,800 LOC                    |
-| Test files / LOC                 | 167 files, ~33,800 LOC                    |
-| Full test run                    | 167 files, 810 passed, 5 skipped, 0 failed|
-| Line coverage                    | 83.95%                                    |
+| Apps / packages                  | 5 apps, 42 packages                       |
+| Source files / LOC (excl. tests) | 147 files, ~24,400 LOC                    |
+| Test files / LOC                 | 169 files, ~34,000 LOC                    |
+| Full test run                    | 169 files, 818 passed, 9 skipped, 0 failed|
+| Line coverage                    | 81.98%                                    |
 | Documentation                    | 11 files under `docs/` + root docs        |
 
 ## 2. Current maturity
@@ -122,10 +122,10 @@ All commands run from the workspace root (`/…/StreetStudio`).
 | --------------------------- | -------------------------- | ----------------------------------------------- |
 | Build (project references)  | `npm run build`            | PASS (exit 0)                                   |
 | Dependency-graph acyclicity | `npm run graph:check`      | PASS — "Package dependency graph is acyclic."   |
-| Import boundaries           | `npm run boundary:check`   | PASS — 141 files scanned, 0 violations          |
+| Import boundaries           | `npm run boundary:check`   | PASS — 148 files scanned, 0 violations          |
 | StreetJS consumption (ADR-0011) | `npm run streetjs:check` | PASS — published, versioned packages only       |
-| Full test suite             | `npm test`                 | PASS — 167 files, 810 passed / 5 skipped        |
-| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 83.95% lines                             |
+| Full test suite             | `npm test`                 | PASS — 169 files, 818 passed / 9 skipped        |
+| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 81.98% lines                             |
 
 All six gates run together via `scripts/check.sh` (and in CI).
 
@@ -182,7 +182,8 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/timeline                      | 2   | 1     | 0    | Timeline model + ops (tracks, clips, markers)   |
 | packages/editor                        | 3   | 2     | 1    | Browser editor model + reducer (trim/split/merge/speed) |
 | packages/recorder                      | 5   | 2     | 1    | Recorder capture + offline upload client        |
-| packages/recordings **(real)**         | 7   | 2     | 1    | Recording lifecycle on **published StreetJS** (real HTTP + Postgres); first de-seamed slice |
+| packages/recordings **(real)**         | 7   | 2     | 1    | Recording lifecycle on **published StreetJS** (real HTTP + Postgres + JWT); first de-seamed slice |
+| packages/uploads **(real)**            | 7   | 2     | 1    | Chunked upload sessions on **published StreetJS** + `@streetjs/storage` (real Postgres + real object storage) |
 | packages/processing                    | 2   | 5     | 3    | Media pipeline: transcode/thumbnail/preview     |
 | packages/notifications                 | 2   | 4     | 3    | Notifications + event contracts                 |
 | packages/realtime                      | 2   | 4     | 3    | Realtime gateway: presence, typing, fan-out     |
