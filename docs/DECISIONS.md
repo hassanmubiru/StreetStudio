@@ -692,3 +692,63 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   (accurately labeled as such in the report). No fakes are added; the migration is
   tracked here and in [`PRODUCTIONIZATION.md`](PRODUCTIONIZATION.md), and executed
   as its own focused effort.
+
+---
+
+## ADR-0021: Standardize on the `SqlClient` repository layer as the single store of record; retire the direct-`PgPool` adapters after convergence
+
+- **Status:** Accepted (decision recorded; retirement is sequenced and not yet
+  executed — no code deleted)
+- **Context:** The domain-by-domain de-seam (ADR-0020, tracked as spec task 43)
+  added a real `postgres<Domain>Store` adapter beside each domain's in-memory
+  default, each composing the published `streetjs` `PgPool` directly with its own
+  `ensure<Domain>Schema` idempotent DDL, proven by a DB-gated integration test.
+  Investigating task 43.14 ("retire the in-memory `repository*Store` seams")
+  surfaced a correction to the original premise: the `repository*Store` adapters
+  are **not in-memory fakes**. They delegate to `@streetstudio/database`'s
+  repository layer (`createRepositories(client)`), which issues **real,
+  parameterized SQL** against an injected `SqlClient`. The "in-memory" aspect is
+  only the `SqlClient` that unit/property tests inject; wired to a real StreetJS
+  Postgres client, the same repository layer is a legitimate production path.
+  StreetStudio therefore has **two** real persistence paths:
+  1. the shared `SqlClient` repository layer (`packages/database`), which every
+     domain service already defaults to via its `repository*Store` adapter, and
+  2. the per-domain direct-`PgPool` adapters added during the de-seam, each with
+     its own DDL.
+  Keeping both indefinitely means two schemas of record and duplicated SQL.
+- **Decision:** Converge on **one** store of record — the `SqlClient` repository
+  layer in `packages/database` — wired to a real StreetJS Postgres client at the
+  composition roots. The direct-`PgPool` `postgres<Domain>Store` adapters are
+  **retained as integration-proof and reference schema**, not as the production
+  wiring, until convergence completes. Retirement of the in-memory *default* is a
+  deliberate, gated migration, executed one domain at a time — never a bulk
+  delete (the task-43.14 constraint).
+- **Sequenced retirement plan (each step keeps all six gates green):**
+  1. **Unify the schema.** Reconcile each domain's `ensure<Domain>Schema` DDL
+     with the `packages/database` migrations so there is a single canonical schema
+     (the direct-`PgPool` DDL becomes redundant once the repository layer owns the
+     tables). Reuse the shared convergence tables (`members`, `roles`,
+     `memberships`, `videos`).
+  2. **Wire a real Postgres `SqlClient` at each composition root.** Provide the
+     StreetJS Postgres client to `createRepositories(client)` in `apps/api` (and
+     the other roots) behind config, mirroring the existing `assemblePostgresAuth`
+     pattern; add a DB-gated integration test per root.
+  3. **Point each domain service's production default at the real repository
+     path** (via its existing `repository*Store` adapter over the real client),
+     one domain at a time, DB-gated, gates green per step.
+  4. **Reclassify the direct-`PgPool` adapters** as integration-test fixtures /
+     reference schema (or delete the ones fully superseded by step 1), once no
+     production path depends on them.
+  5. **Confirm no consumer depends on an in-memory `SqlClient` outside tests**,
+     then the "in-memory seam" is retired by construction — the in-memory client
+     survives only as a unit-test double, which is permitted by the production
+     charter.
+- **Consequences:** One schema and one persistence path in production; the
+  in-memory `SqlClient` is confined to automated tests (charter-compliant); the
+  direct-`PgPool` adapters remain valuable as fast, dependency-light integration
+  proofs and as the reference DDL that seeds step 1. The migration is wide but
+  low-risk when sequenced, because every domain service already targets the
+  repository layer through its port — only the injected client and the production
+  default change, not the domain logic. Tracked as spec task 43.14 and in
+  [`PRODUCTIONIZATION.md`](PRODUCTIONIZATION.md); no code is deleted under this ADR
+  until the steps above are executed and verified.
