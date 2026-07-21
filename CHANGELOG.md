@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Media pipeline de-seam — `MediaPipeline` on real Postgres:**
+  `@streetstudio/processing` gains a real PostgreSQL `ProcessingStore`
+  (`postgresProcessingStore`, `ensureProcessingSchema`; shared videos + assets +
+  renditions tables). `setVideoStatus` is a real in-place `UPDATE` that preserves
+  `source_object_key`, so the original source media is retained across a
+  transition to `failed` (R8.6). A DB-gated integration test runs the real
+  `MediaPipeline` on real Postgres: enqueue marks the video `queued` (R8.1),
+  a successful run persists exactly one thumbnail + one preview + three ABR
+  renditions and marks the video `ready` (R8.2–R8.4, R8.7), and an exhausted
+  transcoder records `failed` while retaining the source and persisting no
+  renditions (R8.6).
+
 - **Comments de-seam — `CommentService` on real Postgres:**
   `@streetstudio/comments` gains a real PostgreSQL `CommentStore`
   (`postgresCommentStore`, `ensureCommentsSchema`; comments/reactions + shared
