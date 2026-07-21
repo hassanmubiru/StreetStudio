@@ -534,9 +534,11 @@ export function repositoryProcessingStore(
       videos.findById(organizationId, videoId),
     findVideoById: (videoId) => videos.findByIdUnscoped(videoId),
     async setVideoStatus(video, status) {
+      // In-place update preserves the video's identity so the FK-owned assets
+      // and renditions persisted during processing are never cascade-deleted
+      // (unlike a delete-then-insert soft update on an FK-cascade schema).
       const updated: VideoRecord = { ...video, status };
-      await videos.deleteById(video.organizationId, video.id);
-      await videos.insert(updated);
+      await videos.update(updated);
       return updated;
     },
     insertAsset: (record) => assets.insert(record),

@@ -21,7 +21,7 @@
  */
 import type { Uuid } from "@streetstudio/shared";
 import type { SqlClient, SqlRow, SqlValue } from "./sql.js";
-import { getTable, type SqlColumnType } from "./schema.js";
+import { ORGANIZATION_ID_COLUMN, getTable, type SqlColumnType } from "./schema.js";
 import type {
   ApiKeyRecord,
   AssetRecord,
@@ -270,6 +270,32 @@ export class TenantRepository<
       `DELETE FROM ${this.table} WHERE organization_id = $1 AND id = $2`,
       [organizationId, id],
     );
+  }
+
+  /**
+   * Update a row in place, scoped to its organization, setting every column
+   * other than `id`/`organization_id` from `record`. Preserves the row's
+   * identity so FK children (`ON DELETE CASCADE`) are never disturbed — unlike a
+   * delete-then-insert soft update.
+   */
+  async update(record: TRecord): Promise<TRecord> {
+    const entries = Object.entries(record as Record<string, unknown>).filter(
+      ([field]) => {
+        const column = toColumnName(field);
+        return column !== "id" && column !== ORGANIZATION_ID_COLUMN;
+      },
+    );
+    const assignments = entries.map(
+      ([field], i) => `${toColumnName(field)} = $${i + 1}`,
+    );
+    const values = entries.map(([, value]) => value as SqlValue);
+    await this.client.query(
+      `UPDATE ${this.table} SET ${assignments.join(", ")} WHERE organization_id = $${
+        values.length + 1
+      } AND id = $${values.length + 2}`,
+      [...values, record.organizationId, record.id],
+    );
+    return record;
   }
 }
 
