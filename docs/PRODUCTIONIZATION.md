@@ -167,3 +167,49 @@ provisioning real infra + client runtimes.
 > Note: there is **no** `@streetjs/http` / `@streetjs/auth` / `@streetjs/rbac` /
 > `@streetjs/runtime` / `@streetjs/plugins` package — those capabilities live
 > inside `streetjs` (see [`FRAMEWORK_CONTRACT.md`](FRAMEWORK_CONTRACT.md)).
+
+---
+
+## De-seam playbook (per-domain convention)
+
+The domain-by-domain migration from in-memory adapter seams to real PostgreSQL
+(ADR-0020) follows one repeatable, **additive** checklist. Each domain is a
+self-contained slice; the pattern keeps the suite green at every step and never
+removes the in-memory adapter until the deliberate retirement migration
+(task 43.14).
+
+For each domain package:
+
+1. **Add the real adapter beside the in-memory one.** Implement a
+   `postgres<Domain>Store` (or index/provider) that satisfies the *same* store
+   port the in-memory `repository*Store` implements. Compose the published
+   `streetjs` `PgPool`; every query is parameterized. Do not modify the in-memory
+   adapter — the two coexist.
+2. **Ship idempotent schema.** Export an `ensure<Domain>Schema(pool)` plus a
+   `*_TABLES_DDL` string using `CREATE TABLE IF NOT EXISTS`. Reuse the shared
+   convergence tables (`members`, `roles`, `memberships`, `videos`) via the same
+   idempotent DDL so domains share one store of record.
+3. **Export it** from the package `index.ts` (value + any types).
+4. **Add the dependency.** Add `"streetjs": "^1.2.7"` to the package manifest.
+5. **Add a DB-gated integration test** named `*.integration.test.ts`, gated by
+   `const suite = process.env["STREETSTUDIO_IT_DATABASE_URL"] ? describe : describe.skip;`
+   and using the standard `poolOptions(url)` helper. Drive the *real* domain
+   service against real Postgres, asserting the requirement clauses the domain
+   owns.
+6. **Run all six gates green:** `npm run build`, `npm run graph:check`,
+   `npm run boundary:check`, `npm run streetjs:check`, `npm test`, and
+   `npm run test:coverage` (≥80% lines). The integration tests run when
+   `STREETSTUDIO_IT_DATABASE_URL` is set (CI Postgres service) and skip otherwise.
+7. **Update measured docs** with freshly measured numbers only — never invented:
+   `STATUS.md` (metrics table + de-seam bar), `docs/IMPLEMENTATION_REPORT.md`
+   (exec summary, metrics, verification gates, and the package matrix row),
+   `CHANGELOG.md`, and the spec `tasks.md` checkbox. Regenerate counts with
+   `npm run status`; regenerate pass/coverage with `npm test` /
+   `npm run test:coverage`.
+
+Completed slices under this convention: recordings, uploads, playback, identity,
+auth (+ apps/api wiring), organizations, content hierarchy, comments, media
+pipeline (videos/assets/renditions), search, and notifications. The remaining
+step is the deliberate retirement of the in-memory `repository*Store` seams once
+no consumer depends on them (task 43.14) — sequenced last because it changes the
+fallback path relied on by the currently-green suite.
