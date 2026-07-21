@@ -701,9 +701,9 @@ StreetJS is consumed only through its public package entry points. Every cross-p
     - Completed and verified against real Postgres
     - _Requirements: 1.5, 8.2, 8.4, 8.7, 9.1_
 
-  - [ ] 43.11 De-seam the Search domain onto a real Postgres/index-backed adapter
-    - Implement a real Postgres/index-backed search store adapter behind the existing search store port beside the in-memory adapter, preserving authorized-scope filtering; export from the package index; add a DB-gated integration test against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
-    - Not started
+  - [x] 43.11 De-seam the Search domain onto a real Postgres/index-backed adapter
+    - `postgresSearchIndex` (`ensureSearchSchema`) implements the pluggable `SearchIndex` port over the shared `videos` table (title matches) plus a `transcripts` table (segment-text matches carrying the playback position, R14.2), with wildcard-escaped `ILIKE` and stable ordering for pagination, beside the in-memory index; authorized-scope filtering stays in the service (R14.4); exported from the package index; a DB-gated `*.integration.test.ts` runs the real `SearchService` against real Postgres (authorized/other-org exclusion, transcript position, query validation, empty set); `"streetjs": "^1.2.7"` added; all six gates green; measured docs updated
+    - Completed and verified against real Postgres
     - _Requirements: 1.5, 14.1_
 
   - [ ] 43.12 De-seam the Notifications domain onto Postgres

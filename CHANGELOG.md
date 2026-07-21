@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Notifications de-seam — `NotificationService` on real Postgres:**
+  `@streetstudio/notifications` gains real PostgreSQL `NotificationStore` +
+  `NotificationPreferenceStore` adapters (`postgresNotificationStore`,
+  `postgresNotificationPreferenceStore`, `ensureNotificationsSchema`;
+  notifications + notification_preferences tables). `save` is a real in-place
+  `UPDATE` of the `read_at`/`delivered_at` columns. A DB-gated integration test
+  runs the real `NotificationService` on real Postgres: create records the event
+  fields and respects a disabled preference (R12.1, R12.4), mark-read is
+  ownership-checked (R12.3, R12.6), and `deliverPending` delivers retained
+  notifications on reconnect exactly once (R12.5).
+
+- **Search de-seam — `SearchService` on a real Postgres index:**
+  `@streetstudio/search` gains a real PostgreSQL `SearchIndex`
+  (`postgresSearchIndex`, `ensureSearchSchema`; shared videos + transcripts
+  tables) matching Videos by title and transcripts by segment text with
+  wildcard-escaped `ILIKE` and stable ordering for pagination. A DB-gated
+  integration test runs the real `SearchService` on real Postgres: returns only
+  authorized, matching results and excludes other organizations (R14.1, R14.4),
+  carries the matching transcript playback position (R14.2), rejects
+  out-of-range queries before searching (R14.5), and returns an empty set when
+  nothing matches (R14.3).
+
 - **Media pipeline de-seam — `MediaPipeline` on real Postgres:**
   `@streetstudio/processing` gains a real PostgreSQL `ProcessingStore`
   (`postgresProcessingStore`, `ensureProcessingSchema`; shared videos + assets +
