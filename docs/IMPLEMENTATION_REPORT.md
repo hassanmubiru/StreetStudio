@@ -177,7 +177,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/media                         | 6   | 17    | 13   | Videos, assets, uploads, sharing, dev-assets, reviews |
 | packages/storage                       | 2   | 5     | 3    | Storage abstraction + StorageProvider contract  |
 | packages/knowledge                     | 2   | 4     | 3    | Transcript indexing, summaries, doc links (knowledge base) |
-| packages/comments                      | 2   | 5     | 4    | Comments, threads, reactions, mentions          |
+| packages/comments                      | 3   | 6     | 4    | Comments, threads, reactions, mentions (real Postgres store) |
 | packages/search                        | 2   | 5     | 4    | Search + transcript search (authorized scope)   |
 | packages/player                        | 2   | 3     | 2    | Streaming/playback: ABR manifest with view-permission & share-credential gating |
 | packages/timeline                      | 2   | 1     | 0    | Timeline model + ops (tracks, clips, markers)   |
