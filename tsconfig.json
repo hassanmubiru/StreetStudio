@@ -32,6 +32,7 @@
     { "path": "./packages/recorder" },
     { "path": "./packages/recordings" },
     { "path": "./packages/uploads" },
+    { "path": "./packages/playback" },
     { "path": "./packages/analytics" },
     { "path": "./packages/sdk" },
     { "path": "./packages/ui" },
