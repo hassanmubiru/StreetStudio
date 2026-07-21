@@ -162,7 +162,7 @@ infrastructure-vs-test failure classifier (R32.6).
 
 | Package / app                          | src | tests | prop | Primary responsibility                          |
 | -------------------------------------- | --- | ----- | ---- | ----------------------------------------------- |
-| apps/api                               | 19  | 25    | 8    | REST + WebSocket + Webhook host, security, ops  |
+| apps/api                               | 20  | 26    | 8    | REST + WebSocket + Webhook host, security, ops (+ real `AuthService`-backed authenticator, verified on real Postgres — ADR-0020) |
 | apps/dashboard                         | 7   | 1     | 0    | Web_Client SPA: session/scope, use-case flows, upload orchestration, sharing, reactions + edit-session over the SDK |
 | apps/desktop                           | 1   | 0     | 0    | Desktop_Client (wraps dashboard + native capture) entry |
 | apps/recorder-extension                | 1   | 0     | 0    | Browser recorder extension entry                |
