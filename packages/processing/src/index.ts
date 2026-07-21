@@ -39,3 +39,10 @@ export type {
   AssetRef,
   RenditionRef,
 } from "./pipeline.js";
+
+// --- Real PostgreSQL persistence (de-seam, task 43.10) ---------------------
+export {
+  ensureProcessingSchema,
+  postgresProcessingStore,
+  PROCESSING_TABLES_DDL,
+} from "./postgres-processing-store.js";
