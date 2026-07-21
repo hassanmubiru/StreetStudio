@@ -369,7 +369,7 @@ export class OrgService {
     token: string,
     member: Uuid,
   ): Promise<MembershipRecord> {
-    const parsed = parseToken(token);
+    const parsed = InvitationToken.parse(token);
     if (!parsed) {
       throw new AppError("INVITATION_INVALID");
     }
@@ -380,7 +380,7 @@ export class OrgService {
     );
     if (
       !invitation ||
-      !tokensMatch(invitation.token, token) ||
+      !InvitationToken.tokensMatch(invitation.token, token) ||
       invitation.status !== "pending" ||
       this.isExpired(invitation.expiresAt)
     ) {
