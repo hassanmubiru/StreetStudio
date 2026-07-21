@@ -38,8 +38,9 @@ describe("parseRange", () => {
         fc.integer({ min: 0, max: 9_999 }),
         fc.integer({ min: 0, max: 9_999 }),
         (size, a, b) => {
-          const start = Math.min(a, b) % size;
-          const end = Math.max(a, b) % size;
+          // Construct a guaranteed 0 <= start <= end < size.
+          const start = a % size;
+          const end = start + (b % (size - start));
           const result = parseRange(`bytes=${start}-${end}`, size);
           expect(result).toEqual({ start, end });
         },
