@@ -90,8 +90,7 @@ export const ADMIN_ACTION_SETTINGS_UPDATED = "org.settings.updated";
 /** Audit `action` recorded when a Member is removed from an Organization (R26.7). */
 export const ADMIN_ACTION_MEMBER_REMOVED = "org.member.removed";
 
-/**
- * Permissions seeded on the Administrator Role. Includes the role-management
+/** Permissions seeded on the Administrator Role. Includes the role-management
  * permission the RBAC evaluator gates role assignment on, so the creator can
  * administer the Organization from the outset.
  */
@@ -101,9 +100,6 @@ const ADMINISTRATOR_PERMISSIONS: readonly string[] = [
 
 /** Permissions seeded on the default Member Role. */
 const MEMBER_PERMISSIONS: readonly string[] = [];
-
-/** Prefix on every invitation token, used as a cheap malformed-input guard. */
-const INVITATION_TOKEN_PREFIX = "ssi";
 
 /** Random bytes in the token's secret component (256 bits of entropy). */
 const TOKEN_SECRET_BYTES = 32;
