@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Organizations de-seam — `OrgService` on real Postgres:**
+  `@streetstudio/organizations` gains a real PostgreSQL `OrgStore`
+  (`postgresOrgStore`, `ensureOrganizationsSchema`) implementing the full port
+  (organizations, roles, memberships, invitations, teams, team memberships).
+  Roles and memberships live in the **same `roles`/`memberships` tables the auth
+  RBAC store uses**, so organization administration and authorization share one
+  store of record. A DB-gated integration test runs the real `OrgService`
+  end-to-end on real Postgres: create org (creator → Administrator), cross-org
+  invite denial (R4.6), invite → accept → real membership, remove member
+  (revokes access), and last-administrator retention (R26.6).
+
 - **Auth de-seam — concrete `apps/api` Postgres auth assembly (ADR-0020):**
   `assemblePostgresAuth(pool, jwtSecret)` + `ensureApiAuthSchema(pool)` build the
   real `AuthService` (Argon2id + HMAC over real member/session stores), the

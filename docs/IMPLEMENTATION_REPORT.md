@@ -172,7 +172,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/config                        | 12  | 8     | 4    | Config loading + boundary/graph tooling         |
 | packages/database                      | 9   | 6     | 2    | Schema, repositories, append-only audit log     |
 | packages/auth                          | 12  | 20    | 12   | Auth, sessions, RBAC, API keys (+ **real PostgreSQL** member/session stores, `AuthService` core, and deny-by-default RBAC evaluator — all verified on real Postgres, ADR-0020 de-seam) |
-| packages/organizations                 | 2   | 10    | 9    | Organizations, teams, membership, admin         |
+| packages/organizations                 | 3   | 11    | 9    | Organizations, teams, membership, admin (+ **real PostgreSQL** `OrgStore`, `OrgService` verified on real Postgres — shares roles/memberships with RBAC) |
 | packages/projects                      | 2   | 5     | 4    | Content hierarchy: projects, folders, workspaces |
 | packages/media                         | 6   | 17    | 13   | Videos, assets, uploads, sharing, dev-assets, reviews |
 | packages/storage                       | 2   | 5     | 3    | Storage abstraction + StorageProvider contract  |
