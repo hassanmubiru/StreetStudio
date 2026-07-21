@@ -651,8 +651,8 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
 
 ## ADR-0020: De-seam the legacy `packages/auth` onto real StreetJS auth (incremental)
 
-- **Status:** Accepted — step 1 executed (real Postgres member/session stores);
-  steps 2–5 in progress
+- **Status:** Accepted — steps 1–2 executed (real Postgres stores; real
+  `AuthService` core verified end-to-end on them); steps 3–5 in progress
 - **Context:** The reference-build `packages/auth` implements authentication,
   sessions, RBAC, and API keys behind **in-memory adapter seams**, and is
   consumed (directly or transitively) across much of the reference build
