@@ -12,23 +12,10 @@ import {
   container,
   BadRequestException,
   NotFoundException,
-  UnauthorizedException,
   type StreetContext,
 } from "streetjs";
-import type { Uuid } from "@streetstudio/shared";
-import type { Actor } from "@streetstudio/uploads";
+import { requireActor } from "@streetstudio/identity";
 import { PlaybackService, parseRange } from "../application/playback-service.js";
-
-function requireActor(ctx: StreetContext): Actor {
-  if (!ctx.user) {
-    throw new UnauthorizedException("Authentication required.");
-  }
-  const org = ctx.headers["x-organization-id"];
-  if (!org) {
-    throw new UnauthorizedException("An active organization (X-Organization-Id) is required.");
-  }
-  return { memberId: ctx.user.id as Uuid, organizationId: org as Uuid };
-}
 
 @Controller("/api/playback")
 export class PlaybackController {
