@@ -26,7 +26,7 @@ const suite = DATABASE_URL ? describe : describe.skip;
  * Proves organizations operations flow through the canonical repository layer.
  */
 suite("Organizations postgres repointing", () => {
-  const pool = new PgPool(DATABASE_URL!);
+  let pool: PgPool;
   
   beforeAll(async () => {
     if (!DATABASE_URL) return;
