@@ -702,12 +702,13 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   composition root via `ensureCanonicalSchema`/`assemblePostgresRepositories`,
   verified by a DB-gated integration test: idempotent migrations, entity
   round-trip through the canonical singular/FK'd tables, and real FK enforcement).
-  Step 3 has begun: the **notifications** domain's production default is repointed
-  onto the canonical repository layer (`assemblePostgresNotifications`), verified
-  by a DB-gated integration test; this also surfaced and fixed a repository-layer
-  type-coercion gap against the real `PgPool` driver (booleans/`jsonb`/numerics).
-  The remaining domains (comments, media, search, content, organizations, auth)
-  repoint the same way, then steps 4–5 (reclassify/remove superseded
+  Step 3 is under way: the **notifications** and **comments** domains' production
+  defaults are repointed onto the canonical repository layer
+  (`assemblePostgresNotifications`, `assemblePostgresComments`), each verified by
+  a DB-gated integration test; the notifications repoint also surfaced and fixed a
+  repository-layer type-coercion gap against the real `PgPool` driver
+  (booleans/`jsonb`/numerics). The remaining domains (media, search, content,
+  organizations, auth) repoint the same way, then steps 4–5 (reclassify/remove superseded
   direct-`PgPool` adapters; confirm the in-memory client is test-only). No code
   deleted.
 - **Context:** The domain-by-domain de-seam (ADR-0020, tracked as spec task 43)
