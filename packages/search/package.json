@@ -13,7 +13,8 @@
   "dependencies": {
     "@streetstudio/shared": "*",
     "@streetstudio/auth": "*",
-    "@streetstudio/media": "*"
+    "@streetstudio/media": "*",
+    "streetjs": "^1.2.7"
   },
   "streetstudio": { "domain": "Search and transcript search over authorized media." }
 }
