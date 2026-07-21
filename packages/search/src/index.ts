@@ -29,3 +29,6 @@ export {
   postgresSearchIndex,
   SEARCH_TABLES_DDL,
 } from "./postgres-search-index.js";
+
+// --- Repository-based search index (ADR-0021, step 3) ----------------------
+export { repositorySearchIndex } from "./repository-search-index.js";
