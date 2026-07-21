@@ -64,7 +64,7 @@ integration against published `@streetjs/*` packages and the UI clients remain
 | Requirements implemented (EARS)  | 32 / 32                                   |
 | Correctness properties covered   | 88 / 88 (1 property test each)            |
 | Apps / packages                  | 5 apps, 44 packages                       |
-| Source files / LOC (excl. tests) | 165 files, ~25,700 LOC                    |
+| Source files / LOC (excl. tests) | 166 files, ~25,800 LOC                    |
 | Test files / LOC                 | 181 files, ~35,200 LOC                    |
 | Full test run (with a DB)        | 181 files, 871 passed, 0 skipped, 0 failed|
 | Line coverage                    | 85.94% (DB-backed) / ~82% (no-DB)         |
@@ -123,9 +123,9 @@ All commands run from the workspace root (`/…/StreetStudio`).
 | --------------------------- | -------------------------- | ----------------------------------------------- |
 | Build (project references)  | `npm run build`            | PASS (exit 0)                                   |
 | Dependency-graph acyclicity | `npm run graph:check`      | PASS — "Package dependency graph is acyclic."   |
-| Import boundaries           | `npm run boundary:check`   | PASS — 166 files scanned, 0 violations          |
+| Import boundaries           | `npm run boundary:check`   | PASS — 167 files scanned, 0 violations          |
 | StreetJS consumption (ADR-0011) | `npm run streetjs:check` | PASS — published, versioned packages only       |
-| Full test suite             | `npm test`                 | PASS — 180 files, 868 passed / 0 skipped (DB-backed) |
+| Full test suite             | `npm test`                 | PASS — 181 files, 871 passed / 0 skipped (DB-backed) |
 | Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 85.94% lines (DB-backed); ~82% no-DB     |
 
 All six gates run together via `scripts/check.sh` (and in CI).
@@ -173,7 +173,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/database                      | 9   | 6     | 2    | Schema, repositories, append-only audit log     |
 | packages/auth                          | 12  | 20    | 12   | Auth, sessions, RBAC, API keys (+ **real PostgreSQL** member/session stores, `AuthService` core, and deny-by-default RBAC evaluator — all verified on real Postgres, ADR-0020 de-seam) |
 | packages/organizations                 | 3   | 11    | 9    | Organizations, teams, membership, admin (+ **real PostgreSQL** `OrgStore`, `OrgService` verified on real Postgres — shares roles/memberships with RBAC) |
-| packages/projects                      | 2   | 5     | 4    | Content hierarchy: projects, folders, workspaces |
+| packages/projects                      | 3   | 6     | 4    | Content hierarchy: projects, folders, workspaces (+ **real PostgreSQL** `ContentStore`, `ContentService` verified on real Postgres) |
 | packages/media                         | 6   | 17    | 13   | Videos, assets, uploads, sharing, dev-assets, reviews |
 | packages/storage                       | 2   | 5     | 3    | Storage abstraction + StorageProvider contract  |
 | packages/knowledge                     | 2   | 4     | 3    | Transcript indexing, summaries, doc links (knowledge base) |

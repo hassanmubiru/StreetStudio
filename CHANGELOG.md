@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Content hierarchy de-seam — `ContentService` on real Postgres:**
+  `@streetstudio/projects` gains a real PostgreSQL `ContentStore`
+  (`postgresContentStore`, `ensureContentSchema`; projects/workspaces/folders/
+  videos tables). A DB-gated integration test runs the real `ContentService` on
+  real Postgres: create project + nested folders (correct depth), move a video
+  into a folder preserving its identity and fields (R5.4), and reject moving a
+  video absent from the org (R5.7).
+
 - **Organizations de-seam — `OrgService` on real Postgres:**
   `@streetstudio/organizations` gains a real PostgreSQL `OrgStore`
   (`postgresOrgStore`, `ensureOrganizationsSchema`) implementing the full port
