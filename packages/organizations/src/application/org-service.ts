@@ -346,7 +346,7 @@ export class OrgService {
       id: invitationId,
       organizationId: orgId,
       email,
-      token: formatToken(orgId, invitationId, this.generateSecret()),
+      token: InvitationToken.format(orgId, invitationId, this.generateSecret()),
       status: "pending",
       createdAt: toIsoTimestamp(createdAt),
       expiresAt: toIsoTimestamp(expiresAt),
