@@ -65,6 +65,12 @@ export {
   AUTH_MEMBERS_TABLE_DDL,
   AUTH_SESSIONS_TABLE_DDL,
 } from "./postgres-stores.js";
+export {
+  ensureRbacSchema,
+  postgresRbacStore,
+  RBAC_ROLES_TABLE_DDL,
+  RBAC_MEMBERSHIPS_TABLE_DDL,
+} from "./postgres-rbac-store.js";
 
 // --- Clock -----------------------------------------------------------------
 export { systemClock } from "./clock.js";
