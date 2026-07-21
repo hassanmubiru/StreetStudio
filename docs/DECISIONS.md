@@ -675,9 +675,10 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
      integration test against real Postgres.
   2. Replace session/refresh-token/API-key seams with `streetjs`
      `auth/session-store`, `auth/refresh-tokens`, `auth/api-keys` against Postgres.
-  3. Replace RBAC evaluation with `streetjs` `auth/rbac` (`RbacService`,
-     `requireRoles`), keeping StreetStudio's role/permission **policy** as product
-     config.
+  3. **[real store done]** RBAC evaluation on real Postgres — `postgresRbacStore`
+     backs the deny-by-default `RbacAccessControl` (organization-scoped
+     `roles`/`memberships`), verified against real Postgres. (Adopting `streetjs`
+     `auth/rbac` primitives where they add value remains optional.)
   4. Migrate consumers one at a time to the real auth + identity helpers, updating
      each package's tests to run against real Postgres (DB-gated), keeping all six
      gates green per step.
