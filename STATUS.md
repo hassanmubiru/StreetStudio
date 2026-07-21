@@ -74,7 +74,7 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   (Argon2id) + JWT issuance, and all three slices authenticate through its shared
   `requireActor`/`jwtAuth` helpers. Those integration tests run when
   `STREETSTUDIO_IT_DATABASE_URL` is set (CI Postgres service) and skip otherwise.
-  Measured: with a DB line coverage is **86.3%**; without a DB (integration
+  Measured: with a DB line coverage is **86.34%**; without a DB (integration
   skipped) it is **~82%**. Both clear the 80% gate. `scripts/check.sh` runs the
   coverage gate and enables the integration tests automatically when the env var
   is set.
