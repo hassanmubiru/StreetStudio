@@ -33,6 +33,7 @@
     { "path": "./packages/recordings" },
     { "path": "./packages/uploads" },
     { "path": "./packages/playback" },
+    { "path": "./packages/identity" },
     { "path": "./packages/analytics" },
     { "path": "./packages/sdk" },
     { "path": "./packages/ui" },
