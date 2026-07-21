@@ -69,9 +69,11 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   HTTP journey; uploads does begin→upload-parts→complete and verifies the
   assembled object's bytes in storage. Those tests run when
   `STREETSTUDIO_IT_DATABASE_URL` is set (CI Postgres service) and skip otherwise,
-  so the persistence/API files show low coverage in the default (no-DB) run —
-  hence global line coverage sits just above the 80% floor locally and is higher
-  in CI where the integration tests execute.
+  so the persistence/API files are covered when a DB is present. Measured: with
+  a DB (CI, or `STREETSTUDIO_IT_DATABASE_URL` set locally) line coverage is
+  **85.76%**; without a DB the integration tests skip and it is **81.98%**. Both
+  clear the 80% gate. `scripts/check.sh` runs the coverage gate and enables the
+  integration tests automatically when the env var is set.
 - **The other backend packages** are still the reference implementation running
   against **in-memory fakes behind adapter seams**; each will be de-seamed onto
   the real framework as its own slice (ADR-0017).
