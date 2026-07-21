@@ -4,7 +4,8 @@
  * mounts the controller. Product composition only.
  */
 import "reflect-metadata";
-import { streetApp, container, PgPool, JwtService, authMiddleware } from "streetjs";
+import { streetApp, container, PgPool } from "streetjs";
+import { jwtAuth } from "@streetstudio/identity";
 import type { Storage } from "@streetjs/storage";
 import { UploadSessionRepository } from "../persistence/upload-session-repository.js";
 import { UploadService, type Clock } from "../application/upload-service.js";
