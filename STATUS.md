@@ -38,7 +38,7 @@ Dashboard client logic           ██████░░░░  65%   session/s
 Dashboard (web UI runtime)       ░░░░░░░░░░   0%   not built
 Desktop client                   ░░░░░░░░░░   0%   scaffold entry only
 Recorder extension               ░░░░░░░░░░   0%   scaffold entry only
-De-seam remaining pkgs → StreetJS ████░░░░░░  40%   auth fully on real Postgres — member/session stores, AuthService core, API authenticate stage, and deny-by-default RBAC evaluator (ADR-0020)
+De-seam remaining pkgs → StreetJS █████░░░░░  45%   auth on real Postgres end-to-end — stores, AuthService core, API authenticate + RBAC lifecycle stages, deny-by-default evaluator (ADR-0020)
 Published repo + npm releases    ░░░░░░░░░░   0%   not released
 ```
 
