@@ -48,7 +48,7 @@
  * `@streetstudio/database`. Time is read through an injectable {@link Clock} so
  * the +7-day expiry and pending/unexpired checks are deterministic under test.
  */
-import { randomBytes } from "node:crypto";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { newUuid } from "@streetstudio/database";
 import type {
   InvitationRecord,
@@ -80,15 +80,6 @@ import {
 
 /** Name of the Role granted to an Organization's creator (Administrator). */
 export const ADMINISTRATOR_ROLE_NAME = "Administrator";
-
-/** Name of the default Role granted to an invited Member on acceptance. */
-export const MEMBER_ROLE_NAME = "Member";
-
-/** Audit `action` recorded when an Organization's settings are updated (R26.7). */
-export const ADMIN_ACTION_SETTINGS_UPDATED = "org.settings.updated";
-
-/** Audit `action` recorded when a Member is removed from an Organization (R26.7). */
-export const ADMIN_ACTION_MEMBER_REMOVED = "org.member.removed";
 
 /** Name of the default Role granted to an invited Member on acceptance. */
 export const MEMBER_ROLE_NAME = "Member";
