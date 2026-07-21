@@ -38,7 +38,7 @@ Dashboard client logic           ██████░░░░  65%   session/s
 Dashboard (web UI runtime)       ░░░░░░░░░░   0%   not built
 Desktop client                   ░░░░░░░░░░   0%   scaffold entry only
 Recorder extension               ░░░░░░░░░░   0%   scaffold entry only
-De-seam remaining pkgs → StreetJS █████░░░░░  55%   auth on real Postgres end-to-end (+ `assemblePostgresAuth`); organizations (OrgService) now on the real Postgres store too, sharing roles/memberships with RBAC; in-memory seam retirement pending (ADR-0020)
+De-seam remaining pkgs → StreetJS ██████░░░░  60%   auth + organizations + projects/folders/videos now on real Postgres stores (identity, tenancy, authz, content hierarchy); in-memory seam retirement pending (ADR-0020)
 Published repo + npm releases    ░░░░░░░░░░   0%   not released
 ```
 
