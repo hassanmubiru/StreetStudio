@@ -53,8 +53,8 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
 | Test files          | 169    |
 | Property-test files | 89     |
 | Test LOC            | 34,003 |
-| Tests               | 818 passing, 9 skipped |
-| Line coverage       | 81.98% |
+| Tests               | 818 passing, 9 skipped (no-DB); 826 passing with a DB |
+| Line coverage       | 85.76% (DB-backed, as CI runs); 81.98% no-DB local |
 | build / graph / boundary / streetjs gates | passing |
 
 *Regenerate the counts with `npm run status`; regenerate pass/coverage with
