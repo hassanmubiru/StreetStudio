@@ -75,15 +75,6 @@ import {
   type OrgSettings,
 } from "../domain/index.js";
 
-/** Maximum length of an Organization name (Requirement 4.1, 4.7). */
-export const MAX_ORG_NAME_LENGTH = 200;
-
-/** Maximum length of a Team name (kept consistent with organizations). */
-export const MAX_TEAM_NAME_LENGTH = 200;
-
-/** Invitation lifetime: an invitation expires 7 days after creation (R4.2). */
-export const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
 /** Name of the Role granted to an Organization's creator (Administrator). */
 export const ADMINISTRATOR_ROLE_NAME = "Administrator";
 
