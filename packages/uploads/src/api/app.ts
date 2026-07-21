@@ -41,7 +41,7 @@ export function createUploadsApp(
     host: options.host ?? "0.0.0.0",
     maxBodyBytes: options.maxBodyBytes ?? 16 * 1024 * 1024,
   });
-  app.use(authMiddleware(new JwtService(options.jwtSecret)));
+  app.use(jwtAuth(options.jwtSecret));
   app.registerController(UploadsController);
   return app;
 }
