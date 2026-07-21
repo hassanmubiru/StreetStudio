@@ -20,3 +20,10 @@ export type {
   ContentStore,
   FolderRef,
 } from "./content.js";
+
+// Real PostgreSQL store adapter (de-seam onto real infrastructure).
+export {
+  ensureContentSchema,
+  postgresContentStore,
+  CONTENT_TABLES_DDL,
+} from "./postgres-content-store.js";
