@@ -30,12 +30,13 @@ suite("Organizations postgres repointing", () => {
   
   beforeAll(async () => {
     if (!DATABASE_URL) return;
+    pool = new PgPool(DATABASE_URL);
     await pool.initialize();
     await ensureCanonicalSchema(pool);
   });
 
   afterAll(async () => {
-    if (DATABASE_URL) await pool.end();
+    if (DATABASE_URL && pool) await pool.end();
   });
 
   it("creates organizations through the canonical repository layer", async () => {
