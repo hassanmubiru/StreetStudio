@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Auth de-seam step 2 (ADR-0020):** the real `AuthService` core is verified
-  end-to-end on the **real PostgreSQL stores** — an integration test wires
+- **Auth de-seam — real `AuthService` verified on real stores (ADR-0020):** the
+  real `AuthService` core is verified end-to-end on the **real PostgreSQL
+  stores** — an integration test wires
   `AuthService` with `postgresAuthStores` + `Argon2idPasswordHasher` +
   `HmacAccessTokenIssuer` against real Postgres and exercises register → login →
   verify-token → logout (token rejected after logout), plus uniform
