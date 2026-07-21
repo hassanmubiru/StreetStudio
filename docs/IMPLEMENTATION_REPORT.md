@@ -171,7 +171,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/types                         | 1   | 0     | 0    | Product-level shared type aliases               |
 | packages/config                        | 12  | 8     | 4    | Config loading + boundary/graph tooling         |
 | packages/database                      | 9   | 6     | 2    | Schema, repositories, append-only audit log     |
-| packages/auth                          | 11  | 19    | 12   | Auth, sessions, RBAC, API keys (+ **real PostgreSQL** stores & the real `AuthService` core verified end-to-end on real Postgres, ADR-0020 de-seam steps 1–2) |
+| packages/auth                          | 11  | 19    | 12   | Auth, sessions, RBAC, API keys (+ **real PostgreSQL** stores & the real `AuthService` core verified end-to-end on real Postgres, ADR-0020 de-seam) |
 | packages/organizations                 | 2   | 10    | 9    | Organizations, teams, membership, admin         |
 | packages/projects                      | 2   | 5     | 4    | Content hierarchy: projects, folders, workspaces |
 | packages/media                         | 6   | 17    | 13   | Videos, assets, uploads, sharing, dev-assets, reviews |
