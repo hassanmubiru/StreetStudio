@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Auth de-seam — API RBAC lifecycle stage on real Postgres (ADR-0020):** a
+  DB-gated integration test runs the API request lifecycle's RBAC stage with the
+  real deny-by-default `RbacAccessControl` backed by real Postgres — a member
+  whose role grants `project:create` passes through to the service; a member
+  whose role lacks it is denied `AUTHORIZATION_DENIED` and the denial is audited
+  with no service run.
+
 - **Auth de-seam — RBAC on real Postgres (ADR-0020):** `@streetstudio/auth`
   gains a real PostgreSQL `RbacStore` (`postgresRbacStore`, `ensureRbacSchema`;
   organization-scoped `roles`/`memberships` tables) so the deny-by-default
