@@ -50,13 +50,13 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
 | ------------------- | ------ |
 | Apps                | 5      |
 | Packages            | 44     |
-| Source files        | 163    |
-| Source LOC          | 25,369 |
-| Test files          | 178    |
+| Source files        | 164    |
+| Source LOC          | 25,434 |
+| Test files          | 179    |
 | Property-test files | 89     |
-| Test LOC            | 34,820 |
-| Tests               | 862 passing with a DB (integration tests skip without one) |
-| Line coverage       | 86.13% (DB-backed, as CI runs); ~82% no-DB local |
+| Test LOC            | 34,948 |
+| Tests               | 865 passing with a DB (integration tests skip without one) |
+| Line coverage       | 86.16% (DB-backed, as CI runs); ~82% no-DB local |
 | build / graph / boundary / streetjs gates | passing |
 
 *Regenerate the counts with `npm run status`; regenerate pass/coverage with
