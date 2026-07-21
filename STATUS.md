@@ -63,18 +63,17 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
 
 ## What "80%" means here (honest caveats)
 
-- **`@streetstudio/recordings` and `@streetstudio/uploads` are real** — they run
-  on the published `streetjs` (HTTP/DI + native PostgreSQL driver + JWT auth) and,
-  for uploads, `@streetjs/storage`, against a **real Postgres** and **real object
-  storage**. Proven by integration tests: recordings does a create→publish→archive
-  HTTP journey; uploads does begin→upload-parts→complete and verifies the
-  assembled object's bytes in storage. Those tests run when
-  `STREETSTUDIO_IT_DATABASE_URL` is set (CI Postgres service) and skip otherwise,
-  so the persistence/API files are covered when a DB is present. Measured: with
-  a DB (CI, or `STREETSTUDIO_IT_DATABASE_URL` set locally) line coverage is
-  **85.76%**; without a DB the integration tests skip and it is **81.98%**. Both
-  clear the 80% gate. `scripts/check.sh` runs the coverage gate and enables the
-  integration tests automatically when the env var is set.
+- **`@streetstudio/recordings`, `@streetstudio/uploads`, and
+  `@streetstudio/playback` are real** — they run on the published `streetjs`
+  (HTTP/DI + native PostgreSQL driver + JWT auth) plus `@streetjs/storage`,
+  against a **real Postgres** and **real object storage**. Proven by integration
+  tests: recordings (create→publish→archive), uploads (begin→upload-parts→
+  complete, verifying assembled bytes), and playback (authorized 200/206/416
+  byte-range streaming). Those tests run when `STREETSTUDIO_IT_DATABASE_URL` is
+  set (CI Postgres service) and skip otherwise. Measured: with a DB line coverage
+  is **85.75%**; without a DB (integration skipped) it is **~82%**. Both clear the
+  80% gate. `scripts/check.sh` runs the coverage gate and enables the integration
+  tests automatically when the env var is set.
 - **The other backend packages** are still the reference implementation running
   against **in-memory fakes behind adapter seams**; each will be de-seamed onto
   the real framework as its own slice (ADR-0017).
