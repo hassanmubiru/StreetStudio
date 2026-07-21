@@ -14,7 +14,8 @@
     "@streetstudio/shared": "*",
     "@streetstudio/auth": "*",
     "@streetstudio/database": "*",
-    "@streetstudio/media": "*"
+    "@streetstudio/media": "*",
+    "streetjs": "^1.2.7"
   },
   "streetstudio": { "domain": "Comments, threads, reactions, and mentions on videos." }
 }
