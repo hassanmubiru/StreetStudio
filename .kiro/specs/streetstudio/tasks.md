@@ -640,6 +640,89 @@ StreetJS is consumed only through its public package entry points. Every cross-p
 - [x] 42. Final checkpoint - full suite
   - Ensure all tests pass, ask the user if questions arise.
 
+---
+
+## De-Seam Migration Plan
+
+> This section is **additive** and tracks an in-progress productionization effort layered on top of the completed plan above (tasks 1–42). It does not modify, renumber, or supersede any prior task. The migration realizes the production charter (real infrastructure only; in-memory adapters permitted only in tests) and the design's data-model/persistence intent by adding a **real PostgreSQL store adapter** per domain behind the existing store port, while the in-memory `repository*Store` adapter stays in place so all prior tests remain green.
+>
+> **Repeatable pattern per domain:** add the real store adapter beside the in-memory one (same store port) → export it from the package index → add a DB-gated `*.integration.test.ts` (`const suite = process.env["STREETSTUDIO_IT_DATABASE_URL"] ? describe : describe.skip;`) proving the real service runs against real Postgres → run all six verification gates (build, `graph:check`, `boundary:check`, `streetjs:check`, `test`, `test:coverage` ≥80% lines) → update measured docs. Each migrated package adds the dependency `"streetjs": "^1.2.7"`.
+>
+> **Convergence principle:** shared tables (`members`, `roles`, `memberships`, `videos`) are reused across packages via idempotent `CREATE TABLE IF NOT EXISTS` DDL so domains share one store of record rather than diverging per package.
+
+- [ ] 43. Migrate in-memory store seams to real PostgreSQL adapters (de-seam)
+  - [x] 43.1 Add real Postgres store + JWT auth to the Recordings domain
+    - Implement a real PostgreSQL store adapter behind the recordings store port beside the existing in-memory `repository*Store`; export it from the package index; add JWT-authenticated service wiring; add a DB-gated `*.integration.test.ts` proving the real service runs against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
+    - Completed and verified against real Postgres
+    - _Requirements: 1.5, 3.2, 9.1, 16.1_
+
+  - [x] 43.2 Add real object-storage-backed store to the Uploads domain
+    - Implement chunked upload sessions persisting to real object storage via the `@streetjs/storage` local driver behind the uploads store port beside the in-memory adapter; export from the package index; add a DB-gated integration test proving chunked sessions assemble against real infrastructure; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
+    - Completed and verified against real Postgres/object storage
+    - _Requirements: 1.5, 7.1, 7.2, 7.3, 9.1, 9.3_
+
+  - [x] 43.3 Add authorized byte-range streaming to the Playback domain
+    - Implement authorized byte-range streaming (200/206/416 responses) over the real store behind the playback store port beside the in-memory adapter; export from the package index; add a DB-gated integration test exercising the range responses against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
+    - Completed and verified against real Postgres
+    - _Requirements: 1.5, 9.1_
+
+  - [x] 43.4 Add real register/login to the Identity domain and dedupe shared auth helpers
+    - Implement `register`/`login` with Argon2id hashing and JWT issuance over a real Postgres store behind the identity store port beside the in-memory adapter; extract shared `requireActor`/`jwtAuth` helpers and dedupe the recordings/uploads/playback domains onto them; export from the package index; add a DB-gated integration test against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
+    - Completed and verified against real Postgres
+    - _Requirements: 1.5, 3.1, 3.2, 16.1_
+
+  - [x] 43.5 De-seam the Auth package onto Postgres (auth + RBAC stores)
+    - Implement `postgresAuthStores` (MemberStore + SessionStore with `ensureAuthSchema` over the shared `members` table plus `auth_sessions`) and `postgresRbacStore` (`ensureRbacSchema` over the shared `roles`/`memberships` tables), each behind the existing store ports beside the in-memory adapters; export from the package index; add DB-gated integration tests including a real `AuthService` end-to-end run against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
+    - Completed and verified against real Postgres
+    - _Requirements: 1.5, 3.1, 3.2, 3.4, 16.1, 16.4, 18.1, 18.3_
+
+  - [x] 43.6 Wire apps/api authentication onto the real Postgres auth stores
+    - Implement `authServiceAuthenticator` plus `assemblePostgresAuth`/`ensureApiAuthSchema` wiring in `apps/api`; add DB-gated integration tests for the API authenticate path and the RBAC lifecycle stages against real Postgres; run all six gates and update measured docs
+    - Completed and verified against real Postgres
+    - _Requirements: 1.5, 3.2, 16.1, 16.2, 18.3_
+
+  - [x] 43.7 De-seam the Organizations domain onto Postgres
+    - Implement `postgresOrgStore` covering the full 18-method OrgStore port behind the existing store port beside the in-memory adapter; reuse the shared `roles`/`memberships` tables and add `organizations`/`invitations`/`teams`/`team_memberships` via idempotent DDL; export from the package index; add a DB-gated integration test against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
+    - Completed and verified against real Postgres
+    - _Requirements: 1.5, 4.1, 4.2, 4.3, 4.4, 4.5, 16.4_
+
+  - [x] 43.8 De-seam the Content hierarchy domain onto Postgres
+    - Implement `postgresContentStore` over `projects`/`workspaces`/`folders`/`videos` tables behind the existing store port beside the in-memory adapter (reusing the shared `videos` table via idempotent DDL); export from the package index; add a DB-gated integration test against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
+    - Completed and verified against real Postgres
+    - _Requirements: 1.5, 5.1, 5.2, 5.4_
+
+  - [ ] 43.9 De-seam the Comments domain onto Postgres
+    - `postgresCommentStore` (over `comments`/`reactions`/`videos` tables, with reaction idempotency enforced via `ON CONFLICT DO NOTHING`) is created behind the existing store port beside the in-memory adapter; **still remaining**: export it from the package index, add the DB-gated `*.integration.test.ts` against real Postgres, add `"streetjs": "^1.2.7"`, run all six gates, and update measured docs
+    - In progress — not fully verified yet
+    - _Requirements: 1.5, 11.1, 11.3, 11.5_
+
+  - [ ] 43.10 De-seam the Media persistence domain onto Postgres
+    - Implement real Postgres store adapters for `videos`/`assets`/`renditions` behind the existing media store ports beside the in-memory adapters (reusing the shared `videos` table via idempotent DDL); export from the package index; add a DB-gated integration test against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
+    - Not started
+    - _Requirements: 1.5, 8.2, 8.4, 8.7, 9.1_
+
+  - [ ] 43.11 De-seam the Search domain onto a real Postgres/index-backed adapter
+    - Implement a real Postgres/index-backed search store adapter behind the existing search store port beside the in-memory adapter, preserving authorized-scope filtering; export from the package index; add a DB-gated integration test against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
+    - Not started
+    - _Requirements: 1.5, 14.1_
+
+  - [ ] 43.12 De-seam the Notifications domain onto Postgres
+    - Implement a real Postgres notification store behind the existing notifications store port beside the in-memory adapter; export from the package index; add a DB-gated integration test against real Postgres; add `"streetjs": "^1.2.7"`; run all six gates and update measured docs
+    - Not started
+    - _Requirements: 1.5, 12.1_
+
+  - [ ] 43.13 Codify the per-domain de-seam checklist convention
+    - Capture the repeatable pattern as a documented convention: add the real store adapter beside the in-memory one (same store port) → export from the package index → add a DB-gated `*.integration.test.ts` → run all six gates (build, `graph:check`, `boundary:check`, `streetjs:check`, `test`, `test:coverage` ≥80% lines) → update `STATUS.md`, `docs/IMPLEMENTATION_REPORT.md`, and `CHANGELOG.md` with **freshly measured** numbers gathered via `npm run status` / `npm test` / `test:coverage`
+    - Not started
+    - _Requirements: 1.5, 2.5_
+
+  - [ ] 43.14 (Deferred, high blast radius) Retire the in-memory `repository*Store` seams
+    - **Deferred and high-risk.** Once no consumer depends on any in-memory `repository*Store` adapter, remove the seams in a deliberate, separate migration — NOT a quick delete. This is intentionally sequenced last because removing the in-memory adapters changes the fallback path relied on by existing green tests; it must be planned and verified on its own with all six gates green
+    - Deferred — not started
+    - _Requirements: 1.5, 2.5_
+
+---
+
 ## Notes
 
 - Tasks marked with `*` are optional test tasks and can be skipped for a faster MVP; core implementation tasks are never optional.
