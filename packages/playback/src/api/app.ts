@@ -34,7 +34,7 @@ export function createPlaybackApp(
 ): PlaybackApp {
   registerPlayback(pool, storage);
   const app = streetApp({ port: options.port ?? 3000, host: options.host ?? "0.0.0.0" });
-  app.use(authMiddleware(new JwtService(options.jwtSecret)));
+  app.use(jwtAuth(options.jwtSecret));
   app.registerController(PlaybackController);
   return app;
 }
