@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Comments de-seam — `CommentService` on real Postgres:**
+  `@streetstudio/comments` gains a real PostgreSQL `CommentStore`
+  (`postgresCommentStore`, `ensureCommentsSchema`; comments/reactions + shared
+  videos tables). Reaction idempotency (R11.5) is enforced at the storage
+  boundary via a composite primary key and `INSERT ... ON CONFLICT DO NOTHING`.
+  A DB-gated integration test runs the real `CommentService` on real Postgres:
+  persist a comment with a valid body/timestamp (R11.1, R11.2), nest a reply
+  under its parent (R11.3), reject empty/over-long bodies (R11.8) and
+  out-of-range timestamps (R11.9) without storing, and retain at most one
+  reaction of each type per member per target (R11.5).
+
 - **Content hierarchy de-seam — `ContentService` on real Postgres:**
   `@streetstudio/projects` gains a real PostgreSQL `ContentStore`
   (`postgresContentStore`, `ensureContentSchema`; projects/workspaces/folders/
