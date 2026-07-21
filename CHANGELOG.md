@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Store-of-record repoint: notifications on the canonical repository layer
+  (ADR-0021, step 3):** `apps/api/src/notifications/postgres-notifications.ts`
+  (`assemblePostgresNotifications`) wires the real `NotificationService` onto the
+  `@streetstudio/database` repository layer (canonical singular, FK-constrained
+  `notification`/`notification_preference` tables) instead of the standalone
+  direct-`PgPool` adapter (which is retained as integration proof). A DB-gated
+  integration test proves create + preference suppression, ownership-checked
+  mark-read, and exactly-once deliver-pending on real Postgres via the canonical
+  path.
+
+### Fixed
+
+- **Repository layer type fidelity against the real Postgres driver:** the
+  `@streetstudio/database` row mapper now coerces column values to the JS types
+  implied by the schema (booleans returned as `"t"`/`"f"`, numeric strings, and
+  unparsed `jsonb`), driven by the `SCHEMA` column metadata. The coercion is a
+  no-op for already-correct JS types, so the in-memory test client is unaffected;
+  it fixes a latent gap where boolean columns (e.g. a disabled notification
+  preference) read back truthy under the StreetJS `PgPool` driver. Surfaced by
+  the store-of-record repoint (ADR-0021).
+
 - **Store-of-record convergence kickoff (ADR-0021):** the API composition root
   gains a canonical persistence assembly — `apps/api/src/persistence/postgres-database.ts`
   (`streetPgPoolClient`, `ensureCanonicalSchema`, `assemblePostgresRepositories`)
