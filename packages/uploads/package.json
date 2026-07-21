@@ -12,6 +12,7 @@
   "scripts": { "build": "tsc -b" },
   "dependencies": {
     "@streetstudio/shared": "*",
+    "@streetstudio/identity": "*",
     "streetjs": "^1.2.7",
     "@streetjs/storage": "^1.0.2"
   },
