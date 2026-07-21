@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Auth de-seam — RBAC on real Postgres (ADR-0020):** `@streetstudio/auth`
+  gains a real PostgreSQL `RbacStore` (`postgresRbacStore`, `ensureRbacSchema`;
+  organization-scoped `roles`/`memberships` tables) so the deny-by-default
+  `RbacAccessControl` evaluator runs unchanged on real data. A DB-gated
+  integration test verifies grant/deny (role-includes-action, deny-by-default,
+  non-member denied, no cross-organization leakage) and `assignRole`
+  (permission-gated + membership-checked) against real Postgres.
+
 - **Auth de-seam — API authenticate stage on the real auth core (ADR-0020):**
   `apps/api` gains a production `authServiceAuthenticator` that bridges the
   request-lifecycle authenticate stage to the real `AuthService.verifyAccessToken`
