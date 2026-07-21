@@ -132,6 +132,33 @@ export class InMemorySqlClient implements SqlClient {
     return { rows: rows.map((r) => ({ ...r })), rowCount: rows.length };
   }
 
+  private update(sql: string, params: readonly SqlValue[]): SqlQueryResult {
+    // UPDATE <table> SET c1 = $n, c2 = $m WHERE col = $k [AND ...]
+    const head = /update\s+([a-z0-9_]+)\s+set\s+(.+?)\s+where\s+/is.exec(sql);
+    if (!head) throw new Error(`Cannot parse UPDATE: ${sql}`);
+    const table = head[1] as string;
+    const assignments = (head[2] as string).split(",").map((part) => {
+      const m = /([a-z0-9_]+)\s*=\s*\$(\d+)/i.exec(part.trim());
+      if (!m) throw new Error(`Cannot parse UPDATE assignment: ${part}`);
+      return {
+        column: m[1] as string,
+        paramIndex: Number.parseInt(m[2] as string, 10) - 1,
+      };
+    });
+    const clauses = parseWhere(sql);
+    const rows = this.rowsFor(table);
+    let updated = 0;
+    for (const row of rows) {
+      if (matches(row, clauses, params)) {
+        for (const a of assignments) {
+          row[a.column] = params[a.paramIndex];
+        }
+        updated++;
+      }
+    }
+    return { rows: [], rowCount: updated };
+  }
+
   private delete(sql: string, params: readonly SqlValue[]): SqlQueryResult {
     const from = /from\s+([a-z0-9_]+)/i.exec(sql);
     if (!from) throw new Error(`Cannot parse DELETE: ${sql}`);

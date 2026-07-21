@@ -186,6 +186,29 @@ export class GlobalRepository<
   async deleteById(id: Uuid): Promise<void> {
     await this.client.query(`DELETE FROM ${this.table} WHERE id = $1`, [id]);
   }
+
+  /**
+   * Update a row in place by its primary key, setting every non-`id` column
+   * from `record`. Unlike a delete-then-insert soft update, this preserves the
+   * row's identity so foreign keys referencing it (and their `ON DELETE
+   * CASCADE` children) are never disturbed.
+   */
+  async update(record: TRecord): Promise<TRecord> {
+    const entries = Object.entries(record as Record<string, unknown>).filter(
+      ([field]) => toColumnName(field) !== "id",
+    );
+    const assignments = entries.map(
+      ([field], i) => `${toColumnName(field)} = $${i + 1}`,
+    );
+    const values = entries.map(([, value]) => value as SqlValue);
+    await this.client.query(
+      `UPDATE ${this.table} SET ${assignments.join(", ")} WHERE id = $${
+        values.length + 1
+      }`,
+      [...values, (record as { id: Uuid }).id],
+    );
+    return record;
+  }
 }
 
 /**
