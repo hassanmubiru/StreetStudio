@@ -5,7 +5,8 @@
  * no framework reimplementation.
  */
 import "reflect-metadata";
-import { streetApp, container, PgPool, JwtService, authMiddleware } from "streetjs";
+import { streetApp, container, PgPool } from "streetjs";
+import { jwtAuth } from "@streetstudio/identity";
 import { RecordingRepository } from "../persistence/recording-repository.js";
 import { RecordingService, type Clock } from "../application/recording-service.js";
 import { RecordingsController } from "./recordings-controller.js";
