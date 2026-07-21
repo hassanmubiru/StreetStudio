@@ -45,6 +45,11 @@ export type { Clock } from "./clock.js";
 export { authServiceAuthenticator } from "./auth-service-authenticator.js";
 export type { AccessTokenVerifier } from "./auth-service-authenticator.js";
 
+// Concrete, config-driven assembly of the real Postgres-backed auth
+// collaborators for the composition root (auth de-seam, ADR-0020).
+export { assemblePostgresAuth, ensureApiAuthSchema } from "./postgres-auth.js";
+export type { ApiAuthComponents } from "./postgres-auth.js";
+
 // Secret storage via the StreetJS secret interface (R29.2), owned by
 // @streetstudio/config and surfaced here for the composition root.
 export {
