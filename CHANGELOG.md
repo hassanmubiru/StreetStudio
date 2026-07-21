@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Auth de-seam step 1 (ADR-0020):** `@streetstudio/auth` gains **real
+  PostgreSQL** `MemberStore`/`SessionStore` adapters (`postgresAuthStores`,
+  `ensureAuthSchema`) over the StreetJS `PgPool`, satisfying the same ports the
+  in-memory/repository adapters do — additive, so the `AuthService` core and all
+  existing consumers/tests are unchanged. `findByEmail` is now a real indexed
+  lookup (unique `members.email`) instead of an O(n) scan; sessions use an
+  `auth_sessions` table with delete-on-invalidate (R3.4). The member store reads/
+  writes the **shared `members` table** (idempotent, compatible DDL), converging
+  identity and auth on one member store of record; identity's `members.password_hash`
+  is now nullable to support federated members. Verified by an integration test
+  against real Postgres (create/indexed-findByEmail/findById; session create/find/
+  invalidate→null). Remaining de-seam steps (session/token/key/RBAC swaps,
+  consumer migration) proceed incrementally per ADR-0020.
+
 - **Fourth real product slice: `@streetstudio/identity`** — real member
   registration and login with **Argon2id** password hashing (via the standard
   `argon2` library — the framework does not expose password hashing), real

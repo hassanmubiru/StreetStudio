@@ -123,10 +123,10 @@ All commands run from the workspace root (`/…/StreetStudio`).
 | --------------------------- | -------------------------- | ----------------------------------------------- |
 | Build (project references)  | `npm run build`            | PASS (exit 0)                                   |
 | Dependency-graph acyclicity | `npm run graph:check`      | PASS — "Package dependency graph is acyclic."   |
-| Import boundaries           | `npm run boundary:check`   | PASS — 161 files scanned, 0 violations          |
+| Import boundaries           | `npm run boundary:check`   | PASS — 162 files scanned, 0 violations          |
 | StreetJS consumption (ADR-0011) | `npm run streetjs:check` | PASS — published, versioned packages only       |
-| Full test suite             | `npm test`                 | PASS — 173 files, 850 passed / 0 skipped (DB-backed) |
-| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 85.91% lines (DB-backed); ~82% no-DB     |
+| Full test suite             | `npm test`                 | PASS — 174 files, 852 passed / 0 skipped (DB-backed) |
+| Coverage gate (≥80% lines)  | `npm run test:coverage`    | PASS — 86.00% lines (DB-backed); ~82% no-DB     |
 
 All six gates run together via `scripts/check.sh` (and in CI).
 
@@ -171,7 +171,7 @@ infrastructure-vs-test failure classifier (R32.6).
 | packages/types                         | 1   | 0     | 0    | Product-level shared type aliases               |
 | packages/config                        | 12  | 8     | 4    | Config loading + boundary/graph tooling         |
 | packages/database                      | 9   | 6     | 2    | Schema, repositories, append-only audit log     |
-| packages/auth                          | 10  | 17    | 12   | Auth, sessions, RBAC, API keys                  |
+| packages/auth                          | 11  | 18    | 12   | Auth, sessions, RBAC, API keys (+ **real PostgreSQL** MemberStore/SessionStore, ADR-0020 de-seam step 1) |
 | packages/organizations                 | 2   | 10    | 9    | Organizations, teams, membership, admin         |
 | packages/projects                      | 2   | 5     | 4    | Content hierarchy: projects, folders, workspaces |
 | packages/media                         | 6   | 17    | 13   | Videos, assets, uploads, sharing, dev-assets, reviews |
