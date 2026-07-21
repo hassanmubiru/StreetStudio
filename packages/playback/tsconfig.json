@@ -5,6 +5,7 @@
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "dist"],
   "references": [
     { "path": "../shared" },
-    { "path": "../uploads" }
+    { "path": "../uploads" },
+    { "path": "../identity" }
   ]
 }
