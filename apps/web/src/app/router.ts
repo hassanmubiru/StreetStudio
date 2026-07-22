@@ -285,6 +285,13 @@ export class Router {
   }
 
   /**
+   * Scroll to top of page smoothly
+   */
+  private scrollToTop(): void {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }
+
+  /**
    * Setup link interception for SPA navigation
    */
   private setupLinkInterception(): void {
