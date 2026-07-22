@@ -295,6 +295,85 @@ describe('KeyboardShortcuts', () => {
       );
     });
   });
+
+  describe('context-sensitive shortcuts', () => {
+    test('should support context-specific shortcuts', () => {
+      const handler = vi.fn();
+      
+      keyboardShortcuts.register({
+        key: 'x',
+        context: 'video-player',
+        description: 'Video player action',
+        handler,
+      });
+
+      // Should not be in global context
+      const globalShortcuts = keyboardShortcuts.getShortcutsForContext('global');
+      const videoPlayerShortcuts = globalShortcuts.filter(s => s.context === 'video-player');
+      expect(videoPlayerShortcuts).toHaveLength(0);
+
+      // Should be in video-player context
+      keyboardShortcuts.setContext('video-player');
+      const contextShortcuts = keyboardShortcuts.getShortcutsForContext('video-player');
+      const videoShortcut = contextShortcuts.find(s => s.key === 'x' && s.context === 'video-player');
+      expect(videoShortcut).toBeDefined();
+    });
+
+    test('should prioritize context-specific shortcuts over global ones', () => {
+      const globalHandler = vi.fn();
+      const contextHandler = vi.fn();
+      
+      keyboardShortcuts.register([
+        {
+          key: 'x',
+          description: 'Global action',
+          handler: globalHandler,
+          priority: 50,
+        },
+        {
+          key: 'x',
+          context: 'video-player',
+          description: 'Video action',
+          handler: contextHandler,
+          priority: 60,
+        },
+      ]);
+
+      keyboardShortcuts.setContext('video-player');
+      const shortcuts = keyboardShortcuts.getShortcutsForContext('video-player');
+      const videoShortcuts = shortcuts.filter(s => s.key === 'x');
+      
+      // Context-specific shortcut should have higher priority
+      expect(videoShortcuts[0].context).toBe('video-player');
+      expect(videoShortcuts[0].priority).toBe(60);
+    });
+  });
+
+  describe('accessibility enhancements', () => {
+    test('should include accessibility shortcuts', () => {
+      const shortcuts = keyboardShortcuts.getShortcutsForContext();
+      
+      // Should include skip links
+      const skipShortcut = shortcuts.find(s => s.key === '1' && s.modifiers?.includes('alt'));
+      expect(skipShortcut).toBeDefined();
+      expect(skipShortcut!.description).toBe('Skip to main content');
+
+      // Should include help shortcut
+      const helpShortcut = shortcuts.find(s => s.key === 'F1');
+      expect(helpShortcut).toBeDefined();
+      expect(helpShortcut!.description).toBe('Show keyboard shortcuts help');
+    });
+
+    test('should support high contrast toggle', () => {
+      const shortcuts = keyboardShortcuts.getShortcutsForContext();
+      const contrastShortcut = shortcuts.find(s => 
+        s.key === 'h' && s.modifiers?.includes('alt')
+      );
+      
+      expect(contrastShortcut).toBeDefined();
+      expect(contrastShortcut!.description).toBe('Toggle high contrast mode');
+    });
+  });
 });
 
 // Integration test for key signature generation
