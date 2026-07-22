@@ -47,6 +47,11 @@ const mockDocument = {
 (global as any).navigator = {
   platform: 'Mac',
 };
+(global as any).localStorage = {
+  getItem: vi.fn(() => null),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+};
 
 describe('KeyboardShortcuts', () => {
   let keyboardShortcuts: KeyboardShortcuts;
