@@ -11,11 +11,11 @@ import type {
 import { AppError } from "@streetstudio/shared";
 import type { InvitationStatus, Uuid } from "@streetstudio/shared";
 import {
-  isValidOrgSettings,
   OrgService,
   type OrgSettings,
   type OrgStore,
-} from "./org-service.js";
+} from "../application/org-service.js";
+import { isValidOrgSettings } from "../domain/index.js";
 import type { AuthContext } from "@streetstudio/auth";
 import type { Clock } from "@streetstudio/auth";
 
