@@ -27,5 +27,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test-setup.ts'],
+    environmentOptions: {
+      jsdom: {
+        url: 'http://localhost:3000',
+      },
+    },
   },
 });
