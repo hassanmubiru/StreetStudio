@@ -5,7 +5,6 @@
  */
 
 import { vi } from 'vitest';
-import 'vitest-dom/extend-expect';
 
 // Mock global objects and APIs
 Object.defineProperty(window, 'crypto', {
