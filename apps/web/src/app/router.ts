@@ -310,7 +310,12 @@ export class Router {
    */
   private handlePopState(event: PopStateEvent): void {
     const path = event.state?.path || window.location.pathname;
-    this.executeRoute(path);
+    this.executeRoute(path).then(() => {
+      this.currentPath = path;
+      this.notifyRouteChange(path);
+    }).catch((error) => {
+      console.error('PopState navigation failed:', error);
+    });
   }
 
   /**
@@ -318,7 +323,12 @@ export class Router {
    */
   private handleInitialNavigation(): void {
     const initialPath = window.location.pathname + window.location.search + window.location.hash;
-    this.executeRoute(initialPath);
+    this.executeRoute(initialPath).then(() => {
+      this.currentPath = initialPath;
+      this.notifyRouteChange(initialPath);
+    }).catch((error) => {
+      console.error('Initial navigation failed:', error);
+    });
   }
 
   /**
