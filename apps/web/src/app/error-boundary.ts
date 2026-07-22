@@ -58,6 +58,11 @@ export class ErrorBoundary {
   private childBoundaries: Set<ErrorBoundary> = new Set();
   private recoveryTimer: number | null = null;
   private retryCount = 0;
+  
+  // Event handler references for cleanup
+  private componentErrorHandler?: (event: any) => void;
+  private errorHandler?: (event: any) => void;
+  private rejectionHandler?: (event: PromiseRejectionEvent) => void;
 
   constructor(container: HTMLElement, options: ErrorBoundaryOptions = {}) {
     this.container = container;
@@ -134,24 +139,30 @@ export class ErrorBoundary {
    * Setup error event listeners for the container
    */
   private setupErrorListeners(): void {
-    // Listen for component errors
-    this.container.addEventListener('component-error', (event: any) => {
+    // Store references for cleanup
+    this.componentErrorHandler = (event: any) => {
       this.handleComponentError(event.detail.error, event.detail.context);
-    });
+    };
+    
+    this.errorHandler = (event: any) => {
+      this.handleError(event.error || new Error(event.message));
+    };
+
+    // Listen for component errors
+    this.container.addEventListener('component-error', this.componentErrorHandler);
 
     // Listen for general errors with capture
-    this.container.addEventListener('error', (event: any) => {
-      this.handleError(event.error || new Error(event.message));
-    }, true);
+    this.container.addEventListener('error', this.errorHandler, true);
 
     // Listen for unhandled promise rejections within this container
     if (this.container === document.body) {
-      window.addEventListener('unhandledrejection', (event) => {
+      this.rejectionHandler = (event: PromiseRejectionEvent) => {
         this.handleError(
           event.reason instanceof Error ? event.reason : new Error(String(event.reason)),
           'unhandled-rejection'
         );
-      });
+      };
+      window.addEventListener('unhandledrejection', this.rejectionHandler);
     }
   }
 
