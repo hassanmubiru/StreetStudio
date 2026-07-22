@@ -20,13 +20,16 @@ const mockDocument = {
     querySelector: vi.fn(() => null),
     querySelectorAll: vi.fn(() => []),
     addEventListener: vi.fn(),
+    appendChild: vi.fn(),
     remove: vi.fn(),
+    textContent: '',
   })),
-  getElementById: vi.fn(),
-  querySelector: vi.fn(),
+  getElementById: vi.fn(() => null),
+  querySelector: vi.fn(() => null),
   body: {
     appendChild: vi.fn(),
     insertBefore: vi.fn(),
+    classList: { add: vi.fn(), remove: vi.fn(), contains: vi.fn(() => false), toggle: vi.fn() },
   },
   head: {
     appendChild: vi.fn(),

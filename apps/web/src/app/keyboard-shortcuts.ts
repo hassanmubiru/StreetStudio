@@ -846,8 +846,11 @@ export class KeyboardShortcuts {
     if (!this.shortcutIndicator) return;
 
     setTimeout(() => {
-      this.shortcutIndicator!.style.opacity = '0';
-    }, 1000);
+      if (this.shortcutIndicator) {
+        this.shortcutIndicator.style.opacity = '0';
+        this.shortcutIndicator.style.transform = 'translateY(-8px)';
+      }
+    }, 2000);
   }
 
   private updateContextIndicator(context: string): void {
@@ -856,6 +859,17 @@ export class KeyboardShortcuts {
     if (indicator) {
       indicator.setAttribute('data-keyboard-context', context);
     }
+
+    // Update shortcut indicator context display
+    if (this.shortcutIndicator) {
+      const contextDisplay = this.shortcutIndicator.querySelector('[data-context-display]');
+      if (contextDisplay) {
+        contextDisplay.textContent = `${context} context`;
+      }
+    }
+
+    // Announce context change to screen readers
+    this.announceShortcut(`Keyboard context changed to ${context}`);
   }
 
   private trapFocus(container: HTMLElement): void {
