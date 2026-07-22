@@ -99,7 +99,7 @@ ${error.stack ? `\n${error.stack}` : ''}
    */
   public destroy(): void {
     // Restore original handlers
-    window.onerror = this.originalErrorHandler || null;
-    window.onunhandledrejection = this.originalRejectionHandler || null;
+    window.onerror = this.originalErrorHandler;
+    window.onunhandledrejection = this.originalRejectionHandler;
   }
 }
