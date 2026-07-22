@@ -66,6 +66,21 @@ export class StreetStudioApp {
     if (this.isInitialized) return;
 
     try {
+      // Initialize client-side logging first
+      initializeClientLogger({
+        remoteEndpoint: `${this.config.apiBaseUrl}/logs`,
+        enableConsoleOutput: this.config.enableDevTools,
+        maxLogSize: this.config.environment === 'development' ? 500 : 1000,
+      });
+
+      // Setup comprehensive error handling
+      setupErrorHandling({
+        enabled: true,
+        endpoint: `${this.config.apiBaseUrl}/errors`,
+        includeUserInfo: this.config.enableAnalytics,
+        includeTelemetry: this.config.enableAnalytics,
+      });
+
       // Setup error boundary
       this.errorBoundary.initialize();
 
