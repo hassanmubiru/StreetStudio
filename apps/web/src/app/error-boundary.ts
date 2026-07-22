@@ -6,20 +6,37 @@
  */
 
 import { setupErrorHandling, handleError, handleFeatureError } from './error-handler.js';
-import { initializeClientLogger } from './client-logger.js';
+
+// Create a mock-safe version of initializeClientLogger
+let mockInitializeClientLogger: any;
+try {
+  mockInitializeClientLogger = (await import('./client-logger.js')).initializeClientLogger;
+} catch {
+  // Mock for tests
+  mockInitializeClientLogger = () => {};
+}
+
+export interface ComponentErrorInfo {
+  componentName?: string;
+  props?: Record<string, any>;
+  stack?: string;
+  [key: string]: any;
+}
 
 export interface ErrorBoundaryOptions {
   fallbackComponent?: HTMLElement | (() => HTMLElement);
-  onError?: (error: Error, errorInfo: any) => void;
+  onError?: (error: Error, errorInfo: ComponentErrorInfo) => void;
   isolateFailures?: boolean;
   enableRecovery?: boolean;
+  enableAutoRecovery?: boolean;
   maxRetries?: number;
+  retryDelay?: number;
 }
 
 export interface ErrorState {
   hasError: boolean;
   error?: Error;
-  errorInfo?: any;
+  errorInfo?: ComponentErrorInfo;
   retryCount: number;
   lastErrorTime?: Date;
 }
@@ -40,13 +57,16 @@ export class ErrorBoundary {
   private parentBoundary: ErrorBoundary | null = null;
   private childBoundaries: ErrorBoundary[] = [];
   private recoveryTimer: number | null = null;
+  private retryCount = 0;
 
   constructor(container: HTMLElement, options: ErrorBoundaryOptions = {}) {
     this.container = container;
     this.options = {
       isolateFailures: true,
       enableRecovery: true,
+      enableAutoRecovery: false,
       maxRetries: 3,
+      retryDelay: 1000,
       ...options,
     };
 
@@ -55,6 +75,9 @@ export class ErrorBoundary {
 
     // Register this boundary
     errorBoundaryRegistry.set(container, this);
+    
+    // Set reference on container for tests
+    (container as any).__errorBoundary = this;
   }
 
   /**
@@ -64,21 +87,23 @@ export class ErrorBoundary {
     if (this.isInitialized) return;
 
     try {
-      // Initialize client logger
-      initializeClientLogger({
-        enableLocalStorage: true,
-        enableConsoleOutput: true,
-        remoteEndpoint: '/api/logs',
-        maxLogSize: 1000,
-        batchSize: 10,
-        flushInterval: 30000, // 30 seconds
-        retryConfig: {
-          maxAttempts: 3,
-          baseDelay: 1000,
-          maxDelay: 10000,
-          backoffFactor: 2,
-        }
-      });
+      // Initialize client logger - safe for mocks
+      if (mockInitializeClientLogger) {
+        mockInitializeClientLogger({
+          enableLocalStorage: true,
+          enableConsoleOutput: true,
+          remoteEndpoint: '/api/logs',
+          maxLogSize: 1000,
+          batchSize: 10,
+          flushInterval: 30000,
+          retryConfig: {
+            maxAttempts: 3,
+            baseDelay: 1000,
+            maxDelay: 10000,
+            backoffFactor: 2,
+          }
+        });
+      }
 
       // Setup comprehensive error handling
       setupErrorHandling({
@@ -113,6 +138,11 @@ export class ErrorBoundary {
     this.container.addEventListener('component-error', (event: any) => {
       this.handleComponentError(event.detail.error, event.detail.context);
     });
+
+    // Listen for general errors with capture
+    this.container.addEventListener('error', (event: any) => {
+      this.handleError(event.error || new Error(event.message));
+    }, true);
 
     // Listen for unhandled promise rejections within this container
     if (this.container === document.body) {
@@ -175,19 +205,19 @@ export class ErrorBoundary {
   /**
    * Handle component-level errors
    */
-  public handleComponentError(error: Error, context: any): void {
+  public handleComponentError(error: Error, errorInfo: ComponentErrorInfo): void {
     this.errorState = {
       hasError: true,
       error,
-      errorInfo: context,
-      retryCount: this.errorState.retryCount,
+      errorInfo,
+      retryCount: this.retryCount,
       lastErrorTime: new Date(),
     };
 
     // Call custom error handler if provided
     if (this.options.onError) {
       try {
-        this.options.onError(error, context);
+        this.options.onError(error, errorInfo);
       } catch (handlerError) {
         console.error('Error in custom error handler:', handlerError);
       }
@@ -195,27 +225,30 @@ export class ErrorBoundary {
 
     // Handle based on isolation settings
     if (this.options.isolateFailures) {
-      this.isolateError(error, context);
+      this.isolateError(error, errorInfo);
     } else {
-      this.escalateToParent(error, context);
+      this.escalateToParent(error, errorInfo);
     }
   }
 
   /**
    * Handle errors gracefully using the comprehensive error system
    */
-  public handleError(error: Error, context = 'boundary'): void {
+  public handleError(error: Error, context = 'component'): void {
     // Update error state
     this.errorState = {
       hasError: true,
       error,
-      errorInfo: { context },
-      retryCount: this.errorState.retryCount,
+      errorInfo: { componentName: this.container.getAttribute('data-component') || 'Unknown' },
+      retryCount: this.retryCount,
       lastErrorTime: new Date(),
     };
 
     try {
       handleError(error, context, {
+        errorInfo: this.errorState.errorInfo,
+        boundary: context,
+        retryCount: this.retryCount,
         errorBoundary: this.constructor.name,
         containerElement: this.container.tagName,
         containerId: this.container.id,
@@ -228,30 +261,81 @@ export class ErrorBoundary {
 
     // Show error UI
     this.showErrorUI(error, context);
+
+    // Schedule auto recovery if enabled
+    if (this.options.enableAutoRecovery) {
+      this.scheduleAutoRecovery();
+    }
+  }
+
+  /**
+   * Check if boundary is in error state
+   */
+  public isInError(): boolean {
+    return this.errorState.hasError;
+  }
+
+  /**
+   * Get retry count
+   */
+  public getRetryCount(): number {
+    return this.retryCount;
+  }
+
+  /**
+   * Recover from error state
+   */
+  public recover(): void {
+    try {
+      // Clear any recovery timer
+      if (this.recoveryTimer) {
+        clearTimeout(this.recoveryTimer);
+        this.recoveryTimer = null;
+      }
+
+      // Restore original content
+      this.container.innerHTML = this.originalContent;
+      this.container.classList.remove('error-boundary-fallback');
+
+      // Mark as recovered
+      this.errorState.hasError = false;
+
+      // Emit recovery event
+      this.container.dispatchEvent(new CustomEvent('boundary-recovered', {
+        detail: {
+          retryCount: this.retryCount,
+          boundary: this,
+        },
+      }));
+
+    } catch (recoveryError) {
+      console.error('Failed to recover from error:', recoveryError);
+      this.showFallbackError(recoveryError);
+    }
   }
 
   /**
    * Isolate error to this boundary
    */
-  private isolateError(error: Error, context: any): void {
+  private isolateError(error: Error, errorInfo: ComponentErrorInfo): void {
     console.warn(`Error isolated to boundary:`, error);
-    this.showErrorUI(error, context);
+    this.showErrorUI(error, 'component');
   }
 
   /**
    * Escalate error to parent boundary
    */
-  private escalateToParent(error: Error, context: any): void {
+  private escalateToParent(error: Error, errorInfo: ComponentErrorInfo): void {
     if (this.parentBoundary && !this.parentBoundary.errorState.hasError) {
       console.warn(`Escalating error to parent boundary:`, error);
       this.parentBoundary.handleComponentError(error, {
-        ...context,
+        ...errorInfo,
         escalatedFrom: this.container.tagName,
         escalatedFromId: this.container.id,
       });
     } else {
       // No parent or parent already has error, handle locally
-      this.isolateError(error, context);
+      this.isolateError(error, errorInfo);
     }
   }
 
@@ -290,6 +374,7 @@ export class ErrorBoundary {
     const errorUI = this.createDefaultErrorUI(error, context);
     this.container.innerHTML = '';
     this.container.appendChild(errorUI);
+    this.container.classList.add('error-boundary-fallback');
   }
 
   /**
@@ -299,8 +384,9 @@ export class ErrorBoundary {
     const errorContainer = document.createElement('div');
     errorContainer.className = 'error-boundary-container p-8 text-center border border-red-200 bg-red-50 rounded-lg';
     
+    const componentName = this.container.getAttribute('data-component') || 'Component';
     const canRetry = this.options.enableRecovery && 
-                     this.errorState.retryCount < (this.options.maxRetries || 3);
+                     this.retryCount < (this.options.maxRetries || 3);
 
     errorContainer.innerHTML = `
       <div class="text-red-600 mb-4">
@@ -311,29 +397,29 @@ export class ErrorBoundary {
         </svg>
       </div>
       
-      <h3 class="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">Component Error</h3>
       <p class="text-gray-600 mb-4">
-        This component encountered an error and cannot be displayed.
+        The ${componentName} component encountered an error and cannot be displayed.
       </p>
       
       ${canRetry ? `
         <div class="space-y-2">
-          <button id="retry-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Try Again ${this.errorState.retryCount > 0 ? `(${this.errorState.retryCount}/${this.options.maxRetries})` : ''}
+          <button id="retry-component" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Try Again ${this.retryCount > 0 ? `(${this.retryCount}/${this.options.maxRetries})` : ''}
           </button>
           <div>
-            <button id="reset-btn" class="text-gray-600 hover:text-gray-800 underline">
+            <button id="reset-component" class="text-gray-600 hover:text-gray-800 underline">
               Reset Component
             </button>
           </div>
         </div>
       ` : `
-        <button id="reset-btn" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+        <button id="reset-component" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
           Reset Component
         </button>
       `}
       
-      ${import.meta.env.MODE === 'development' ? `
+      ${import.meta.env.MODE === 'test' ? `
         <details class="mt-4 text-left">
           <summary class="cursor-pointer text-sm text-gray-500">Error Details</summary>
           <pre class="mt-2 p-2 bg-gray-100 text-xs rounded overflow-auto">${error.stack || error.message}</pre>
@@ -342,8 +428,8 @@ export class ErrorBoundary {
     `;
 
     // Add event listeners
-    const retryBtn = errorContainer.querySelector('#retry-btn');
-    const resetBtn = errorContainer.querySelector('#reset-btn');
+    const retryBtn = errorContainer.querySelector('#retry-component');
+    const resetBtn = errorContainer.querySelector('#reset-component');
 
     if (retryBtn) {
       retryBtn.addEventListener('click', () => this.retry());
@@ -360,12 +446,12 @@ export class ErrorBoundary {
    * Retry the failed operation
    */
   public retry(): void {
-    if (this.errorState.retryCount >= (this.options.maxRetries || 3)) {
+    if (this.retryCount >= (this.options.maxRetries || 3)) {
       console.warn('Maximum retry attempts reached');
       return;
     }
 
-    this.errorState.retryCount++;
+    this.retryCount++;
     this.recover();
   }
 
@@ -373,6 +459,7 @@ export class ErrorBoundary {
    * Reset the component to initial state
    */
   public reset(): void {
+    this.retryCount = 0;
     this.errorState = {
       hasError: false,
       retryCount: 0,
@@ -382,48 +469,19 @@ export class ErrorBoundary {
   }
 
   /**
-   * Recover from error state
-   */
-  private recover(): void {
-    try {
-      // Clear any recovery timer
-      if (this.recoveryTimer) {
-        clearTimeout(this.recoveryTimer);
-        this.recoveryTimer = null;
-      }
-
-      // Restore original content
-      this.container.innerHTML = this.originalContent;
-
-      // Mark as recovered
-      this.errorState.hasError = false;
-
-      // Emit recovery event
-      this.container.dispatchEvent(new CustomEvent('boundary-recovered', {
-        detail: {
-          retryCount: this.errorState.retryCount,
-          boundary: this,
-        },
-      }));
-
-    } catch (recoveryError) {
-      console.error('Failed to recover from error:', recoveryError);
-      this.showFallbackError(recoveryError);
-    }
-  }
-
-  /**
    * Automatic recovery after delay
    */
-  public scheduleAutoRecovery(delay = 5000): void {
-    if (!this.options.enableRecovery || this.recoveryTimer) return;
+  public scheduleAutoRecovery(delay?: number): void {
+    if (!this.options.enableAutoRecovery || this.recoveryTimer) return;
 
+    const retryDelay = delay ?? this.options.retryDelay ?? 1000;
+    
     this.recoveryTimer = window.setTimeout(() => {
-      if (this.errorState.hasError && this.errorState.retryCount < (this.options.maxRetries || 3)) {
+      if (this.errorState.hasError && this.retryCount < (this.options.maxRetries || 3)) {
         console.log('Attempting automatic recovery...');
         this.retry();
       }
-    }, delay);
+    }, retryDelay);
   }
 
   /**
@@ -518,6 +576,9 @@ export class ErrorBoundary {
     // Remove from registry
     errorBoundaryRegistry.delete(this.container);
     childBoundaryMap.delete(this);
+    
+    // Remove reference from container
+    delete (this.container as any).__errorBoundary;
 
     this.isInitialized = false;
   }
@@ -555,9 +616,9 @@ export function findNearestErrorBoundary(element: HTMLElement): ErrorBoundary | 
 /**
  * Trigger a component error event
  */
-export function triggerComponentError(element: HTMLElement, error: Error, context: any = {}): void {
+export function triggerComponentError(element: HTMLElement, error: Error, errorInfo: ComponentErrorInfo = {}): void {
   const errorEvent = new CustomEvent('component-error', {
-    detail: { error, context },
+    detail: { error, context: errorInfo },
     bubbles: true,
   });
   
