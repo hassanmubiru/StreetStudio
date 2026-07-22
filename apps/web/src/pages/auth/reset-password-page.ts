@@ -1,8 +1,11 @@
 /**
  * Reset Password Page Component
  * 
- * Password reset completion page with token validation.
+ * Password reset completion page with token validation and comprehensive form handling.
+ * Requirements: 1.5 - Complete password reset workflow
  */
+
+import { logger } from '../../app/client-logger.js';
 
 export class ResetPasswordPage {
   private element: HTMLElement;
@@ -91,12 +94,14 @@ export class ResetPasswordPage {
                 name="password"
                 type="password"
                 required
-                class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                aria-describedby="password-error password-help"
+                class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Enter new password"
               >
-              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Password must be at least 8 characters long
+              <p id="password-help" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Password must be at least 8 characters long with uppercase, lowercase, and number
               </p>
+              <div id="password-error" class="hidden text-sm text-red-600 dark:text-red-400 mt-1" role="alert"></div>
             </div>
 
             <div>
@@ -108,9 +113,11 @@ export class ResetPasswordPage {
                 name="confirmPassword"
                 type="password"
                 required
-                class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                aria-describedby="confirmPassword-error"
+                class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Confirm new password"
               >
+              <div id="confirmPassword-error" class="hidden text-sm text-red-600 dark:text-red-400 mt-1" role="alert"></div>
             </div>
           </div>
 
@@ -170,6 +177,18 @@ export class ResetPasswordPage {
       event.preventDefault();
       this.handleResetPassword();
     });
+
+    // Real-time validation for all inputs
+    const inputs = form.querySelectorAll('input[type="password"]');
+    inputs.forEach(input => {
+      input.addEventListener('blur', () => {
+        this.validateField(input as HTMLInputElement);
+      });
+
+      input.addEventListener('input', () => {
+        this.clearFieldError(input as HTMLInputElement);
+      });
+    });
   }
 
   private async handleResetPassword(): Promise<void> {
@@ -180,19 +199,8 @@ export class ResetPasswordPage {
     const password = formData.get('password') as string;
     const confirmPassword = formData.get('confirmPassword') as string;
 
-    // Basic validation
-    if (!password || !confirmPassword) {
-      this.showError('Please fill in all fields');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      this.showError('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 8) {
-      this.showError('Password must be at least 8 characters long');
+    // Comprehensive validation
+    if (!this.validatePasswordForm(password, confirmPassword)) {
       return;
     }
 
@@ -201,11 +209,26 @@ export class ResetPasswordPage {
     this.hideError();
 
     try {
-      // TODO: Implement actual password reset with token
-      // For now, simulate success
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      // Call API to reset password with token
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: this.resetToken,
+          password: password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Password reset failed');
+      }
+
       this.showSuccess();
+      
+      logger.info('Password reset completed successfully');
       
       // Redirect to login after 3 seconds
       setTimeout(() => {
@@ -213,10 +236,117 @@ export class ResetPasswordPage {
       }, 3000);
 
     } catch (error) {
-      console.error('Password reset error:', error);
-      this.showError('An unexpected error occurred. Please try again.');
+      logger.error('Password reset error', {
+        error: (error as Error).message,
+      });
+
+      if ((error as Error).message.includes('expired') || (error as Error).message.includes('invalid')) {
+        this.showError('This password reset link has expired or is invalid. Please request a new one.');
+      } else {
+        this.showError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       this.showLoading(false);
+    }
+  }
+
+  /**
+   * Validate password form
+   */
+  private validatePasswordForm(password: string, confirmPassword: string): boolean {
+    let isValid = true;
+
+    // Password validation
+    if (!password) {
+      this.showFieldError('password', 'Password is required');
+      isValid = false;
+    } else if (password.length < 8) {
+      this.showFieldError('password', 'Password must be at least 8 characters long');
+      isValid = false;
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      this.showFieldError('password', 'Password must contain at least one uppercase letter, one lowercase letter, and one number');
+      isValid = false;
+    } else {
+      this.clearFieldError(this.element.querySelector('#password') as HTMLInputElement);
+    }
+
+    // Confirm password validation
+    if (!confirmPassword) {
+      this.showFieldError('confirmPassword', 'Please confirm your password');
+      isValid = false;
+    } else if (password !== confirmPassword) {
+      this.showFieldError('confirmPassword', 'Passwords do not match');
+      isValid = false;
+    } else {
+      this.clearFieldError(this.element.querySelector('#confirmPassword') as HTMLInputElement);
+    }
+
+    return isValid;
+  }
+
+  /**
+   * Validate individual field
+   */
+  private validateField(input: HTMLInputElement): void {
+    const value = input.value;
+    
+    switch (input.id) {
+      case 'password':
+        if (!value) {
+          this.showFieldError('password', 'Password is required');
+        } else if (value.length < 8) {
+          this.showFieldError('password', 'Password must be at least 8 characters long');
+        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+          this.showFieldError('password', 'Password must contain at least one uppercase letter, one lowercase letter, and one number');
+        } else {
+          this.clearFieldError(input);
+          // Also validate confirm password if it has a value
+          const confirmInput = this.element.querySelector('#confirmPassword') as HTMLInputElement;
+          if (confirmInput.value) {
+            this.validateField(confirmInput);
+          }
+        }
+        break;
+        
+      case 'confirmPassword':
+        const passwordInput = this.element.querySelector('#password') as HTMLInputElement;
+        if (!value) {
+          this.showFieldError('confirmPassword', 'Please confirm your password');
+        } else if (passwordInput.value !== value) {
+          this.showFieldError('confirmPassword', 'Passwords do not match');
+        } else {
+          this.clearFieldError(input);
+        }
+        break;
+    }
+  }
+
+  /**
+   * Show field-specific error message
+   */
+  private showFieldError(fieldId: string, message: string): void {
+    const input = this.element.querySelector(`#${fieldId}`) as HTMLInputElement;
+    const errorElement = this.element.querySelector(`#${fieldId}-error`) as HTMLElement;
+    
+    if (input && errorElement) {
+      input.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+      input.setAttribute('aria-invalid', 'true');
+      errorElement.textContent = message;
+      errorElement.classList.remove('hidden');
+    }
+  }
+
+  /**
+   * Clear field-specific error message
+   */
+  private clearFieldError(input: HTMLInputElement): void {
+    const errorElement = this.element.querySelector(`#${input.id}-error`) as HTMLElement;
+    
+    if (input && errorElement) {
+      input.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+      input.removeAttribute('aria-invalid');
+      errorElement.classList.add('hidden');
+      errorElement.textContent = '';
     }
   }
 

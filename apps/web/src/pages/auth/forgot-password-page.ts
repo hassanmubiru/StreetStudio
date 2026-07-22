@@ -1,10 +1,12 @@
 /**
  * Forgot Password Page Component
  * 
- * Password reset request page with email validation.
+ * Password reset request page with email validation and consistent confirmation message.
+ * Requirements: 1.5 - Always show same confirmation regardless of email existence
  */
 
 import { AuthController } from '../../app/auth/auth-controller.js';
+import { logger } from '../../app/client-logger.js';
 
 export class ForgotPasswordPage {
   private element: HTMLElement;
@@ -47,9 +49,11 @@ export class ForgotPasswordPage {
               name="email"
               type="email"
               required
-              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              aria-describedby="email-error"
+              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
               placeholder="Enter your email address"
             >
+            <div id="email-error" class="hidden text-sm text-red-600 dark:text-red-400 mt-1" role="alert"></div>
           </div>
 
           <div class="error-message hidden" data-error-message>
@@ -58,8 +62,19 @@ export class ForgotPasswordPage {
           </div>
 
           <div class="success-message hidden" data-success-message>
-            <div class="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 text-green-600 dark:text-green-400 px-4 py-3 rounded">
-              Check your email for a password reset link. If you don't see it, check your spam folder.
+            <div class="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 text-green-600 dark:text-green-400 px-4 py-3 rounded" role="alert">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L7.53 10.53a.75.75 0 00-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm font-medium">
+                    If an account with that email exists, we've sent a password reset link. Please check your email and spam folder.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -106,6 +121,16 @@ export class ForgotPasswordPage {
       event.preventDefault();
       this.handleForgotPassword();
     });
+
+    // Real-time validation
+    const emailInput = form.querySelector('#email') as HTMLInputElement;
+    emailInput.addEventListener('blur', () => {
+      this.validateEmail(emailInput);
+    });
+
+    emailInput.addEventListener('input', () => {
+      this.clearFieldError(emailInput);
+    });
   }
 
   private async handleForgotPassword(): Promise<void> {
@@ -116,16 +141,10 @@ export class ForgotPasswordPage {
 
     const form = this.element.querySelector('[data-forgot-password-form]') as HTMLFormElement;
     const formData = new FormData(form);
-    const email = formData.get('email') as string;
+    const email = (formData.get('email') as string)?.trim();
 
-    // Basic validation
-    if (!email) {
-      this.showError('Please enter your email address');
-      return;
-    }
-
-    if (!this.isValidEmail(email)) {
-      this.showError('Please enter a valid email address');
+    // Validation
+    if (!this.validateEmail(this.element.querySelector('#email') as HTMLInputElement)) {
       return;
     }
 
@@ -135,22 +154,83 @@ export class ForgotPasswordPage {
     this.hideSuccess();
 
     try {
+      // Always call the API regardless of email validity (Requirement 1.5)
       const result = await this.authController.requestPasswordReset(email);
 
-      if (result.success) {
-        this.showSuccess();
-        // Disable form after successful submission
-        const submitButton = this.element.querySelector('[data-submit-button]') as HTMLButtonElement;
-        submitButton.textContent = 'Email Sent';
-        submitButton.disabled = true;
-      } else {
-        this.showError(result.error || 'Failed to send reset email');
-      }
+      // Always show the same success message (Requirement 1.5 - Security uniformity)
+      this.showSuccess();
+      
+      // Disable form after submission
+      const submitButton = this.element.querySelector('[data-submit-button]') as HTMLButtonElement;
+      submitButton.textContent = 'Email Sent';
+      submitButton.disabled = true;
+
+      logger.info('Password reset requested', { 
+        email: email.substring(0, 3) + '***' // Log partial email for privacy
+      });
+
     } catch (error) {
-      console.error('Password reset request error:', error);
-      this.showError('An unexpected error occurred. Please try again.');
+      logger.error('Password reset request error', {
+        error: (error as Error).message,
+      });
+      
+      // Still show success message for security (don't reveal if email exists)
+      this.showSuccess();
+      
+      const submitButton = this.element.querySelector('[data-submit-button]') as HTMLButtonElement;
+      submitButton.textContent = 'Email Sent';
+      submitButton.disabled = true;
     } finally {
       this.showLoading(false);
+    }
+  }
+
+  /**
+   * Validate email field
+   */
+  private validateEmail(input: HTMLInputElement): boolean {
+    const email = input.value.trim();
+    
+    if (!email) {
+      this.showFieldError('email', 'Email address is required');
+      return false;
+    }
+    
+    if (!this.isValidEmail(email)) {
+      this.showFieldError('email', 'Please enter a valid email address');
+      return false;
+    }
+    
+    this.clearFieldError(input);
+    return true;
+  }
+
+  /**
+   * Show field-specific error message
+   */
+  private showFieldError(fieldId: string, message: string): void {
+    const input = this.element.querySelector(`#${fieldId}`) as HTMLInputElement;
+    const errorElement = this.element.querySelector(`#${fieldId}-error`) as HTMLElement;
+    
+    if (input && errorElement) {
+      input.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+      input.setAttribute('aria-invalid', 'true');
+      errorElement.textContent = message;
+      errorElement.classList.remove('hidden');
+    }
+  }
+
+  /**
+   * Clear field-specific error message
+   */
+  private clearFieldError(input: HTMLInputElement): void {
+    const errorElement = this.element.querySelector(`#${input.id}-error`) as HTMLElement;
+    
+    if (input && errorElement) {
+      input.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+      input.removeAttribute('aria-invalid');
+      errorElement.classList.add('hidden');
+      errorElement.textContent = '';
     }
   }
 
