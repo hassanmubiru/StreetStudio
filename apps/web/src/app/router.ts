@@ -351,14 +351,24 @@ export class Router {
   }
 
   /**
-   * Execute a route
+   * Execute a route with improved error handling and abort support
    */
-  private async executeRoute(path: string, transitionType?: string): Promise<void> {
+  private async executeRoute(path: string, transitionType?: string, signal?: AbortSignal): Promise<void> {
     const normalizedPath = this.normalizePath(path);
     const route = this.findRoute(normalizedPath);
 
     if (route) {
-      // Check route guard
+      // Check if navigation was cancelled
+      if (signal?.aborted) {
+        throw new Error('Navigation cancelled');
+      }
+
+      // Update page title
+      if (route.title) {
+        document.title = route.title;
+      }
+
+      // Check route guard one more time
       if (this.routeGuard) {
         const canAccess = await this.routeGuard(normalizedPath);
         if (!canAccess) {
@@ -376,8 +386,18 @@ export class Router {
         await this.executeTransitionOut(transitionType || route.transition || 'fade');
       }
 
+      // Check cancellation again before executing handler
+      if (signal?.aborted) {
+        throw new Error('Navigation cancelled');
+      }
+
       // Execute route handler
       await this.executeRouteHandler(route, normalizedPath);
+
+      // Check cancellation one final time
+      if (signal?.aborted) {
+        throw new Error('Navigation cancelled');
+      }
 
       // Execute transition in animation
       if (this.config.enableTransitions) {
@@ -391,6 +411,7 @@ export class Router {
       await this.notFoundHandler({});
     } else {
       console.warn('No route found for:', normalizedPath);
+      throw new Error(`Route not found: ${normalizedPath}`);
     }
 
     // Update current path
