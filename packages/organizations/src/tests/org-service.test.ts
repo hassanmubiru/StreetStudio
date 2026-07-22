@@ -14,12 +14,12 @@ import {
   ADMIN_ACTION_SETTINGS_UPDATED,
   ADMINISTRATOR_ROLE_NAME,
   INVITATION_TTL_MS,
-  isValidOrgSettings,
   MEMBER_ROLE_NAME,
   OrgService,
   type AdminAuditRecorder,
   type OrgStore,
-} from "./org-service.js";
+} from "../application/org-service.js";
+import { isValidOrgSettings } from "../domain/index.js";
 import type { AuthContext } from "@streetstudio/auth";
 import type { Clock } from "@streetstudio/auth";
 
