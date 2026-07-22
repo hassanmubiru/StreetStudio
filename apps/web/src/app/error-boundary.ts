@@ -244,6 +244,15 @@ export class ErrorBoundary {
       lastErrorTime: new Date(),
     };
 
+    // Call custom error handler if provided
+    if (this.options.onError) {
+      try {
+        this.options.onError(error, this.errorState.errorInfo!);
+      } catch (handlerError) {
+        console.error('Error in custom error handler:', handlerError);
+      }
+    }
+
     try {
       handleError(error, context, {
         errorInfo: this.errorState.errorInfo,
@@ -299,6 +308,9 @@ export class ErrorBoundary {
 
       // Mark as recovered
       this.errorState.hasError = false;
+      
+      // Reset retry count on successful recovery
+      this.retryCount = 0;
 
       // Emit recovery event
       this.container.dispatchEvent(new CustomEvent('boundary-recovered', {
