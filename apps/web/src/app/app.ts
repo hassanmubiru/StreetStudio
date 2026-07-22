@@ -179,60 +179,114 @@ export class StreetStudioApp {
     this.layoutController.setupThemeToggle();
   }
   private async setupRouter(): Promise<void> {
+    // Configure router with authentication
+    this.router.setAuthenticationCheck(() => this.authController.isAuthenticated());
+
     // Define routes
-    this.router.addRoute('/', () => this.renderLandingPage());
+    this.router.addRoute('/', () => this.renderLandingPage(), { 
+      title: 'StreetStudio - Video Recording & Collaboration',
+      component: 'landing'
+    });
     
     // Authentication routes
-    this.router.addRoute('/auth/login', () => this.renderLogin());
-    this.router.addRoute('/auth/register', () => this.renderRegister());
-    this.router.addRoute('/auth/forgot-password', () => this.renderForgotPassword());
-    this.router.addRoute('/auth/reset-password', () => this.renderResetPassword());
+    this.router.addRoute('/auth/login', () => this.renderLogin(), {
+      title: 'Sign In - StreetStudio',
+      component: 'login'
+    });
+    this.router.addRoute('/auth/register', () => this.renderRegister(), {
+      title: 'Sign Up - StreetStudio',
+      component: 'register'
+    });
+    this.router.addRoute('/auth/forgot-password', () => this.renderForgotPassword(), {
+      title: 'Forgot Password - StreetStudio',
+      component: 'forgot-password'
+    });
+    this.router.addRoute('/auth/reset-password', () => this.renderResetPassword(), {
+      title: 'Reset Password - StreetStudio',
+      component: 'reset-password'
+    });
     
     // Protected routes (require authentication)
-    this.router.addProtectedRoute('/dashboard', () => this.renderDashboard());
-    this.router.addProtectedRoute('/projects', () => this.renderProjects());
+    this.router.addProtectedRoute('/dashboard', () => this.renderDashboard(), {
+      title: 'Dashboard - StreetStudio',
+      component: 'dashboard'
+    });
+    this.router.addProtectedRoute('/projects', () => this.renderProjects(), {
+      title: 'Projects - StreetStudio',
+      component: 'projects'
+    });
     this.router.addProtectedRoute('/projects/:projectId', (params) => {
       const projectId = params.projectId;
       if (projectId) {
         this.renderProject(projectId);
       }
+    }, {
+      title: 'Project Details - StreetStudio',
+      component: 'project-detail'
     });
-    this.router.addProtectedRoute('/recordings', () => this.renderRecordings());
+    this.router.addProtectedRoute('/recordings', () => this.renderRecordings(), {
+      title: 'Recordings - StreetStudio',
+      component: 'recordings'
+    });
     this.router.addProtectedRoute('/recordings/:recordingId', (params) => {
       const recordingId = params.recordingId;
       if (recordingId) {
         this.renderRecording(recordingId);
       }
+    }, {
+      title: 'Recording Details - StreetStudio',
+      component: 'recording-detail'
     });
     this.router.addProtectedRoute('/recordings/:recordingId/review', (params) => {
       const recordingId = params.recordingId;
       if (recordingId) {
         this.renderReview(recordingId);
       }
+    }, {
+      title: 'Review Recording - StreetStudio',
+      component: 'review'
     });
     this.router.addProtectedRoute('/recordings/:recordingId/edit', (params) => {
       const recordingId = params.recordingId;
       if (recordingId) {
         this.renderEditor(recordingId);
       }
+    }, {
+      title: 'Edit Recording - StreetStudio',
+      component: 'editor'
     });
-    this.router.addProtectedRoute('/search', () => this.renderSearch());
-    this.router.addProtectedRoute('/notifications', () => this.renderNotifications());
-    this.router.addProtectedRoute('/settings', () => this.renderSettings());
-    this.router.addProtectedRoute('/settings/organization', () => this.renderOrganizationSettings());
-    this.router.addProtectedRoute('/settings/profile', () => this.renderProfileSettings());
-    this.router.addProtectedRoute('/settings/billing', () => this.renderBillingSettings());
+    this.router.addProtectedRoute('/search', () => this.renderSearch(), {
+      title: 'Search - StreetStudio',
+      component: 'search'
+    });
+    this.router.addProtectedRoute('/notifications', () => this.renderNotifications(), {
+      title: 'Notifications - StreetStudio',
+      component: 'notifications'
+    });
+    this.router.addProtectedRoute('/settings', () => this.renderSettings(), {
+      title: 'Settings - StreetStudio',
+      component: 'settings'
+    });
+    this.router.addProtectedRoute('/settings/organization', () => this.renderOrganizationSettings(), {
+      title: 'Organization Settings - StreetStudio',
+      component: 'organization-settings'
+    });
+    this.router.addProtectedRoute('/settings/profile', () => this.renderProfileSettings(), {
+      title: 'Profile Settings - StreetStudio',
+      component: 'profile-settings'
+    });
+    this.router.addProtectedRoute('/settings/billing', () => this.renderBillingSettings(), {
+      title: 'Billing Settings - StreetStudio',
+      component: 'billing-settings'
+    });
     
     // 404 handler
     this.router.setNotFoundHandler(() => this.render404());
     
     // Setup route guards
     this.router.setRouteGuard((path) => {
-      // Check authentication for protected routes
-      if (this.router.isProtectedRoute(path) && !this.authController.isAuthenticated()) {
-        this.router.navigate('/auth/login');
-        return false;
-      }
+      // Additional route validation can go here
+      // The authentication check is handled automatically by the router
       return true;
     });
 
