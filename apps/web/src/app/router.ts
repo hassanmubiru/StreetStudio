@@ -154,25 +154,45 @@ export class Router {
   }
 
   /**
-   * Navigate to a route programmatically
+   * Navigate to a route programmatically with improved error handling and cancellation
    */
-  public async navigate(path: string, options: { replace?: boolean; transition?: string } = {}): Promise<void> {
-    if (this.isTransitioning) {
-      return; // Prevent navigation during transitions
+  public async navigate(path: string, options: { replace?: boolean; transition?: string; force?: boolean } = {}): Promise<void> {
+    // Cancel any ongoing navigation
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+    this.abortController = new AbortController();
+    
+    if (this.isTransitioning && !options.force) {
+      return; // Prevent navigation during transitions unless forced
     }
 
     // Normalize path
     const normalizedPath = this.normalizePath(path);
 
-    // Don't navigate if already at this path
-    if (normalizedPath === this.currentPath) {
+    // Don't navigate if already at this path unless forced
+    if (normalizedPath === this.currentPath && !options.force) {
       return;
     }
 
-    // Run route guard
+    // Check authentication for protected routes first
+    if (this.isProtectedRoute(normalizedPath) && this.authCheck && !this.authCheck()) {
+      // Redirect to login instead of blocking
+      console.log('Redirecting unauthenticated user to login');
+      this.navigate('/auth/login', { replace: true });
+      return;
+    }
+
+    // Run additional route guard
     if (this.routeGuard) {
-      const canNavigate = await this.routeGuard(normalizedPath);
-      if (!canNavigate) {
+      try {
+        const canNavigate = await this.routeGuard(normalizedPath);
+        if (!canNavigate) {
+          return;
+        }
+      } catch (error) {
+        console.error('Route guard error:', error);
+        this.handleNavigationError(error as Error);
         return;
       }
     }
@@ -187,17 +207,27 @@ export class Router {
         window.history.pushState({ path: normalizedPath }, '', normalizedPath);
       }
 
-      // Execute route
-      await this.executeRoute(normalizedPath, options.transition);
+      // Execute route with abort signal
+      await this.executeRoute(normalizedPath, options.transition, this.abortController.signal);
 
       // Update current path
       this.currentPath = normalizedPath;
 
+      // Scroll to top if enabled
+      if (this.config.scrollToTop) {
+        this.scrollToTop();
+      }
+
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.debug('Navigation cancelled');
+        return;
+      }
       console.error('Navigation failed:', error);
       this.handleNavigationError(error as Error);
     } finally {
       this.isTransitioning = false;
+      this.abortController = undefined;
     }
   }
 
