@@ -94,32 +94,38 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 }));
 
 // Mock timers - ensure they work properly in test environment
+const originalSetTimeout = global.setTimeout;
+const originalClearTimeout = global.clearTimeout;
+const originalSetInterval = global.setInterval;
+const originalClearInterval = global.clearInterval;
+
 Object.defineProperty(window, 'setTimeout', {
   writable: true,
   value: vi.fn().mockImplementation((callback: Function, delay: number) => {
-    return setTimeout(callback, delay);
+    return originalSetTimeout(callback, delay);
   }),
 });
 
 Object.defineProperty(window, 'clearTimeout', {
   writable: true,
   value: vi.fn().mockImplementation((id: number) => {
-    return clearTimeout(id);
+    return originalClearTimeout(id);
   }),
 });
 
 Object.defineProperty(window, 'setInterval', {
   writable: true,
   value: vi.fn().mockImplementation((callback: Function, delay: number) => {
-    return setInterval(callback, delay);
+    return originalSetInterval(callback, delay);
   }),
 });
 
 Object.defineProperty(window, 'clearInterval', {
   writable: true,
   value: vi.fn().mockImplementation((id: number) => {
-    return clearInterval(id);
+    return originalClearInterval(id);
   }),
+});
 });
 
 // Clean up between tests
