@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error Boundary System Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .error-boundary-fallback {
+            border: 2px solid #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Error Boundary System Demo</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Error Testing Panel -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Error Testing</h2>
+                <div class="space-y-3">
+                    <button id="fatal-error" class="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
+                        Trigger Fatal Error
+                    </button>
+                    <button id="recoverable-error" class="w-full bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700">
+                        Trigger Recoverable Error
+                    </button>
+                    <button id="network-error" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+                        Trigger Network Error
+                    </button>
+                    <button id="component-error" class="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700">
+                        Trigger Component Error
+                    </button>
+                    <button id="feature-error" class="w-full bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700">
+                        Trigger Feature Failure
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Error Reporting Status -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Error Reporting Status</h2>
+                <div id="error-status">
+                    <p class="text-gray-600">No errors reported yet.</p>
+                </div>
+                <button id="consent-settings" class="mt-4 bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700">
+                    Manage Error Reporting Consent
+                </button>
+            </div>
+        </div>
+        
+        <!-- Test Components -->
+        <div class="mt-8">
+            <h2 class="text-xl font-semibold mb-4">Test Components</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="test-component-1" data-component="VideoPlayer" class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="font-medium">Video Player Component</h3>
+                    <p class="text-gray-600">This component simulates a video player</p>
+                    <button class="mt-2 bg-blue-500 text-white py-1 px-3 rounded text-sm hover:bg-blue-600">
+                        Play Video
+                    </button>
+                </div>
+                
+                <div id="test-component-2" data-component="Timeline" class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="font-medium">Timeline Component</h3>
+                    <p class="text-gray-600">This component simulates a timeline editor</p>
+                    <button class="mt-2 bg-green-500 text-white py-1 px-3 rounded text-sm hover:bg-green-600">
+                        Edit Timeline
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Error Log -->
+        <div class="mt-8">
+            <h2 class="text-xl font-semibold mb-4">Error Log</h2>
+            <div id="error-log" class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm h-32 overflow-y-auto">
+                System ready...
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Mock error handler for demo
+        let errorCount = 0;
+        const errorLog = document.getElementById('error-log');
+        const errorStatus = document.getElementById('error-status');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            errorLog.innerHTML += `\n[${timestamp}] ${message}`;
+            errorLog.scrollTop = errorLog.scrollHeight;
+        }
+        
+        function updateStatus() {
+            errorCount++;
+            errorStatus.innerHTML = `
+                <p class="text-gray-600">Errors handled: <span class="font-semibold">${errorCount}</span></p>
+                <p class="text-green-600">System operational with graceful degradation</p>
+            `;
+        }
+        
+        // Simulate error boundary behavior
+        function handleError(type, component = null) {
+            log(`${type} error detected${component ? ` in ${component}` : ''}`);
+            
+            switch(type) {
+                case 'fatal':
+                    log('Categorized as: FATAL - showing full screen recovery');
+                    setTimeout(() => {
+                        document.body.innerHTML = `
+                            <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+                                <div class="max-w-md w-full text-center">
+                                    <div class="text-red-600 mb-4">
+                                        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.84L13.732 4.86c-.77-1.175-2.694-1.175-3.464 0L3.34 16.16c-.77 1.173.192 2.84 1.732 2.84z"></path>
+                                        </svg>
+                                    </div>
+                                    <h1 class="text-xl font-semibold text-gray-900 mb-2">Application Error</h1>
+                                    <p class="text-gray-600 mb-6">A critical error has occurred. Please reload the application to continue.</p>
+                                    <div class="space-y-3">
+                                        <button onclick="window.location.reload()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                                            Reload Application
+                                        </button>
+                                        <button onclick="window.open('mailto:support@streetstudio.com')" class="w-full bg-gray-200 text-gray-900 px-4 py-2 rounded-md hover:bg-gray-300">
+                                            Contact Support
+                                        </button>
+                                    </div>
+                                    <div class="mt-6 pt-6 border-t border-gray-200">
+                                        <p class="text-sm text-gray-600 mb-3">Need help? Contact our support team</p>
+                                        <p class="text-sm text-gray-600">Error ID: <span class="font-mono text-gray-800">ERR-${Date.now()}</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }, 1000);
+                    break;
+                    
+                case 'recoverable':
+                    log('Categorized as: RECOVERABLE - showing retry options');
+                    showToast('Temporary error occurred. Retrying...', 'warning');
+                    break;
+                    
+                case 'network':
+                    log('Categorized as: NETWORK - queuing for retry');
+                    showToast('Network error. Please check your connection.', 'error');
+                    break;
+                    
+                case 'component':
+                    if (component) {
+                        log(`Applying graceful degradation to ${component}`);
+                        const componentEl = document.querySelector(`[data-component="${component}"]`);
+                        if (componentEl) {
+                            componentEl.innerHTML = `
+                                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                                    <div class="flex items-start">
+                                        <svg class="w-5 h-5 text-red-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.84L13.732 4.86c-.77-1.175-2.694-1.175-3.464 0L3.34 16.16c-.77 1.173.192 2.84 1.732 2.84z"></path>
+                                        </svg>
+                                        <div class="flex-1">
+                                            <h3 class="text-sm font-medium text-red-800">Component Error</h3>
+                                            <p class="mt-1 text-sm text-red-700">The ${component} component is temporarily unavailable.</p>
+                                            <button onclick="handleError('component', '${component}')" class="mt-3 bg-red-100 text-red-800 px-3 py-1 rounded text-sm hover:bg-red-200">
+                                                Try Again
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            componentEl.classList.add('error-boundary-fallback');
+                        }
+                    }
+                    break;
+                    
+                case 'feature':
+                    log('Feature failure - enabling fallback mode');
+                    showToast('Advanced features temporarily unavailable. Using simplified mode.', 'info');
+                    break;
+            }
+            
+            updateStatus();
+        }
+        
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                type === 'error' ? 'bg-red-600' :
+                type === 'warning' ? 'bg-yellow-600' :
+                type === 'info' ? 'bg-blue-600' : 'bg-gray-600'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 4000);
+        }
+        
+        function showConsentModal() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900">Help Improve StreetStudio</h3>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-4">
+                        Would you like to help us improve StreetStudio by automatically sending error reports when issues occur?
+                    </p>
+                    
+                    <div class="bg-gray-50 rounded-md p-3 mb-4">
+                        <p class="text-sm text-gray-700 font-medium mb-2">What we collect:</p>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• Error messages and technical details</li>
+                            <li>• Page you were on when the error occurred</li>
+                            <li>• Browser and device information</li>
+                            <li class="text-red-600">• No personal data or video content</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button onclick="setConsent(true)" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            Yes, Help Improve
+                        </button>
+                        <button onclick="setConsent(false)" class="flex-1 bg-gray-200 text-gray-900 px-4 py-2 rounded-md hover:bg-gray-300">
+                            No Thanks
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            window.setConsent = (consented) => {
+                localStorage.setItem('error_reporting_consent', consented.toString());
+                document.body.removeChild(modal);
+                log(`Error reporting consent: ${consented ? 'GRANTED' : 'DENIED'}`);
+                showToast(`Error reporting ${consented ? 'enabled' : 'disabled'}`, 'info');
+            };
+        }
+        
+        // Make handleError globally available
+        window.handleError = handleError;
+        
+        // Event listeners
+        document.getElementById('fatal-error').addEventListener('click', () => handleError('fatal'));
+        document.getElementById('recoverable-error').addEventListener('click', () => handleError('recoverable'));
+        document.getElementById('network-error').addEventListener('click', () => handleError('network'));
+        document.getElementById('component-error').addEventListener('click', () => handleError('component', 'VideoPlayer'));
+        document.getElementById('feature-error').addEventListener('click', () => handleError('feature'));
+        document.getElementById('consent-settings').addEventListener('click', showConsentModal);
+        
+        log('Error boundary system initialized');
+        log('All error categories ready: fatal, recoverable, network, component, feature');
+        log('User consent system ready');
+        log('Graceful degradation enabled');
+    </script>
+</body>
+</html>

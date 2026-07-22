@@ -178,3 +178,239 @@ export class StreetStudioApp {
     // Setup theme management
     this.layoutController.setupThemeToggle();
   }
+  private async setupRouter(): Promise<void> {
+    // Define routes
+    this.router.addRoute('/', () => this.renderLandingPage());
+    
+    // Authentication routes
+    this.router.addRoute('/auth/login', () => this.renderLogin());
+    this.router.addRoute('/auth/register', () => this.renderRegister());
+    this.router.addRoute('/auth/forgot-password', () => this.renderForgotPassword());
+    this.router.addRoute('/auth/reset-password', () => this.renderResetPassword());
+    
+    // Protected routes (require authentication)
+    this.router.addProtectedRoute('/dashboard', () => this.renderDashboard());
+    this.router.addProtectedRoute('/projects', () => this.renderProjects());
+    this.router.addProtectedRoute('/projects/:projectId', (params) => {
+      const projectId = params.projectId;
+      if (projectId) {
+        this.renderProject(projectId);
+      }
+    });
+    this.router.addProtectedRoute('/recordings', () => this.renderRecordings());
+    this.router.addProtectedRoute('/recordings/:recordingId', (params) => {
+      const recordingId = params.recordingId;
+      if (recordingId) {
+        this.renderRecording(recordingId);
+      }
+    });
+    this.router.addProtectedRoute('/recordings/:recordingId/review', (params) => {
+      const recordingId = params.recordingId;
+      if (recordingId) {
+        this.renderReview(recordingId);
+      }
+    });
+    this.router.addProtectedRoute('/recordings/:recordingId/edit', (params) => {
+      const recordingId = params.recordingId;
+      if (recordingId) {
+        this.renderEditor(recordingId);
+      }
+    });
+    this.router.addProtectedRoute('/search', () => this.renderSearch());
+    this.router.addProtectedRoute('/notifications', () => this.renderNotifications());
+    this.router.addProtectedRoute('/settings', () => this.renderSettings());
+    this.router.addProtectedRoute('/settings/organization', () => this.renderOrganizationSettings());
+    this.router.addProtectedRoute('/settings/profile', () => this.renderProfileSettings());
+    this.router.addProtectedRoute('/settings/billing', () => this.renderBillingSettings());
+    
+    // 404 handler
+    this.router.setNotFoundHandler(() => this.render404());
+    
+    // Setup route guards
+    this.router.setRouteGuard((path) => {
+      // Check authentication for protected routes
+      if (this.router.isProtectedRoute(path) && !this.authController.isAuthenticated()) {
+        this.router.navigate('/auth/login');
+        return false;
+      }
+      return true;
+    });
+
+    // Start router
+    this.router.start();
+  }
+
+  // Route handlers - use lazy loading
+  private async renderLandingPage(): Promise<void> {
+    const { LandingPage } = await import('../pages/landing/landing-page.js');
+    const page = new LandingPage();
+    this.layoutController.renderPage(page.getElement());
+  }
+
+  private async renderLogin(): Promise<void> {
+    const { LoginPage } = await import('../pages/auth/login-page.js');
+    const page = new LoginPage(this.authController);
+    this.layoutController.renderAuthPage(page.getElement());
+  }
+
+  private async renderRegister(): Promise<void> {
+    // TODO: Create register page
+    this.layoutController.renderAuthPage(this.createPlaceholderPage('Register'));
+  }
+
+  private async renderForgotPassword(): Promise<void> {
+    // TODO: Create forgot password page
+    this.layoutController.renderAuthPage(this.createPlaceholderPage('Forgot Password'));
+  }
+
+  private async renderResetPassword(): Promise<void> {
+    // TODO: Create reset password page
+    this.layoutController.renderAuthPage(this.createPlaceholderPage('Reset Password'));
+  }
+
+  private async renderDashboard(): Promise<void> {
+    const { DashboardPage } = await import('../pages/dashboard/dashboard-page.js');
+    const page = new DashboardPage(this.session);
+    this.layoutController.renderAppPage(page.getElement());
+  }
+  private async renderProjects(): Promise<void> {
+    // TODO: Create projects page
+    this.layoutController.renderAppPage(this.createPlaceholderPage('Projects'));
+  }
+
+  private async renderProject(projectId: string): Promise<void> {
+    // TODO: Create project page
+    this.layoutController.renderAppPage(this.createPlaceholderPage(`Project ${projectId}`));
+  }
+
+  private async renderRecordings(): Promise<void> {
+    // TODO: Create recordings page
+    this.layoutController.renderAppPage(this.createPlaceholderPage('Recordings'));
+  }
+
+  private async renderRecording(recordingId: string): Promise<void> {
+    // TODO: Create recording page
+    this.layoutController.renderAppPage(this.createPlaceholderPage(`Recording ${recordingId}`));
+  }
+
+  private async renderReview(recordingId: string): Promise<void> {
+    // TODO: Create review page
+    this.layoutController.renderAppPage(this.createPlaceholderPage(`Review ${recordingId}`));
+  }
+
+  private async renderEditor(recordingId: string): Promise<void> {
+    // TODO: Create editor page
+    this.layoutController.renderAppPage(this.createPlaceholderPage(`Editor ${recordingId}`));
+  }
+
+  private async renderSearch(): Promise<void> {
+    // TODO: Create search page
+    this.layoutController.renderAppPage(this.createPlaceholderPage('Search'));
+  }
+
+  private async renderNotifications(): Promise<void> {
+    // TODO: Create notifications page
+    this.layoutController.renderAppPage(this.createPlaceholderPage('Notifications'));
+  }
+
+  private async renderSettings(): Promise<void> {
+    // TODO: Create settings page
+    this.layoutController.renderAppPage(this.createPlaceholderPage('Settings'));
+  }
+
+  private async renderOrganizationSettings(): Promise<void> {
+    // TODO: Create organization settings page
+    this.layoutController.renderAppPage(this.createPlaceholderPage('Organization Settings'));
+  }
+
+  private async renderProfileSettings(): Promise<void> {
+    // TODO: Create profile settings page
+    this.layoutController.renderAppPage(this.createPlaceholderPage('Profile Settings'));
+  }
+
+  private async renderBillingSettings(): Promise<void> {
+    // TODO: Create billing settings page
+    this.layoutController.renderAppPage(this.createPlaceholderPage('Billing Settings'));
+  }
+  private async render404(): Promise<void> {
+    const { NotFoundPage } = await import('../pages/not-found/not-found-page.js');
+    const page = new NotFoundPage();
+    this.layoutController.renderPage(page.getElement());
+  }
+
+  // Helper method to create placeholder pages
+  private createPlaceholderPage(title: string): HTMLElement {
+    const page = document.createElement('div');
+    page.className = 'p-8 text-center';
+    page.innerHTML = `
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">${title}</h1>
+      <p class="text-gray-600 dark:text-gray-400">This page is under development.</p>
+      <button 
+        onclick="history.back()" 
+        class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Go Back
+      </button>
+    `;
+    return page;
+  }
+
+  // Keyboard shortcut handlers
+  private openGlobalSearch(): void {
+    // TODO: Implement global search modal
+    console.log('Opening global search...');
+  }
+
+  private focusSearch(): void {
+    // TODO: Focus search input if visible
+    const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+    }
+  }
+
+  private startNewRecording(): void {
+    // TODO: Start recording flow
+    this.router.navigate('/recordings');
+  }
+
+  private closeOverlays(): void {
+    // TODO: Close any open modals or overlays
+    const modals = document.querySelectorAll('[role="dialog"]');
+    modals.forEach(modal => {
+      if (modal instanceof HTMLElement) {
+        modal.style.display = 'none';
+      }
+    });
+  }
+  // Authentication storage helpers
+  private getStoredAuth(): { token: string } | null {
+    try {
+      const stored = localStorage.getItem('streetstudio_auth');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private clearStoredAuth(): void {
+    localStorage.removeItem('streetstudio_auth');
+  }
+
+  // Public API
+  public getSession(): DashboardSession {
+    return this.session;
+  }
+
+  public getRouter(): Router {
+    return this.router;
+  }
+
+  public destroy(): void {
+    this.router.destroy();
+    this.keyboardShortcuts.destroy();
+    this.notificationController.destroy();
+    this.errorBoundary.destroy();
+    this.isInitialized = false;
+  }
+}
