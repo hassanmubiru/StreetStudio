@@ -16,6 +16,10 @@ export interface RouteGuard {
   (path: string): boolean | Promise<boolean>;
 }
 
+export interface AuthenticationCheck {
+  (): boolean;
+}
+
 export interface Route {
   path: string;
   handler: RouteHandler;
@@ -23,6 +27,8 @@ export interface Route {
   component?: string;
   loadingState?: boolean;
   transition?: 'slide' | 'fade' | 'none';
+  title?: string;
+  meta?: Record<string, any>;
 }
 
 export interface RouterConfig {
@@ -30,6 +36,7 @@ export interface RouterConfig {
   enableTransitions?: boolean;
   transitionDuration?: number;
   enablePrefetch?: boolean;
+  scrollToTop?: boolean;
 }
 
 export class Router {
@@ -37,10 +44,12 @@ export class Router {
   private protectedRoutes: Set<string> = new Set();
   private currentPath: string = '';
   private routeGuard?: RouteGuard;
+  private authCheck?: AuthenticationCheck;
   private notFoundHandler?: RouteHandler;
   private config: RouterConfig;
   private isTransitioning = false;
   private prefetchedComponents = new Map<string, any>();
+  private abortController?: AbortController;
 
   constructor(config: RouterConfig = {}) {
     this.config = {
@@ -48,6 +57,7 @@ export class Router {
       enableTransitions: true,
       transitionDuration: 300,
       enablePrefetch: true,
+      scrollToTop: true,
       ...config,
     };
 
@@ -56,7 +66,14 @@ export class Router {
   }
 
   /**
-   * Add a regular route
+   * Set authentication check function
+   */
+  public setAuthenticationCheck(authCheck: AuthenticationCheck): void {
+    this.authCheck = authCheck;
+  }
+
+  /**
+   * Add a regular route with metadata support
    */
   public addRoute(path: string, handler: RouteHandler, options: Partial<Route> = {}): void {
     this.routes.set(path, {
@@ -64,12 +81,13 @@ export class Router {
       handler,
       isProtected: false,
       transition: 'fade',
+      title: options.title || this.generateTitleFromPath(path),
       ...options,
     });
   }
 
   /**
-   * Add a protected route (requires authentication)
+   * Add a protected route (requires authentication) with metadata support
    */
   public addProtectedRoute(path: string, handler: RouteHandler, options: Partial<Route> = {}): void {
     this.protectedRoutes.add(path);
@@ -78,8 +96,21 @@ export class Router {
       handler,
       isProtected: true,
       transition: 'slide',
+      title: options.title || this.generateTitleFromPath(path),
       ...options,
     });
+  }
+
+  /**
+   * Generate a title from path for accessibility
+   */
+  private generateTitleFromPath(path: string): string {
+    const segments = path.split('/').filter(Boolean);
+    if (segments.length === 0) return 'Home';
+    
+    return segments
+      .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' - ');
   }
 
   /**
@@ -450,7 +481,7 @@ export class Router {
   }
 
   /**
-   * Load component dynamically
+   * Load component dynamically with proper error handling
    */
   private async loadComponent(componentName: string): Promise<any> {
     // Check if already prefetched
@@ -458,9 +489,43 @@ export class Router {
       return this.prefetchedComponents.get(componentName);
     }
 
-    // Dynamic import based on component name
-    const component = await import(`../pages/${componentName}.js`);
-    return component;
+    try {
+      // Map component names to their actual import paths
+      const componentPaths: Record<string, () => Promise<any>> = {
+        'landing': () => import('../pages/landing/landing-page.js'),
+        'login': () => import('../pages/auth/login-page.js'),
+        'register': () => import('../pages/auth/register-page.js'),
+        'forgot-password': () => import('../pages/auth/forgot-password-page.js'),
+        'reset-password': () => import('../pages/auth/reset-password-page.js'),
+        'dashboard': () => import('../pages/dashboard/dashboard-page.js'),
+        'projects': () => import('../pages/projects/projects-page.js'),
+        'project-detail': () => import('../pages/projects/project-detail-page.js'),
+        'recordings': () => import('../pages/recordings/recordings-page.js'),
+        'recording-detail': () => import('../pages/recordings/recording-detail-page.js'),
+        'review': () => import('../pages/review/review-page.js'),
+        'editor': () => import('../pages/editor/editor-page.js'),
+        'search': () => import('../pages/search/search-page.js'),
+        'notifications': () => import('../pages/notifications/notifications-page.js'),
+        'settings': () => import('../pages/settings/settings-page.js'),
+        'organization-settings': () => import('../pages/settings/organization-settings-page.js'),
+        'profile-settings': () => import('../pages/settings/profile-settings-page.js'),
+        'billing-settings': () => import('../pages/settings/billing-settings-page.js'),
+        'not-found': () => import('../pages/not-found/not-found-page.js'),
+      };
+
+      const importFn = componentPaths[componentName];
+      if (!importFn) {
+        throw new Error(`Unknown component: ${componentName}`);
+      }
+
+      const module = await importFn();
+      this.prefetchedComponents.set(componentName, module);
+      return module;
+
+    } catch (error) {
+      console.error(`Failed to load component '${componentName}':`, error);
+      throw new Error(`Component loading failed: ${componentName}`);
+    }
   }
 
   /**
@@ -528,42 +593,92 @@ export class Router {
   }
 
   /**
-   * Show loading state
+   * Show loading state with accessibility support
    */
   private showLoadingState(): void {
     // Add loading indicator to app container
     const appContainer = document.querySelector('[data-router-view]');
     if (appContainer) {
       appContainer.classList.add('router-loading');
+      // Set loading state for screen readers
+      appContainer.setAttribute('aria-busy', 'true');
+      appContainer.setAttribute('aria-live', 'polite');
     }
 
     // Announce to screen readers
     this.announceToScreenReader('Loading page...');
+
+    // Focus management: move focus to loading indicator if present
+    const loadingIndicator = document.querySelector('[data-loading-indicator]');
+    if (loadingIndicator instanceof HTMLElement) {
+      loadingIndicator.focus();
+    }
   }
 
   /**
-   * Hide loading state
+   * Hide loading state and restore focus
    */
   private hideLoadingState(): void {
     const appContainer = document.querySelector('[data-router-view]');
     if (appContainer) {
       appContainer.classList.remove('router-loading');
+      appContainer.removeAttribute('aria-busy');
+      
+      // Focus management: move focus to main content
+      const mainContent = appContainer.querySelector('[data-main-content]') as HTMLElement;
+      if (mainContent) {
+        // Ensure main content is focusable
+        if (!mainContent.hasAttribute('tabindex')) {
+          mainContent.setAttribute('tabindex', '-1');
+        }
+        mainContent.focus();
+        
+        // Announce page change to screen readers
+        const pageTitle = mainContent.getAttribute('aria-label') || 
+                         document.title || 
+                         'Page loaded';
+        this.announceToScreenReader(pageTitle);
+      }
     }
   }
 
   /**
-   * Handle navigation errors
+   * Handle navigation errors with proper error boundary integration
    */
   private handleNavigationError(error: Error): void {
     console.error('Navigation error:', error);
     
-    // Show error state or redirect to error page
+    // Add error state to router container
+    const appContainer = document.querySelector('[data-router-view]');
+    if (appContainer) {
+      appContainer.classList.add('router-error');
+    }
+
+    // Try to show error page first, fallback to error boundary
     if (this.notFoundHandler) {
-      this.notFoundHandler({});
+      try {
+        this.notFoundHandler({});
+      } catch (handlerError) {
+        console.error('Error handler failed:', handlerError);
+        this.fallbackToErrorBoundary(error);
+      }
+    } else {
+      this.fallbackToErrorBoundary(error);
     }
 
     // Announce error to screen readers
     this.announceToScreenReader('Navigation failed. Please try again.');
+  }
+
+  /**
+   * Fallback to error boundary when navigation completely fails
+   */
+  private fallbackToErrorBoundary(error: Error): void {
+    // Dispatch custom event for error boundary to catch
+    const errorEvent = new CustomEvent('router-error', {
+      detail: { error, context: 'navigation' }
+    });
+    window.dispatchEvent(errorEvent);
   }
 
   /**
