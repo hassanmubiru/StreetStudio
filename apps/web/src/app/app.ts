@@ -122,7 +122,7 @@ export class StreetStudioApp {
     this.keyboardShortcuts.register([
       {
         key: 'k',
-        modifiers: ['cmd', 'ctrl'],
+        modifiers: ['cmd', 'ctrl'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         description: 'Open global search',
         handler: () => this.openGlobalSearch(),
         priority: 100,
@@ -135,7 +135,7 @@ export class StreetStudioApp {
       },
       {
         key: 'n',
-        modifiers: ['cmd', 'ctrl'],
+        modifiers: ['cmd', 'ctrl'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         description: 'Start new recording',
         handler: () => this.startNewRecording(),
         priority: 100,
@@ -149,28 +149,28 @@ export class StreetStudioApp {
       // Navigation shortcuts
       {
         key: 'd',
-        modifiers: ['alt'],
+        modifiers: ['alt'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         description: 'Navigate to dashboard',
         handler: () => this.router.navigate('/dashboard'),
         priority: 80,
       },
       {
         key: 'p',
-        modifiers: ['alt'],
+        modifiers: ['alt'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         description: 'Navigate to projects',
         handler: () => this.router.navigate('/projects'),
         priority: 80,
       },
       {
         key: 'r',
-        modifiers: ['alt'],
+        modifiers: ['alt'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         description: 'Navigate to recordings',
         handler: () => this.router.navigate('/recordings'),
         priority: 80,
       },
       {
         key: 's',
-        modifiers: ['alt'],
+        modifiers: ['alt'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         description: 'Navigate to settings',
         handler: () => this.router.navigate('/settings'),
         priority: 80,
@@ -226,14 +226,14 @@ export class StreetStudioApp {
     this.keyboardShortcuts.register([
       {
         key: 'r',
-        modifiers: ['cmd', 'ctrl'],
+        modifiers: ['cmd', 'ctrl'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         context: 'dashboard',
         description: 'Refresh dashboard',
         handler: () => this.router.refresh(),
       },
       {
         key: 'f',
-        modifiers: ['cmd', 'ctrl'],
+        modifiers: ['cmd', 'ctrl'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         context: 'dashboard',
         description: 'Filter dashboard content',
         handler: () => this.focusDashboardFilter(),
@@ -360,21 +360,21 @@ export class StreetStudioApp {
       },
       {
         key: 'z',
-        modifiers: ['cmd', 'ctrl'],
+        modifiers: ['cmd', 'ctrl'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         context: 'video-editor',
         description: 'Undo last action',
         handler: () => this.undoLastAction(),
       },
       {
         key: 'z',
-        modifiers: ['cmd', 'shift'],
+        modifiers: ['cmd', 'shift'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         context: 'video-editor',
         description: 'Redo last action',
         handler: () => this.redoLastAction(),
       },
       {
         key: 's',
-        modifiers: ['cmd', 'ctrl'],
+        modifiers: ['cmd', 'ctrl'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         context: 'video-editor',
         description: 'Save project',
         handler: (event) => {
@@ -389,7 +389,7 @@ export class StreetStudioApp {
     this.keyboardShortcuts.register([
       {
         key: 'n',
-        modifiers: ['cmd', 'ctrl'],
+        modifiers: ['cmd', 'ctrl'] as ('ctrl' | 'cmd' | 'alt' | 'shift')[],
         context: 'projects',
         description: 'Create new project',
         handler: () => this.createNewProject(),
