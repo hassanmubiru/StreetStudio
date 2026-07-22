@@ -499,12 +499,14 @@ export class ErrorBoundary {
     
     // Clear any existing timer
     if (this.recoveryTimer) {
-      clearTimeout(this.recoveryTimer);
+      const clearTimeoutFn = typeof window !== 'undefined' && window.clearTimeout ? window.clearTimeout : clearTimeout;
+      clearTimeoutFn(this.recoveryTimer);
     }
 
     const retryDelay = delay ?? this.options.retryDelay ?? 1000;
+    const timeoutFn = typeof window !== 'undefined' && window.setTimeout ? window.setTimeout : setTimeout;
     
-    this.recoveryTimer = window.setTimeout(() => {
+    this.recoveryTimer = timeoutFn(() => {
       this.recoveryTimer = null; // Clear the timer reference
       
       if (this.errorState.hasError && this.retryCount < (this.options.maxRetries || 3)) {
@@ -590,7 +592,8 @@ export class ErrorBoundary {
   public destroy(): void {
     // Clear recovery timer
     if (this.recoveryTimer) {
-      clearTimeout(this.recoveryTimer);
+      const clearTimeoutFn = typeof window !== 'undefined' && window.clearTimeout ? window.clearTimeout : clearTimeout;
+      clearTimeoutFn(this.recoveryTimer);
       this.recoveryTimer = null;
     }
 

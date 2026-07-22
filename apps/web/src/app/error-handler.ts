@@ -810,7 +810,8 @@ function setupDataCorruptionDetection(): void {
 
 function setupAutoBackup(): void {
   // Backup critical data every 5 minutes
-  setInterval(() => {
+  const intervalFn = typeof window !== 'undefined' && window.setInterval ? window.setInterval : setInterval;
+  intervalFn(() => {
     try {
       // Backup video projects
       const projects = localStorage.getItem('streetstudio_video-project');

@@ -64,7 +64,9 @@ class ToastManager {
     // Auto-dismiss after duration (default 5 seconds, 0 = no auto-dismiss)
     const duration = options?.duration ?? 5000;
     if (duration > 0) {
-      toast.timer = window.setTimeout(() => {
+      // Use setTimeout from global scope for better test compatibility
+      const timeoutFn = typeof window !== 'undefined' && window.setTimeout ? window.setTimeout : setTimeout;
+      toast.timer = timeoutFn(() => {
         this.dismiss(id);
       }, duration);
     }
