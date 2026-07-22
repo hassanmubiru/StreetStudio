@@ -22,10 +22,9 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock CSS.supports
-Object.defineProperty(CSS, 'supports', {
-  writable: true,
-  value: vi.fn(() => false),
-});
+(global as any).CSS = {
+  supports: vi.fn(() => false),
+};
 
 // Mock requestAnimationFrame
 Object.defineProperty(window, 'requestAnimationFrame', {
