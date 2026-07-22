@@ -17,7 +17,7 @@ setupErrorHandling();
 setupAccessibility();
 
 // Setup global CSS and design system
-setupGlobalCSS();
+await setupGlobalCSS();
 
 // Initialize analytics (if enabled)
 initializeAnalytics();
@@ -37,10 +37,8 @@ const perfMark = performance.mark('app-init-start');
 // Initialize application
 async function initializeApp() {
   try {
-    // Remove loading spinner
-    const loadingElement = document.getElementById('loading');
-    
-    // Initialize StreetStudio app
+    // Setup global CSS and design system
+    await setupGlobalCSS();
     const app = new StreetStudioApp({
       container: document.getElementById('app')!,
       config,
