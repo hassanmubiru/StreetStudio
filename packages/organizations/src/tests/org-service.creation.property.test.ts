@@ -12,10 +12,10 @@ import type {
 import type { InvitationStatus, Uuid } from "@streetstudio/shared";
 import {
   ADMINISTRATOR_ROLE_NAME,
-  MAX_ORG_NAME_LENGTH,
   OrgService,
   type OrgStore,
-} from "./org-service.js";
+} from "../application/org-service.js";
+import { MAX_ORG_NAME_LENGTH } from "../domain/index.js";
 import type { AuthContext } from "@streetstudio/auth";
 import type { Clock } from "@streetstudio/auth";
 
