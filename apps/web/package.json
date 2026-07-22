@@ -1,0 +1,37 @@
+{
+  "name": "@streetstudio/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "StreetStudio web application - production SPA for recording, reviewing, and collaborating on videos.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -b && vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "test": "vitest",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@streetstudio/shared": "*",
+    "@streetstudio/ui": "*",
+    "@streetstudio/sdk": "*",
+    "@streetstudio/dashboard": "*",
+    "@streetstudio/recorder": "*",
+    "@streetstudio/timeline": "*",
+    "@streetstudio/editor": "*",
+    "@streetstudio/organizations": "*",
+    "@streetstudio/projects": "*",
+    "@streetstudio/comments": "*",
+    "@streetstudio/notifications": "*",
+    "@streetstudio/search": "*"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "typescript": "^5.0.0"
+  },
+  "streetstudio": {
+    "domain": "StreetStudio web application - production SPA for recording, reviewing, and collaborating on videos."
+  }
+}
