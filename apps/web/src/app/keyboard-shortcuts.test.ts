@@ -344,8 +344,8 @@ describe('KeyboardShortcuts', () => {
       const videoShortcuts = shortcuts.filter(s => s.key === 'x');
       
       // Context-specific shortcut should have higher priority
-      expect(videoShortcuts[0].context).toBe('video-player');
-      expect(videoShortcuts[0].priority).toBe(60);
+      expect(videoShortcuts[0]?.context).toBe('video-player');
+      expect(videoShortcuts[0]?.priority).toBe(60);
     });
   });
 
