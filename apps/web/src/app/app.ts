@@ -939,6 +939,7 @@ export class StreetStudioApp {
     this.keyboardShortcuts.destroy();
     this.notificationController.destroy();
     this.errorBoundary.destroy();
+    this.authController.destroy();
     this.isInitialized = false;
   }
 }
