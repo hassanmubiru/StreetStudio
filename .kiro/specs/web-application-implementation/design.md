@@ -304,3 +304,165 @@ const useUploadManager = () => {
   return { uploads, startUpload };
 };
 ```
+## Data Models
+
+### Client-Side Data Models
+
+The web application uses the DTOs from `@streetstudio/shared` as the primary data model, enhanced with client-specific properties:
+
+#### Enhanced Video Model
+
+```typescript
+interface ClientVideoDto extends VideoDto {
+  // Client-specific computed properties
+  isProcessing: boolean;
+  thumbnailUrl?: string;
+  previewUrl?: string;
+  streamingUrl?: string;
+  
+  // UI state
+  isSelected?: boolean;
+  isPlaying?: boolean;
+  currentTime?: number;
+  
+  // Collaboration state
+  activeViewers?: MemberDto[];
+  commentCount?: number;
+  reactionCounts?: Record<string, number>;
+}
+```
+
+#### UI State Models
+
+```typescript
+// Authentication state
+interface AuthState {
+  isAuthenticated: boolean;
+  currentUser?: MemberDto;
+  currentOrganization?: OrganizationDto;
+  permissions: string[];
+  sessionExpiry?: IsoTimestamp;
+}
+
+// Workspace context
+interface WorkspaceState {
+  currentWorkspace?: WorkspaceDto;
+  currentProject?: ProjectDto;
+  currentFolder?: FolderDto;
+  breadcrumbs: BreadcrumbItem[];
+  sidebarCollapsed: boolean;
+}
+
+// Upload management
+interface UploadState {
+  uploads: UploadItem[];
+  isUploading: boolean;
+  totalProgress: number;
+  completedUploads: number;
+  failedUploads: number;
+}
+
+// Notification system
+interface NotificationState {
+  notifications: NotificationDto[];
+  unreadCount: number;
+  isLoading: boolean;
+  lastFetch?: IsoTimestamp;
+}
+```
+
+#### Form Models
+
+```typescript
+// Video upload form
+interface VideoUploadForm {
+  file?: File;
+  title: string;
+  description?: string;
+  projectId?: Uuid;
+  folderId?: Uuid;
+  tags: string[];
+  isPrivate: boolean;
+  developerMode: boolean;
+}
+
+// Project creation form
+interface ProjectForm {
+  name: string;
+  description?: string;
+  isPrivate: boolean;
+  initialMembers: string[]; // email addresses
+}
+
+// Comment form
+interface CommentForm {
+  body: string;
+  timestampSeconds?: number;
+  parentCommentId?: Uuid;
+  mentions: Uuid[]; // member IDs
+}
+```
+
+### Data Validation and Transformation
+
+#### Client-Side Validation
+
+```typescript
+// Comprehensive validation rules
+const ValidationRules = {
+  video: {
+    title: {
+      required: true,
+      minLength: 1,
+      maxLength: 255,
+      pattern: /^[^<>{}]+$/ // No HTML-like content
+    },
+    description: {
+      maxLength: 2000,
+      pattern: /^[^<>{}]*$/ // No HTML-like content
+    }
+  },
+  
+  project: {
+    name: {
+      required: true,
+      minLength: 1,
+      maxLength: 100,
+      pattern: /^[a-zA-Z0-9\s\-_.]+$/ // Alphanumeric with safe chars
+    }
+  },
+  
+  comment: {
+    body: {
+      required: true,
+      minLength: 1,
+      maxLength: 1000,
+      pattern: /^[\s\S]*$/ // Any content but length limited
+    }
+  }
+};
+```
+
+#### Data Transformers
+
+```typescript
+// Transform server DTOs to client models
+const transformVideoForClient = (video: VideoDto): ClientVideoDto => ({
+  ...video,
+  isProcessing: ['uploading', 'queued', 'processing'].includes(video.status),
+  thumbnailUrl: `/api/videos/${video.id}/thumbnail`,
+  streamingUrl: video.status === 'ready' ? `/api/videos/${video.id}/stream` : undefined,
+  activeViewers: [],
+  commentCount: 0,
+  reactionCounts: {}
+});
+
+// Transform client forms to API requests
+const transformVideoFormToRequest = (form: VideoUploadForm) => ({
+  title: form.title.trim(),
+  description: form.description?.trim() || '',
+  folderId: form.folderId,
+  developerMode: form.developerMode,
+  // File handled separately in upload
+});
+```
