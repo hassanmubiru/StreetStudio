@@ -11,6 +11,8 @@ import { LayoutController } from './layout/layout-controller.js';
 import { NavigationController } from './navigation/navigation-controller.js';
 import { NotificationController } from './notifications/notification-controller.js';
 import { ErrorBoundary } from './error-boundary.js';
+import { setupErrorHandling } from './error-handler.js';
+import { initializeClientLogger } from './client-logger.js';
 import { KeyboardShortcuts } from './keyboard-shortcuts.js';
 import type { Uuid } from '@streetstudio/shared';
 
