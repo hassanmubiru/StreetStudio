@@ -306,7 +306,7 @@ export class ErrorBoundary {
   /**
    * Recover from error state
    */
-  public recover(): void {
+  public recover(resetRetryCount: boolean = true): void {
     try {
       // Clear any recovery timer
       if (this.recoveryTimer) {
@@ -318,8 +318,13 @@ export class ErrorBoundary {
       this.container.innerHTML = this.originalContent;
       this.container.classList.remove('error-boundary-fallback');
 
-      // Mark as recovered, but don't reset retry count during auto-recovery
+      // Mark as recovered
       this.errorState.hasError = false;
+      
+      // Reset retry count on successful manual recovery
+      if (resetRetryCount) {
+        this.retryCount = 0;
+      }
 
       // Emit recovery event
       this.container.dispatchEvent(new CustomEvent('boundary-recovered', {
@@ -505,7 +510,7 @@ export class ErrorBoundary {
       if (this.errorState.hasError && this.retryCount < (this.options.maxRetries || 3)) {
         console.log('Attempting automatic recovery...');
         this.retryCount++; // Increment retry count for auto recovery
-        this.recover();
+        this.recover(false); // Don't reset retry count during auto-recovery
       }
     }, retryDelay);
   }
