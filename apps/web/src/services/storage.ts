@@ -356,7 +356,7 @@ export class StorageManager {
 
     } catch (error) {
       logger.warn('Failed to get storage usage info', {
-        error: error.message,
+        error: (error as Error).message,
         storageType: this.storageType,
       });
 
