@@ -1,10 +1,51 @@
 /**
  * Test Setup
  * 
- * Global test configuration for vitest
+ * Global test configuration for vitest with comprehensive browser API mocks
  */
 
-import { vi } from 'vitest';
+import { vi, beforeEach, afterEach } from 'vitest';
+
+// Mock environment variables
+vi.stubGlobal('import.meta', {
+  env: {
+    MODE: 'test',
+    DEV: true,
+    PROD: false,
+  },
+});
+
+// Mock crypto.randomUUID
+vi.stubGlobal('crypto', {
+  randomUUID: vi.fn(() => 'test-uuid-123'),
+});
+
+// Mock localStorage
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+};
+vi.stubGlobal('localStorage', localStorageMock);
+
+// Mock sessionStorage  
+vi.stubGlobal('sessionStorage', localStorageMock);
+
+// Mock fetch
+global.fetch = vi.fn();
+
+// Mock location
+Object.defineProperty(window, 'location', {
+  writable: true,
+  value: {
+    href: 'http://localhost:3000',
+    pathname: '/',
+    search: '',
+    hash: '',
+    reload: vi.fn(),
+  },
+});
 
 // Mock DOM APIs that aren't available in jsdom
 Object.defineProperty(window, 'matchMedia', {
@@ -51,3 +92,63 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
+
+// Mock timers - ensure they work properly in test environment
+Object.defineProperty(window, 'setTimeout', {
+  writable: true,
+  value: vi.fn().mockImplementation((callback: Function, delay: number) => {
+    return setTimeout(callback, delay);
+  }),
+});
+
+Object.defineProperty(window, 'clearTimeout', {
+  writable: true,
+  value: vi.fn().mockImplementation((id: number) => {
+    return clearTimeout(id);
+  }),
+});
+
+Object.defineProperty(window, 'setInterval', {
+  writable: true,
+  value: vi.fn().mockImplementation((callback: Function, delay: number) => {
+    return setInterval(callback, delay);
+  }),
+});
+
+Object.defineProperty(window, 'clearInterval', {
+  writable: true,
+  value: vi.fn().mockImplementation((id: number) => {
+    return clearInterval(id);
+  }),
+});
+
+// Clean up between tests
+beforeEach(() => {
+  // Reset DOM
+  document.body.innerHTML = '';
+  document.head.innerHTML = '';
+  
+  // Reset mocks
+  vi.clearAllMocks();
+  
+  // Reset localStorage mock
+  localStorageMock.getItem.mockClear();
+  localStorageMock.setItem.mockClear();
+  localStorageMock.removeItem.mockClear();
+  localStorageMock.clear.mockClear();
+  
+  // Reset global fetch mock
+  (global.fetch as any).mockClear?.();
+});
+
+afterEach(() => {
+  // Clean up any remaining timers
+  vi.clearAllTimers();
+  
+  // Clean up DOM
+  document.body.innerHTML = '';
+  
+  // Reset any global state
+  delete (window as any).errorReportingService;
+  delete (window as any).degradationManager;
+});
