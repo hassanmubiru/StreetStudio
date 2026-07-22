@@ -4,7 +4,7 @@ import { PgPool } from "streetjs";
 import { AppError } from "@streetstudio/shared";
 import type { AuthContext } from "@streetstudio/auth";
 import { OrgService } from "../application/org-service.js";
-import { ensureOrganizationsSchema, postgresOrgStore } from "./postgres-org-store.js";
+import { ensureOrganizationsSchema, postgresOrgStore } from "../infrastructure/postgres-org-store.js";
 
 /**
  * De-seam (ADR-0020 pattern): the real {@link OrgService} running on the real
