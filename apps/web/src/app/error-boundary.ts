@@ -6,8 +6,8 @@
 
 export class ErrorBoundary {
   private container: HTMLElement;
-  private originalErrorHandler?: (event: ErrorEvent) => void;
-  private originalRejectionHandler?: (event: PromiseRejectionEvent) => void;
+  private originalErrorHandler?: ((event: ErrorEvent) => void) | null;
+  private originalRejectionHandler?: ((event: PromiseRejectionEvent) => void) | null;
 
   constructor(container: HTMLElement) {
     this.container = container;
