@@ -295,7 +295,7 @@ export class StorageManager {
 
     } catch (error) {
       logger.error('Failed to get keys from storage', {
-        error: error.message,
+        error: (error as Error).message,
         storageType: this.storageType,
       });
       return [];
