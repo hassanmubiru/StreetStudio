@@ -276,7 +276,7 @@ describe('Key signature generation', () => {
       showHelpOverlay: false,
     });
 
-    const handler = jest.fn();
+    const handler = vi.fn();
     
     // Test various key combinations
     const testCases = [
