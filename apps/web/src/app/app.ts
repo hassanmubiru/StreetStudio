@@ -101,31 +101,308 @@ export class StreetStudioApp {
   }
 
   private setupKeyboardShortcuts(): void {
-    // Global keyboard shortcuts
+    // Initialize keyboard shortcuts manager
+    this.keyboardShortcuts = new KeyboardShortcuts({
+      enableVisualIndicators: true,
+      showHelpOverlay: true,
+      preventDefaultBehavior: true,
+    });
+
+    // Global navigation shortcuts
     this.keyboardShortcuts.register([
       {
         key: 'k',
         modifiers: ['cmd', 'ctrl'],
-        description: 'Open search',
+        description: 'Open global search',
         handler: () => this.openGlobalSearch(),
+        priority: 90,
       },
       {
         key: '/',
-        description: 'Focus search',
-        handler: () => this.focusSearch(),
+        description: 'Focus search input',
+        handler: (event) => {
+          // Only if not in input field
+          if (!this.isInputFocused(event.target)) {
+            this.focusSearch();
+            return true;
+          }
+          return false;
+        },
+        preventDefault: false,
       },
       {
         key: 'n',
         modifiers: ['cmd', 'ctrl'],
-        description: 'New recording',
+        description: 'Start new recording',
         handler: () => this.startNewRecording(),
+        priority: 80,
       },
       {
         key: 'Escape',
-        description: 'Close modals/overlays',
+        description: 'Close modals and overlays',
         handler: () => this.closeOverlays(),
+        priority: 100,
+      },
+      {
+        key: 'd',
+        modifiers: ['cmd', 'ctrl'],
+        description: 'Go to dashboard',
+        handler: () => {
+          this.router.navigate('/dashboard');
+          return true;
+        },
+      },
+      {
+        key: 'p',
+        modifiers: ['cmd', 'ctrl'],
+        description: 'Go to projects',
+        handler: () => {
+          this.router.navigate('/projects');
+          return true;
+        },
+      },
+      {
+        key: 'r',
+        modifiers: ['cmd', 'ctrl'],
+        description: 'Go to recordings',
+        handler: () => {
+          this.router.navigate('/recordings');
+          return true;
+        },
+      },
+      {
+        key: ',',
+        modifiers: ['cmd', 'ctrl'],
+        description: 'Open settings',
+        handler: () => {
+          this.router.navigate('/settings');
+          return true;
+        },
+      },
+      {
+        key: 'i',
+        modifiers: ['cmd', 'ctrl'],
+        description: 'Open notifications',
+        handler: () => {
+          this.router.navigate('/notifications');
+          return true;
+        },
       },
     ]);
+
+    // Setup context-sensitive shortcuts for different application states
+    this.setupContextSensitiveShortcuts();
+
+    // Listen for route changes to update context
+    this.router.onRouteChange((path) => {
+      this.updateKeyboardContext(path);
+    });
+  }
+
+  private setupContextSensitiveShortcuts(): void {
+    // Dashboard context shortcuts
+    this.keyboardShortcuts.register([
+      {
+        key: 'c',
+        context: 'dashboard',
+        description: 'Create new project',
+        handler: () => this.createNewProject(),
+      },
+      {
+        key: 'ArrowUp',
+        context: 'dashboard',
+        description: 'Navigate up in project list',
+        handler: () => this.navigateProjectList('up'),
+      },
+      {
+        key: 'ArrowDown',
+        context: 'dashboard',
+        description: 'Navigate down in project list',
+        handler: () => this.navigateProjectList('down'),
+      },
+      {
+        key: 'Enter',
+        context: 'dashboard',
+        description: 'Open selected project',
+        handler: () => this.openSelectedProject(),
+      },
+    ]);
+
+    // Video player context shortcuts
+    this.keyboardShortcuts.register([
+      {
+        key: ' ',
+        context: 'video-player',
+        description: 'Play/pause video',
+        handler: () => this.togglePlayback(),
+      },
+      {
+        key: 'ArrowLeft',
+        context: 'video-player',
+        description: 'Seek backward 10 seconds',
+        handler: () => this.seekVideo(-10),
+      },
+      {
+        key: 'ArrowRight',
+        context: 'video-player',
+        description: 'Seek forward 10 seconds',
+        handler: () => this.seekVideo(10),
+      },
+      {
+        key: 'ArrowLeft',
+        modifiers: ['shift'],
+        context: 'video-player',
+        description: 'Seek backward 30 seconds',
+        handler: () => this.seekVideo(-30),
+      },
+      {
+        key: 'ArrowRight',
+        modifiers: ['shift'],
+        context: 'video-player',
+        description: 'Seek forward 30 seconds',
+        handler: () => this.seekVideo(30),
+      },
+      {
+        key: 'f',
+        context: 'video-player',
+        description: 'Toggle fullscreen',
+        handler: () => this.toggleFullscreen(),
+      },
+      {
+        key: 'm',
+        context: 'video-player',
+        description: 'Mute/unmute audio',
+        handler: () => this.toggleMute(),
+      },
+      {
+        key: 'c',
+        context: 'video-player',
+        description: 'Add comment at current time',
+        handler: () => this.addTimestampComment(),
+      },
+    ]);
+
+    // Timeline editor context shortcuts
+    this.keyboardShortcuts.register([
+      {
+        key: ' ',
+        context: 'timeline-editor',
+        description: 'Play/pause timeline',
+        handler: () => this.toggleTimelinePlayback(),
+      },
+      {
+        key: 's',
+        context: 'timeline-editor',
+        description: 'Split video at playhead',
+        handler: () => this.splitAtPlayhead(),
+      },
+      {
+        key: 't',
+        context: 'timeline-editor',
+        description: 'Add text overlay',
+        handler: () => this.addTextOverlay(),
+      },
+      {
+        key: 'z',
+        modifiers: ['cmd', 'ctrl'],
+        context: 'timeline-editor',
+        description: 'Undo last action',
+        handler: () => this.undoEdit(),
+        priority: 95,
+      },
+      {
+        key: 'y',
+        modifiers: ['cmd', 'ctrl'],
+        context: 'timeline-editor',
+        description: 'Redo last action',
+        handler: () => this.redoEdit(),
+        priority: 95,
+      },
+      {
+        key: 'Delete',
+        context: 'timeline-editor',
+        description: 'Delete selected element',
+        handler: () => this.deleteSelected(),
+      },
+    ]);
+
+    // Recording interface context shortcuts
+    this.keyboardShortcuts.register([
+      {
+        key: ' ',
+        context: 'recording',
+        description: 'Start/stop recording',
+        handler: () => this.toggleRecording(),
+      },
+      {
+        key: 'p',
+        context: 'recording',
+        description: 'Pause/resume recording',
+        handler: () => this.pauseResumeRecording(),
+      },
+      {
+        key: 'a',
+        context: 'recording',
+        description: 'Toggle annotation mode',
+        handler: () => this.toggleAnnotationMode(),
+      },
+      {
+        key: 'd',
+        context: 'recording',
+        description: 'Toggle drawing tools',
+        handler: () => this.toggleDrawingTools(),
+      },
+    ]);
+
+    // Search context shortcuts
+    this.keyboardShortcuts.register([
+      {
+        key: 'Enter',
+        context: 'search',
+        description: 'Execute search',
+        handler: () => this.executeSearch(),
+      },
+      {
+        key: 'ArrowUp',
+        context: 'search',
+        description: 'Previous search result',
+        handler: () => this.navigateSearchResults('up'),
+      },
+      {
+        key: 'ArrowDown',
+        context: 'search',
+        description: 'Next search result',
+        handler: () => this.navigateSearchResults('down'),
+      },
+    ]);
+  }
+
+  private updateKeyboardContext(path: string): void {
+    let context = 'global';
+    
+    if (path === '/dashboard') {
+      context = 'dashboard';
+    } else if (path.includes('/recordings/') && path.includes('/review')) {
+      context = 'video-player';
+    } else if (path.includes('/recordings/') && path.includes('/edit')) {
+      context = 'timeline-editor';
+    } else if (path === '/recordings' && this.isRecording()) {
+      context = 'recording';
+    } else if (path === '/search') {
+      context = 'search';
+    }
+    
+    this.keyboardShortcuts.setContext(context);
+  }
+
+  private isInputFocused(target: EventTarget | null): boolean {
+    if (!target || !(target instanceof Element)) return false;
+    
+    const tagName = target.tagName.toLowerCase();
+    const isInput = tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+    const isContentEditable = target.getAttribute('contenteditable') === 'true';
+    
+    return isInput || isContentEditable;
   }
 
   private async setupAuthentication(): Promise<void> {
@@ -341,18 +618,172 @@ export class StreetStudioApp {
   // Keyboard shortcut handlers
   private openGlobalSearch(): void {
     // TODO: Implement global search modal
+    console.log('Opening global search...');
   }
 
   private focusSearch(): void {
     // TODO: Focus search input if visible
+    const searchInput = document.querySelector('input[type="search"], input[placeholder*="search" i]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.select();
+    }
   }
 
   private startNewRecording(): void {
     // TODO: Start recording flow
+    this.router.navigate('/recordings');
+    console.log('Starting new recording...');
   }
 
   private closeOverlays(): void {
-    // TODO: Close any open modals or overlays
+    // Close any open modals, dropdowns, or overlays
+    const modals = document.querySelectorAll('[role="dialog"], .modal, .dropdown-menu.show');
+    modals.forEach(modal => {
+      if (modal instanceof HTMLElement) {
+        modal.style.display = 'none';
+        modal.classList.remove('show', 'open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    // Close keyboard shortcuts help overlay
+    if (this.keyboardShortcuts) {
+      const helpOverlay = document.querySelector('[role="dialog"][aria-labelledby="shortcut-help-title"]');
+      if (helpOverlay && !helpOverlay.classList.contains('hidden')) {
+        this.keyboardShortcuts.toggleHelpOverlay();
+      }
+    }
+  }
+
+  // Dashboard context handlers
+  private createNewProject(): void {
+    // TODO: Open project creation modal
+    console.log('Creating new project...');
+  }
+
+  private navigateProjectList(direction: 'up' | 'down'): void {
+    // TODO: Navigate project list with keyboard
+    console.log(`Navigating project list ${direction}...`);
+  }
+
+  private openSelectedProject(): void {
+    // TODO: Open currently selected project
+    console.log('Opening selected project...');
+  }
+
+  // Video player context handlers
+  private togglePlayback(): void {
+    const video = document.querySelector('video') as HTMLVideoElement;
+    if (video) {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    }
+  }
+
+  private seekVideo(seconds: number): void {
+    const video = document.querySelector('video') as HTMLVideoElement;
+    if (video) {
+      video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
+    }
+  }
+
+  private toggleFullscreen(): void {
+    const videoContainer = document.querySelector('.video-player-container, video') as HTMLElement;
+    if (videoContainer) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        videoContainer.requestFullscreen();
+      }
+    }
+  }
+
+  private toggleMute(): void {
+    const video = document.querySelector('video') as HTMLVideoElement;
+    if (video) {
+      video.muted = !video.muted;
+    }
+  }
+
+  private addTimestampComment(): void {
+    // TODO: Open comment interface with current timestamp
+    console.log('Adding timestamp comment...');
+  }
+
+  // Timeline editor context handlers
+  private toggleTimelinePlayback(): void {
+    // TODO: Toggle timeline playback
+    console.log('Toggling timeline playback...');
+  }
+
+  private splitAtPlayhead(): void {
+    // TODO: Split video at current playhead position
+    console.log('Splitting at playhead...');
+  }
+
+  private addTextOverlay(): void {
+    // TODO: Add text overlay at current position
+    console.log('Adding text overlay...');
+  }
+
+  private undoEdit(): void {
+    // TODO: Undo last edit operation
+    console.log('Undoing last edit...');
+  }
+
+  private redoEdit(): void {
+    // TODO: Redo last edit operation
+    console.log('Redoing last edit...');
+  }
+
+  private deleteSelected(): void {
+    // TODO: Delete selected timeline element
+    console.log('Deleting selected element...');
+  }
+
+  // Recording context handlers
+  private toggleRecording(): void {
+    // TODO: Start/stop recording
+    console.log('Toggling recording...');
+  }
+
+  private pauseResumeRecording(): void {
+    // TODO: Pause/resume current recording
+    console.log('Pausing/resuming recording...');
+  }
+
+  private toggleAnnotationMode(): void {
+    // TODO: Toggle annotation mode
+    console.log('Toggling annotation mode...');
+  }
+
+  private toggleDrawingTools(): void {
+    // TODO: Toggle drawing tools panel
+    console.log('Toggling drawing tools...');
+  }
+
+  // Search context handlers
+  private executeSearch(): void {
+    const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement;
+    if (searchInput && searchInput.value.trim()) {
+      // TODO: Execute search with current query
+      console.log(`Executing search: ${searchInput.value}`);
+    }
+  }
+
+  private navigateSearchResults(direction: 'up' | 'down'): void {
+    // TODO: Navigate search results with keyboard
+    console.log(`Navigating search results ${direction}...`);
+  }
+
+  // Utility methods
+  private isRecording(): boolean {
+    // TODO: Check if currently recording
+    return false;
   }
 
   // Authentication storage helpers
