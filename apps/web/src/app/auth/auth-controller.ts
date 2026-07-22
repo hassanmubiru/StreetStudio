@@ -10,9 +10,6 @@ import type { DashboardSession } from '@streetstudio/dashboard';
 import type { MemberDto, OrganizationDto } from '@streetstudio/shared';
 import { handleError } from '../error-handler.js';
 import { logger } from '../client-logger.js';
-import { oauthConfigService } from '../services/oauth-config.js';
-import { ssoConfigService } from '../services/sso-config.js';
-import { oauthCallbackHandler, OAuthCallbackHandler } from '../services/oauth-callback-handler.js';
 
 export interface AuthState {
   isAuthenticated: boolean;
