@@ -81,5 +81,22 @@ Object.defineProperty(window, 'performance', {
   },
 });
 
+// Mock timers
+Object.defineProperty(window, 'setInterval', {
+  value: vi.fn((fn, delay) => setTimeout(fn, delay)),
+});
+
+Object.defineProperty(window, 'clearInterval', {
+  value: vi.fn(),
+});
+
+Object.defineProperty(window, 'setTimeout', {
+  value: vi.fn((fn, delay) => delay),
+});
+
+Object.defineProperty(window, 'clearTimeout', {
+  value: vi.fn(),
+});
+
 // Setup waitFor utility for async tests
 global.vi = vi;
