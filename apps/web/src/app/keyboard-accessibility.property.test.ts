@@ -78,14 +78,17 @@ class MockDOMEnvironment {
     }
     
     this.focusedElement = elementId;
-    element.focused = true;
     
     // Blur other elements
     for (const [id, el] of this.elements.entries()) {
       if (id !== elementId) {
         el.focused = false;
+        el.blur();
       }
     }
+    
+    // Focus the target element
+    element.focus();
     
     return true;
   }
@@ -208,13 +211,18 @@ class MockElement {
   focus(): void {
     if (this.isFocusable()) {
       this.focused = true;
-      this.focusIndicator = {
-        visible: true,
-        color: '#005fcc',
-        width: 2,
-        style: 'solid',
-        offset: 2,
-      };
+      // Ensure focus indicator is created and set to visible
+      if (!this.focusIndicator) {
+        this.focusIndicator = {
+          visible: true,
+          color: '#005fcc',
+          width: 2,
+          style: 'solid',
+          offset: 2,
+        };
+      } else {
+        this.focusIndicator.visible = true;
+      }
     }
   }
 
