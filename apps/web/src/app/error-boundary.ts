@@ -55,7 +55,7 @@ export class ErrorBoundary {
   };
   private originalContent: string = '';
   private parentBoundary: ErrorBoundary | null = null;
-  private childBoundaries: ErrorBoundary[] = [];
+  private childBoundaries: Set<ErrorBoundary> = new Set();
   private recoveryTimer: number | null = null;
   private retryCount = 0;
 
