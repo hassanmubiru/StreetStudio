@@ -270,7 +270,7 @@ export class StorageManager {
 
     } catch (error) {
       logger.error('Failed to clear storage', {
-        error: error.message,
+        error: (error as Error).message,
         storageType: this.storageType,
       });
       return false;
