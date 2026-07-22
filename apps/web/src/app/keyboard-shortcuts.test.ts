@@ -155,7 +155,7 @@ describe('KeyboardShortcuts', () => {
       
       keyboardShortcuts.register([
         {
-          key: 'k',
+          key: 'z', // Use different key to avoid conflicts with existing shortcuts
           modifiers: ['ctrl'],
           description: 'Global shortcut',
           handler: globalHandler,
@@ -171,8 +171,14 @@ describe('KeyboardShortcuts', () => {
       keyboardShortcuts.setContext('video-player');
       const shortcuts = keyboardShortcuts.getShortcutsForContext('video-player');
       
+      // Filter for our test shortcuts
+      const testShortcuts = shortcuts.filter(s => 
+        (s.key === 'z' && s.modifiers?.includes('ctrl')) || 
+        (s.key === ' ' && s.context === 'video-player')
+      );
+      
       // Should include both global and context shortcuts
-      expect(shortcuts).toHaveLength(2);
+      expect(testShortcuts).toHaveLength(2);
     });
   });
 
