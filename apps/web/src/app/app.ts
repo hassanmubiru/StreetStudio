@@ -194,9 +194,22 @@ export class StreetStudioApp {
     this.setupContextSensitiveShortcuts();
 
     // Listen for route changes to update context
-    this.router.onRouteChange((path) => {
-      this.updateKeyboardContext(path);
-    });
+    // Note: Assuming router has onRouteChange method, will be implemented in router
+    if (this.router && typeof this.router.onRouteChange === 'function') {
+      this.router.onRouteChange((path) => {
+        this.updateKeyboardContext(path);
+      });
+    } else {
+      // Fallback: Monitor URL changes manually
+      let currentPath = window.location.pathname;
+      setInterval(() => {
+        const newPath = window.location.pathname;
+        if (newPath !== currentPath) {
+          currentPath = newPath;
+          this.updateKeyboardContext(newPath);
+        }
+      }, 100);
+    }
   }
 
   private setupContextSensitiveShortcuts(): void {
