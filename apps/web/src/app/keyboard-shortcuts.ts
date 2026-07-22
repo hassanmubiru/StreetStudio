@@ -385,7 +385,21 @@ export class KeyboardShortcuts {
     skipLink.textContent = 'Skip to main content (Alt+1)';
     skipLink.className = 'sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded';
     skipLink.setAttribute('accesskey', '1');
-    document.body.insertBefore(skipLink, document.body.firstChild);
+    
+    // Ensure skip link is the first focusable element
+    if (document.body.firstChild) {
+      document.body.insertBefore(skipLink, document.body.firstChild);
+    } else {
+      document.body.appendChild(skipLink);
+    }
+
+    // Create ARIA live region for keyboard shortcut announcements
+    const announceRegion = document.createElement('div');
+    announceRegion.id = 'keyboard-announcements';
+    announceRegion.setAttribute('aria-live', 'assertive');
+    announceRegion.setAttribute('aria-atomic', 'true');
+    announceRegion.className = 'sr-only';
+    document.body.appendChild(announceRegion);
 
     // Register accessibility shortcuts
     this.register([
@@ -394,19 +408,39 @@ export class KeyboardShortcuts {
         modifiers: ['alt'],
         description: 'Skip to main content',
         handler: () => {
-          const mainContent = document.getElementById('main-content') || document.querySelector('main');
-          if (mainContent && mainContent instanceof HTMLElement) {
-            mainContent.focus();
-            mainContent.scrollIntoView({ behavior: 'smooth' });
-          }
+          this.skipToMainContent();
+          this.announceShortcut('Skipped to main content');
         },
         priority: 100, // High priority for accessibility
+      },
+      {
+        key: '2',
+        modifiers: ['alt'],
+        description: 'Skip to navigation',
+        handler: () => {
+          this.skipToNavigation();
+          this.announceShortcut('Skipped to navigation');
+        },
+        priority: 100,
+      },
+      {
+        key: '3',
+        modifiers: ['alt'],
+        description: 'Skip to search',
+        handler: () => {
+          this.skipToSearch();
+          this.announceShortcut('Skipped to search');
+        },
+        priority: 100,
       },
       {
         key: 'F1',
         description: 'Show keyboard shortcuts help',
         handler: () => {
           this.toggleHelpOverlay();
+          this.announceShortcut(
+            this.helpOverlayVisible ? 'Keyboard shortcuts help opened' : 'Keyboard shortcuts help closed'
+          );
         },
         priority: 100,
       },
@@ -416,11 +450,130 @@ export class KeyboardShortcuts {
         handler: (event) => {
           if (!this.isInputFocused(event.target)) {
             this.toggleHelpOverlay();
+            this.announceShortcut(
+              this.helpOverlayVisible ? 'Keyboard shortcuts help opened' : 'Keyboard shortcuts help closed'
+            );
           }
         },
         priority: 50,
       },
+      {
+        key: 'h',
+        modifiers: ['alt'],
+        description: 'Toggle high contrast mode',
+        handler: () => {
+          this.toggleHighContrast();
+        },
+        priority: 100,
+      },
+      {
+        key: 'm',
+        modifiers: ['alt'],
+        description: 'Toggle reduced motion',
+        handler: () => {
+          this.toggleReducedMotion();
+        },
+        priority: 100,
+      },
     ]);
+  }
+
+  /**
+   * Announce shortcut action to screen readers
+   */
+  private announceShortcut(message: string): void {
+    const announceRegion = document.getElementById('keyboard-announcements');
+    if (announceRegion) {
+      announceRegion.textContent = message;
+      // Clear after announcement
+      setTimeout(() => {
+        announceRegion.textContent = '';
+      }, 1000);
+    }
+  }
+
+  /**
+   * Skip to main content
+   */
+  private skipToMainContent(): void {
+    const targets = [
+      document.getElementById('main-content'),
+      document.querySelector('main'),
+      document.querySelector('[role="main"]'),
+      document.querySelector('.main-content'),
+    ];
+
+    for (const target of targets) {
+      if (target && target instanceof HTMLElement) {
+        target.focus();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+    }
+  }
+
+  /**
+   * Skip to navigation
+   */
+  private skipToNavigation(): void {
+    const targets = [
+      document.getElementById('navigation'),
+      document.querySelector('nav'),
+      document.querySelector('[role="navigation"]'),
+      document.querySelector('.navigation'),
+    ];
+
+    for (const target of targets) {
+      if (target && target instanceof HTMLElement) {
+        target.focus();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+    }
+  }
+
+  /**
+   * Skip to search
+   */
+  private skipToSearch(): void {
+    const targets = [
+      document.getElementById('search'),
+      document.querySelector('input[type="search"]'),
+      document.querySelector('[role="search"] input'),
+      document.querySelector('.search-input'),
+    ];
+
+    for (const target of targets) {
+      if (target && target instanceof HTMLElement) {
+        target.focus();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+    }
+  }
+
+  /**
+   * Toggle high contrast mode
+   */
+  private toggleHighContrast(): void {
+    document.body.classList.toggle('high-contrast');
+    const isEnabled = document.body.classList.contains('high-contrast');
+    this.announceShortcut(`High contrast ${isEnabled ? 'enabled' : 'disabled'}`);
+    
+    // Store preference
+    localStorage.setItem('streetstudio-high-contrast', isEnabled.toString());
+  }
+
+  /**
+   * Toggle reduced motion preference
+   */
+  private toggleReducedMotion(): void {
+    document.body.classList.toggle('reduce-motion');
+    const isEnabled = document.body.classList.contains('reduce-motion');
+    this.announceShortcut(`Reduced motion ${isEnabled ? 'enabled' : 'disabled'}`);
+    
+    // Store preference
+    localStorage.setItem('streetstudio-reduce-motion', isEnabled.toString());
   }
 
   private createHelpOverlay(): void {
@@ -430,30 +583,58 @@ export class KeyboardShortcuts {
     this.helpOverlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden';
     this.helpOverlay.setAttribute('role', 'dialog');
     this.helpOverlay.setAttribute('aria-labelledby', 'shortcut-help-title');
+    this.helpOverlay.setAttribute('aria-describedby', 'shortcut-help-description');
     this.helpOverlay.setAttribute('aria-modal', 'true');
 
     this.helpOverlay.innerHTML = `
-      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h2 id="shortcut-help-title" class="text-lg font-semibold text-gray-900">
-              Keyboard Shortcuts
-            </h2>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-96 overflow-hidden flex flex-col">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 id="shortcut-help-title" class="text-lg font-semibold text-gray-900 dark:text-white">
+                Keyboard Shortcuts
+              </h2>
+              <p id="shortcut-help-description" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Use these keyboard shortcuts to navigate and interact with the application more efficiently.
+              </p>
+            </div>
             <button 
               type="button" 
-              class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded p-2"
               aria-label="Close keyboard shortcuts help"
+              title="Close help (Esc)"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          <div id="shortcuts-list" class="space-y-2">
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-6">
+          <div id="shortcuts-list" class="space-y-6">
             <!-- Shortcuts will be populated here -->
           </div>
-          <div class="mt-4 text-sm text-gray-500">
-            <p>Press <kbd class="px-2 py-1 bg-gray-100 rounded text-xs font-mono">Esc</kbd> or <kbd class="px-2 py-1 bg-gray-100 rounded text-xs font-mono">F1</kbd> to close this help.</p>
+        </div>
+        
+        <div class="p-6 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+          <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+            <div class="flex items-center gap-2">
+              <kbd class="px-2 py-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded text-xs font-mono shadow-sm">Esc</kbd>
+              <span>Close help</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-2 py-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded text-xs font-mono shadow-sm">Tab</kbd>
+              <span>Navigate</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-2 py-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded text-xs font-mono shadow-sm">Alt+H</kbd>
+              <span>High contrast</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-2 py-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded text-xs font-mono shadow-sm">Alt+M</kbd>
+              <span>Reduced motion</span>
+            </div>
           </div>
         </div>
       </div>
