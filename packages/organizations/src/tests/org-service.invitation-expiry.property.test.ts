@@ -10,7 +10,8 @@ import type {
   TeamRecord,
 } from "@streetstudio/database";
 import type { InvitationStatus, Uuid } from "@streetstudio/shared";
-import { INVITATION_TTL_MS, OrgService, type OrgStore } from "./org-service.js";
+import { OrgService, type OrgStore } from "../application/org-service.js";
+import { INVITATION_TTL_MS } from "../domain/index.js";
 import type { AuthContext } from "@streetstudio/auth";
 import type { Clock } from "@streetstudio/auth";
 
