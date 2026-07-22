@@ -243,11 +243,6 @@ export class ErrorBoundary {
    * Handle errors gracefully using the comprehensive error system
    */
   public handleError(error: Error, context = 'component'): void {
-    // If we're in auto-recovery mode and this is a subsequent error, treat it as a retry
-    if (this.options.enableAutoRecovery && this.errorState.hasError) {
-      this.retryCount++;
-    }
-
     // Update error state
     this.errorState = {
       hasError: true,
