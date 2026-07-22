@@ -275,9 +275,334 @@ class ErrorReportingService {
 class GracefulDegradationManager {
   private failedFeatures = new Set<string>();
   private fallbackStrategies = new Map<string, () => void>();
+  private corruptionDetectors = new Map<string, (data: any) => boolean>();
+  private recoveryStrategies = new Map<string, () => Promise<boolean>>();
 
   public registerFallback(feature: string, fallbackFn: () => void): void {
     this.fallbackStrategies.set(feature, fallbackFn);
+  }
+
+  /**
+   * Register data corruption detector for a specific data type
+   * Implements Requirement 13.10 - data corruption detection and recovery
+   */
+  public registerCorruptionDetector(dataType: string, detector: (data: any) => boolean): void {
+    this.corruptionDetectors.set(dataType, detector);
+  }
+
+  /**
+   * Register recovery strategy for corrupted data
+   */
+  public registerRecoveryStrategy(dataType: string, recovery: () => Promise<boolean>): void {
+    this.recoveryStrategies.set(dataType, recovery);
+  }
+
+  /**
+   * Check data for corruption and provide recovery options
+   */
+  public async checkDataIntegrity(dataType: string, data: any): Promise<{
+    isCorrupted: boolean;
+    canRecover: boolean;
+    recovery?: () => Promise<boolean>;
+  }> {
+    const detector = this.corruptionDetectors.get(dataType);
+    if (!detector) {
+      return { isCorrupted: false, canRecover: false };
+    }
+
+    const isCorrupted = detector(data);
+    if (!isCorrupted) {
+      return { isCorrupted: false, canRecover: false };
+    }
+
+    const recovery = this.recoveryStrategies.get(dataType);
+    return {
+      isCorrupted: true,
+      canRecover: !!recovery,
+      recovery,
+    };
+  }
+
+  /**
+   * Handle data corruption with recovery options
+   */
+  public async handleDataCorruption(dataType: string, data: any, context: Record<string, any> = {}): Promise<void> {
+    const integrity = await this.checkDataIntegrity(dataType, data);
+    
+    if (!integrity.isCorrupted) {
+      return;
+    }
+
+    logger.error(`Data corruption detected: ${dataType}`, {
+      dataType,
+      context,
+      canRecover: integrity.canRecover,
+    });
+
+    // Show corruption error with recovery options
+    this.showDataCorruptionError(dataType, integrity, context);
+  }
+
+  /**
+   * Show data corruption error with recovery UI
+   */
+  private showDataCorruptionError(
+    dataType: string, 
+    integrity: { canRecover: boolean; recovery?: () => Promise<boolean> },
+    context: Record<string, any>
+  ): void {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+      <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+        <div class="flex items-center mb-4">
+          <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.84L13.732 4.86c-.77-1.175-2.694-1.175-3.464 0L3.34 16.16c-.77 1.173.192 2.84 1.732 2.84z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900">Data Corruption Detected</h3>
+        </div>
+        
+        <p class="text-gray-600 mb-4">
+          We've detected corrupted data in your ${dataType}. This could be due to a network error, 
+          storage issue, or unexpected interruption.
+        </p>
+        
+        <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
+          <p class="text-sm text-yellow-800">
+            <strong>What happened:</strong> The data integrity check failed, indicating potential data loss or corruption.
+          </p>
+        </div>
+        
+        <div class="space-y-3">
+          ${integrity.canRecover ? `
+            <button id="recover-data" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+              🔄 Try to Recover Data
+            </button>
+            <button id="backup-restore" class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors">
+              📁 Restore from Backup
+            </button>
+          ` : ''}
+          
+          <button id="start-fresh" class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors">
+            🆕 Start Fresh (Data Loss)
+          </button>
+          
+          <button id="contact-support" class="w-full bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors">
+            📞 Contact Support
+          </button>
+        </div>
+        
+        <div class="mt-4 pt-4 border-t border-gray-200">
+          <p class="text-xs text-gray-500">
+            Corruption ID: ${crypto.randomUUID().split('-')[0]}
+          </p>
+        </div>
+      </div>
+    `;
+
+    // Add event handlers
+    if (integrity.canRecover) {
+      const recoverBtn = modal.querySelector('#recover-data') as HTMLButtonElement;
+      recoverBtn.addEventListener('click', async () => {
+        recoverBtn.disabled = true;
+        recoverBtn.innerHTML = '🔄 Recovering...';
+        
+        try {
+          const recovered = await integrity.recovery!();
+          if (recovered) {
+            toast.success('Data recovered successfully!');
+            document.body.removeChild(modal);
+            window.location.reload();
+          } else {
+            toast.error('Recovery failed. Please try another option.');
+            recoverBtn.disabled = false;
+            recoverBtn.innerHTML = '🔄 Try to Recover Data';
+          }
+        } catch (error) {
+          toast.error('Recovery failed. Please try another option.');
+          recoverBtn.disabled = false;
+          recoverBtn.innerHTML = '🔄 Try to Recover Data';
+        }
+      });
+
+      const backupBtn = modal.querySelector('#backup-restore') as HTMLButtonElement;
+      backupBtn.addEventListener('click', () => {
+        this.showBackupRestoreOptions(dataType, modal);
+      });
+    }
+
+    const freshBtn = modal.querySelector('#start-fresh') as HTMLButtonElement;
+    freshBtn.addEventListener('click', () => {
+      if (confirm('Are you sure? This will clear corrupted data and you may lose recent changes.')) {
+        this.clearCorruptedData(dataType);
+        toast.info('Data cleared. Starting fresh.');
+        document.body.removeChild(modal);
+        window.location.reload();
+      }
+    });
+
+    const supportBtn = modal.querySelector('#contact-support') as HTMLButtonElement;
+    supportBtn.addEventListener('click', () => {
+      openSupportContact({
+        id: crypto.randomUUID(),
+        message: `Data corruption in ${dataType}`,
+        severity: 'recoverable' as const,
+        category: 'javascript' as const,
+        timestamp: new Date().toISOString(),
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        context: { dataType, ...context },
+        recoverable: true,
+      });
+    });
+
+    document.body.appendChild(modal);
+  }
+
+  /**
+   * Show backup restore options
+   */
+  private showBackupRestoreOptions(dataType: string, parentModal: HTMLElement): void {
+    const backupModal = document.createElement('div');
+    backupModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    backupModal.innerHTML = `
+      <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Restore from Backup</h3>
+        
+        <div class="space-y-3">
+          <button id="auto-backup" class="w-full text-left p-3 border border-gray-300 rounded-md hover:bg-gray-50">
+            <div class="font-medium">Auto-saved backup</div>
+            <div class="text-sm text-gray-500">Automatically saved 5 minutes ago</div>
+          </button>
+          
+          <button id="local-backup" class="w-full text-left p-3 border border-gray-300 rounded-md hover:bg-gray-50">
+            <div class="font-medium">Local storage backup</div>
+            <div class="text-sm text-gray-500">Stored in browser cache</div>
+          </button>
+          
+          <label class="w-full block p-3 border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer">
+            <div class="font-medium">Upload backup file</div>
+            <div class="text-sm text-gray-500">Restore from downloaded backup</div>
+            <input type="file" accept=".json,.bak" class="hidden" id="file-backup">
+          </label>
+        </div>
+        
+        <div class="flex space-x-3 mt-6">
+          <button id="back-to-options" class="flex-1 bg-gray-200 text-gray-900 px-4 py-2 rounded-md hover:bg-gray-300">
+            Back
+          </button>
+        </div>
+      </div>
+    `;
+
+    const backBtn = backupModal.querySelector('#back-to-options') as HTMLButtonElement;
+    backBtn.addEventListener('click', () => {
+      document.body.removeChild(backupModal);
+    });
+
+    const autoBackupBtn = backupModal.querySelector('#auto-backup') as HTMLButtonElement;
+    autoBackupBtn.addEventListener('click', async () => {
+      await this.restoreFromAutoBackup(dataType);
+      document.body.removeChild(backupModal);
+      document.body.removeChild(parentModal);
+    });
+
+    const localBackupBtn = backupModal.querySelector('#local-backup') as HTMLButtonElement;
+    localBackupBtn.addEventListener('click', async () => {
+      await this.restoreFromLocalBackup(dataType);
+      document.body.removeChild(backupModal);
+      document.body.removeChild(parentModal);
+    });
+
+    const fileInput = backupModal.querySelector('#file-backup') as HTMLInputElement;
+    fileInput.addEventListener('change', async (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file) {
+        await this.restoreFromFile(dataType, file);
+        document.body.removeChild(backupModal);
+        document.body.removeChild(parentModal);
+      }
+    });
+
+    document.body.appendChild(backupModal);
+  }
+
+  /**
+   * Restore data from automatic backup
+   */
+  private async restoreFromAutoBackup(dataType: string): Promise<void> {
+    try {
+      const backup = localStorage.getItem(`streetstudio_backup_${dataType}`);
+      if (!backup) {
+        throw new Error('No auto-backup found');
+      }
+
+      const data = JSON.parse(backup);
+      localStorage.setItem(`streetstudio_${dataType}`, JSON.stringify(data));
+      
+      toast.success('Data restored from auto-backup');
+      window.location.reload();
+    } catch (error) {
+      toast.error('Failed to restore from auto-backup');
+    }
+  }
+
+  /**
+   * Restore data from local backup
+   */
+  private async restoreFromLocalBackup(dataType: string): Promise<void> {
+    try {
+      const backup = sessionStorage.getItem(`streetstudio_session_${dataType}`);
+      if (!backup) {
+        throw new Error('No local backup found');
+      }
+
+      const data = JSON.parse(backup);
+      localStorage.setItem(`streetstudio_${dataType}`, JSON.stringify(data));
+      
+      toast.success('Data restored from local backup');
+      window.location.reload();
+    } catch (error) {
+      toast.error('Failed to restore from local backup');
+    }
+  }
+
+  /**
+   * Restore data from uploaded file
+   */
+  private async restoreFromFile(dataType: string, file: File): Promise<void> {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      // Validate restored data
+      const integrity = await this.checkDataIntegrity(dataType, data);
+      if (integrity.isCorrupted) {
+        throw new Error('Backup file is also corrupted');
+      }
+
+      localStorage.setItem(`streetstudio_${dataType}`, JSON.stringify(data));
+      
+      toast.success('Data restored from file');
+      window.location.reload();
+    } catch (error) {
+      toast.error('Failed to restore from file: Invalid backup');
+    }
+  }
+
+  /**
+   * Clear corrupted data
+   */
+  private clearCorruptedData(dataType: string): void {
+    try {
+      localStorage.removeItem(`streetstudio_${dataType}`);
+      sessionStorage.removeItem(`streetstudio_session_${dataType}`);
+      localStorage.removeItem(`streetstudio_backup_${dataType}`);
+    } catch (error) {
+      logger.warn('Failed to clear corrupted data', { error: (error as Error).message });
+    }
   }
 
   public handleFeatureFailure(feature: string, error: Error): void {
