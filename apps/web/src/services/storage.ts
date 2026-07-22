@@ -239,7 +239,7 @@ export class StorageManager {
 
     } catch (error) {
       logger.error(`Failed to remove item: ${key}`, {
-        error: error.message,
+        error: (error as Error).message,
         storageType: this.storageType,
       });
       return false;
