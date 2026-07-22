@@ -6,6 +6,7 @@
  */
 
 import { toast } from '@streetstudio/ui';
+import { logger } from './client-logger.js';
 
 export type ErrorSeverity = 'fatal' | 'recoverable' | 'minor';
 export type ErrorCategory = 'javascript' | 'network' | 'authentication' | 'api' | 'component' | 'unhandledrejection' | 'chunk' | 'permission';
