@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { PgPool } from "streetjs";
 import { AppError } from "@streetstudio/shared";
 import type { AuthContext } from "@streetstudio/auth";
-import { OrgService } from "./org-service.js";
+import { OrgService } from "../application/org-service.js";
 import { ensureOrganizationsSchema, postgresOrgStore } from "./postgres-org-store.js";
 
 /**
