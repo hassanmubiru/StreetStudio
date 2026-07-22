@@ -77,6 +77,9 @@ describe('KeyboardShortcuts', () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
       
+      // Get initial count (includes accessibility shortcuts)
+      const initialCount = keyboardShortcuts.getShortcutsForContext().length;
+      
       keyboardShortcuts.register([
         {
           key: 'k',
@@ -93,7 +96,7 @@ describe('KeyboardShortcuts', () => {
       ]);
 
       const shortcuts = keyboardShortcuts.getShortcutsForContext();
-      expect(shortcuts).toHaveLength(2);
+      expect(shortcuts).toHaveLength(initialCount + 2);
     });
 
     test('should handle shortcut conflicts with priority', () => {
@@ -102,7 +105,7 @@ describe('KeyboardShortcuts', () => {
       
       // Register low priority shortcut first
       keyboardShortcuts.register({
-        key: 'k',
+        key: 'x', // Use a different key to avoid conflicts with existing shortcuts
         modifiers: ['ctrl'],
         description: 'Low priority',
         handler: handler1,
@@ -111,7 +114,7 @@ describe('KeyboardShortcuts', () => {
 
       // Register high priority shortcut with same key
       keyboardShortcuts.register({
-        key: 'k',
+        key: 'x',
         modifiers: ['ctrl'],
         description: 'High priority',
         handler: handler2,
@@ -119,9 +122,12 @@ describe('KeyboardShortcuts', () => {
       });
 
       const shortcuts = keyboardShortcuts.getShortcutsForContext();
+      // Find our test shortcuts
+      const testShortcuts = shortcuts.filter(s => s.key === 'x');
+      
       // Should have both shortcuts, but high priority first
-      expect(shortcuts[0].priority).toBe(10);
-      expect(shortcuts[1].priority).toBe(1);
+      expect(testShortcuts[0].priority).toBe(10);
+      expect(testShortcuts[1].priority).toBe(1);
     });
   });
 
@@ -129,7 +135,7 @@ describe('KeyboardShortcuts', () => {
     test('should set and get active context', () => {
       keyboardShortcuts.setContext('video-player');
       
-      const handler = jest.fn();
+      const handler = vi.fn();
       keyboardShortcuts.register({
         key: ' ',
         context: 'video-player',
@@ -143,8 +149,8 @@ describe('KeyboardShortcuts', () => {
     });
 
     test('should include global shortcuts in any context', () => {
-      const globalHandler = jest.fn();
-      const contextHandler = jest.fn();
+      const globalHandler = vi.fn();
+      const contextHandler = vi.fn();
       
       keyboardShortcuts.register([
         {
@@ -171,7 +177,7 @@ describe('KeyboardShortcuts', () => {
 
   describe('shortcut unregistration', () => {
     test('should unregister shortcuts by key and context', () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
       
       keyboardShortcuts.register({
         key: 'k',
