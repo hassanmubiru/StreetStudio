@@ -85,10 +85,10 @@ export class StorageManager {
       
       switch (this.storageType) {
         case StorageType.Local:
-          nativeStorage = localStorage;
+          nativeStorage = window.localStorage;
           break;
         case StorageType.Session:
-          nativeStorage = sessionStorage;
+          nativeStorage = window.sessionStorage;
           break;
         case StorageType.Memory:
           return new MemoryStorage();
@@ -105,7 +105,7 @@ export class StorageManager {
 
     } catch (error) {
       logger.warn(`${this.storageType} storage not available, falling back to memory storage`, {
-        error: error.message,
+        error: (error as Error).message,
         storageType: this.storageType,
       });
 
