@@ -483,7 +483,7 @@ export class StorageManager {
 
     } catch (error) {
       logger.error('Failed to cleanup oldest items', {
-        error: error.message,
+        error: (error as Error).message,
         storageType: this.storageType,
       });
       return 0;
