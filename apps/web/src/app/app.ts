@@ -123,24 +123,322 @@ export class StreetStudioApp {
       {
         key: 'k',
         modifiers: ['cmd', 'ctrl'],
-        description: 'Open search',
+        description: 'Open global search',
         handler: () => this.openGlobalSearch(),
+        priority: 100,
       },
       {
         key: '/',
-        description: 'Focus search',
+        description: 'Focus search input',
         handler: () => this.focusSearch(),
+        priority: 90,
       },
       {
         key: 'n',
         modifiers: ['cmd', 'ctrl'],
-        description: 'New recording',
+        description: 'Start new recording',
         handler: () => this.startNewRecording(),
+        priority: 100,
       },
       {
         key: 'Escape',
-        description: 'Close modals/overlays',
+        description: 'Close modals and overlays',
         handler: () => this.closeOverlays(),
+        priority: 200, // High priority for escape
+      },
+      // Navigation shortcuts
+      {
+        key: 'd',
+        modifiers: ['alt'],
+        description: 'Navigate to dashboard',
+        handler: () => this.router.navigate('/dashboard'),
+        priority: 80,
+      },
+      {
+        key: 'p',
+        modifiers: ['alt'],
+        description: 'Navigate to projects',
+        handler: () => this.router.navigate('/projects'),
+        priority: 80,
+      },
+      {
+        key: 'r',
+        modifiers: ['alt'],
+        description: 'Navigate to recordings',
+        handler: () => this.router.navigate('/recordings'),
+        priority: 80,
+      },
+      {
+        key: 's',
+        modifiers: ['alt'],
+        description: 'Navigate to settings',
+        handler: () => this.router.navigate('/settings'),
+        priority: 80,
+      },
+    ]);
+
+    // Setup context-sensitive shortcuts based on current route
+    this.setupContextSensitiveShortcuts();
+  }
+
+  private setupContextSensitiveShortcuts(): void {
+    // Listen for route changes to update context
+    this.router.onRouteChange((path) => {
+      this.updateKeyboardContext(path);
+    });
+
+    // Set initial context
+    this.updateKeyboardContext(this.router.getCurrentPath());
+  }
+
+  private updateKeyboardContext(path: string): void {
+    let context = 'global';
+
+    if (path.startsWith('/dashboard')) {
+      context = 'dashboard';
+      this.registerDashboardShortcuts();
+    } else if (path.startsWith('/recordings')) {
+      if (path.includes('/review')) {
+        context = 'video-review';
+        this.registerVideoReviewShortcuts();
+      } else if (path.includes('/edit')) {
+        context = 'video-editor';
+        this.registerVideoEditorShortcuts();
+      } else {
+        context = 'recordings';
+        this.registerRecordingsShortcuts();
+      }
+    } else if (path.startsWith('/projects')) {
+      context = 'projects';
+      this.registerProjectsShortcuts();
+    } else if (path.startsWith('/search')) {
+      context = 'search';
+      this.registerSearchShortcuts();
+    } else if (path.startsWith('/auth')) {
+      context = 'auth';
+      this.registerAuthShortcuts();
+    }
+
+    this.keyboardShortcuts.setContext(context);
+  }
+
+  private registerDashboardShortcuts(): void {
+    this.keyboardShortcuts.register([
+      {
+        key: 'r',
+        modifiers: ['cmd', 'ctrl'],
+        context: 'dashboard',
+        description: 'Refresh dashboard',
+        handler: () => this.router.refresh(),
+      },
+      {
+        key: 'f',
+        modifiers: ['cmd', 'ctrl'],
+        context: 'dashboard',
+        description: 'Filter dashboard content',
+        handler: () => this.focusDashboardFilter(),
+      },
+    ]);
+  }
+
+  private registerRecordingsShortcuts(): void {
+    this.keyboardShortcuts.register([
+      {
+        key: ' ',
+        context: 'recordings',
+        description: 'Start/stop recording',
+        handler: (event) => {
+          event.preventDefault();
+          this.toggleRecording();
+        },
+      },
+      {
+        key: 'Delete',
+        context: 'recordings',
+        description: 'Delete selected recording',
+        handler: () => this.deleteSelectedRecording(),
+      },
+    ]);
+  }
+
+  private registerVideoReviewShortcuts(): void {
+    this.keyboardShortcuts.register([
+      {
+        key: ' ',
+        context: 'video-review',
+        description: 'Play/pause video',
+        handler: (event) => {
+          event.preventDefault();
+          this.toggleVideoPlayback();
+        },
+      },
+      {
+        key: 'ArrowLeft',
+        context: 'video-review',
+        description: 'Rewind 10 seconds',
+        handler: (event) => {
+          event.preventDefault();
+          this.seekVideo(-10);
+        },
+      },
+      {
+        key: 'ArrowRight',
+        context: 'video-review',
+        description: 'Forward 10 seconds',
+        handler: (event) => {
+          event.preventDefault();
+          this.seekVideo(10);
+        },
+      },
+      {
+        key: 'j',
+        context: 'video-review',
+        description: 'Rewind 10 seconds',
+        handler: () => this.seekVideo(-10),
+      },
+      {
+        key: 'l',
+        context: 'video-review',
+        description: 'Forward 10 seconds',
+        handler: () => this.seekVideo(10),
+      },
+      {
+        key: 'k',
+        context: 'video-review',
+        description: 'Play/pause video',
+        handler: () => this.toggleVideoPlayback(),
+      },
+      {
+        key: 'f',
+        context: 'video-review',
+        description: 'Toggle fullscreen',
+        handler: () => this.toggleFullscreen(),
+      },
+      {
+        key: 'c',
+        context: 'video-review',
+        description: 'Add comment at current time',
+        handler: () => this.addCommentAtCurrentTime(),
+      },
+      {
+        key: 'm',
+        context: 'video-review',
+        description: 'Toggle mute',
+        handler: () => this.toggleMute(),
+      },
+    ]);
+  }
+
+  private registerVideoEditorShortcuts(): void {
+    this.keyboardShortcuts.register([
+      {
+        key: ' ',
+        context: 'video-editor',
+        description: 'Play/pause timeline',
+        handler: (event) => {
+          event.preventDefault();
+          this.toggleTimelinePlayback();
+        },
+      },
+      {
+        key: 'i',
+        context: 'video-editor',
+        description: 'Set in point',
+        handler: () => this.setInPoint(),
+      },
+      {
+        key: 'o',
+        context: 'video-editor',
+        description: 'Set out point',
+        handler: () => this.setOutPoint(),
+      },
+      {
+        key: 'x',
+        context: 'video-editor',
+        description: 'Cut at playhead',
+        handler: () => this.cutAtPlayhead(),
+      },
+      {
+        key: 'z',
+        modifiers: ['cmd', 'ctrl'],
+        context: 'video-editor',
+        description: 'Undo last action',
+        handler: () => this.undoLastAction(),
+      },
+      {
+        key: 'z',
+        modifiers: ['cmd', 'shift'],
+        context: 'video-editor',
+        description: 'Redo last action',
+        handler: () => this.redoLastAction(),
+      },
+      {
+        key: 's',
+        modifiers: ['cmd', 'ctrl'],
+        context: 'video-editor',
+        description: 'Save project',
+        handler: (event) => {
+          event.preventDefault();
+          this.saveProject();
+        },
+      },
+    ]);
+  }
+
+  private registerProjectsShortcuts(): void {
+    this.keyboardShortcuts.register([
+      {
+        key: 'n',
+        modifiers: ['cmd', 'ctrl'],
+        context: 'projects',
+        description: 'Create new project',
+        handler: () => this.createNewProject(),
+      },
+      {
+        key: 'Delete',
+        context: 'projects',
+        description: 'Delete selected project',
+        handler: () => this.deleteSelectedProject(),
+      },
+    ]);
+  }
+
+  private registerSearchShortcuts(): void {
+    this.keyboardShortcuts.register([
+      {
+        key: 'Enter',
+        context: 'search',
+        description: 'Execute search',
+        handler: () => this.executeSearch(),
+      },
+      {
+        key: 'ArrowDown',
+        context: 'search',
+        description: 'Navigate to next result',
+        handler: (event) => {
+          event.preventDefault();
+          this.navigateSearchResults(1);
+        },
+      },
+      {
+        key: 'ArrowUp',
+        context: 'search',
+        description: 'Navigate to previous result',
+        handler: (event) => {
+          event.preventDefault();
+          this.navigateSearchResults(-1);
+        },
+      },
+    ]);
+  }
+
+  private registerAuthShortcuts(): void {
+    this.keyboardShortcuts.register([
+      {
+        key: 'Enter',
+        context: 'auth',
+        description: 'Submit form',
+        handler: () => this.submitAuthForm(),
       },
     ]);
   }
