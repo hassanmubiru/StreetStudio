@@ -158,7 +158,8 @@ export class KeyboardShortcuts {
     
     for (const shortcuts of this.shortcuts.values()) {
       for (const shortcut of shortcuts) {
-        if ((shortcut.context || 'global') === targetContext || shortcut.context === 'global') {
+        const shortcutContext = shortcut.context || 'global';
+        if (shortcutContext === targetContext || shortcutContext === 'global') {
           contextShortcuts.push(shortcut);
         }
       }
