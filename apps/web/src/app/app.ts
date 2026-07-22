@@ -732,29 +732,179 @@ export class StreetStudioApp {
   private openGlobalSearch(): void {
     // TODO: Implement global search modal
     console.log('Opening global search...');
+    // For now, navigate to search page
+    this.router.navigate('/search');
   }
 
   private focusSearch(): void {
-    // TODO: Focus search input if visible
+    // Focus search input if visible
     const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement;
     if (searchInput) {
       searchInput.focus();
+    } else {
+      // If no search input is visible, open global search
+      this.openGlobalSearch();
     }
   }
 
   private startNewRecording(): void {
-    // TODO: Start recording flow
+    // Start recording flow
     this.router.navigate('/recordings');
   }
 
   private closeOverlays(): void {
-    // TODO: Close any open modals or overlays
+    // Close any open modals or overlays
     const modals = document.querySelectorAll('[role="dialog"]');
     modals.forEach(modal => {
       if (modal instanceof HTMLElement) {
         modal.style.display = 'none';
       }
     });
+
+    // Close dropdowns
+    const dropdowns = document.querySelectorAll('[aria-expanded="true"]');
+    dropdowns.forEach(dropdown => {
+      if (dropdown instanceof HTMLElement) {
+        dropdown.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Emit escape key event for any components listening
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:escape'));
+  }
+
+  // Dashboard context handlers
+  private focusDashboardFilter(): void {
+    const filterInput = document.querySelector('[data-dashboard-filter]') as HTMLInputElement;
+    if (filterInput) {
+      filterInput.focus();
+    }
+  }
+
+  // Recording context handlers
+  private toggleRecording(): void {
+    // Toggle recording state
+    console.log('Toggling recording...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:toggle-recording'));
+  }
+
+  private deleteSelectedRecording(): void {
+    // Delete currently selected recording
+    console.log('Deleting selected recording...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:delete-recording'));
+  }
+
+  // Video review context handlers
+  private toggleVideoPlayback(): void {
+    const video = document.querySelector('video') as HTMLVideoElement;
+    if (video) {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    }
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:toggle-playback'));
+  }
+
+  private seekVideo(seconds: number): void {
+    const video = document.querySelector('video') as HTMLVideoElement;
+    if (video) {
+      video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
+    }
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:seek', { detail: { seconds } }));
+  }
+
+  private toggleFullscreen(): void {
+    const videoContainer = document.querySelector('[data-video-container]') as HTMLElement;
+    if (videoContainer) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        videoContainer.requestFullscreen();
+      }
+    }
+  }
+
+  private addCommentAtCurrentTime(): void {
+    console.log('Adding comment at current time...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:add-comment'));
+  }
+
+  private toggleMute(): void {
+    const video = document.querySelector('video') as HTMLVideoElement;
+    if (video) {
+      video.muted = !video.muted;
+    }
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:toggle-mute'));
+  }
+
+  // Video editor context handlers
+  private toggleTimelinePlayback(): void {
+    console.log('Toggling timeline playback...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:toggle-timeline'));
+  }
+
+  private setInPoint(): void {
+    console.log('Setting in point...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:set-in-point'));
+  }
+
+  private setOutPoint(): void {
+    console.log('Setting out point...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:set-out-point'));
+  }
+
+  private cutAtPlayhead(): void {
+    console.log('Cutting at playhead...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:cut-at-playhead'));
+  }
+
+  private undoLastAction(): void {
+    console.log('Undoing last action...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:undo'));
+  }
+
+  private redoLastAction(): void {
+    console.log('Redoing last action...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:redo'));
+  }
+
+  private saveProject(): void {
+    console.log('Saving project...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:save-project'));
+  }
+
+  // Projects context handlers
+  private createNewProject(): void {
+    console.log('Creating new project...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:new-project'));
+  }
+
+  private deleteSelectedProject(): void {
+    console.log('Deleting selected project...');
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:delete-project'));
+  }
+
+  // Search context handlers
+  private executeSearch(): void {
+    const searchForm = document.querySelector('[data-search-form]') as HTMLFormElement;
+    if (searchForm) {
+      searchForm.requestSubmit();
+    }
+  }
+
+  private navigateSearchResults(direction: number): void {
+    console.log(`Navigating search results: ${direction > 0 ? 'next' : 'previous'}`);
+    document.dispatchEvent(new CustomEvent('keyboardshortcut:navigate-results', { detail: { direction } }));
+  }
+
+  // Auth context handlers
+  private submitAuthForm(): void {
+    const authForm = document.querySelector('form') as HTMLFormElement;
+    if (authForm) {
+      authForm.requestSubmit();
+    }
   }
   // Authentication storage helpers
   private getStoredAuth(): { token: string } | null {
