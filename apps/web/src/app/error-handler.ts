@@ -5,7 +5,7 @@
  * graceful degradation, and contextual help. Implements requirements 13.1, 13.2, 13.6, 13.8.
  */
 
-import { toast } from '@streetstudio/ui';
+import { toast } from '../utils/toast.js';
 import { logger } from './client-logger.js';
 
 export type ErrorSeverity = 'fatal' | 'recoverable' | 'minor';
