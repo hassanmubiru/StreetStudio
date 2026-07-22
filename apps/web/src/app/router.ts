@@ -53,6 +53,7 @@ export class Router {
   private isTransitioning = false;
   private prefetchedComponents = new Map<string, any>();
   private abortController?: AbortController;
+  private routeChangeListeners: Array<(path: string) => void> = [];
 
   constructor(config: RouterConfig = {}) {
     this.config = {
@@ -66,6 +67,36 @@ export class Router {
 
     // Bind methods to preserve context
     this.handlePopState = this.handlePopState.bind(this);
+  }
+
+  /**
+   * Add route change listener
+   */
+  public onRouteChange(listener: (path: string) => void): void {
+    this.routeChangeListeners.push(listener);
+  }
+
+  /**
+   * Remove route change listener
+   */
+  public removeRouteChangeListener(listener: (path: string) => void): void {
+    const index = this.routeChangeListeners.indexOf(listener);
+    if (index > -1) {
+      this.routeChangeListeners.splice(index, 1);
+    }
+  }
+
+  /**
+   * Notify route change listeners
+   */
+  private notifyRouteChange(path: string): void {
+    this.routeChangeListeners.forEach(listener => {
+      try {
+        listener(path);
+      } catch (error) {
+        console.error('Error in route change listener:', error);
+      }
+    });
   }
 
   /**
@@ -215,6 +246,9 @@ export class Router {
 
       // Update current path
       this.currentPath = normalizedPath;
+
+      // Notify route change listeners
+      this.notifyRouteChange(normalizedPath);
 
       // Scroll to top if enabled
       if (this.config.scrollToTop) {
