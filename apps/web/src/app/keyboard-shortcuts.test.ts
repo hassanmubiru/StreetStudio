@@ -4,30 +4,31 @@
  * Unit tests for the keyboard shortcuts manager functionality.
  */
 
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { KeyboardShortcuts } from './keyboard-shortcuts';
 
 // Mock DOM environment
 const mockDocument = {
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  createElement: jest.fn(() => ({
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  createElement: vi.fn(() => ({
     className: '',
     innerHTML: '',
     style: {},
-    setAttribute: jest.fn(),
-    classList: { add: jest.fn(), remove: jest.fn(), contains: jest.fn(() => false) },
-    querySelector: jest.fn(),
-    addEventListener: jest.fn(),
-    remove: jest.fn(),
+    setAttribute: vi.fn(),
+    classList: { add: vi.fn(), remove: vi.fn(), contains: vi.fn(() => false) },
+    querySelector: vi.fn(),
+    addEventListener: vi.fn(),
+    remove: vi.fn(),
   })),
-  getElementById: jest.fn(),
-  querySelector: jest.fn(),
+  getElementById: vi.fn(),
+  querySelector: vi.fn(),
   body: {
-    appendChild: jest.fn(),
-    insertBefore: jest.fn(),
+    appendChild: vi.fn(),
+    insertBefore: vi.fn(),
   },
   head: {
-    appendChild: jest.fn(),
+    appendChild: vi.fn(),
   },
   documentElement: {
     style: {},
