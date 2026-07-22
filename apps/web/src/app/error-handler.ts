@@ -1201,3 +1201,43 @@ export function handleFeatureError(feature: string, error: Error, context: Recor
   };
   handleError(error, 'component', enhancedContext);
 }
+
+/**
+ * Check data integrity and handle corruption (Requirement 13.10)
+ */
+export async function checkDataIntegrity(dataType: string, data: any): Promise<boolean> {
+  if (!degradationManager) {
+    return true; // Assume data is valid if manager not initialized
+  }
+
+  const integrity = await degradationManager.checkDataIntegrity(dataType, data);
+  
+  if (integrity.isCorrupted) {
+    await degradationManager.handleDataCorruption(dataType, data, {
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+    });
+    
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Register custom data corruption detector
+ */
+export function registerCorruptionDetector(dataType: string, detector: (data: any) => boolean): void {
+  if (degradationManager) {
+    degradationManager.registerCorruptionDetector(dataType, detector);
+  }
+}
+
+/**
+ * Register custom recovery strategy
+ */
+export function registerRecoveryStrategy(dataType: string, recovery: () => Promise<boolean>): void {
+  if (degradationManager) {
+    degradationManager.registerRecoveryStrategy(dataType, recovery);
+  }
+}

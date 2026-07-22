@@ -443,17 +443,22 @@ export class StreetStudioApp {
     ]);
   }
   private async setupAuthentication(): Promise<void> {
-    // Check for stored authentication
-    const storedAuth = this.getStoredAuth();
-    if (storedAuth) {
-      try {
-        this.session.useBearerToken(storedAuth.token);
-        await this.session.currentMember(); // Validate token
-        this.authController.setState({ isAuthenticated: true });
-      } catch (error) {
-        // Invalid token, clear storage
-        this.clearStoredAuth();
-        this.authController.setState({ isAuthenticated: false });
+    // Initialize authentication from stored tokens with automatic refresh
+    const initialized = await this.authController.initializeFromStorage();
+    
+    if (!initialized) {
+      // Check for stored authentication (legacy)
+      const storedAuth = this.getStoredAuth();
+      if (storedAuth) {
+        try {
+          this.session.useBearerToken(storedAuth.token);
+          await this.session.currentMember(); // Validate token
+          this.authController.setState({ isAuthenticated: true });
+        } catch (error) {
+          // Invalid token, clear storage
+          this.clearStoredAuth();
+          this.authController.setState({ isAuthenticated: false });
+        }
       }
     }
 
