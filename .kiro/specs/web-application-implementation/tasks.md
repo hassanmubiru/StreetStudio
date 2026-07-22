@@ -9,7 +9,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
 ## Tasks
 
 - [ ] 1. Application Infrastructure and Core Systems
-  - [x] 1.1 Complete router implementation with route guards and lazy loading
+  - [ ] 1.1 Complete router implementation with route guards and lazy loading
     - Implement protected routes with authentication checks
     - Add code splitting for route-based modules
     - Create route transition animations and loading states
@@ -20,7 +20,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - **Property 3: Keyboard Navigation Universality**
     - **Validates: Requirements 2.2**
 
-  - [-] 1.3 Implement comprehensive error boundary system
+  - [ ] 1.3 Implement comprehensive error boundary system
     - Create global error boundary with categorized error handling (fatal, recoverable, minor)
     - Implement error reporting with user consent and context capture
     - Add graceful degradation for non-critical feature failures
