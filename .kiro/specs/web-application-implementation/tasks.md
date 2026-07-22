@@ -16,7 +16,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Set up 404 handling and error boundary integration
     - _Requirements: 2.2, 2.8, 12.2_
 
-  - [ ] 1.2 Write property tests for router navigation system
+  - [-] 1.2 Write property tests for router navigation system
     - **Property 3: Keyboard Navigation Universality**
     - **Validates: Requirements 2.2**
 
@@ -27,7 +27,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Set up client-side error logging and retry mechanisms
     - _Requirements: 13.1, 13.2, 13.6, 13.8_
 
-  - [ ] 1.4 Write property tests for error handling resilience
+  - [-] 1.4 Write property tests for error handling resilience
     - **Property 10: Error Handling Resilience**
     - **Validates: Requirements 13.1**
 
@@ -37,12 +37,12 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Implement context-sensitive shortcuts for different application states
     - _Requirements: 11.1, 11.2_
 
-  - [ ] 1.6 Write property tests for keyboard accessibility
+  - [-] 1.6 Write property tests for keyboard accessibility
     - **Property 9: Universal Keyboard Accessibility**
     - **Validates: Requirements 11.1**
 
 - [ ] 2. Authentication System Implementation
-  - [ ] 2.1 Create authentication pages and forms
+  - [-] 2.1 Create authentication pages and forms
     - Implement login page with email/password fields and remember me option
     - Create registration form with email, password, confirm password, and terms acceptance
     - Build password reset request and reset password pages
