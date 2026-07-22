@@ -12,6 +12,8 @@ import { NavigationController } from './navigation/navigation-controller.js';
 import { NotificationController } from './notifications/notification-controller.js';
 import { ErrorBoundary } from './error-boundary.js';
 import { KeyboardShortcuts } from './keyboard-shortcuts.js';
+import { apiClient } from '../services/api.js';
+import { initializeCollaborationSocket } from '../services/websocket.js';
 import type { Uuid } from '@streetstudio/shared';
 
 export interface AppConfig {
@@ -63,8 +65,24 @@ export class StreetStudioApp {
     if (this.isInitialized) return;
 
     try {
-      // Setup error boundary
+      // Setup error boundary first
       this.errorBoundary.initialize();
+
+      // Configure API client
+      apiClient.setDefaultHeaders({
+        'X-Application': 'StreetStudio Web',
+        'X-Version': '1.0.0',
+      });
+
+      // Initialize collaboration WebSocket
+      if (this.config.wsBaseUrl) {
+        try {
+          initializeCollaborationSocket(this.config.wsBaseUrl);
+        } catch (error) {
+          console.warn('Failed to initialize collaboration socket:', error);
+          // Continue without WebSocket - graceful degradation will handle it
+        }
+      }
 
       // Initialize keyboard shortcuts
       this.setupKeyboardShortcuts();
@@ -94,7 +112,7 @@ export class StreetStudioApp {
 
     } catch (error) {
       console.error('Failed to initialize StreetStudio application:', error);
-      this.errorBoundary.handleError(error as Error);
+      this.errorBoundary.handleError(error as Error, 'initialization');
       throw error;
     }
   }
@@ -308,18 +326,21 @@ export class StreetStudioApp {
   }
 
   private async renderRegister(): Promise<void> {
-    // TODO: Create register page
-    this.layoutController.renderAuthPage(this.createPlaceholderPage('Register'));
+    const { RegisterPage } = await import('../pages/auth/register-page.js');
+    const page = new RegisterPage(this.authController);
+    this.layoutController.renderAuthPage(page.getElement());
   }
 
   private async renderForgotPassword(): Promise<void> {
-    // TODO: Create forgot password page
-    this.layoutController.renderAuthPage(this.createPlaceholderPage('Forgot Password'));
+    const { ForgotPasswordPage } = await import('../pages/auth/forgot-password-page.js');
+    const page = new ForgotPasswordPage(this.authController);
+    this.layoutController.renderAuthPage(page.getElement());
   }
 
   private async renderResetPassword(): Promise<void> {
-    // TODO: Create reset password page
-    this.layoutController.renderAuthPage(this.createPlaceholderPage('Reset Password'));
+    const { ResetPasswordPage } = await import('../pages/auth/reset-password-page.js');
+    const page = new ResetPasswordPage();
+    this.layoutController.renderAuthPage(page.getElement());
   }
 
   private async renderDashboard(): Promise<void> {

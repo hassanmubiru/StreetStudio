@@ -4,6 +4,9 @@
  * Client-side router with authentication guards, lazy loading, and transition animations.
  */
 
+// Import router transition styles
+import './router-styles.js';
+
 export interface RouteParams {
   [key: string]: string;
 }
