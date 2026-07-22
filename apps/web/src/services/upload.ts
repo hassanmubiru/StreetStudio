@@ -80,7 +80,7 @@ export class UploadManager {
         } catch (error) {
           throw this.createUploadError(
             'validation',
-            `File validation failed: ${error.message}`,
+            `File validation failed: ${(error as Error).message}`,
             false,
             error as Error
           );
@@ -281,13 +281,13 @@ class UploadSession {
           throw this.createUploadError('abort', 'Upload was cancelled', false);
         }
 
-        await this.uploadChunk(chunks[i], uploadId, uploadUrl);
+        await this.uploadChunk(chunks[i]!, uploadId, uploadUrl);
         
         this.options.onChunkComplete?.(i, chunks.length);
       }
 
       // Complete upload
-      const completeResponse = await apiClient.post(`/uploads/${uploadId}/complete`);
+      const completeResponse = await apiClient.post(`/uploads/${uploadId}/complete`, {});
       
       return completeResponse.data;
 
@@ -296,7 +296,7 @@ class UploadSession {
       try {
         await apiClient.delete(`/uploads/${uploadId}`);
       } catch (cleanupError) {
-        logger.warn(`Failed to cleanup upload ${uploadId}:`, cleanupError);
+        logger.warn(`Failed to cleanup upload ${uploadId}:`, (cleanupError as Error).message);
       }
       
       throw error;
@@ -385,7 +385,7 @@ class UploadSession {
       'chunk',
       `Failed to upload chunk ${chunk.index} after ${this.options.maxRetries} attempts`,
       true,
-      lastError
+      lastError!
     );
   }
 

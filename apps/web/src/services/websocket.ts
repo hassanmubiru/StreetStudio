@@ -173,7 +173,7 @@ export class WebSocketManager {
         
         // Set up response timeout for request-response messages
         if (message.type.endsWith('Request')) {
-          const timeout = setTimeout(() => {
+          const timeoutId = setTimeout(() => {
             this.pendingMessages.delete(fullMessage.id!);
             reject(new Error('Message timeout'));
           }, this.options.messageTimeout);
@@ -181,7 +181,7 @@ export class WebSocketManager {
           this.pendingMessages.set(fullMessage.id!, {
             resolve,
             reject,
-            timeout,
+            timeout: timeoutId as any,
           });
         } else {
           resolve();
@@ -293,7 +293,7 @@ export class WebSocketManager {
           } catch (error) {
             logger.error('Error in WebSocket message handler', {
               messageType: message.type,
-              error: error.message,
+              error: (error as Error).message,
             });
           }
         });
