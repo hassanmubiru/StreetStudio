@@ -10,6 +10,9 @@ import type { DashboardSession } from '@streetstudio/dashboard';
 import type { MemberDto, OrganizationDto } from '@streetstudio/shared';
 import { handleError } from '../error-handler.js';
 import { logger } from '../client-logger.js';
+import { oauthConfigService } from '../services/oauth-config.js';
+import { ssoConfigService } from '../services/sso-config.js';
+import { oauthCallbackHandler, OAuthCallbackHandler } from '../services/oauth-callback-handler.js';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -31,6 +34,19 @@ export interface StoredAuth {
   user?: MemberDto;
 }
 
+export interface TokenStorage {
+  strategy: 'memory' | 'localStorage' | 'httpOnlyCookie';
+  secure: boolean;
+  sameSite: 'strict' | 'lax' | 'none';
+}
+
+export interface SessionConfig {
+  tokenStorage: TokenStorage;
+  refreshMargin: number; // milliseconds before expiry to refresh
+  maxRetries: number;
+  sessionTimeout: number; // milliseconds of inactivity before logout
+}
+
 export class AuthController {
   private state: AuthState = {
     isAuthenticated: false,
@@ -41,11 +57,27 @@ export class AuthController {
   private session: DashboardSession;
   private refreshTimer?: number;
   private refreshPromise?: Promise<boolean>;
-  private readonly REFRESH_MARGIN_MS = 5 * 60 * 1000; // Refresh 5 minutes before expiry
+  private sessionTimeoutTimer?: number;
+  private activityTimer?: number;
+  private memoryTokenStorage = new Map<string, string>();
+  private config: SessionConfig;
+  private readonly DEFAULT_CONFIG: SessionConfig = {
+    tokenStorage: {
+      strategy: 'memory',
+      secure: true,
+      sameSite: 'strict'
+    },
+    refreshMargin: 5 * 60 * 1000, // 5 minutes
+    maxRetries: 3,
+    sessionTimeout: 30 * 60 * 1000 // 30 minutes
+  };
 
-  constructor(session: DashboardSession) {
+  constructor(session: DashboardSession, config?: Partial<SessionConfig>) {
     this.session = session;
+    this.config = { ...this.DEFAULT_CONFIG, ...config };
     this.setupTokenRefreshHandling();
+    this.setupSessionActivityTracking();
+    this.handleCallbackIfPresent();
   }
 
   /**
@@ -59,6 +91,75 @@ export class AuthController {
     setInterval(() => {
       this.checkTokenExpiry();
     }, 60 * 1000); // Check every minute
+  }
+
+  /**
+   * Setup session activity tracking for automatic timeout
+   */
+  private setupSessionActivityTracking(): void {
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    const activityHandler = () => {
+      this.resetSessionTimeout();
+    };
+
+    // Add activity listeners
+    events.forEach(event => {
+      document.addEventListener(event, activityHandler, { passive: true });
+    });
+
+    // Track page visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && this.isAuthenticated()) {
+        this.resetSessionTimeout();
+        // Validate session when page becomes visible
+        this.validateSession();
+      }
+    });
+  }
+
+  /**
+   * Reset session timeout timer
+   */
+  private resetSessionTimeout(): void {
+    if (!this.isAuthenticated()) return;
+
+    // Clear existing timer
+    if (this.sessionTimeoutTimer) {
+      clearTimeout(this.sessionTimeoutTimer);
+    }
+
+    // Set new timeout
+    this.sessionTimeoutTimer = window.setTimeout(() => {
+      this.handleSessionTimeout();
+    }, this.config.sessionTimeout);
+  }
+
+  /**
+   * Handle session timeout
+   */
+  private async handleSessionTimeout(): Promise<void> {
+    logger.warn('Session timeout due to inactivity');
+    
+    // Show warning notification
+    window.dispatchEvent(new CustomEvent('show-notification', {
+      detail: {
+        type: 'warning',
+        message: 'Your session will expire soon due to inactivity. Please interact with the page to continue.',
+        duration: 10000,
+        actions: [{
+          label: 'Stay logged in',
+          action: () => this.resetSessionTimeout()
+        }]
+      }
+    }));
+
+    // Force logout after additional grace period
+    setTimeout(() => {
+      if (this.isAuthenticated()) {
+        this.logout();
+      }
+    }, 30000); // 30 seconds grace period
   }
 
   /**
@@ -130,12 +231,145 @@ export class AuthController {
     const timeUntilExpiry = tokenExpiry.getTime() - now.getTime();
 
     // Refresh token if it expires within the margin
-    if (timeUntilExpiry <= this.REFRESH_MARGIN_MS) {
+    if (timeUntilExpiry <= this.config.refreshMargin) {
       logger.info('Token approaching expiry, refreshing...', {
         expiresIn: Math.floor(timeUntilExpiry / 1000),
       });
       
       await this.attemptTokenRefresh();
+    }
+  }
+
+  /**
+   * Validate current session with server
+   */
+  private async validateSession(): Promise<boolean> {
+    if (!this.isAuthenticated()) return false;
+
+    try {
+      const user = await this.session.currentMember();
+      
+      // Update user info if changed
+      if (JSON.stringify(user) !== JSON.stringify(this.state.currentUser)) {
+        this.setState({
+          currentUser: user,
+        });
+      }
+
+      return true;
+
+    } catch (error) {
+      logger.warn('Session validation failed', {
+        error: (error as Error).message,
+      });
+      
+      // Try to refresh token
+      const refreshed = await this.attemptTokenRefresh();
+      return refreshed;
+    }
+  }
+
+  /**
+   * Store token securely based on configured strategy
+   */
+  private storeTokenSecurely(key: string, value: string): void {
+    try {
+      switch (this.config.tokenStorage.strategy) {
+        case 'memory':
+          this.memoryTokenStorage.set(key, value);
+          break;
+          
+        case 'httpOnlyCookie':
+          // Set httpOnly cookie via server endpoint
+          fetch('/api/auth/set-session-cookie', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: key,
+              value,
+              secure: this.config.tokenStorage.secure,
+              sameSite: this.config.tokenStorage.sameSite,
+              maxAge: 24 * 60 * 60 // 24 hours
+            })
+          }).catch(error => {
+            logger.warn('Failed to set httpOnly cookie, falling back to memory', {
+              error: error.message
+            });
+            this.memoryTokenStorage.set(key, value);
+          });
+          break;
+          
+        case 'localStorage':
+        default:
+          localStorage.setItem(key, value);
+          break;
+      }
+    } catch (error) {
+      logger.error('Failed to store token securely', {
+        error: (error as Error).message,
+        strategy: this.config.tokenStorage.strategy
+      });
+      
+      // Fallback to memory storage
+      this.memoryTokenStorage.set(key, value);
+    }
+  }
+
+  /**
+   * Retrieve token securely based on configured strategy
+   */
+  private getStoredTokenSecurely(key: string): string | null {
+    try {
+      switch (this.config.tokenStorage.strategy) {
+        case 'memory':
+          return this.memoryTokenStorage.get(key) || null;
+          
+        case 'httpOnlyCookie':
+          // HttpOnly cookies are not accessible via JavaScript
+          // Server should include token in auth check responses
+          return null;
+          
+        case 'localStorage':
+        default:
+          return localStorage.getItem(key);
+      }
+    } catch (error) {
+      logger.error('Failed to retrieve stored token', {
+        error: (error as Error).message,
+        strategy: this.config.tokenStorage.strategy
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Clear stored tokens securely
+   */
+  private clearStoredTokensSecurely(): void {
+    try {
+      // Clear from all possible storage locations
+      this.memoryTokenStorage.clear();
+      
+      // Clear localStorage
+      localStorage.removeItem('streetstudio_auth');
+      sessionStorage.removeItem('auth_return_url');
+      
+      // Clear httpOnly cookies via server
+      if (this.config.tokenStorage.strategy === 'httpOnlyCookie') {
+        fetch('/api/auth/clear-session-cookie', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        }).catch(error => {
+          logger.warn('Failed to clear httpOnly cookie', {
+            error: error.message
+          });
+        });
+      }
+      
+    } catch (error) {
+      logger.warn('Error clearing stored tokens', {
+        error: (error as Error).message
+      });
     }
   }
 
@@ -148,11 +382,45 @@ export class AuthController {
       return this.refreshPromise;
     }
 
-    this.refreshPromise = this.doTokenRefresh();
+    this.refreshPromise = this.doTokenRefreshWithRetry();
     const result = await this.refreshPromise;
     this.refreshPromise = undefined;
     
     return result;
+  }
+
+  /**
+   * Perform token refresh with retry logic
+   */
+  private async doTokenRefreshWithRetry(): Promise<boolean> {
+    let lastError: Error;
+    
+    for (let attempt = 0; attempt < this.config.maxRetries; attempt++) {
+      try {
+        return await this.doTokenRefresh();
+      } catch (error) {
+        lastError = error as Error;
+        
+        // Don't retry on certain errors
+        if (error instanceof Error && 
+            (error.message.includes('401') || error.message.includes('403'))) {
+          break;
+        }
+        
+        // Wait before retry with exponential backoff
+        if (attempt < this.config.maxRetries - 1) {
+          const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s, etc.
+          await this.delay(delay);
+        }
+      }
+    }
+    
+    logger.error('Token refresh failed after all retry attempts', {
+      attempts: this.config.maxRetries,
+      error: lastError!.message
+    });
+    
+    throw lastError!;
   }
 
   /**
@@ -402,22 +670,44 @@ export class AuthController {
   }
 
   /**
-   * Logout
+   * Logout with comprehensive session cleanup
    */
   public async logout(): Promise<void> {
     this.setState({ isLoading: true });
 
     try {
+      // Clear session timeout timer
+      if (this.sessionTimeoutTimer) {
+        clearTimeout(this.sessionTimeoutTimer);
+        this.sessionTimeoutTimer = undefined;
+      }
+      
+      // Clear refresh timer
+      if (this.refreshTimer) {
+        clearTimeout(this.refreshTimer);
+        this.refreshTimer = undefined;
+      }
+
       // Notify server of logout
       const storedAuth = this.getStoredAuth();
       if (storedAuth?.token) {
         try {
-          await fetch('/api/auth/logout', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${storedAuth.token}`,
-            },
-          });
+          await Promise.race([
+            fetch('/api/auth/logout', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${storedAuth.token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                allSessions: false // Only logout current session
+              })
+            }),
+            // Timeout after 3 seconds
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Logout timeout')), 3000)
+            )
+          ]);
         } catch (error) {
           // Ignore logout API errors, still clear local state
           logger.warn('Logout API call failed', {
@@ -426,13 +716,9 @@ export class AuthController {
         }
       }
       
-      // Clear session
-      this.session.clearAuthentication?.();
-      
-      // Clear refresh timer
-      if (this.refreshTimer) {
-        clearTimeout(this.refreshTimer);
-        this.refreshTimer = undefined;
+      // Clear session from dashboard
+      if (this.session.clearAuthentication) {
+        this.session.clearAuthentication();
       }
 
       // Clear local state
@@ -445,8 +731,16 @@ export class AuthController {
         error: undefined,
       });
 
-      // Clear stored authentication
+      // Clear stored authentication data
       this.clearStoredAuth();
+
+      // Clear any cached data that might contain sensitive information
+      this.clearSensitiveCaches();
+
+      // Broadcast logout event for other components to clean up
+      window.dispatchEvent(new CustomEvent('auth-logout', {
+        detail: { reason: 'user-initiated' }
+      }));
 
       logger.info('User logged out successfully');
 
@@ -459,6 +753,71 @@ export class AuthController {
       
       handleError(error as Error, 'authentication', {
         operation: 'logout',
+      });
+    }
+  }
+
+  /**
+   * Logout from all sessions
+   */
+  public async logoutFromAllSessions(): Promise<void> {
+    this.setState({ isLoading: true });
+
+    try {
+      const storedAuth = this.getStoredAuth();
+      if (storedAuth?.token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${storedAuth.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            allSessions: true
+          })
+        });
+      }
+
+      // Perform regular logout cleanup
+      await this.logout();
+      
+      logger.info('User logged out from all sessions');
+
+    } catch (error) {
+      // Still perform local cleanup even if server call fails
+      await this.logout();
+      
+      handleError(error as Error, 'authentication', {
+        operation: 'logout-all-sessions',
+      });
+    }
+  }
+
+  /**
+   * Clear sensitive cached data
+   */
+  private clearSensitiveCaches(): void {
+    try {
+      // Clear API cache
+      if ('caches' in window) {
+        caches.delete('streetstudio-api-cache').catch(error => {
+          logger.warn('Failed to clear API cache', { error: error.message });
+        });
+      }
+
+      // Clear memory caches in other services
+      window.dispatchEvent(new CustomEvent('clear-sensitive-caches'));
+
+      // Clear any service worker stored data
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CLEAR_SENSITIVE_DATA'
+        });
+      }
+
+    } catch (error) {
+      logger.warn('Error clearing sensitive caches', {
+        error: (error as Error).message
       });
     }
   }
@@ -554,8 +913,23 @@ export class AuthController {
    */
   private getStoredAuth(): StoredAuth | null {
     try {
-      const stored = localStorage.getItem('streetstudio_auth');
-      return stored ? JSON.parse(stored) : null;
+      // Try to get from configured storage
+      const stored = this.getStoredTokenSecurely('streetstudio_auth');
+      
+      if (!stored) {
+        // Fallback: try localStorage for backward compatibility
+        const fallback = localStorage.getItem('streetstudio_auth');
+        if (fallback) {
+          const auth = JSON.parse(fallback);
+          // Migrate to secure storage
+          this.storeAuth(auth);
+          localStorage.removeItem('streetstudio_auth'); // Clean up old storage
+          return auth;
+        }
+        return null;
+      }
+      
+      return JSON.parse(stored);
     } catch (error) {
       logger.warn('Failed to parse stored auth', {
         error: (error as Error).message,
@@ -565,11 +939,17 @@ export class AuthController {
   }
 
   /**
-   * Store authentication data
+   * Store authentication data securely
    */
   private storeAuth(authData: StoredAuth): void {
     try {
-      localStorage.setItem('streetstudio_auth', JSON.stringify(authData));
+      const serialized = JSON.stringify(authData);
+      this.storeTokenSecurely('streetstudio_auth', serialized);
+      
+      // Also store user info separately for quick access (non-sensitive)
+      if (authData.user) {
+        localStorage.setItem('streetstudio_user', JSON.stringify(authData.user));
+      }
     } catch (error) {
       logger.error('Failed to store auth data', {
         error: (error as Error).message,
@@ -586,13 +966,79 @@ export class AuthController {
    */
   private clearStoredAuth(): void {
     try {
-      localStorage.removeItem('streetstudio_auth');
-      sessionStorage.removeItem('auth_return_url');
+      this.clearStoredTokensSecurely();
+      
+      // Clear user info
+      localStorage.removeItem('streetstudio_user');
+      
     } catch (error) {
       logger.warn('Failed to clear stored auth', {
         error: (error as Error).message,
       });
     }
+  }
+
+  /**
+   * Update token storage configuration
+   */
+  public updateStorageConfig(config: Partial<SessionConfig>): void {
+    const oldStrategy = this.config.tokenStorage.strategy;
+    this.config = { ...this.config, ...config };
+    
+    // If storage strategy changed, migrate existing tokens
+    if (config.tokenStorage?.strategy && config.tokenStorage.strategy !== oldStrategy) {
+      const auth = this.getStoredAuth();
+      if (auth) {
+        // Clear old storage
+        if (oldStrategy === 'localStorage') {
+          localStorage.removeItem('streetstudio_auth');
+        } else if (oldStrategy === 'memory') {
+          this.memoryTokenStorage.clear();
+        }
+        
+        // Store in new location
+        this.storeAuth(auth);
+        
+        logger.info('Migrated token storage', {
+          from: oldStrategy,
+          to: config.tokenStorage.strategy
+        });
+      }
+    }
+  }
+
+  /**
+   * Get session information
+   */
+  public getSessionInfo(): {
+    isAuthenticated: boolean;
+    tokenExpiry?: Date;
+    timeUntilExpiry?: number;
+    storageStrategy: string;
+    sessionTimeout: number;
+  } {
+    const { tokenExpiry } = this.state;
+    return {
+      isAuthenticated: this.isAuthenticated(),
+      tokenExpiry,
+      timeUntilExpiry: tokenExpiry ? tokenExpiry.getTime() - Date.now() : undefined,
+      storageStrategy: this.config.tokenStorage.strategy,
+      sessionTimeout: this.config.sessionTimeout
+    };
+  }
+
+  /**
+   * Force session validation
+   */
+  public async forceValidateSession(): Promise<boolean> {
+    return this.validateSession();
+  }
+
+  /**
+   * Utility method for delays
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
@@ -603,6 +1049,231 @@ export class AuthController {
       clearTimeout(this.refreshTimer);
     }
     
+    if (this.sessionTimeoutTimer) {
+      clearTimeout(this.sessionTimeoutTimer);
+    }
+    
+    if (this.activityTimer) {
+      clearTimeout(this.activityTimer);
+    }
+    
     this.listeners.clear();
+    this.memoryTokenStorage.clear();
+    
+    // Remove event listeners
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      document.removeEventListener(event, this.resetSessionTimeout);
+    });
+    
+    logger.info('AuthController destroyed');
+  }
+
+  // OAuth Integration Methods
+
+  /**
+   * Check for OAuth/SSO callback on initialization
+   */
+  private handleCallbackIfPresent(): void {
+    if (OAuthCallbackHandler.isCallbackUrl()) {
+      logger.info('OAuth/SSO callback detected on initialization');
+      
+      // Handle the callback asynchronously
+      setTimeout(async () => {
+        try {
+          const params = OAuthCallbackHandler.parseCallbackParams();
+          const result = await oauthCallbackHandler.handleCallback(params);
+          
+          if (result.success) {
+            OAuthCallbackHandler.handleSuccessRedirect(result.returnUrl);
+          } else {
+            OAuthCallbackHandler.handleErrorDisplay(result.error!, result.provider);
+          }
+        } catch (error) {
+          logger.error('Failed to handle OAuth/SSO callback', {
+            error: (error as Error).message,
+          });
+          OAuthCallbackHandler.handleErrorDisplay('Authentication callback failed');
+        }
+      }, 100);
+    }
+    
+    // Check for stored callback errors
+    const storedError = OAuthCallbackHandler.getAndClearStoredError();
+    if (storedError) {
+      this.setState({
+        error: storedError.error,
+      });
+    }
+  }
+
+  /**
+   * Initiate OAuth authentication
+   */
+  public async loginWithOAuth(providerId: string, returnUrl?: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      this.setState({ isLoading: true, error: undefined });
+
+      // Validate provider
+      const validation = await oauthConfigService.validateProvider(providerId);
+      if (!validation.valid) {
+        throw new Error(`OAuth provider configuration invalid: ${validation.errors.join(', ')}`);
+      }
+
+      // Store return URL for after authentication
+      if (returnUrl) {
+        sessionStorage.setItem('auth_return_url', returnUrl);
+      }
+
+      // Initiate OAuth flow - this will redirect
+      await oauthConfigService.initiateOAuth(providerId, returnUrl);
+
+      // This won't be reached due to redirect, but return success for type safety
+      return { success: true };
+
+    } catch (error) {
+      this.setState({
+        isLoading: false,
+        error: (error as Error).message || 'OAuth authentication failed',
+      });
+
+      handleError(error as Error, 'authentication', {
+        operation: 'oauth-login',
+        provider: providerId,
+      });
+
+      return { 
+        success: false, 
+        error: (error as Error).message || 'OAuth authentication failed' 
+      };
+    }
+  }
+
+  /**
+   * Initiate SSO authentication
+   */
+  public async loginWithSSO(providerId: string, returnUrl?: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      this.setState({ isLoading: true, error: undefined });
+
+      // Check if SSO is available
+      if (!(await ssoConfigService.isSSOAvailable())) {
+        throw new Error('SSO is not configured or enabled');
+      }
+
+      // Store return URL for after authentication
+      if (returnUrl) {
+        sessionStorage.setItem('auth_return_url', returnUrl);
+      }
+
+      // Initiate SSO flow - this will redirect
+      await ssoConfigService.initiatSSO(providerId, returnUrl);
+
+      // This won't be reached due to redirect, but return success for type safety
+      return { success: true };
+
+    } catch (error) {
+      this.setState({
+        isLoading: false,
+        error: (error as Error).message || 'SSO authentication failed',
+      });
+
+      handleError(error as Error, 'authentication', {
+        operation: 'sso-login',
+        provider: providerId,
+      });
+
+      return { 
+        success: false, 
+        error: (error as Error).message || 'SSO authentication failed' 
+      };
+    }
+  }
+
+  /**
+   * Check if email should trigger SSO auto-redirect
+   */
+  public async checkSSOAutoRedirect(email: string): Promise<{ shouldRedirect: boolean; provider?: string }> {
+    try {
+      const provider = await ssoConfigService.shouldAutoRedirect(email);
+      
+      if (provider) {
+        logger.info('SSO auto-redirect detected for email domain', {
+          provider: provider.id,
+          domain: email.split('@')[1],
+        });
+
+        return {
+          shouldRedirect: true,
+          provider: provider.id,
+        };
+      }
+
+      return { shouldRedirect: false };
+
+    } catch (error) {
+      logger.warn('Failed to check SSO auto-redirect', {
+        error: (error as Error).message,
+        email: email.split('@')[1], // Only log domain, not full email
+      });
+
+      return { shouldRedirect: false };
+    }
+  }
+
+  /**
+   * Get available OAuth providers
+   */
+  public async getOAuthProviders(): Promise<Array<{ id: string; displayName: string; buttonColor?: string; buttonTextColor?: string; iconSvg?: string }>> {
+    try {
+      const providers = await oauthConfigService.getEnabledProviders();
+      return providers.map(p => ({
+        id: p.id,
+        displayName: p.displayName,
+        buttonColor: p.buttonColor,
+        buttonTextColor: p.buttonTextColor,
+        iconSvg: p.iconSvg,
+      }));
+    } catch (error) {
+      logger.warn('Failed to get OAuth providers', {
+        error: (error as Error).message,
+      });
+      return [];
+    }
+  }
+
+  /**
+   * Get available SSO providers
+   */
+  public async getSSOProviders(): Promise<Array<{ id: string; displayName: string; buttonColor?: string; buttonTextColor?: string; iconSvg?: string }>> {
+    try {
+      const providers = await ssoConfigService.getEnabledProviders();
+      return providers.map(p => ({
+        id: p.id,
+        displayName: p.displayName,
+        buttonColor: p.buttonColor,
+        buttonTextColor: p.buttonTextColor,
+        iconSvg: p.iconSvg,
+      }));
+    } catch (error) {
+      logger.warn('Failed to get SSO providers', {
+        error: (error as Error).message,
+      });
+      return [];
+    }
+  }
+
+  /**
+   * Check if OAuth is available
+   */
+  public async isOAuthAvailable(): Promise<boolean> {
+    return oauthConfigService.isOAuthAvailable();
+  }
+
+  /**
+   * Check if SSO is available
+   */
+  public async isSSOAvailable(): Promise<boolean> {
+    return ssoConfigService.isSSOAvailable();
   }
 }

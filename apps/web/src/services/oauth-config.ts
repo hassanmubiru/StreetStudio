@@ -147,9 +147,9 @@ export class OAuthConfigService {
   }
 
   /**
-   * Initiate OAuth authentication flow
+   * Initiate OAuth authentication flow with enhanced state management
    */
-  public async initiateOAuth(providerId: string): Promise<void> {
+  public async initiateOAuth(providerId: string, returnUrl?: string): Promise<void> {
     try {
       const providers = await this.getEnabledProviders();
       const provider = providers.find(p => p.id === providerId);
@@ -160,17 +160,42 @@ export class OAuthConfigService {
 
       logger.info('Initiating OAuth flow', { provider: providerId });
 
-      // Store return URL for after OAuth completion
-      const returnUrl = sessionStorage.getItem('auth_return_url') || '/dashboard';
-      sessionStorage.setItem('oauth_return_url', returnUrl);
-
-      // Generate state parameter for security
+      // Store enhanced state information
+      const finalReturnUrl = returnUrl || sessionStorage.getItem('auth_return_url') || '/dashboard';
       const state = crypto.randomUUID();
-      sessionStorage.setItem('oauth_state', state);
+      const timestamp = Date.now();
 
-      // Construct OAuth URL with state parameter
+      // Store flow state with timestamp for expiration
+      const flowState = {
+        state,
+        providerId,
+        returnUrl: finalReturnUrl,
+        timestamp,
+        scopes: provider.scopes,
+      };
+
+      sessionStorage.setItem('oauth_flow_state', JSON.stringify(flowState));
+
+      // Construct OAuth URL with enhanced parameters
       const oauthUrl = new URL(provider.authUrl, window.location.origin);
       oauthUrl.searchParams.set('state', state);
+      oauthUrl.searchParams.set('redirect_uri', `${window.location.origin}/auth/oauth/callback`);
+      
+      // Add scopes if specified
+      if (provider.scopes && provider.scopes.length > 0) {
+        oauthUrl.searchParams.set('scope', provider.scopes.join(' '));
+      }
+
+      // Add client ID if available
+      if (provider.clientId) {
+        oauthUrl.searchParams.set('client_id', provider.clientId);
+      }
+
+      logger.info('Redirecting to OAuth provider', {
+        provider: providerId,
+        url: oauthUrl.origin + oauthUrl.pathname, // Don't log sensitive params
+        scopes: provider.scopes,
+      });
 
       // Redirect to OAuth provider
       window.location.href = oauthUrl.toString();
@@ -180,44 +205,86 @@ export class OAuthConfigService {
         provider: providerId,
         error: (error as Error).message,
       });
-      throw error;
+      
+      // Clean up any partial state
+      this.cleanupOAuthState();
+      
+      throw new Error(`OAuth authentication failed: ${(error as Error).message}`);
     }
   }
 
   /**
-   * Handle OAuth callback
+   * Handle OAuth callback with enhanced error handling and validation
    */
-  public async handleOAuthCallback(code: string, state: string, providerId: string): Promise<{ success: boolean; error?: string }> {
+  public async handleOAuthCallback(
+    code: string, 
+    state: string, 
+    providerId: string,
+    error?: string,
+    errorDescription?: string
+  ): Promise<{ success: boolean; error?: string; returnUrl?: string }> {
     try {
-      // Verify state parameter
-      const storedState = sessionStorage.getItem('oauth_state');
-      if (!storedState || storedState !== state) {
-        throw new Error('Invalid OAuth state parameter');
+      // Handle OAuth error responses from provider
+      if (error) {
+        logger.warn('OAuth provider returned error', {
+          provider: providerId,
+          error,
+          errorDescription,
+        });
+        
+        this.cleanupOAuthState();
+        return { 
+          success: false, 
+          error: this.formatOAuthError(error, errorDescription, providerId) 
+        };
       }
 
-      // Exchange code for token
+      // Verify flow state
+      const flowState = this.getOAuthFlowState();
+      if (!flowState) {
+        throw new Error('No OAuth flow state found. The session may have expired.');
+      }
+
+      if (flowState.state !== state) {
+        throw new Error('Invalid OAuth state parameter. This may indicate a security issue.');
+      }
+
+      if (flowState.providerId !== providerId) {
+        throw new Error('Provider mismatch in OAuth callback');
+      }
+
+      // Check if flow state is expired (30 minutes max)
+      const maxAge = 30 * 60 * 1000;
+      if (Date.now() - flowState.timestamp > maxAge) {
+        this.cleanupOAuthState();
+        throw new Error('OAuth flow expired. Please try signing in again.');
+      }
+
+      // Exchange authorization code for tokens
       const response = await apiClient.post('/auth/oauth/callback', {
         provider: providerId,
         code,
         state,
+        redirect_uri: `${window.location.origin}/auth/oauth/callback`,
+        scopes: flowState.scopes,
       });
 
       if (response.success) {
-        logger.info('OAuth authentication successful', { provider: providerId });
+        logger.info('OAuth authentication successful', { 
+          provider: providerId,
+          userId: response.data?.user?.id,
+          scopes: flowState.scopes,
+        });
 
         // Clean up OAuth state
-        sessionStorage.removeItem('oauth_state');
+        this.cleanupOAuthState();
 
-        // Get return URL
-        const returnUrl = sessionStorage.getItem('oauth_return_url') || '/dashboard';
-        sessionStorage.removeItem('oauth_return_url');
-
-        // Redirect to return URL
-        window.location.href = returnUrl;
-
-        return { success: true };
+        return { 
+          success: true, 
+          returnUrl: flowState.returnUrl 
+        };
       } else {
-        throw new Error('OAuth authentication failed');
+        throw new Error(response.error || 'OAuth token exchange failed');
       }
 
     } catch (error) {
@@ -227,8 +294,7 @@ export class OAuthConfigService {
       });
 
       // Clean up OAuth state on error
-      sessionStorage.removeItem('oauth_state');
-      sessionStorage.removeItem('oauth_return_url');
+      this.cleanupOAuthState();
 
       return { 
         success: false, 
@@ -255,6 +321,136 @@ export class OAuthConfigService {
       return config.enabled && config.providers.some(p => p.enabled);
     } catch (error) {
       return false;
+    }
+  }
+
+  /**
+   * Get OAuth flow state from storage
+   */
+  private getOAuthFlowState(): { state: string; providerId: string; returnUrl: string; timestamp: number; scopes: string[] } | null {
+    try {
+      const stored = sessionStorage.getItem('oauth_flow_state');
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      logger.warn('Failed to parse OAuth flow state', {
+        error: (error as Error).message,
+      });
+      this.cleanupOAuthState();
+      return null;
+    }
+  }
+
+  /**
+   * Clean up OAuth state from storage
+   */
+  private cleanupOAuthState(): void {
+    try {
+      sessionStorage.removeItem('oauth_flow_state');
+      sessionStorage.removeItem('oauth_state'); // Legacy cleanup
+      sessionStorage.removeItem('oauth_return_url'); // Legacy cleanup
+    } catch (error) {
+      logger.warn('Failed to cleanup OAuth state', {
+        error: (error as Error).message,
+      });
+    }
+  }
+
+  /**
+   * Format OAuth error messages for user display
+   */
+  private formatOAuthError(error: string, errorDescription?: string, providerId?: string): string {
+    const provider = this.getProviderDisplayName(providerId);
+    
+    switch (error.toLowerCase()) {
+      case 'access_denied':
+        return `You cancelled the ${provider} sign-in. Please try again if you'd like to continue.`;
+      case 'invalid_request':
+        return `There was a problem with the ${provider} sign-in request. Please try again.`;
+      case 'unauthorized_client':
+        return `${provider} sign-in is not properly configured. Please contact your administrator.`;
+      case 'unsupported_response_type':
+        return `${provider} doesn't support this type of authentication request. Please contact your administrator.`;
+      case 'invalid_scope':
+        return `The requested permissions for ${provider} are not valid. Please contact your administrator.`;
+      case 'server_error':
+        return `${provider} is currently experiencing issues. Please try again later.`;
+      case 'temporarily_unavailable':
+        return `${provider} sign-in is temporarily unavailable. Please try again in a few minutes.`;
+      case 'invalid_client':
+        return `${provider} configuration error. Please contact your administrator.`;
+      case 'invalid_grant':
+        return `${provider} authentication expired. Please try signing in again.`;
+      case 'unsupported_grant_type':
+        return `${provider} authentication method is not supported. Please contact your administrator.`;
+      default:
+        const message = errorDescription || error;
+        return `${provider} sign-in failed: ${message}. Please try again or contact support if the problem persists.`;
+    }
+  }
+
+  /**
+   * Get display name for provider ID
+   */
+  private getProviderDisplayName(providerId?: string): string {
+    if (!providerId) {
+      return 'OAuth Provider';
+    }
+
+    switch (providerId.toLowerCase()) {
+      case 'google':
+        return 'Google';
+      case 'github':
+        return 'GitHub';
+      case 'microsoft':
+        return 'Microsoft';
+      case 'slack':
+        return 'Slack';
+      case 'gitlab':
+        return 'GitLab';
+      case 'bitbucket':
+        return 'Bitbucket';
+      case 'discord':
+        return 'Discord';
+      case 'linkedin':
+        return 'LinkedIn';
+      default:
+        return 'OAuth Provider';
+    }
+  }
+
+  /**
+   * Validate OAuth provider configuration
+   */
+  public async validateProvider(providerId: string): Promise<{ valid: boolean; errors: string[] }> {
+    try {
+      const config = await this.getConfig();
+      const provider = config.providers.find(p => p.id === providerId);
+      
+      if (!provider) {
+        return { valid: false, errors: ['Provider not found'] };
+      }
+
+      const errors: string[] = [];
+
+      if (!provider.enabled) {
+        errors.push('Provider is disabled');
+      }
+
+      if (!provider.authUrl) {
+        errors.push('Authentication URL not configured');
+      }
+
+      if (!provider.scopes || provider.scopes.length === 0) {
+        errors.push('No scopes configured');
+      }
+
+      return { valid: errors.length === 0, errors };
+
+    } catch (error) {
+      return { 
+        valid: false, 
+        errors: [`Configuration validation failed: ${(error as Error).message}`] 
+      };
     }
   }
 }

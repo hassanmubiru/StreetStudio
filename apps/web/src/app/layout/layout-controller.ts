@@ -136,10 +136,11 @@ export class LayoutController {
         </div>
       </div>
       <div class="flex flex-col flex-1 overflow-hidden">
-        <div id="app-header" class="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div id="app-header" class="flex-shrink-0">
           <!-- Header content will be added by navigation controller -->
         </div>
         <main id="app-main" class="flex-1 relative overflow-y-auto focus:outline-none" tabindex="-1">
+          <!-- Breadcrumb navigation will be inserted here by navigation controller -->
           <div id="page-content" class="w-full h-full">
             <!-- Page content will be rendered here -->
           </div>
