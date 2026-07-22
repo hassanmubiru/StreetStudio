@@ -498,7 +498,12 @@ export class ErrorBoundary {
    * Automatic recovery after delay
    */
   public scheduleAutoRecovery(delay?: number): void {
-    if (!this.options.enableAutoRecovery || this.recoveryTimer) return;
+    if (!this.options.enableAutoRecovery) return;
+    
+    // Clear any existing timer
+    if (this.recoveryTimer) {
+      clearTimeout(this.recoveryTimer);
+    }
 
     const retryDelay = delay ?? this.options.retryDelay ?? 1000;
     
@@ -507,7 +512,7 @@ export class ErrorBoundary {
       
       if (this.errorState.hasError && this.retryCount < (this.options.maxRetries || 3)) {
         console.log('Attempting automatic recovery...');
-        this.retryCount++; // Increment retry count
+        this.retryCount++; // Increment retry count for auto recovery
         this.recover();
       }
     }, retryDelay);
