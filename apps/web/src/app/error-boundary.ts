@@ -318,11 +318,8 @@ export class ErrorBoundary {
       this.container.innerHTML = this.originalContent;
       this.container.classList.remove('error-boundary-fallback');
 
-      // Mark as recovered
+      // Mark as recovered, but don't reset retry count during auto-recovery
       this.errorState.hasError = false;
-      
-      // Reset retry count on successful recovery
-      this.retryCount = 0;
 
       // Emit recovery event
       this.container.dispatchEvent(new CustomEvent('boundary-recovered', {
