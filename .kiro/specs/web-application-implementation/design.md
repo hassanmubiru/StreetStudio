@@ -184,3 +184,123 @@ The application extends the base UI component library with specialized component
 - Notification bell with unread count
 - User avatar and dropdown menu
 - Organization context indicator
+#### Media Components
+
+**VideoPlayer**: Adaptive video player providing:
+- Multi-quality adaptive streaming
+- Keyboard and touch controls
+- Picture-in-picture mode
+- Captions and transcript display
+- Playback speed controls
+- Timeline scrubbing with frame accuracy
+- Full-screen mode support
+
+**Timeline**: Video timeline component providing:
+- Frame-accurate scrubbing
+- Comment markers and threads
+- Trim and split controls
+- Zoom and navigation
+- Waveform visualization
+- Multi-track support for editing
+
+**RecordingControls**: Browser recording interface providing:
+- Screen/window/tab selection
+- Recording state indicators
+- Drawing and annotation tools
+- Cursor highlighting options
+- Audio level indicators
+- Keyboard shortcut overlay
+
+#### Collaboration Components
+
+**CommentSystem**: Threaded comment interface providing:
+- Timestamp-anchored comments
+- Threaded replies and discussions
+- @mention autocomplete
+- Reaction buttons and tallies
+- Real-time updates and notifications
+- Comment moderation tools
+
+**PresenceIndicators**: Real-time collaboration providing:
+- User avatars and status
+- Typing indicators
+- Current viewers list
+- Collaborative viewing sync
+- Activity feed updates
+
+**ReactionPanel**: Reaction interface providing:
+- Quick reaction buttons
+- Custom reaction types
+- Reaction aggregation and display
+- Real-time reaction updates
+- Accessibility keyboard controls
+
+#### Upload Components
+
+**UploadManager**: File upload interface providing:
+- Drag-and-drop upload zones
+- Progress tracking and visualization
+- Batch upload management
+- Error handling and retry logic
+- Background upload capabilities
+- Metadata collection forms
+
+**UploadProgress**: Progress tracking providing:
+- Individual file progress
+- Overall batch progress
+- Upload speed and ETA
+- Pause and resume controls
+- Error state handling
+
+### Component Design Patterns
+
+#### Compound Components
+
+Complex interfaces use compound component patterns for flexibility:
+
+```typescript
+// Timeline editor with flexible composition
+<TimelineEditor>
+  <TimelineEditor.Track>
+    <TimelineEditor.Video src="..." />
+    <TimelineEditor.Comments comments={comments} />
+  </TimelineEditor.Track>
+  <TimelineEditor.Controls>
+    <TimelineEditor.PlayButton />
+    <TimelineEditor.ZoomControls />
+  </TimelineEditor.Controls>
+</TimelineEditor>
+```
+
+#### Render Props for Data Fetching
+
+Data components use render props for flexible rendering:
+
+```typescript
+// Flexible data fetching with render props
+<VideoLoader videoId={videoId}>
+  {({ video, loading, error }) => (
+    loading ? <LoadingSkeleton /> :
+    error ? <ErrorMessage error={error} /> :
+    <VideoPlayer video={video} />
+  )}
+</VideoLoader>
+```
+
+#### Hook-Based State Management
+
+Custom hooks encapsulate complex state logic:
+
+```typescript
+// Centralized upload state management
+const useUploadManager = () => {
+  const { uploads, addUpload, updateProgress } = useUploadStore();
+  const { showNotification } = useNotifications();
+  
+  const startUpload = useCallback((file: File) => {
+    // Upload logic with progress callbacks
+  }, []);
+  
+  return { uploads, startUpload };
+};
+```
