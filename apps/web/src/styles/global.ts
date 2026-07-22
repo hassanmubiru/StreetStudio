@@ -4,6 +4,8 @@
  * Initializes the StreetStudio design system and global styles.
  */
 
+import { ValidationCSS } from '../utils/validation.js';
+
 export async function setupGlobalCSS(): Promise<void> {
   // Inject global styles
   const globalStyles = `
@@ -88,6 +90,9 @@ export async function setupGlobalCSS(): Promise<void> {
       white-space: nowrap;
       border: 0;
     }
+    
+    /* Form validation styles */
+    ${ValidationCSS}
   `;
 
   // Create or update style element
