@@ -74,7 +74,6 @@ export class AuthController {
     this.config = { ...this.DEFAULT_CONFIG, ...config };
     this.setupTokenRefreshHandling();
     this.setupSessionActivityTracking();
-    this.handleCallbackIfPresent();
   }
 
   /**
@@ -1069,208 +1068,37 @@ export class AuthController {
   // OAuth Integration Methods
 
   /**
-   * Check for OAuth/SSO callback on initialization
+   * Utility method for delays
    */
-  private handleCallbackIfPresent(): void {
-    if (OAuthCallbackHandler.isCallbackUrl()) {
-      logger.info('OAuth/SSO callback detected on initialization');
-      
-      // Handle the callback asynchronously
-      setTimeout(async () => {
-        try {
-          const params = OAuthCallbackHandler.parseCallbackParams();
-          const result = await oauthCallbackHandler.handleCallback(params);
-          
-          if (result.success) {
-            OAuthCallbackHandler.handleSuccessRedirect(result.returnUrl);
-          } else {
-            OAuthCallbackHandler.handleErrorDisplay(result.error!, result.provider);
-          }
-        } catch (error) {
-          logger.error('Failed to handle OAuth/SSO callback', {
-            error: (error as Error).message,
-          });
-          OAuthCallbackHandler.handleErrorDisplay('Authentication callback failed');
-        }
-      }, 100);
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Destroy the controller and clean up resources
+   */
+  public destroy(): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
     }
     
-    // Check for stored callback errors
-    const storedError = OAuthCallbackHandler.getAndClearStoredError();
-    if (storedError) {
-      this.setState({
-        error: storedError.error,
-      });
+    if (this.sessionTimeoutTimer) {
+      clearTimeout(this.sessionTimeoutTimer);
     }
-  }
-
-  /**
-   * Initiate OAuth authentication
-   */
-  public async loginWithOAuth(providerId: string, returnUrl?: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      this.setState({ isLoading: true, error: undefined });
-
-      // Validate provider
-      const validation = await oauthConfigService.validateProvider(providerId);
-      if (!validation.valid) {
-        throw new Error(`OAuth provider configuration invalid: ${validation.errors.join(', ')}`);
-      }
-
-      // Store return URL for after authentication
-      if (returnUrl) {
-        sessionStorage.setItem('auth_return_url', returnUrl);
-      }
-
-      // Initiate OAuth flow - this will redirect
-      await oauthConfigService.initiateOAuth(providerId, returnUrl);
-
-      // This won't be reached due to redirect, but return success for type safety
-      return { success: true };
-
-    } catch (error) {
-      this.setState({
-        isLoading: false,
-        error: (error as Error).message || 'OAuth authentication failed',
-      });
-
-      handleError(error as Error, 'authentication', {
-        operation: 'oauth-login',
-        provider: providerId,
-      });
-
-      return { 
-        success: false, 
-        error: (error as Error).message || 'OAuth authentication failed' 
-      };
+    
+    if (this.activityTimer) {
+      clearTimeout(this.activityTimer);
     }
-  }
-
-  /**
-   * Initiate SSO authentication
-   */
-  public async loginWithSSO(providerId: string, returnUrl?: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      this.setState({ isLoading: true, error: undefined });
-
-      // Check if SSO is available
-      if (!(await ssoConfigService.isSSOAvailable())) {
-        throw new Error('SSO is not configured or enabled');
-      }
-
-      // Store return URL for after authentication
-      if (returnUrl) {
-        sessionStorage.setItem('auth_return_url', returnUrl);
-      }
-
-      // Initiate SSO flow - this will redirect
-      await ssoConfigService.initiatSSO(providerId, returnUrl);
-
-      // This won't be reached due to redirect, but return success for type safety
-      return { success: true };
-
-    } catch (error) {
-      this.setState({
-        isLoading: false,
-        error: (error as Error).message || 'SSO authentication failed',
-      });
-
-      handleError(error as Error, 'authentication', {
-        operation: 'sso-login',
-        provider: providerId,
-      });
-
-      return { 
-        success: false, 
-        error: (error as Error).message || 'SSO authentication failed' 
-      };
-    }
-  }
-
-  /**
-   * Check if email should trigger SSO auto-redirect
-   */
-  public async checkSSOAutoRedirect(email: string): Promise<{ shouldRedirect: boolean; provider?: string }> {
-    try {
-      const provider = await ssoConfigService.shouldAutoRedirect(email);
-      
-      if (provider) {
-        logger.info('SSO auto-redirect detected for email domain', {
-          provider: provider.id,
-          domain: email.split('@')[1],
-        });
-
-        return {
-          shouldRedirect: true,
-          provider: provider.id,
-        };
-      }
-
-      return { shouldRedirect: false };
-
-    } catch (error) {
-      logger.warn('Failed to check SSO auto-redirect', {
-        error: (error as Error).message,
-        email: email.split('@')[1], // Only log domain, not full email
-      });
-
-      return { shouldRedirect: false };
-    }
-  }
-
-  /**
-   * Get available OAuth providers
-   */
-  public async getOAuthProviders(): Promise<Array<{ id: string; displayName: string; buttonColor?: string; buttonTextColor?: string; iconSvg?: string }>> {
-    try {
-      const providers = await oauthConfigService.getEnabledProviders();
-      return providers.map(p => ({
-        id: p.id,
-        displayName: p.displayName,
-        buttonColor: p.buttonColor,
-        buttonTextColor: p.buttonTextColor,
-        iconSvg: p.iconSvg,
-      }));
-    } catch (error) {
-      logger.warn('Failed to get OAuth providers', {
-        error: (error as Error).message,
-      });
-      return [];
-    }
-  }
-
-  /**
-   * Get available SSO providers
-   */
-  public async getSSOProviders(): Promise<Array<{ id: string; displayName: string; buttonColor?: string; buttonTextColor?: string; iconSvg?: string }>> {
-    try {
-      const providers = await ssoConfigService.getEnabledProviders();
-      return providers.map(p => ({
-        id: p.id,
-        displayName: p.displayName,
-        buttonColor: p.buttonColor,
-        buttonTextColor: p.buttonTextColor,
-        iconSvg: p.iconSvg,
-      }));
-    } catch (error) {
-      logger.warn('Failed to get SSO providers', {
-        error: (error as Error).message,
-      });
-      return [];
-    }
-  }
-
-  /**
-   * Check if OAuth is available
-   */
-  public async isOAuthAvailable(): Promise<boolean> {
-    return oauthConfigService.isOAuthAvailable();
-  }
-
-  /**
-   * Check if SSO is available
-   */
-  public async isSSOAvailable(): Promise<boolean> {
-    return ssoConfigService.isSSOAvailable();
+    
+    this.listeners.clear();
+    this.memoryTokenStorage.clear();
+    
+    // Remove event listeners
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      document.removeEventListener(event, this.resetSessionTimeout);
+    });
+    
+    logger.info('AuthController destroyed');
   }
 }
