@@ -660,9 +660,22 @@ export class KeyboardShortcuts {
     if (this.shortcutIndicator) return;
 
     this.shortcutIndicator = document.createElement('div');
-    this.shortcutIndicator.className = 'fixed top-4 right-4 z-40 bg-gray-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-200 pointer-events-none';
+    this.shortcutIndicator.className = 'fixed top-4 right-4 z-40 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-3 rounded-lg shadow-lg opacity-0 transition-all duration-300 pointer-events-none max-w-xs';
     this.shortcutIndicator.setAttribute('aria-live', 'polite');
     this.shortcutIndicator.setAttribute('data-enabled', 'true');
+    this.shortcutIndicator.setAttribute('role', 'status');
+
+    // Add context indicator
+    const contextIndicator = document.createElement('div');
+    contextIndicator.className = 'text-xs opacity-75 mb-1';
+    contextIndicator.setAttribute('data-context-display', '');
+    this.shortcutIndicator.appendChild(contextIndicator);
+
+    // Add shortcut text
+    const shortcutText = document.createElement('div');
+    shortcutText.className = 'font-medium';
+    shortcutText.setAttribute('data-shortcut-text', '');
+    this.shortcutIndicator.appendChild(shortcutText);
 
     document.body.appendChild(this.shortcutIndicator);
   }
@@ -678,39 +691,79 @@ export class KeyboardShortcuts {
 
     shortcutsList.innerHTML = '';
 
-    for (const [context, shortcuts] of Object.entries(groupedShortcuts)) {
-      if (shortcuts.length === 0) continue;
+    // Define context display names and order
+    const contextOrder = ['global', 'dashboard', 'recordings', 'video-review', 'video-editor', 'projects', 'search', 'auth'];
+    const contextNames = {
+      global: 'Global',
+      dashboard: 'Dashboard',
+      recordings: 'Recordings',
+      'video-review': 'Video Review',
+      'video-editor': 'Video Editor',
+      projects: 'Projects',
+      search: 'Search',
+      auth: 'Authentication',
+    };
+
+    // Create a grid layout for contexts
+    const contextsGrid = document.createElement('div');
+    contextsGrid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+
+    for (const contextKey of contextOrder) {
+      const shortcuts = groupedShortcuts[contextKey];
+      if (!shortcuts || shortcuts.length === 0) continue;
 
       const contextGroup = document.createElement('div');
-      contextGroup.className = 'mb-4';
+      contextGroup.className = 'bg-gray-50 dark:bg-gray-900 rounded-lg p-4';
 
       const contextTitle = document.createElement('h3');
-      contextTitle.className = 'text-sm font-medium text-gray-700 mb-2';
-      contextTitle.textContent = context === 'global' ? 'Global Shortcuts' : `${context} Context`;
+      contextTitle.className = 'text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center';
+      const displayName = contextNames[contextKey as keyof typeof contextNames] || contextKey;
+      
+      // Add context indicator
+      const isActive = contextKey === this.activeContext;
+      contextTitle.innerHTML = `
+        ${displayName}
+        ${isActive ? '<span class="ml-2 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">Active</span>' : ''}
+      `;
       contextGroup.appendChild(contextTitle);
 
       const shortcutList = document.createElement('div');
-      shortcutList.className = 'space-y-1';
+      shortcutList.className = 'space-y-2';
 
       for (const shortcut of shortcuts) {
         if (shortcut.disabled) continue;
 
         const shortcutItem = document.createElement('div');
-        shortcutItem.className = 'flex items-center justify-between py-1 px-2 rounded hover:bg-gray-50';
+        shortcutItem.className = 'flex flex-col gap-1 py-2 px-3 rounded hover:bg-white dark:hover:bg-gray-800 transition-colors';
 
         const keyCombo = this.formatKeyCombo(shortcut);
         const description = shortcut.description;
 
         shortcutItem.innerHTML = `
-          <span class="text-sm text-gray-900">${description}</span>
-          <span class="text-xs font-mono bg-gray-100 px-2 py-1 rounded">${keyCombo}</span>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-900 dark:text-gray-100 font-medium">${description}</span>
+            <kbd class="text-xs font-mono bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-2 py-1 rounded shadow-sm">${keyCombo}</kbd>
+          </div>
         `;
 
         shortcutList.appendChild(shortcutItem);
       }
 
       contextGroup.appendChild(shortcutList);
-      shortcutsList.appendChild(contextGroup);
+      contextsGrid.appendChild(contextGroup);
+    }
+
+    shortcutsList.appendChild(contextsGrid);
+
+    // Add help text if no shortcuts in current context
+    if (Object.keys(groupedShortcuts).length === 0) {
+      const emptyState = document.createElement('div');
+      emptyState.className = 'text-center text-gray-500 dark:text-gray-400 py-8';
+      emptyState.innerHTML = `
+        <p class="text-lg mb-2">No shortcuts available</p>
+        <p class="text-sm">Navigate to different pages to see context-specific shortcuts.</p>
+      `;
+      shortcutsList.appendChild(emptyState);
     }
   }
 
@@ -773,9 +826,20 @@ export class KeyboardShortcuts {
   private showShortcutIndicator(shortcut: KeyboardShortcut): void {
     if (!this.shortcutIndicator) return;
 
-    const keyCombo = this.formatKeyCombo(shortcut);
-    this.shortcutIndicator.textContent = `${keyCombo}: ${shortcut.description}`;
-    this.shortcutIndicator.style.opacity = '1';
+    const contextDisplay = this.shortcutIndicator.querySelector('[data-context-display]');
+    const shortcutText = this.shortcutIndicator.querySelector('[data-shortcut-text]');
+    
+    if (contextDisplay && shortcutText) {
+      const contextName = shortcut.context || 'global';
+      const keyCombo = this.formatKeyCombo(shortcut);
+      
+      contextDisplay.textContent = `${contextName} context`;
+      shortcutText.textContent = `${keyCombo}: ${shortcut.description}`;
+      
+      // Add visual feedback
+      this.shortcutIndicator.style.opacity = '1';
+      this.shortcutIndicator.style.transform = 'translateY(0)';
+    }
   }
 
   private hideShortcutIndicator(): void {
