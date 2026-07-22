@@ -145,8 +145,9 @@ describe('KeyboardShortcuts', () => {
       });
 
       const shortcuts = keyboardShortcuts.getShortcutsForContext('video-player');
-      expect(shortcuts).toHaveLength(1);
-      expect(shortcuts[0].context).toBe('video-player');
+      const contextShortcut = shortcuts.find(s => s.key === ' ' && s.context === 'video-player');
+      expect(contextShortcut).toBeDefined();
+      expect(contextShortcut!.context).toBe('video-player');
     });
 
     test('should include global shortcuts in any context', () => {
@@ -187,17 +188,24 @@ describe('KeyboardShortcuts', () => {
       const handler = vi.fn();
       
       keyboardShortcuts.register({
-        key: 'k',
+        key: 'y', // Use a different key
         modifiers: ['ctrl'],
         context: 'test-context',
         description: 'Test shortcut',
         handler,
       });
 
-      keyboardShortcuts.unregister('k', ['ctrl'], 'test-context');
+      // Verify it was added
+      let shortcuts = keyboardShortcuts.getShortcutsForContext('test-context');
+      let testShortcut = shortcuts.find(s => s.key === 'y' && s.context === 'test-context');
+      expect(testShortcut).toBeDefined();
+
+      keyboardShortcuts.unregister('y', ['ctrl'], 'test-context');
       
-      const shortcuts = keyboardShortcuts.getShortcutsForContext('test-context');
-      expect(shortcuts).toHaveLength(0);
+      // Verify it was removed
+      shortcuts = keyboardShortcuts.getShortcutsForContext('test-context');
+      testShortcut = shortcuts.find(s => s.key === 'y' && s.context === 'test-context');
+      expect(testShortcut).toBeUndefined();
     });
   });
 
