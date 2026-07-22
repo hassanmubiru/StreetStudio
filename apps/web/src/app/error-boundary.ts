@@ -176,7 +176,7 @@ export class ErrorBoundary {
    * Register a child boundary
    */
   private registerChild(childBoundary: ErrorBoundary): void {
-    this.childBoundaries.push(childBoundary);
+    this.childBoundaries.add(childBoundary);
     
     if (!childBoundaryMap.has(this)) {
       childBoundaryMap.set(this, []);
@@ -188,10 +188,7 @@ export class ErrorBoundary {
    * Unregister a child boundary
    */
   private unregisterChild(childBoundary: ErrorBoundary): void {
-    const index = this.childBoundaries.indexOf(childBoundary);
-    if (index > -1) {
-      this.childBoundaries.splice(index, 1);
-    }
+    this.childBoundaries.delete(childBoundary);
     
     const children = childBoundaryMap.get(this);
     if (children) {
