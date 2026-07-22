@@ -441,7 +441,7 @@ export class StorageManager {
 
     } catch (error) {
       logger.error('Failed to cleanup expired items', {
-        error: error.message,
+        error: (error as Error).message,
         storageType: this.storageType,
       });
     }
