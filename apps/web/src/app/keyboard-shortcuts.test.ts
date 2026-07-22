@@ -190,7 +190,7 @@ describe('KeyboardShortcuts', () => {
 
   describe('keyboard event handling', () => {
     test('should generate correct key signature from event', () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
       
       keyboardShortcuts.register({
         key: 'k',
