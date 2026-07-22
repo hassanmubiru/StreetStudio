@@ -126,7 +126,6 @@ Object.defineProperty(window, 'clearInterval', {
     return originalClearInterval(id);
   }),
 });
-});
 
 // Clean up between tests
 beforeEach(() => {
