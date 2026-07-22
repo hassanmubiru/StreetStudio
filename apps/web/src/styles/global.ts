@@ -6,7 +6,18 @@
 
 import { generateCSSVariables, colors, spacing, typography, borderRadius, shadows } from '@streetstudio/ui';
 
-export function setupGlobalCSS(): void {
+// Import keyboard shortcuts CSS
+async function loadKeyboardShortcutsCSS(): Promise<string> {
+  try {
+    const response = await fetch(new URL('./keyboard-shortcuts.css', import.meta.url));
+    return await response.text();
+  } catch (error) {
+    console.warn('Failed to load keyboard shortcuts CSS:', error);
+    return '';
+  }
+}
+
+export async function setupGlobalCSS(): Promise<void> {
   // Create and inject CSS variables
   const cssVariables = generateCSSVariables();
   const cssVarsString = Object.entries(cssVariables)
@@ -14,6 +25,9 @@ export function setupGlobalCSS(): void {
     .join('; ');
   
   document.documentElement.style.cssText = cssVarsString;
+
+  // Load keyboard shortcuts CSS
+  const keyboardShortcutsCSS = await loadKeyboardShortcutsCSS();
 
   // Inject global styles
   const globalStyles = `
@@ -465,5 +479,5 @@ export function setupGlobalCSS(): void {
     document.head.appendChild(styleElement);
   }
   
-  styleElement.textContent = globalStyles;
+  styleElement.textContent = globalStyles + '\n\n' + keyboardShortcutsCSS;
 }
