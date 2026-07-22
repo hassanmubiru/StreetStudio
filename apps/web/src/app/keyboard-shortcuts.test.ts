@@ -48,7 +48,7 @@ describe('KeyboardShortcuts', () => {
   let keyboardShortcuts: KeyboardShortcuts;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     keyboardShortcuts = new KeyboardShortcuts({
       enableVisualIndicators: false, // Disable for testing
       showHelpOverlay: false,
@@ -61,7 +61,7 @@ describe('KeyboardShortcuts', () => {
 
   describe('shortcut registration', () => {
     test('should register a single shortcut', () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
       
       keyboardShortcuts.register({
         key: 'k',
@@ -74,8 +74,8 @@ describe('KeyboardShortcuts', () => {
     });
 
     test('should register multiple shortcuts', () => {
-      const handler1 = jest.fn();
-      const handler2 = jest.fn();
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
       
       keyboardShortcuts.register([
         {
@@ -97,8 +97,8 @@ describe('KeyboardShortcuts', () => {
     });
 
     test('should handle shortcut conflicts with priority', () => {
-      const handler1 = jest.fn();
-      const handler2 = jest.fn();
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
       
       // Register low priority shortcut first
       keyboardShortcuts.register({
