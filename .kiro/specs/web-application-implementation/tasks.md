@@ -49,7 +49,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Add OAuth provider buttons with dynamic configuration
     - _Requirements: 1.1, 1.4, 1.5, 1.6_
 
-  - [ ] 2.2 Implement authentication controller and session management
+  - [-] 2.2 Implement authentication controller and session management
     - Build secure token storage with memory and httpOnly cookie strategy
     - Create automatic token refresh with early renewal logic
     - Implement authentication state management with reactive updates
@@ -64,7 +64,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - **Property 2: Password Reset Security Uniformity**
     - **Validates: Requirements 1.5**
 
-  - [ ] 2.5 Add OAuth and SSO integration handlers
+  - [-] 2.5 Add OAuth and SSO integration handlers
     - Implement OAuth redirect flow handling for configured providers
     - Create SSO authentication flow with proper state management
     - Add provider-specific error handling and user guidance
@@ -77,14 +77,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - _Requirements: 1.2, 1.6, 1.7_
 
 - [ ] 3. Dashboard and Navigation Implementation
-  - [ ] 3.1 Build main dashboard interface
+  - [-] 3.1 Build main dashboard interface
     - Create dashboard layout with recent projects, videos, and activity widgets
     - Implement responsive project cards with thumbnails and metadata display
     - Add quick action buttons for new recordings and project creation
     - Build activity feed with real-time updates and pagination
     - _Requirements: 2.1, 2.5, 2.6, 2.7_
 
-  - [ ] 3.2 Implement navigation system and layout controllers
+  - [-] 3.2 Implement navigation system and layout controllers
     - Create top navigation bar with organization switcher and user menu
     - Build sidebar navigation with contextual menu items and breadcrumbs
     - Implement responsive navigation with hamburger menu for mobile
