@@ -39,6 +39,11 @@ async function initializeApp() {
   try {
     // Setup global CSS and design system
     await setupGlobalCSS();
+    
+    // Remove loading spinner
+    const loadingElement = document.getElementById('loading');
+    
+    // Initialize StreetStudio app
     const app = new StreetStudioApp({
       container: document.getElementById('app')!,
       config,
