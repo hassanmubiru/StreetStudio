@@ -711,6 +711,130 @@ function setupFallbackStrategies(): void {
     // Fallback to single file upload
     console.log('Using basic file upload');
   });
+
+  // Setup data corruption detection (Requirement 13.10)
+  setupDataCorruptionDetection();
+}
+
+function setupDataCorruptionDetection(): void {
+  // Video project data corruption detection
+  degradationManager.registerCorruptionDetector('video-project', (data: any) => {
+    if (!data || typeof data !== 'object') return true;
+    if (!data.id || !data.timeline || !Array.isArray(data.timeline)) return true;
+    
+    // Check for required project fields
+    const requiredFields = ['id', 'name', 'createdAt', 'timeline'];
+    for (const field of requiredFields) {
+      if (!(field in data)) return true;
+    }
+    
+    // Check timeline integrity
+    for (const clip of data.timeline) {
+      if (!clip.id || !clip.start || !clip.duration) return true;
+    }
+    
+    return false;
+  });
+
+  // Video project recovery
+  degradationManager.registerRecoveryStrategy('video-project', async () => {
+    try {
+      // Try to reconstruct from available data
+      const backup = localStorage.getItem('streetstudio_backup_video-project');
+      if (backup) {
+        const data = JSON.parse(backup);
+        localStorage.setItem('streetstudio_video-project', JSON.stringify(data));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  });
+
+  // User preferences corruption detection
+  degradationManager.registerCorruptionDetector('user-preferences', (data: any) => {
+    if (!data || typeof data !== 'object') return true;
+    
+    // Check for critical preference structure
+    const expectedStructure = ['theme', 'language', 'notifications', 'accessibility'];
+    return expectedStructure.some(key => !(key in data));
+  });
+
+  // User preferences recovery
+  degradationManager.registerRecoveryStrategy('user-preferences', async () => {
+    try {
+      // Restore default preferences
+      const defaultPreferences = {
+        theme: 'system',
+        language: 'en',
+        notifications: {
+          email: true,
+          push: false,
+          inApp: true,
+        },
+        accessibility: {
+          highContrast: false,
+          reducedMotion: false,
+          screenReaderOptimized: false,
+        },
+        privacy: {
+          analytics: false,
+          errorReporting: false,
+        },
+      };
+      
+      localStorage.setItem('streetstudio_user-preferences', JSON.stringify(defaultPreferences));
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  // Comment data corruption detection
+  degradationManager.registerCorruptionDetector('comments', (data: any) => {
+    if (!Array.isArray(data)) return true;
+    
+    for (const comment of data) {
+      if (!comment.id || !comment.body || !comment.timestamp || !comment.userId) {
+        return true;
+      }
+    }
+    
+    return false;
+  });
+
+  // Auto-backup important data to prevent corruption
+  setupAutoBackup();
+}
+
+function setupAutoBackup(): void {
+  // Backup critical data every 5 minutes
+  setInterval(() => {
+    try {
+      // Backup video projects
+      const projects = localStorage.getItem('streetstudio_video-project');
+      if (projects) {
+        localStorage.setItem('streetstudio_backup_video-project', projects);
+      }
+
+      // Backup user preferences
+      const preferences = localStorage.getItem('streetstudio_user-preferences');
+      if (preferences) {
+        localStorage.setItem('streetstudio_backup_user-preferences', preferences);
+      }
+
+      // Backup comments
+      const comments = localStorage.getItem('streetstudio_comments');
+      if (comments) {
+        sessionStorage.setItem('streetstudio_session_comments', comments);
+      }
+
+      logger.debug('Auto-backup completed');
+    } catch (error) {
+      logger.warn('Auto-backup failed', { error: (error as Error).message });
+    }
+  }, 5 * 60 * 1000); // Every 5 minutes
 }
 
 export function handleError(error: Error, context = 'unknown', additionalContext: Record<string, any> = {}): void {
