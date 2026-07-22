@@ -501,11 +501,31 @@ export class StreetStudioApp {
     // Protected routes (require authentication)
     this.router.addProtectedRoute('/dashboard', () => this.renderDashboard());
     this.router.addProtectedRoute('/projects', () => this.renderProjects());
-    this.router.addProtectedRoute('/projects/:projectId', (params) => this.renderProject(params.projectId));
+    this.router.addProtectedRoute('/projects/:projectId', (params) => {
+      const projectId = params.projectId;
+      if (projectId) {
+        this.renderProject(projectId);
+      }
+    });
     this.router.addProtectedRoute('/recordings', () => this.renderRecordings());
-    this.router.addProtectedRoute('/recordings/:recordingId', (params) => this.renderRecording(params.recordingId));
-    this.router.addProtectedRoute('/recordings/:recordingId/review', (params) => this.renderReview(params.recordingId));
-    this.router.addProtectedRoute('/recordings/:recordingId/edit', (params) => this.renderEditor(params.recordingId));
+    this.router.addProtectedRoute('/recordings/:recordingId', (params) => {
+      const recordingId = params.recordingId;
+      if (recordingId) {
+        this.renderRecording(recordingId);
+      }
+    });
+    this.router.addProtectedRoute('/recordings/:recordingId/review', (params) => {
+      const recordingId = params.recordingId;
+      if (recordingId) {
+        this.renderReview(recordingId);
+      }
+    });
+    this.router.addProtectedRoute('/recordings/:recordingId/edit', (params) => {
+      const recordingId = params.recordingId;
+      if (recordingId) {
+        this.renderEditor(recordingId);
+      }
+    });
     this.router.addProtectedRoute('/search', () => this.renderSearch());
     this.router.addProtectedRoute('/notifications', () => this.renderNotifications());
     this.router.addProtectedRoute('/settings', () => this.renderSettings());

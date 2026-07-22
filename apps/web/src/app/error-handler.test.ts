@@ -201,10 +201,11 @@ describe('Error Handler System', () => {
       const error = new Error('Test error for consent');
       handleError(error);
       
+      // Wait for modal to appear
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Should show consent modal
-      await vi.waitFor(() => {
-        expect(document.body.innerHTML).toContain('Help Improve StreetStudio');
-      });
+      expect(document.body.innerHTML).toContain('Help Improve StreetStudio');
     });
 
     it('should store consent choice in localStorage', () => {
@@ -250,18 +251,18 @@ describe('Error Handler System', () => {
       handleError(error);
       
       // Give time for async reporting
-      await vi.waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith(
-          '/api/errors',
-          expect.objectContaining({
-            method: 'POST',
-            headers: expect.objectContaining({
-              'Content-Type': 'application/json'
-            }),
-            body: expect.stringContaining('Test error for reporting')
-          })
-        );
-      });
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/errors',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json'
+          }),
+          body: expect.stringContaining('Test error for reporting')
+        })
+      );
     });
   });
 
@@ -480,9 +481,9 @@ describe('Error Handler System', () => {
       handleError(new Error('Error 2'));
       handleError(new Error('Error 3')); // Should not be reported
       
-      await vi.waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledTimes(2);
-      });
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
 });

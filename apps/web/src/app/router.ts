@@ -389,7 +389,9 @@ export class Router {
     const paramNames: string[] = [];
     const paramMatches = pattern.matchAll(/:([^/]+)/g);
     for (const match of paramMatches) {
-      paramNames.push(match[1]);
+      if (match[1]) {
+        paramNames.push(match[1]);
+      }
     }
 
     if (paramNames.length === 0) {
@@ -404,7 +406,10 @@ export class Router {
     if (matches) {
       // matches[0] is the full match, parameters start at index 1
       paramNames.forEach((name, index) => {
-        params[name] = matches[index + 1];
+        const paramValue = matches[index + 1];
+        if (paramValue !== undefined) {
+          params[name] = paramValue;
+        }
       });
     }
 

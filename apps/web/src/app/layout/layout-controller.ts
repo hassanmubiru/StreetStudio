@@ -261,9 +261,20 @@ export class LayoutController {
    * Load router transition styles
    */
   private async loadRouterStyles(): Promise<void> {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = '/src/styles/router-transitions.css';
-    document.head.appendChild(link);
+    try {
+      const response = await fetch(new URL('../../styles/router-transitions.css', import.meta.url));
+      const css = await response.text();
+      
+      let styleElement = document.getElementById('router-transitions') as HTMLStyleElement;
+      if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'router-transitions';
+        document.head.appendChild(styleElement);
+      }
+      
+      styleElement.textContent = css;
+    } catch (error) {
+      console.warn('Failed to load router transition styles:', error);
+    }
   }
 }
