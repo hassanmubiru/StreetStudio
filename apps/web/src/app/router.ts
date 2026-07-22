@@ -251,13 +251,21 @@ export class Router {
   }
 
   /**
-   * Destroy the router
+   * Destroy the router and clean up resources
    */
   public destroy(): void {
+    // Cancel any ongoing navigation
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+    
     window.removeEventListener('popstate', this.handlePopState);
     this.routes.clear();
     this.protectedRoutes.clear();
     this.prefetchedComponents.clear();
+    this.authCheck = undefined;
+    this.routeGuard = undefined;
+    this.notFoundHandler = undefined;
   }
 
   /**
