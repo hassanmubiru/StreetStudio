@@ -69,7 +69,9 @@ async function initializeApp() {
     // Log initialization time in development
     if (config.enableDevTools) {
       const measure = performance.getEntriesByName('app-initialization')[0];
-      console.log(`🚀 StreetStudio initialized in ${Math.round(measure.duration)}ms`);
+      if (measure) {
+        console.log(`🚀 StreetStudio initialized in ${Math.round(measure.duration)}ms`);
+      }
     }
     
   } catch (error) {
