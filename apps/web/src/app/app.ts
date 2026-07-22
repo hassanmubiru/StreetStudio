@@ -59,3 +59,70 @@ export class StreetStudioApp {
     this.errorBoundary = new ErrorBoundary(this.container);
     this.keyboardShortcuts = new KeyboardShortcuts();
   }
+  public async initialize(): Promise<void> {
+    if (this.isInitialized) return;
+
+    try {
+      // Setup error boundary
+      this.errorBoundary.initialize();
+
+      // Initialize keyboard shortcuts
+      this.setupKeyboardShortcuts();
+
+      // Setup authentication flow
+      await this.setupAuthentication();
+
+      // Setup navigation
+      await this.setupNavigation();
+
+      // Setup layout
+      await this.setupLayout();
+
+      // Setup router
+      await this.setupRouter();
+
+      // Initialize notifications
+      this.notificationController.initialize();
+
+      // Mark as initialized
+      this.isInitialized = true;
+
+      // Log successful initialization
+      if (this.config.enableDevTools) {
+        console.log('✅ StreetStudio application initialized successfully');
+      }
+
+    } catch (error) {
+      console.error('Failed to initialize StreetStudio application:', error);
+      this.errorBoundary.handleError(error as Error);
+      throw error;
+    }
+  }
+
+  private setupKeyboardShortcuts(): void {
+    // Global keyboard shortcuts
+    this.keyboardShortcuts.register([
+      {
+        key: 'k',
+        modifiers: ['cmd', 'ctrl'],
+        description: 'Open search',
+        handler: () => this.openGlobalSearch(),
+      },
+      {
+        key: '/',
+        description: 'Focus search',
+        handler: () => this.focusSearch(),
+      },
+      {
+        key: 'n',
+        modifiers: ['cmd', 'ctrl'],
+        description: 'New recording',
+        handler: () => this.startNewRecording(),
+      },
+      {
+        key: 'Escape',
+        description: 'Close modals/overlays',
+        handler: () => this.closeOverlays(),
+      },
+    ]);
+  }
