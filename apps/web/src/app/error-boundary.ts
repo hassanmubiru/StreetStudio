@@ -67,7 +67,7 @@ export class ErrorBoundary {
   constructor(container: HTMLElement, options: ErrorBoundaryOptions = {}) {
     this.container = container;
     this.options = {
-      isolateFailures: true,
+      isolateFailures: false, // Changed default to false so errors escalate by default
       enableRecovery: true,
       enableAutoRecovery: false,
       maxRetries: 3,
@@ -497,9 +497,12 @@ export class ErrorBoundary {
     const retryDelay = delay ?? this.options.retryDelay ?? 1000;
     
     this.recoveryTimer = window.setTimeout(() => {
+      this.recoveryTimer = null; // Clear the timer reference
+      
       if (this.errorState.hasError && this.retryCount < (this.options.maxRetries || 3)) {
         console.log('Attempting automatic recovery...');
-        this.retry();
+        this.retryCount++; // Increment retry count
+        this.recover();
       }
     }, retryDelay);
   }
@@ -581,6 +584,19 @@ export class ErrorBoundary {
     if (this.recoveryTimer) {
       clearTimeout(this.recoveryTimer);
       this.recoveryTimer = null;
+    }
+
+    // Remove event listeners
+    if (this.componentErrorHandler) {
+      this.container.removeEventListener('component-error', this.componentErrorHandler);
+    }
+    
+    if (this.errorHandler) {
+      this.container.removeEventListener('error', this.errorHandler);
+    }
+    
+    if (this.rejectionHandler) {
+      window.removeEventListener('unhandledrejection', this.rejectionHandler);
     }
 
     // Unregister from parent
