@@ -50,7 +50,7 @@ class RetryManager {
     customConfig?: Partial<RetryConfig>
   ): Promise<T> {
     const config = { ...this.retryConfig, ...customConfig };
-    let lastError: Error;
+    let lastError: Error | undefined;
 
     for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
       try {
@@ -79,7 +79,7 @@ class RetryManager {
       }
     }
 
-    throw lastError;
+    throw lastError!;
   }
 
   private sleep(ms: number): Promise<void> {
@@ -315,7 +315,7 @@ export class ClientLogger {
 
       this.debug(`Successfully flushed ${logsToSend.length} logs`);
     } catch (error) {
-      this.debug(`Failed to flush logs after retries: ${error.message}`);
+      this.debug(`Failed to flush logs after retries: ${(error as Error).message}`);
       // Keep logs in buffer for next attempt
     }
   }

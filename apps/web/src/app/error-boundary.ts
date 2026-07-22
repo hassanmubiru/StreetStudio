@@ -336,7 +336,7 @@ export class ErrorBoundary {
 
     } catch (recoveryError) {
       console.error('Failed to recover from error:', recoveryError);
-      this.showFallbackError(recoveryError);
+      this.showFallbackError(recoveryError as Error);
     }
   }
 
