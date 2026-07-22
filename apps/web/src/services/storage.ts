@@ -158,11 +158,11 @@ export class StorageManager {
       return true;
 
     } catch (error) {
-      if (error.name === 'QuotaExceededError') {
+      if ((error as any).name === 'QuotaExceededError') {
         this.handleQuotaExceeded(key);
       } else {
         logger.error(`Failed to store item: ${key}`, {
-          error: error.message,
+          error: (error as Error).message,
           storageType: this.storageType,
         });
 
@@ -212,7 +212,7 @@ export class StorageManager {
 
     } catch (error) {
       logger.warn(`Failed to retrieve item: ${key}`, {
-        error: error.message,
+        error: (error as Error).message,
         storageType: this.storageType,
       });
 
