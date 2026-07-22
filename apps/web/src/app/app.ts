@@ -126,3 +126,55 @@ export class StreetStudioApp {
       },
     ]);
   }
+  private async setupAuthentication(): Promise<void> {
+    // Check for stored authentication
+    const storedAuth = this.getStoredAuth();
+    if (storedAuth) {
+      try {
+        this.session.useBearerToken(storedAuth.token);
+        await this.session.currentMember(); // Validate token
+        this.authController.setState({ isAuthenticated: true });
+      } catch (error) {
+        // Invalid token, clear storage
+        this.clearStoredAuth();
+        this.authController.setState({ isAuthenticated: false });
+      }
+    }
+
+    // Setup auth event listeners
+    this.authController.onAuthStateChange((state) => {
+      if (state.isAuthenticated) {
+        // Redirect to dashboard if on auth pages
+        if (this.router.getCurrentPath().startsWith('/auth')) {
+          this.router.navigate('/dashboard');
+        }
+      } else {
+        // Redirect to login if accessing protected routes
+        const currentPath = this.router.getCurrentPath();
+        if (!currentPath.startsWith('/auth') && currentPath !== '/') {
+          this.router.navigate('/auth/login');
+        }
+      }
+    });
+  }
+
+  private async setupNavigation(): Promise<void> {
+    this.navigationController.initialize();
+
+    // Setup organization selector
+    this.navigationController.onOrganizationChange((orgId: Uuid) => {
+      this.session.selectOrganization(orgId);
+      // Refresh current page data
+      this.router.refresh();
+    });
+  }
+
+  private async setupLayout(): Promise<void> {
+    await this.layoutController.initialize();
+    
+    // Setup responsive behavior
+    this.layoutController.setupResponsiveLayout();
+    
+    // Setup theme management
+    this.layoutController.setupThemeToggle();
+  }
