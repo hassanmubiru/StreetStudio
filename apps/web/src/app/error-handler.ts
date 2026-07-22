@@ -407,6 +407,17 @@ export function handleError(error: Error, context = 'unknown', additionalContext
     },
   };
 
+  // Log to client logger
+  const logLevel = errorDetails.severity === 'fatal' ? 'fatal' : 'error';
+  logger[logLevel](`${context}: ${error.message}`, {
+    errorId: errorDetails.id,
+    category: errorDetails.category,
+    severity: errorDetails.severity,
+    recoverable: errorDetails.recoverable,
+    stack: error.stack,
+    context: errorDetails.context,
+  });
+
   // Log error to console in development
   if (import.meta.env.MODE === 'development') {
     console.error('Error details:', errorDetails);
