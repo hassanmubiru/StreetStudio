@@ -135,8 +135,8 @@ describe('KeyboardShortcuts', () => {
       const testShortcuts = shortcuts.filter(s => s.key === 'x');
       
       // Should have both shortcuts, but high priority first
-      expect(testShortcuts[0].priority).toBe(10);
-      expect(testShortcuts[1].priority).toBe(1);
+      expect(testShortcuts[0]?.priority).toBe(10);
+      expect(testShortcuts[1]?.priority).toBe(1);
     });
   });
 
