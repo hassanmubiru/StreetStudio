@@ -1,274 +1,641 @@
 /**
  * Keyboard Shortcuts Manager
  * 
- * Manages global keyboard shortcuts with accessibility support.
+ * Global keyboard shortcut manager with conflict resolution, accessibility support,
+ * and context-sensitive shortcuts for different application states.
+ * 
+ * Requirements: 11.1, 11.2
  */
 
 export interface KeyboardShortcut {
   key: string;
-  modifiers?: string[];
+  modifiers?: ('ctrl' | 'cmd' | 'alt' | 'shift')[];
+  context?: string;
   description: string;
-  handler: () => void;
-  contexts?: string[];
+  handler: (event: KeyboardEvent) => void | boolean;
+  priority?: number; // Higher priority shortcuts override lower ones
+  preventDefault?: boolean;
+  disabled?: boolean;
+}
+
+export interface ShortcutConflict {
+  existing: KeyboardShortcut;
+  new: KeyboardShortcut;
+  keySignature: string;
+}
+
+export interface KeyboardShortcutsOptions {
+  enableVisualIndicators?: boolean;
+  showHelpOverlay?: boolean;
+  preventDefaultBehavior?: boolean;
 }
 
 export class KeyboardShortcuts {
-  private shortcuts: Map<string, KeyboardShortcut> = new Map();
+  private shortcuts = new Map<string, KeyboardShortcut[]>();
+  private contexts = new Set<string>();
+  private activeContext = 'global';
   private isEnabled = true;
-  private helpVisible = false;
+  private helpOverlayVisible = false;
+  private options: KeyboardShortcutsOptions;
+  
+  // DOM elements
+  private helpOverlay: HTMLElement | null = null;
+  private shortcutIndicator: HTMLElement | null = null;
 
-  constructor() {
-    this.handleKeyDown = this.handleKeyDown.bind(this);
-  }
+  constructor(options: KeyboardShortcutsOptions = {}) {
+    this.options = {
+      enableVisualIndicators: true,
+      showHelpOverlay: true,
+      preventDefaultBehavior: true,
+      ...options,
+    };
 
-  /**
-   * Register keyboard shortcuts
-   */
-  public register(shortcuts: KeyboardShortcut[]): void {
-    for (const shortcut of shortcuts) {
-      const key = this.getShortcutKey(shortcut);
-      this.shortcuts.set(key, shortcut);
+    // Initialize keyboard event listeners
+    this.setupEventListeners();
+    
+    // Setup accessibility features
+    this.setupAccessibilityFeatures();
+    
+    // Create help overlay if enabled
+    if (this.options.showHelpOverlay) {
+      this.createHelpOverlay();
     }
 
-    // Add event listener if not already added
-    document.addEventListener('keydown', this.handleKeyDown);
-
-    // Register help shortcut
-    this.registerHelpShortcut();
+    // Create visual indicators if enabled
+    if (this.options.enableVisualIndicators) {
+      this.createShortcutIndicator();
+    }
   }
 
   /**
-   * Unregister a shortcut
+   * Register a keyboard shortcut
    */
-  public unregister(shortcut: KeyboardShortcut): void {
-    const key = this.getShortcutKey(shortcut);
-    this.shortcuts.delete(key);
+  public register(shortcut: KeyboardShortcut): void;
+  public register(shortcuts: KeyboardShortcut[]): void;
+  public register(input: KeyboardShortcut | KeyboardShortcut[]): void {
+    const shortcuts = Array.isArray(input) ? input : [input];
+
+    for (const shortcut of shortcuts) {
+      this.registerSingleShortcut(shortcut);
+    }
+  }
+
+  private registerSingleShortcut(shortcut: KeyboardShortcut): void {
+    const keySignature = this.getKeySignature(shortcut);
+    const context = shortcut.context || 'global';
+    
+    // Add context to active contexts
+    this.contexts.add(context);
+
+    // Check for conflicts
+    const existingShortcuts = this.shortcuts.get(keySignature) || [];
+    const conflicts = this.detectConflicts(shortcut, existingShortcuts);
+    
+    if (conflicts.length > 0) {
+      this.resolveConflicts(shortcut, conflicts);
+    }
+
+    // Add shortcut to registry
+    if (!this.shortcuts.has(keySignature)) {
+      this.shortcuts.set(keySignature, []);
+    }
+    
+    const shortcutList = this.shortcuts.get(keySignature)!;
+    shortcutList.push(shortcut);
+    
+    // Sort by priority (higher priority first)
+    shortcutList.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+
+    // Update help overlay if visible
+    if (this.helpOverlayVisible) {
+      this.updateHelpOverlay();
+    }
   }
 
   /**
-   * Enable/disable shortcuts
+   * Unregister a keyboard shortcut
+   */
+  public unregister(key: string, modifiers?: string[], context?: string): void {
+    const keySignature = this.createKeySignature(key, modifiers);
+    const shortcuts = this.shortcuts.get(keySignature);
+    
+    if (!shortcuts) return;
+
+    const targetContext = context || 'global';
+    const filteredShortcuts = shortcuts.filter(s => s.context !== targetContext);
+    
+    if (filteredShortcuts.length === 0) {
+      this.shortcuts.delete(keySignature);
+    } else {
+      this.shortcuts.set(keySignature, filteredShortcuts);
+    }
+
+    // Update help overlay if visible
+    if (this.helpOverlayVisible) {
+      this.updateHelpOverlay();
+    }
+  }
+
+  /**
+   * Set the active context for context-sensitive shortcuts
+   */
+  public setContext(context: string): void {
+    this.activeContext = context;
+    this.contexts.add(context);
+    
+    // Update visual indicators
+    if (this.options.enableVisualIndicators) {
+      this.updateContextIndicator(context);
+    }
+  }
+
+  /**
+   * Get all shortcuts for the current context
+   */
+  public getShortcutsForContext(context?: string): KeyboardShortcut[] {
+    const targetContext = context || this.activeContext;
+    const contextShortcuts: KeyboardShortcut[] = [];
+    
+    for (const shortcuts of this.shortcuts.values()) {
+      for (const shortcut of shortcuts) {
+        if ((shortcut.context || 'global') === targetContext || shortcut.context === 'global') {
+          contextShortcuts.push(shortcut);
+        }
+      }
+    }
+    
+    return contextShortcuts;
+  }
+
+  /**
+   * Show/hide help overlay
+   */
+  public toggleHelpOverlay(): void {
+    if (!this.helpOverlay) {
+      this.createHelpOverlay();
+    }
+
+    this.helpOverlayVisible = !this.helpOverlayVisible;
+    
+    if (this.helpOverlayVisible) {
+      this.updateHelpOverlay();
+      this.showHelpOverlay();
+    } else {
+      this.hideHelpOverlay();
+    }
+  }
+
+  /**
+   * Enable/disable keyboard shortcuts
    */
   public setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
-  }
-
-  /**
-   * Show keyboard shortcuts help
-   */
-  public showHelp(): void {
-    if (this.helpVisible) return;
-
-    this.helpVisible = true;
-    this.renderHelpDialog();
-  }
-
-  /**
-   * Hide keyboard shortcuts help
-   */
-  public hideHelp(): void {
-    this.helpVisible = false;
-    const helpDialog = document.getElementById('keyboard-shortcuts-help');
-    if (helpDialog) {
-      helpDialog.remove();
+    
+    // Update visual indicators
+    if (this.shortcutIndicator) {
+      this.shortcutIndicator.setAttribute('data-enabled', enabled.toString());
     }
   }
 
   /**
-   * Handle keydown events
+   * Destroy the keyboard shortcuts manager
    */
-  private handleKeyDown(event: KeyboardEvent): void {
+  public destroy(): void {
+    // Remove event listeners
+    document.removeEventListener('keydown', this.handleKeyDown);
+    document.removeEventListener('keyup', this.handleKeyUp);
+    
+    // Remove DOM elements
+    if (this.helpOverlay) {
+      this.helpOverlay.remove();
+    }
+    
+    if (this.shortcutIndicator) {
+      this.shortcutIndicator.remove();
+    }
+
+    // Clear shortcuts
+    this.shortcuts.clear();
+    this.contexts.clear();
+  }
+
+  private setupEventListeners(): void {
+    document.addEventListener('keydown', this.handleKeyDown.bind(this));
+    document.addEventListener('keyup', this.handleKeyUp.bind(this));
+  }
+
+  private handleKeyDown = (event: KeyboardEvent): void => {
     if (!this.isEnabled) return;
 
-    // Skip if user is typing in an input
-    const target = event.target as HTMLElement;
-    if (this.isInputElement(target)) {
-      return;
+    // Handle help overlay toggle (F1 or ?)
+    if (event.key === 'F1' || (event.key === '?' && !this.isInputFocused(event.target))) {
+      if (this.options.showHelpOverlay) {
+        event.preventDefault();
+        this.toggleHelpOverlay();
+        return;
+      }
     }
 
-    const shortcutKey = this.getEventKey(event);
-    const shortcut = this.shortcuts.get(shortcutKey);
+    // Handle Escape to close overlays
+    if (event.key === 'Escape') {
+      if (this.helpOverlayVisible) {
+        event.preventDefault();
+        this.toggleHelpOverlay();
+        return;
+      }
+    }
 
-    if (shortcut) {
-      event.preventDefault();
-      event.stopPropagation();
+    const keySignature = this.getKeySignatureFromEvent(event);
+    const shortcuts = this.shortcuts.get(keySignature) || [];
+    
+    // Find the best matching shortcut for current context
+    const matchingShortcut = this.findBestMatch(shortcuts);
+    
+    if (matchingShortcut && !matchingShortcut.disabled) {
+      // Show visual indicator if enabled
+      if (this.options.enableVisualIndicators) {
+        this.showShortcutIndicator(matchingShortcut);
+      }
+
+      // Execute shortcut handler
+      const result = matchingShortcut.handler(event);
       
-      try {
-        shortcut.handler();
-      } catch (error) {
-        console.error('Keyboard shortcut handler error:', error);
+      // Prevent default behavior if configured
+      if ((matchingShortcut.preventDefault ?? this.options.preventDefaultBehavior) && result !== false) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }
+  };
+
+  private handleKeyUp = (event: KeyboardEvent): void => {
+    // Hide visual indicator on key release
+    if (this.options.enableVisualIndicators) {
+      this.hideShortcutIndicator();
+    }
+  };
+
+  private findBestMatch(shortcuts: KeyboardShortcut[]): KeyboardShortcut | null {
+    // First, try to find shortcut matching current context
+    for (const shortcut of shortcuts) {
+      const shortcutContext = shortcut.context || 'global';
+      if (shortcutContext === this.activeContext) {
+        return shortcut;
+      }
+    }
+
+    // Fallback to global context shortcuts
+    for (const shortcut of shortcuts) {
+      const shortcutContext = shortcut.context || 'global';
+      if (shortcutContext === 'global') {
+        return shortcut;
+      }
+    }
+
+    return null;
+  }
+
+  private detectConflicts(newShortcut: KeyboardShortcut, existingShortcuts: KeyboardShortcut[]): ShortcutConflict[] {
+    const conflicts: ShortcutConflict[] = [];
+    const keySignature = this.getKeySignature(newShortcut);
+    const newContext = newShortcut.context || 'global';
+
+    for (const existing of existingShortcuts) {
+      const existingContext = existing.context || 'global';
+      
+      // Check if contexts overlap (same context or one is global)
+      if (existingContext === newContext || existingContext === 'global' || newContext === 'global') {
+        conflicts.push({
+          existing,
+          new: newShortcut,
+          keySignature,
+        });
+      }
+    }
+
+    return conflicts;
+  }
+
+  private resolveConflicts(newShortcut: KeyboardShortcut, conflicts: ShortcutConflict[]): void {
+    // Priority-based conflict resolution
+    const newPriority = newShortcut.priority || 0;
+    
+    for (const conflict of conflicts) {
+      const existingPriority = conflict.existing.priority || 0;
+      
+      if (newPriority <= existingPriority) {
+        console.warn(`Keyboard shortcut conflict detected:`, {
+          existing: this.getShortcutDescription(conflict.existing),
+          new: this.getShortcutDescription(newShortcut),
+          resolution: 'Existing shortcut takes precedence due to higher priority'
+        });
+      } else {
+        console.warn(`Keyboard shortcut conflict detected:`, {
+          existing: this.getShortcutDescription(conflict.existing),
+          new: this.getShortcutDescription(newShortcut),
+          resolution: 'New shortcut will override existing due to higher priority'
+        });
       }
     }
   }
 
-  /**
-   * Register help shortcut (? key)
-   */
-  private registerHelpShortcut(): void {
-    this.shortcuts.set('?', {
-      key: '?',
-      description: 'Show keyboard shortcuts help',
-      handler: () => this.showHelp(),
-    });
+  private getKeySignature(shortcut: KeyboardShortcut): string {
+    return this.createKeySignature(shortcut.key, shortcut.modifiers);
   }
 
-  /**
-   * Generate shortcut key from shortcut definition
-   */
-  private getShortcutKey(shortcut: KeyboardShortcut): string {
-    const modifiers = shortcut.modifiers || [];
-    return [...modifiers, shortcut.key].join('+').toLowerCase();
+  private createKeySignature(key: string, modifiers?: string[]): string {
+    const mods = (modifiers || []).sort().join('+');
+    return mods ? `${mods}+${key.toLowerCase()}` : key.toLowerCase();
   }
 
-  /**
-   * Generate shortcut key from keyboard event
-   */
-  private getEventKey(event: KeyboardEvent): string {
+  private getKeySignatureFromEvent(event: KeyboardEvent): string {
     const modifiers: string[] = [];
     
-    if (event.ctrlKey || event.metaKey) {
-      modifiers.push(event.ctrlKey ? 'ctrl' : 'cmd');
-    }
-    if (event.altKey) {
-      modifiers.push('alt');
-    }
-    if (event.shiftKey && event.key.length > 1) {
-      // Only include shift for special keys, not for regular characters
-      modifiers.push('shift');
-    }
-
-    return [...modifiers, event.key.toLowerCase()].join('+');
-  }
-
-  /**
-   * Check if target is an input element
-   */
-  private isInputElement(target: HTMLElement): boolean {
-    const tagName = target.tagName.toLowerCase();
-    const inputTypes = ['input', 'textarea', 'select'];
+    if (event.ctrlKey) modifiers.push('ctrl');
+    if (event.metaKey) modifiers.push('cmd');
+    if (event.altKey) modifiers.push('alt');
+    if (event.shiftKey) modifiers.push('shift');
     
-    if (inputTypes.includes(tagName)) {
-      return true;
-    }
-
-    // Check for contenteditable
-    if (target.isContentEditable) {
-      return true;
-    }
-
-    // Check for role="textbox"
-    if (target.getAttribute('role') === 'textbox') {
-      return true;
-    }
-
-    return false;
+    return this.createKeySignature(event.key, modifiers);
   }
 
-  /**
-   * Render help dialog
-   */
-  private renderHelpDialog(): void {
-    const dialog = document.createElement('div');
-    dialog.id = 'keyboard-shortcuts-help';
-    dialog.className = 'fixed inset-0 z-50 overflow-y-auto';
-    dialog.setAttribute('role', 'dialog');
-    dialog.setAttribute('aria-labelledby', 'shortcuts-title');
-    dialog.setAttribute('aria-modal', 'true');
+  private getShortcutDescription(shortcut: KeyboardShortcut): string {
+    const modifiers = shortcut.modifiers || [];
+    const modString = modifiers.join(' + ');
+    const keyString = modString ? `${modString} + ${shortcut.key}` : shortcut.key;
+    const contextString = shortcut.context ? ` (${shortcut.context})` : '';
+    return `${keyString}${contextString}: ${shortcut.description}`;
+  }
 
-    const shortcuts = Array.from(this.shortcuts.values()).sort((a, b) => 
-      a.description.localeCompare(b.description)
-    );
+  private isInputFocused(target: EventTarget | null): boolean {
+    if (!target || !(target instanceof Element)) return false;
+    
+    const tagName = target.tagName.toLowerCase();
+    const isInput = tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+    const isContentEditable = target.getAttribute('contenteditable') === 'true';
+    
+    return isInput || isContentEditable;
+  }
 
-    dialog.innerHTML = `
-      <div class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="this.closest('#keyboard-shortcuts-help').remove()"></div>
-        
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-        
-        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+  private setupAccessibilityFeatures(): void {
+    // Add skip link for keyboard users
+    const skipLink = document.createElement('a');
+    skipLink.href = '#main-content';
+    skipLink.textContent = 'Skip to main content (Alt+1)';
+    skipLink.className = 'sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded';
+    skipLink.setAttribute('accesskey', '1');
+    document.body.insertBefore(skipLink, document.body.firstChild);
+
+    // Register accessibility shortcuts
+    this.register([
+      {
+        key: '1',
+        modifiers: ['alt'],
+        description: 'Skip to main content',
+        handler: () => {
+          const mainContent = document.getElementById('main-content') || document.querySelector('main');
+          if (mainContent && mainContent instanceof HTMLElement) {
+            mainContent.focus();
+            mainContent.scrollIntoView({ behavior: 'smooth' });
+          }
+        },
+        priority: 100, // High priority for accessibility
+      },
+      {
+        key: 'F1',
+        description: 'Show keyboard shortcuts help',
+        handler: () => {
+          this.toggleHelpOverlay();
+        },
+        priority: 100,
+      },
+      {
+        key: '?',
+        description: 'Show keyboard shortcuts help',
+        handler: (event) => {
+          if (!this.isInputFocused(event.target)) {
+            this.toggleHelpOverlay();
+          }
+        },
+        priority: 50,
+      },
+    ]);
+  }
+
+  private createHelpOverlay(): void {
+    if (this.helpOverlay) return;
+
+    this.helpOverlay = document.createElement('div');
+    this.helpOverlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden';
+    this.helpOverlay.setAttribute('role', 'dialog');
+    this.helpOverlay.setAttribute('aria-labelledby', 'shortcut-help-title');
+    this.helpOverlay.setAttribute('aria-modal', 'true');
+
+    this.helpOverlay.innerHTML = `
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+        <div class="p-6">
           <div class="flex items-center justify-between mb-4">
-            <h3 id="shortcuts-title" class="text-lg font-medium text-gray-900 dark:text-white">
+            <h2 id="shortcut-help-title" class="text-lg font-semibold text-gray-900">
               Keyboard Shortcuts
-            </h3>
+            </h2>
             <button 
-              onclick="this.closest('#keyboard-shortcuts-help').remove()"
-              class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+              type="button" 
+              class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+              aria-label="Close keyboard shortcuts help"
             >
-              <span class="sr-only">Close</span>
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          
-          <div class="space-y-3 max-h-96 overflow-y-auto">
-            ${shortcuts.map(shortcut => `
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-900 dark:text-white">${shortcut.description}</span>
-                <kbd class="inline-flex items-center px-2 py-1 text-xs font-mono text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded">
-                  ${this.formatShortcutDisplay(shortcut)}
-                </kbd>
-              </div>
-            `).join('')}
+          <div id="shortcuts-list" class="space-y-2">
+            <!-- Shortcuts will be populated here -->
           </div>
-          
-          <div class="mt-6 flex justify-end">
-            <button 
-              onclick="this.closest('#keyboard-shortcuts-help').remove()"
-              class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Close
-            </button>
+          <div class="mt-4 text-sm text-gray-500">
+            <p>Press <kbd class="px-2 py-1 bg-gray-100 rounded text-xs font-mono">Esc</kbd> or <kbd class="px-2 py-1 bg-gray-100 rounded text-xs font-mono">F1</kbd> to close this help.</p>
           </div>
         </div>
       </div>
     `;
 
-    document.body.appendChild(dialog);
-
-    // Focus the dialog for accessibility
-    const closeButton = dialog.querySelector('button');
+    // Close button event listener
+    const closeButton = this.helpOverlay.querySelector('button');
     if (closeButton) {
-      closeButton.focus();
+      closeButton.addEventListener('click', () => this.toggleHelpOverlay());
     }
 
-    // Handle escape key to close
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.hideHelp();
-        document.removeEventListener('keydown', handleEscape);
+    // Click outside to close
+    this.helpOverlay.addEventListener('click', (event) => {
+      if (event.target === this.helpOverlay) {
+        this.toggleHelpOverlay();
+      }
+    });
+
+    document.body.appendChild(this.helpOverlay);
+  }
+
+  private createShortcutIndicator(): void {
+    if (this.shortcutIndicator) return;
+
+    this.shortcutIndicator = document.createElement('div');
+    this.shortcutIndicator.className = 'fixed top-4 right-4 z-40 bg-gray-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-200 pointer-events-none';
+    this.shortcutIndicator.setAttribute('aria-live', 'polite');
+    this.shortcutIndicator.setAttribute('data-enabled', 'true');
+
+    document.body.appendChild(this.shortcutIndicator);
+  }
+
+  private updateHelpOverlay(): void {
+    if (!this.helpOverlay) return;
+
+    const shortcutsList = this.helpOverlay.querySelector('#shortcuts-list');
+    if (!shortcutsList) return;
+
+    const contextShortcuts = this.getShortcutsForContext();
+    const groupedShortcuts = this.groupShortcutsByContext(contextShortcuts);
+
+    shortcutsList.innerHTML = '';
+
+    for (const [context, shortcuts] of Object.entries(groupedShortcuts)) {
+      if (shortcuts.length === 0) continue;
+
+      const contextGroup = document.createElement('div');
+      contextGroup.className = 'mb-4';
+
+      const contextTitle = document.createElement('h3');
+      contextTitle.className = 'text-sm font-medium text-gray-700 mb-2';
+      contextTitle.textContent = context === 'global' ? 'Global Shortcuts' : `${context} Context`;
+      contextGroup.appendChild(contextTitle);
+
+      const shortcutList = document.createElement('div');
+      shortcutList.className = 'space-y-1';
+
+      for (const shortcut of shortcuts) {
+        if (shortcut.disabled) continue;
+
+        const shortcutItem = document.createElement('div');
+        shortcutItem.className = 'flex items-center justify-between py-1 px-2 rounded hover:bg-gray-50';
+
+        const keyCombo = this.formatKeyCombo(shortcut);
+        const description = shortcut.description;
+
+        shortcutItem.innerHTML = `
+          <span class="text-sm text-gray-900">${description}</span>
+          <span class="text-xs font-mono bg-gray-100 px-2 py-1 rounded">${keyCombo}</span>
+        `;
+
+        shortcutList.appendChild(shortcutItem);
+      }
+
+      contextGroup.appendChild(shortcutList);
+      shortcutsList.appendChild(contextGroup);
+    }
+  }
+
+  private groupShortcutsByContext(shortcuts: KeyboardShortcut[]): Record<string, KeyboardShortcut[]> {
+    const grouped: Record<string, KeyboardShortcut[]> = {};
+
+    for (const shortcut of shortcuts) {
+      const context = shortcut.context || 'global';
+      if (!grouped[context]) {
+        grouped[context] = [];
+      }
+      grouped[context].push(shortcut);
+    }
+
+    return grouped;
+  }
+
+  private formatKeyCombo(shortcut: KeyboardShortcut): string {
+    const modifiers = shortcut.modifiers || [];
+    const isMac = navigator.platform.indexOf('Mac') > -1;
+    
+    const modifierMap: Record<string, string> = {
+      cmd: isMac ? '⌘' : 'Ctrl',
+      ctrl: isMac ? '⌃' : 'Ctrl',
+      alt: isMac ? '⌥' : 'Alt',
+      shift: isMac ? '⇧' : 'Shift',
+    };
+
+    const modString = modifiers.map(mod => modifierMap[mod] || mod).join(isMac ? '' : '+');
+    return modString ? `${modString}${isMac ? '' : '+'}${shortcut.key}` : shortcut.key;
+  }
+
+  private showHelpOverlay(): void {
+    if (!this.helpOverlay) return;
+
+    this.helpOverlay.classList.remove('hidden');
+    
+    // Focus management for accessibility
+    const firstFocusable = this.helpOverlay.querySelector('button');
+    if (firstFocusable instanceof HTMLElement) {
+      firstFocusable.focus();
+    }
+
+    // Trap focus within overlay
+    this.trapFocus(this.helpOverlay);
+  }
+
+  private hideHelpOverlay(): void {
+    if (!this.helpOverlay) return;
+
+    this.helpOverlay.classList.add('hidden');
+    
+    // Return focus to previously focused element
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+  }
+
+  private showShortcutIndicator(shortcut: KeyboardShortcut): void {
+    if (!this.shortcutIndicator) return;
+
+    const keyCombo = this.formatKeyCombo(shortcut);
+    this.shortcutIndicator.textContent = `${keyCombo}: ${shortcut.description}`;
+    this.shortcutIndicator.style.opacity = '1';
+  }
+
+  private hideShortcutIndicator(): void {
+    if (!this.shortcutIndicator) return;
+
+    setTimeout(() => {
+      this.shortcutIndicator!.style.opacity = '0';
+    }, 1000);
+  }
+
+  private updateContextIndicator(context: string): void {
+    // Add context indicator to show current keyboard context
+    const indicator = document.querySelector('[data-keyboard-context]');
+    if (indicator) {
+      indicator.setAttribute('data-keyboard-context', context);
+    }
+  }
+
+  private trapFocus(container: HTMLElement): void {
+    const focusableElements = container.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+
+    const firstElement = focusableElements[0] as HTMLElement;
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+    const handleTabKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+
+      if (event.shiftKey) {
+        if (document.activeElement === firstElement) {
+          event.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          event.preventDefault();
+          firstElement.focus();
+        }
       }
     };
-    
-    document.addEventListener('keydown', handleEscape);
-  }
 
-  /**
-   * Format shortcut for display
-   */
-  private formatShortcutDisplay(shortcut: KeyboardShortcut): string {
-    const modifiers = shortcut.modifiers || [];
-    const parts = [...modifiers];
-    
-    // Replace with platform-specific symbols
-    const symbols: Record<string, string> = {
-      'cmd': '⌘',
-      'ctrl': 'Ctrl',
-      'alt': '⌥',
-      'shift': '⇧',
-    };
-
-    const displayParts = parts.map(mod => symbols[mod] || mod);
-    displayParts.push(shortcut.key.toUpperCase());
-
-    return displayParts.join(' + ');
-  }
-
-  /**
-   * Destroy keyboard shortcuts
-   */
-  public destroy(): void {
-    document.removeEventListener('keydown', this.handleKeyDown);
-    this.shortcuts.clear();
-    this.hideHelp();
+    container.addEventListener('keydown', handleTabKey);
   }
 }
