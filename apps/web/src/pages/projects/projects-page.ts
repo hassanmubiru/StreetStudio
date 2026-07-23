@@ -749,3 +749,220 @@ export class ProjectsPage {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
+  private async createProject(form: HTMLFormElement, invitedEmails: string[], dialog: HTMLElement): Promise<void> {
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const submitText = submitBtn?.querySelector('[data-submit-text]');
+    const loadingText = submitBtn?.querySelector('[data-loading-text]');
+
+    try {
+      // Update button state
+      submitBtn?.setAttribute('disabled', 'true');
+      submitText?.classList.add('hidden');
+      loadingText?.classList.remove('hidden');
+
+      const projectData = {
+        name: formData.get('name') as string,
+        description: formData.get('description') as string || undefined,
+        isPrivate: formData.get('privacy') === 'private',
+        invitedMembers: invitedEmails
+      };
+
+      const response = await apiClient.post('/projects', projectData);
+      
+      // Add new project to local state
+      const newProject = this.enrichProjectData(response.data);
+      this.projects.unshift(newProject);
+      this.filterProjects();
+      this.renderProjects();
+      this.updateProjectCount();
+
+      // Close dialog
+      document.body.removeChild(dialog);
+
+      // Show success message
+      this.showToast('Project created successfully!', 'success');
+      
+      logger.info('Project created', { 
+        projectId: response.data.id, 
+        name: projectData.name,
+        memberCount: invitedEmails.length 
+      });
+
+    } catch (error) {
+      handleError(error as Error, 'api', {
+        feature: 'project-management',
+        endpoint: '/projects',
+        action: 'create'
+      });
+      
+      this.showToast('Failed to create project. Please try again.', 'error');
+      
+    } finally {
+      // Reset button state
+      submitBtn?.removeAttribute('disabled');
+      submitText?.classList.remove('hidden');
+      loadingText?.classList.add('hidden');
+    }
+  }
+
+  private showToast(message: string, type: 'success' | 'error' | 'info' = 'info'): void {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 max-w-sm w-full px-4 py-3 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+    
+    const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+    toast.classList.add(bgColor, 'text-white');
+    
+    toast.innerHTML = `
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          ${type === 'success' ? `
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          ` : type === 'error' ? `
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          ` : `
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          `}
+        </div>
+        <div class="ml-3 flex-1">
+          <p class="text-sm font-medium">${message}</p>
+        </div>
+        <button class="ml-4 text-white hover:text-gray-200" onclick="this.parentElement.parentElement.remove()">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Animate in
+    setTimeout(() => {
+      toast.classList.remove('translate-x-full');
+    }, 100);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      toast.classList.add('translate-x-full');
+      setTimeout(() => {
+        if (toast.parentElement) {
+          document.body.removeChild(toast);
+        }
+      }, 300);
+    }, 5000);
+  }
+
+  private async showEditProjectDialog(projectId: string): Promise<void> {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    // Implementation similar to create dialog but with pre-filled values
+    // For brevity, showing just the structure
+    const dialog = document.createElement('div');
+    dialog.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+    
+    // Implementation would be similar to createProject dialog
+    // but with edit-specific logic and pre-populated fields
+    
+    this.showToast('Edit functionality will be available in the next update', 'info');
+  }
+
+  private async showMemberManagementDialog(projectId: string): Promise<void> {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    // Implementation for member management
+    this.showToast('Member management functionality will be available in the next update', 'info');
+  }
+
+  private async showDeleteConfirmation(projectId: string): Promise<void> {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    const dialog = document.createElement('div');
+    dialog.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+    dialog.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="p-6">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Delete Project</h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Are you sure you want to delete "<strong>${project.name}</strong>"? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-gray-50 dark:bg-gray-700 px-6 py-3 flex justify-end space-x-3">
+          <button type="button" class="btn btn-secondary" data-cancel-delete>
+            Cancel
+          </button>
+          <button type="button" class="btn btn-danger" data-confirm-delete>
+            Delete Project
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    const cancelBtn = dialog.querySelector('[data-cancel-delete]');
+    const confirmBtn = dialog.querySelector('[data-confirm-delete]');
+
+    cancelBtn?.addEventListener('click', () => {
+      document.body.removeChild(dialog);
+    });
+
+    confirmBtn?.addEventListener('click', async () => {
+      try {
+        await apiClient.delete(`/projects/${projectId}`);
+        
+        // Remove from local state
+        this.projects = this.projects.filter(p => p.id !== projectId);
+        this.filterProjects();
+        this.renderProjects();
+        this.updateProjectCount();
+        
+        document.body.removeChild(dialog);
+        this.showToast('Project deleted successfully', 'success');
+        
+        logger.info('Project deleted', { projectId, name: project.name });
+        
+      } catch (error) {
+        handleError(error as Error, 'api', {
+          feature: 'project-management',
+          endpoint: `/projects/${projectId}`,
+          action: 'delete'
+        });
+        
+        this.showToast('Failed to delete project. Please try again.', 'error');
+      }
+    });
+
+    // Close on backdrop click
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        document.body.removeChild(dialog);
+      }
+    });
+  }
+
+  public refresh(): Promise<void> {
+    return this.loadProjects();
+  }
+}

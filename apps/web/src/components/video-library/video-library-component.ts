@@ -602,3 +602,117 @@ export class VideoLibraryComponent {
       </div>
     `;
   }
+  private getFilteredAndSortedVideos(): VideoDto[] {
+    let filtered = this.videos.slice();
+    
+    // Apply text filter
+    if (this.state.filterText) {
+      const query = this.state.filterText.toLowerCase();
+      filtered = filtered.filter(video => 
+        video.title.toLowerCase().includes(query) ||
+        video.id.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply processing filter (Requirement 4.10)
+    if (this.state.showProcessingOnly) {
+      filtered = filtered.filter(video => 
+        ['uploading', 'queued', 'processing'].includes(video.status)
+      );
+    }
+    
+    // Sort videos (Requirement 4.3)
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (this.state.sortField) {
+        case 'name':
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case 'date':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case 'duration':
+          comparison = a.durationSeconds - b.durationSeconds;
+          break;
+        case 'activity':
+          // For now, use creation date as activity proxy
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+      }
+      
+      return this.state.sortDirection === 'desc' ? -comparison : comparison;
+    });
+    
+    return filtered;
+  }
+
+  private groupVideosByDate(videos: VideoDto[]): Record<string, VideoDto[]> {
+    return videos.reduce((groups, video) => {
+      const date = new Date(video.createdAt).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(video);
+      
+      return groups;
+    }, {} as Record<string, VideoDto[]>);
+  }
+
+  private updateViewToggleButtons(): void {
+    const toggles = this.element?.querySelectorAll('.view-toggle');
+    toggles?.forEach(toggle => {
+      const layout = toggle.getAttribute('data-layout');
+      toggle.classList.toggle('bg-white', layout === this.state.layout);
+      toggle.classList.toggle('dark:bg-gray-600', layout === this.state.layout);
+      toggle.classList.toggle('shadow-sm', layout === this.state.layout);
+    });
+  }
+
+  private updateSortButton(): void {
+    const sortButton = this.element?.querySelector('.sort-direction svg');
+    if (sortButton) {
+      sortButton.classList.toggle('rotate-180', this.state.sortDirection === 'desc');
+    }
+  }
+
+  private updateBulkOperationsBar(): void {
+    const bulkBar = this.element?.querySelector('[data-bulk-bar]') as HTMLElement;
+    const selectedCount = this.state.selectedVideos.size;
+    
+    if (selectedCount === 0) {
+      bulkBar?.classList.add('hidden');
+    } else {
+      bulkBar?.classList.remove('hidden');
+      const countElement = bulkBar?.querySelector('.selected-count');
+      if (countElement) {
+        countElement.textContent = `${selectedCount} video${selectedCount !== 1 ? 's' : ''} selected`;
+      }
+    }
+  }
+
+  private updateVideoSelectionUI(): void {
+    this.element?.querySelectorAll('.video-select').forEach(checkbox => {
+      const videoItem = (checkbox as HTMLElement).closest('.video-item');
+      const videoId = videoItem?.getAttribute('data-video-id');
+      if (videoId) {
+        (checkbox as HTMLInputElement).checked = this.state.selectedVideos.has(videoId);
+      }
+    });
+    
+    // Update select all checkbox
+    const selectAllCheckbox = this.element?.querySelector('.select-all') as HTMLInputElement;
+    if (selectAllCheckbox) {
+      const filteredVideos = this.getFilteredAndSortedVideos();
+      const allSelected = filteredVideos.length > 0 && 
+                         filteredVideos.every(v => this.state.selectedVideos.has(v.id));
+      selectAllCheckbox.checked = allSelected;
+      selectAllCheckbox.indeterminate = this.state.selectedVideos.size > 0 && !allSelected;
+    }
+  }
