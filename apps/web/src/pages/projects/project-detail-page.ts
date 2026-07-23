@@ -483,7 +483,7 @@ export class ProjectDetailPage {
     contentGrid.innerHTML = [...folderItems, ...videoItems].join('');
 
     // Attach content event listeners
-    this.attachContentEvents(contentGrid);
+    this.attachContentEvents(contentGrid as HTMLElement);
   }
 
   private renderFolderCard(folder: FolderDto): string {
