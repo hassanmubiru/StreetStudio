@@ -28,14 +28,23 @@ export class LoginPage {
     try {
       // Load OAuth providers
       this.oauthProviders = await oauthConfigService.getEnabledProviders();
+      
+      // Load SSO providers
+      this.ssoProviders = await ssoConfigService.getEnabledProviders();
+      
+      logger.info('Auth providers loaded', {
+        oauthCount: this.oauthProviders.length,
+        ssoCount: this.ssoProviders.length,
+      });
     } catch (error) {
-      logger.warn('Failed to load OAuth providers', {
+      logger.warn('Failed to load auth providers', {
         error: (error as Error).message,
       });
     }
     
     this.render();
     this.attachEventListeners();
+    this.checkForCallbackErrors();
   }
 
   public getElement(): HTMLElement {

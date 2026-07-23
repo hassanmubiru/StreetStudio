@@ -244,7 +244,7 @@ export class DashboardPage {
             <div class="mt-4 sm:mt-0">
               <button 
                 id="refresh-dashboard" 
-                class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 ${this.isLoading ? 'disabled' : ''}
               >
                 <svg class="w-4 h-4 mr-2 ${this.isLoading ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -513,12 +513,22 @@ export class DashboardPage {
    * Setup event listeners
    */
   private setupEventListeners(): void {
-    // Listen for refresh button clicks
-    document.addEventListener('click', async (event) => {
+    // Listen for refresh button clicks using event delegation
+    this.element.addEventListener('click', async (event) => {
       const target = event.target as HTMLElement;
       if (target.id === 'refresh-dashboard' || target.closest('#refresh-dashboard')) {
         event.preventDefault();
         await this.refresh();
+      }
+    });
+
+    // Listen for retry button clicks 
+    this.element.addEventListener('click', async (event) => {
+      const target = event.target as HTMLElement;
+      if (target.id === 'retry-load' || target.closest('#retry-load')) {
+        event.preventDefault();
+        await this.loadDashboardData();
+        this.render();
       }
     });
 
