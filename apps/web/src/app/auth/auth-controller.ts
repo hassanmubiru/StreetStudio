@@ -1224,7 +1224,7 @@ export class AuthController {
    */
   public async getStoredCallbackError(): Promise<{ error: string; provider?: string } | null> {
     try {
-      const { OAuthCallbackHandler } = await import('../services/oauth-callback-handler.js');
+      const { OAuthCallbackHandler } = await import('../../services/oauth-callback-handler.js');
       return OAuthCallbackHandler.getAndClearStoredError();
     } catch (error) {
       logger.warn('Failed to get stored callback error', {

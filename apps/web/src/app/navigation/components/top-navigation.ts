@@ -44,6 +44,27 @@ export class TopNavigation {
   }
 
   /**
+   * Update notification and upload badges
+   */
+  public updateBadges(badges: { notifications?: number; uploads?: number }): void {
+    // Update notification badge
+    if (badges.notifications !== undefined) {
+      const notificationButton = this.container.querySelector('#notifications-button');
+      const indicator = notificationButton?.querySelector('.absolute');
+      if (indicator) {
+        if (badges.notifications > 0) {
+          indicator.classList.remove('hidden');
+          indicator.textContent = badges.notifications > 99 ? '99+' : badges.notifications.toString();
+        } else {
+          indicator.classList.add('hidden');
+        }
+      }
+    }
+    
+    // Could add upload progress indicator here if needed
+  }
+
+  /**
    * Clean up resources
    */
   public destroy(): void {

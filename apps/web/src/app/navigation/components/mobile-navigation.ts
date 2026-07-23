@@ -65,6 +65,22 @@ export class MobileNavigation {
   }
 
   /**
+   * Update navigation items
+   */
+  public updateItems(items: any[]): void {
+    // Update navigation items and re-render
+    this.render();
+  }
+
+  /**
+   * Update notification and upload badges
+   */
+  public updateBadges(badges: { notifications?: number; uploads?: number }): void {
+    // Update badges in mobile navigation
+    // This would update the mobile navigation UI with notification counts
+  }
+
+  /**
    * Clean up resources
    */
   public destroy(): void {

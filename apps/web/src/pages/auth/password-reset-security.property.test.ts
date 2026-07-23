@@ -88,22 +88,28 @@ describe('Password Reset Security Property Tests', () => {
             mockAuthController.requestPasswordReset.mockRejectedValueOnce(new Error('API Error'));
           }
 
-          // Get form elements
-          const form = pageElement.querySelector('[data-forgot-password-form]') as HTMLFormElement;
-          const emailField = pageElement.querySelector('#email') as HTMLInputElement;
-          const submitButton = pageElement.querySelector('[data-submit-button]') as HTMLButtonElement;
+          // Get form elements with more detailed debugging
+          const allForms = pageElement.querySelectorAll('[data-forgot-password-form]');
+          const allEmails = pageElement.querySelectorAll('#email');
+          const allSubmits = pageElement.querySelectorAll('[data-submit-button]');
+          
+          const form = allForms[0] as HTMLFormElement;
+          const emailField = allEmails[0] as HTMLInputElement; 
+          const submitButton = allSubmits[0] as HTMLButtonElement;
 
           if (!form || !emailField || !submitButton) {
             const debugInfo = {
               pageElement: !!pageElement,
               pageElementInDOM: document.body.contains(pageElement),
-              formSelector: '[data-forgot-password-form]',
-              formElements: pageElement.querySelectorAll('[data-forgot-password-form]').length,
-              emailSelector: '#email', 
-              emailElements: pageElement.querySelectorAll('#email').length,
-              submitSelector: '[data-submit-button]',
-              submitElements: pageElement.querySelectorAll('[data-submit-button]').length,
-              pageHTML: pageElement.innerHTML.substring(0, 500),
+              allFormsLength: allForms.length,
+              allEmailsLength: allEmails.length,
+              allSubmitsLength: allSubmits.length,
+              formElement: !!form,
+              emailElement: !!emailField,
+              submitElement: !!submitButton,
+              formTagName: form?.tagName,
+              emailTagName: emailField?.tagName,
+              submitTagName: submitButton?.tagName,
               emailInput: emailInput.trim()
             };
             throw new Error(`Required form elements not found. Debug: ${JSON.stringify(debugInfo, null, 2)}`);

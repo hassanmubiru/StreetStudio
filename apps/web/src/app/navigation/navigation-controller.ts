@@ -336,6 +336,268 @@ export class NavigationController {
   }
 
   /**
+   * Toggle sidebar collapsed state
+   */
+  public toggleSidebar(): void {
+    const collapsed = !this.state.sidebarCollapsed;
+    this.updateState({ sidebarCollapsed: collapsed });
+    this.sidebarNavigation?.setCollapsed(collapsed);
+    this.saveSidebarState(collapsed);
+    
+    // Update workspace store
+    try {
+      this.workspaceStore?.setSidebarCollapsed(collapsed);
+    } catch (error) {
+      logger.warn('Failed to update workspace store sidebar state', { error });
+    }
+  }
+
+  /**
+   * Toggle mobile menu
+   */
+  public toggleMobileMenu(): void {
+    const isOpen = !this.state.mobileMenuOpen;
+    this.updateState({ mobileMenuOpen: isOpen });
+    this.mobileNavigation?.setOpen(isOpen);
+  }
+
+  /**
+   * Close mobile menu
+   */
+  public closeMobileMenu(): void {
+    if (this.state.mobileMenuOpen) {
+      this.updateState({ mobileMenuOpen: false });
+      this.mobileNavigation?.setOpen(false);
+    }
+  }
+
+  /**
+   * Handle navigation to new route
+   */
+  private handleNavigation(href: string): void {
+    // Close mobile menu if open
+    this.closeMobileMenu();
+    
+    // Update workspace store with navigation
+    try {
+      this.workspaceStore?.navigateToRoute(href);
+    } catch (error) {
+      logger.warn('Failed to update workspace store navigation', { error });
+    }
+    
+    // Update current route
+    this.updateState({ currentRoute: href });
+    
+    // Let router handle the actual navigation
+    const event = new CustomEvent('navigate', { detail: { href } });
+    window.dispatchEvent(event);
+  }
+
+  /**
+   * Handle workspace change
+   */
+  private handleWorkspaceChange(workspace: any): void {
+    logger.info('Workspace changed', { workspaceId: workspace.id, workspaceName: workspace.name });
+    
+    // Update workspace in workspace store
+    try {
+      this.workspaceStore?.setCurrentWorkspace(workspace);
+    } catch (error) {
+      logger.warn('Failed to update workspace store', { error });
+    }
+    
+    // Update navigation context
+    this.updateWorkspaceContext();
+  }
+
+  /**
+   * Handle project change
+   */
+  private handleProjectChange(project: any): void {
+    if (project) {
+      logger.info('Project changed', { projectId: project.id, projectName: project.name });
+    } else {
+      logger.info('Project cleared');
+    }
+    
+    // Update navigation context
+    this.updateWorkspaceContext();
+  }
+
+  /**
+   * Handle folder change
+   */
+  private handleFolderChange(folder: any): void {
+    if (folder) {
+      logger.info('Folder changed', { folderId: folder.id, folderName: folder.name });
+    } else {
+      logger.info('Folder cleared');
+    }
+    
+    // Update navigation context
+    this.updateWorkspaceContext();
+  }
+
+  /**
+   * Handle breadcrumb updates from workspace context
+   */
+  private handleBreadcrumbUpdate(breadcrumbs: BreadcrumbItem[]): void {
+    this.setBreadcrumbs(breadcrumbs);
+  }
+
+  /**
+   * Notify all listeners of state changes
+   */
+  private notifyStateChange(): void {
+    for (const listener of this.stateChangeListeners) {
+      try {
+        listener(this.state);
+      } catch (error) {
+        console.error('Navigation state change listener error:', error);
+      }
+    }
+  }
+
+  /**
+   * Persist important navigation state
+   */
+  private persistState(): void {
+    try {
+      const stateToSave = {
+        sidebarCollapsed: this.state.sidebarCollapsed,
+      };
+      localStorage.setItem('streetstudio_navigation_state', JSON.stringify(stateToSave));
+    } catch (error) {
+      console.warn('Failed to persist navigation state:', error);
+    }
+  }
+
+  /**
+   * Get contextual navigation items based on current state
+   */
+  private getContextualNavigationItems(): NavigationItem[] {
+    const baseItems: NavigationItem[] = [
+      {
+        id: 'dashboard',
+        label: 'Dashboard',
+        href: '/dashboard',
+        icon: 'home',
+        active: this.state.currentRoute === '/dashboard'
+      },
+      {
+        id: 'projects',
+        label: 'Projects',
+        href: '/projects',
+        icon: 'folder',
+        active: this.state.currentRoute.startsWith('/projects')
+      },
+      {
+        id: 'recordings',
+        label: 'Recordings',
+        href: '/recordings',
+        icon: 'video',
+        active: this.state.currentRoute.startsWith('/recordings')
+      },
+      {
+        id: 'library',
+        label: 'Library',
+        href: '/library',
+        icon: 'collection',
+        active: this.state.currentRoute.startsWith('/library')
+      }
+    ];
+
+    // Add upload status if uploads are active
+    try {
+      const uploadState = this.uploadStore?.getState();
+      if (uploadState?.isUploading) {
+        baseItems.push({
+          id: 'uploads',
+          label: 'Uploads',
+          href: '/uploads',
+          icon: 'upload',
+          badge: uploadState.queuedUploads + (uploadState.isUploading ? 1 : 0)
+        });
+      }
+    } catch (error) {
+      logger.warn('Failed to get upload state for navigation', { error });
+    }
+
+    return baseItems;
+  }
+
+  /**
+   * Setup deep link support
+   */
+  public setupDeepLinkSupport(): void {
+    // Handle direct URL access with query parameters and hash
+    const urlParams = new URLSearchParams(window.location.search);
+    const hash = window.location.hash;
+    
+    if (urlParams.size > 0 || hash) {
+      const deepLinkState: Record<string, any> = {};
+      
+      // Parse query parameters
+      urlParams.forEach((value, key) => {
+        deepLinkState[key] = value;
+      });
+      
+      // Parse hash if present
+      if (hash) {
+        deepLinkState.hash = hash.substring(1);
+      }
+      
+      // Store deep link state
+      try {
+        this.workspaceStore?.setDeepLinkState(window.location.pathname, deepLinkState);
+      } catch (error) {
+        logger.warn('Failed to set deep link state', { error });
+      }
+    }
+  }
+
+  /**
+   * Navigate with state preservation
+   */
+  public navigateWithState(path: string, state?: Record<string, any>): void {
+    // Update workspace store with state
+    try {
+      if (state) {
+        this.workspaceStore?.setDeepLinkState(path, state);
+      }
+      this.workspaceStore?.navigateToRoute(path, state);
+    } catch (error) {
+      logger.warn('Failed to navigate with state', { error });
+    }
+    
+    // Trigger navigation
+    this.handleNavigation(path);
+  }
+
+  /**
+   * Save sidebar state to storage
+   */
+  private saveSidebarState(collapsed: boolean): void {
+    try {
+      localStorage.setItem('streetstudio_sidebar_collapsed', JSON.stringify(collapsed));
+    } catch (error) {
+      console.warn('Failed to save sidebar state:', error);
+    }
+  }
+
+  /**
+   * Get saved sidebar state from storage
+   */
+  private getSavedSidebarState(): boolean {
+    try {
+      const stored = localStorage.getItem('streetstudio_sidebar_collapsed');
+      return stored ? JSON.parse(stored) : false;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Clean up resources
    */
   public destroy(): void {
