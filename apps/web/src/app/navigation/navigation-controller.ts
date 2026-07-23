@@ -334,6 +334,11 @@ export class NavigationController {
     // Update navigation elements after organization change
     this.updateNavigationItems(this.getContextualNavigationItems());
   }
+
+  /**
+   * Clean up resources
+   */
+  public destroy(): void {
     this.topNavigation?.destroy();
     this.sidebarNavigation?.destroy();
     this.mobileNavigation?.destroy();
