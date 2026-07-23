@@ -15,6 +15,8 @@ export class LoginPage {
   private element: HTMLElement;
   private authController: AuthController;
   private oauthProviders: OAuthProvider[] = [];
+  private ssoProviders: SSOProvider[] = [];
+  private emailInput?: HTMLInputElement;
 
   constructor(authController: AuthController) {
     this.authController = authController;

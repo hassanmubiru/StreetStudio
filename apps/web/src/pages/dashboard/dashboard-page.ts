@@ -342,45 +342,53 @@ export class DashboardPage {
     const quickActionsContainer = document.getElementById('quick-actions-container');
     if (quickActionsContainer) {
       const quickActions = new QuickActions();
+      quickActionsContainer.innerHTML = '';
       quickActionsContainer.appendChild(quickActions.getElement());
     }
 
-    // Render project cards
+    // Render project cards or empty state
     const projectsContainer = document.getElementById('projects-container');
-    if (projectsContainer && this.data.recentProjects.length > 0) {
-      const projectsGrid = document.createElement('div');
-      projectsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
-      
-      this.data.recentProjects.forEach(project => {
-        const projectCard = new ProjectCard(project);
-        projectsGrid.appendChild(projectCard.getElement());
-      });
-      
-      projectsContainer.appendChild(projectsGrid);
-    } else if (projectsContainer) {
-      this.renderEmptyState(projectsContainer, 'No recent projects', 'Create your first project to get started');
+    if (projectsContainer) {
+      if (this.data.recentProjects.length > 0) {
+        const projectsGrid = document.createElement('div');
+        projectsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
+        
+        this.data.recentProjects.forEach(project => {
+          const projectCard = new ProjectCard(project);
+          projectsGrid.appendChild(projectCard.getElement());
+        });
+        
+        projectsContainer.innerHTML = '';
+        projectsContainer.appendChild(projectsGrid);
+      } else {
+        this.renderEmptyState(projectsContainer, 'No recent projects', 'Create your first project to get started');
+      }
     }
 
-    // Render video cards  
+    // Render video cards or empty state
     const videosContainer = document.getElementById('videos-container');
-    if (videosContainer && this.data.recentVideos.length > 0) {
-      const videosGrid = document.createElement('div');
-      videosGrid.className = 'space-y-4';
-      
-      this.data.recentVideos.forEach(video => {
-        const videoCard = new VideoCard(video);
-        videosGrid.appendChild(videoCard.getElement());
-      });
-      
-      videosContainer.appendChild(videosGrid);
-    } else if (videosContainer) {
-      this.renderEmptyState(videosContainer, 'No recent videos', 'Record your first video to see it here');
+    if (videosContainer) {
+      if (this.data.recentVideos.length > 0) {
+        const videosGrid = document.createElement('div');
+        videosGrid.className = 'space-y-4';
+        
+        this.data.recentVideos.forEach(video => {
+          const videoCard = new VideoCard(video);
+          videosGrid.appendChild(videoCard.getElement());
+        });
+        
+        videosContainer.innerHTML = '';
+        videosContainer.appendChild(videosGrid);
+      } else {
+        this.renderEmptyState(videosContainer, 'No recent videos', 'Record your first video to see it here');
+      }
     }
 
     // Render stats widget
     const statsContainer = document.getElementById('stats-container');
     if (statsContainer) {
       const statsWidget = new DashboardStatsWidget(this.data.weeklyStats);
+      statsContainer.innerHTML = '';
       statsContainer.appendChild(statsWidget.getElement());
     }
 
@@ -388,6 +396,7 @@ export class DashboardPage {
     const activityContainer = document.getElementById('activity-feed-container');
     if (activityContainer) {
       const activityFeed = new ActivityFeed(this.data.notifications);
+      activityContainer.innerHTML = '';
       activityContainer.appendChild(activityFeed.getElement());
     }
   }
