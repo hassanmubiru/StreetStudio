@@ -1,15 +1,35 @@
 /**
- * Projects Page Component - Placeholder
+ * Projects Page Component
+ * 
+ * Provides comprehensive project management with searchable and filterable grid layout.
+ * Includes project creation, member invitation, and organization capabilities.
  */
-export class ProjectsPage {
-  public getElement(): HTMLElement {
-    const container = document.createElement('div');
-    container.className = 'p-8';
-    container.setAttribute('data-main-content', '');
-    container.innerHTML = `
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Projects</h1>
-      <p class="text-gray-600 dark:text-gray-400">Projects interface coming soon.</p>
-    `;
-    return container;
-  }
+
+import { apiClient } from '../../services/api.js';
+import type { ProjectDto, MemberDto, OrganizationDto } from '@streetstudio/shared';
+import { handleError } from '../../app/error-handler.js';
+import { logger } from '../../app/client-logger.js';
+
+export interface ProjectWithMembers extends ProjectDto {
+  memberCount: number;
+  lastActivity: string;
+  thumbnailUrl?: string;
 }
+
+export class ProjectsPage {
+  private container: HTMLElement | null = null;
+  private projects: ProjectWithMembers[] = [];
+  private filteredProjects: ProjectWithMembers[] = [];
+  private searchQuery = '';
+  private sortBy: 'name' | 'created' | 'activity' | 'members' = 'activity';
+  private sortOrder: 'asc' | 'desc' = 'desc';
+  private viewMode: 'grid' | 'list' = 'grid';
+  private isLoading = false;
+
+  public async getElement(): Promise<HTMLElement> {
+    if (!this.container) {
+      this.container = this.createContainer();
+      await this.loadProjects();
+    }
+    return this.container;
+  }
