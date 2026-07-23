@@ -147,8 +147,10 @@ describe('QuickActions', () => {
   });
 
   describe('File Upload Functionality', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       quickActions = new QuickActions();
+      // Allow for async rendering to complete
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
 
     it('should create and trigger file input on upload video click', () => {
