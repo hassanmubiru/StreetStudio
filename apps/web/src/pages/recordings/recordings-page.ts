@@ -1,9 +1,4 @@
-import { Recorder } from '@streetstudio/recorder';
-import { Button } from '@streetstudio/ui';
-import { RecordingInterface } from './components/recording-interface.js';
-import { ScreenSelector } from './components/screen-selector.js';
-import { RecordingControls } from './components/recording-controls.js';
-import { CursorSettings } from './components/cursor-settings.js';
+import { RecordingController } from '../../components/recording/recording-controller.js';
 import { formatTime } from '../../utils/format-time.js';
 
 /**

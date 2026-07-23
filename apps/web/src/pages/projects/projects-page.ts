@@ -366,3 +366,166 @@ export class ProjectsPage {
       return 'Just now';
     }
   }
+  private openProject(projectId: string): void {
+    // Navigate to project detail page
+    window.history.pushState(null, '', `/projects/${projectId}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    logger.info('Navigated to project', { projectId });
+  }
+
+  private showProjectMenu(projectId: string, event: MouseEvent): void {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    // Create context menu
+    const menu = document.createElement('div');
+    menu.className = 'fixed bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 min-w-48';
+    menu.innerHTML = `
+      <button class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+              data-action="open">
+        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        </svg>
+        Open Project
+      </button>
+      <button class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+              data-action="edit">
+        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Edit Details
+      </button>
+      <button class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+              data-action="members">
+        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+        </svg>
+        Manage Members
+      </button>
+      <hr class="my-1 border-gray-200 dark:border-gray-600">
+      <button class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 flex items-center"
+              data-action="delete">
+        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        Delete Project
+      </button>
+    `;
+
+    // Position the menu
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    menu.style.left = `${rect.right - 200}px`;
+    menu.style.top = `${rect.bottom + 5}px`;
+
+    document.body.appendChild(menu);
+
+    // Handle menu actions
+    menu.addEventListener('click', (e) => {
+      const action = (e.target as HTMLElement).closest('[data-action]')?.getAttribute('data-action');
+      if (action) {
+        this.handleProjectAction(projectId, action);
+        this.closeContextMenu();
+      }
+    });
+
+    // Close menu on outside click
+    const closeHandler = (e: Event) => {
+      if (!menu.contains(e.target as Node)) {
+        this.closeContextMenu();
+      }
+    };
+
+    setTimeout(() => {
+      document.addEventListener('click', closeHandler);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          this.closeContextMenu();
+        }
+      });
+    }, 10);
+
+    // Store cleanup function
+    menu.dataset.closeHandler = 'true';
+  }
+
+  private closeContextMenu(): void {
+    const menu = document.querySelector('.fixed.bg-white.dark\\:bg-gray-800');
+    if (menu) {
+      document.removeEventListener('click', this.closeContextMenu);
+      menu.remove();
+    }
+  }
+
+  private handleProjectAction(projectId: string, action: string): void {
+    switch (action) {
+      case 'open':
+        this.openProject(projectId);
+        break;
+      case 'edit':
+        this.showEditProjectDialog(projectId);
+        break;
+      case 'members':
+        this.showMemberManagementDialog(projectId);
+        break;
+      case 'delete':
+        this.showDeleteConfirmation(projectId);
+        break;
+    }
+  }
+
+  private showLoading(): void {
+    if (this.container) {
+      const loadingEl = this.container.querySelector('[data-loading]');
+      const gridEl = this.container.querySelector('[data-projects-grid]');
+      const listEl = this.container.querySelector('[data-projects-list]');
+      const emptyEl = this.container.querySelector('[data-empty-state]');
+
+      loadingEl?.classList.remove('hidden');
+      gridEl?.classList.add('hidden');
+      listEl?.classList.add('hidden');
+      emptyEl?.classList.add('hidden');
+    }
+  }
+
+  private hideLoading(): void {
+    if (this.container) {
+      const loadingEl = this.container.querySelector('[data-loading]');
+      loadingEl?.classList.add('hidden');
+    }
+  }
+
+  private showErrorState(): void {
+    if (this.container) {
+      const mainContent = this.container.querySelector('main .p-6');
+      if (mainContent) {
+        mainContent.innerHTML = `
+          <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Unable to load projects</h3>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              There was an error loading your projects. Please try again.
+            </p>
+            <button 
+              class="mt-4 btn btn-primary"
+              onclick="window.location.reload()"
+            >
+              Retry
+            </button>
+          </div>
+        `;
+      }
+    }
+  }
+
+  private updateProjectCount(): void {
+    if (this.container) {
+      const countEl = this.container.querySelector('[data-projects-count]');
+      if (countEl) {
+        const count = this.filteredProjects.length;
+        countEl.textContent = `${count} project${count !== 1 ? 's' : ''}`;
+      }
+    }
+  }

@@ -289,3 +289,115 @@ export class VideoLibraryComponent {
       }
     });
   }
+  private changeViewLayout(layout: ViewLayout): void {
+    this.state.layout = layout;
+    this.saveUserPreference('viewLayout', layout);
+    this.updateViewToggleButtons();
+    this.renderVideoContent();
+  }
+
+  private toggleSortDirection(): void {
+    this.state.sortDirection = this.state.sortDirection === 'asc' ? 'desc' : 'asc';
+    this.updateSortButton();
+    this.renderVideoContent();
+  }
+
+  private changeSortField(field: SortField): void {
+    this.state.sortField = field;
+    this.renderVideoContent();
+  }
+
+  private handleSearch(query: string): void {
+    this.state.filterText = query.trim();
+    this.renderVideoContent();
+  }
+
+  private toggleProcessingFilter(enabled: boolean): void {
+    this.state.showProcessingOnly = enabled;
+    this.renderVideoContent();
+  }
+
+  private toggleVideoSelection(videoId: string): void {
+    if (this.state.selectedVideos.has(videoId)) {
+      this.state.selectedVideos.delete(videoId);
+    } else {
+      this.state.selectedVideos.add(videoId);
+    }
+    
+    this.updateBulkOperationsBar();
+    this.updateVideoSelectionUI();
+  }
+
+  private toggleSelectAll(): void {
+    const filteredVideos = this.getFilteredAndSortedVideos();
+    const allSelected = filteredVideos.every(v => this.state.selectedVideos.has(v.id));
+    
+    if (allSelected) {
+      // Clear all selections
+      filteredVideos.forEach(v => this.state.selectedVideos.delete(v.id));
+    } else {
+      // Select all filtered videos
+      filteredVideos.forEach(v => this.state.selectedVideos.add(v.id));
+    }
+    
+    this.updateBulkOperationsBar();
+    this.updateVideoSelectionUI();
+  }
+
+  private clearSelection(): void {
+    this.state.selectedVideos.clear();
+    this.updateBulkOperationsBar();
+    this.updateVideoSelectionUI();
+  }
+
+  private handleBulkAction(action: string): void {
+    const selectedVideoIds = Array.from(this.state.selectedVideos);
+    
+    if (selectedVideoIds.length === 0) {
+      return;
+    }
+
+    // Confirmation dialog for destructive actions
+    if (action === 'delete') {
+      const confirmed = confirm(`Are you sure you want to delete ${selectedVideoIds.length} video(s)?`);
+      if (!confirmed) return;
+    }
+
+    this.bulkController.performAction(action, selectedVideoIds)
+      .then(() => {
+        this.clearSelection();
+        this.loadVideosForProject(); // Refresh the list
+      })
+      .catch(error => {
+        console.error(`Bulk action ${action} failed:`, error);
+        // Show error notification
+      });
+  }
+
+  private renderVideoContent(): void {
+    const contentArea = this.element?.querySelector('[data-video-content]') as HTMLElement;
+    if (!contentArea) return;
+
+    const filteredVideos = this.getFilteredAndSortedVideos();
+    
+    // Clear current content
+    contentArea.innerHTML = '';
+    
+    if (filteredVideos.length === 0) {
+      this.renderEmptyState(contentArea);
+      return;
+    }
+    
+    // Render based on current layout (Requirement 4.3)
+    switch (this.state.layout) {
+      case 'list':
+        this.renderListView(contentArea, filteredVideos);
+        break;
+      case 'grid':
+        this.renderGridView(contentArea, filteredVideos);
+        break;
+      case 'timeline':
+        this.renderTimelineView(contentArea, filteredVideos);
+        break;
+    }
+  }
