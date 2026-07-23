@@ -239,11 +239,19 @@ export class ForgotPasswordPage {
     const loadingSpinner = this.element.querySelector('[data-loading-spinner]') as HTMLElement;
 
     if (loading) {
-      submitButton.disabled = true;
-      loadingSpinner.classList.remove('hidden');
+      if (submitButton) {
+        submitButton.disabled = true;
+      }
+      if (loadingSpinner) {
+        loadingSpinner.classList.remove('hidden');
+      }
     } else {
-      submitButton.disabled = false;
-      loadingSpinner.classList.add('hidden');
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+      if (loadingSpinner) {
+        loadingSpinner.classList.add('hidden');
+      }
     }
   }
 

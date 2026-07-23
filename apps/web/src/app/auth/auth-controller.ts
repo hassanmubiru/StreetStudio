@@ -1256,39 +1256,4 @@ export class AuthController {
     // Proceed with regular login
     return this.login(email, password);
   }
-
-  /**
-   * Utility method for delays
-   */
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  /**
-   * Destroy the controller and clean up resources
-   */
-  public destroy(): void {
-    if (this.refreshTimer) {
-      clearTimeout(this.refreshTimer);
-    }
-    
-    if (this.sessionTimeoutTimer) {
-      clearTimeout(this.sessionTimeoutTimer);
-    }
-    
-    if (this.activityTimer) {
-      clearTimeout(this.activityTimer);
-    }
-    
-    this.listeners.clear();
-    this.memoryTokenStorage.clear();
-    
-    // Remove event listeners
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    events.forEach(event => {
-      document.removeEventListener(event, this.resetSessionTimeout);
-    });
-    
-    logger.info('AuthController destroyed');
-  }
 }
