@@ -42,6 +42,7 @@ export class DashboardPage {
   constructor(session: DashboardSession) {
     this.session = session;
     this.element = document.createElement('div');
+    this.element.className = 'flex-1 relative overflow-hidden';
     this.initialize();
   }
 

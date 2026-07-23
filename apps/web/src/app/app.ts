@@ -527,6 +527,16 @@ export class StreetStudioApp {
       component: 'reset-password'
     });
     
+    // OAuth/SSO callback routes
+    this.router.addRoute('/auth/oauth/callback', () => this.renderOAuthCallback(), {
+      title: 'Completing Sign In - StreetStudio',
+      component: 'oauth-callback'
+    });
+    this.router.addRoute('/auth/sso/callback', () => this.renderSSOCallback(), {
+      title: 'Completing SSO Sign In - StreetStudio',
+      component: 'sso-callback'
+    });
+    
     // Protected routes (require authentication)
     this.router.addProtectedRoute('/dashboard', () => this.renderDashboard(), {
       title: 'Dashboard - StreetStudio',
@@ -643,6 +653,18 @@ export class StreetStudioApp {
   private async renderResetPassword(): Promise<void> {
     const { ResetPasswordPage } = await import('../pages/auth/reset-password-page.js');
     const page = new ResetPasswordPage();
+    this.layoutController.renderAuthPage(page.getElement());
+  }
+
+  private async renderOAuthCallback(): Promise<void> {
+    const { OAuthCallbackPage } = await import('../pages/auth/oauth-callback-page.js');
+    const page = new OAuthCallbackPage();
+    this.layoutController.renderAuthPage(page.getElement());
+  }
+
+  private async renderSSOCallback(): Promise<void> {
+    const { SSOCallbackPage } = await import('../pages/auth/sso-callback-page.js');
+    const page = new SSOCallbackPage();
     this.layoutController.renderAuthPage(page.getElement());
   }
 
