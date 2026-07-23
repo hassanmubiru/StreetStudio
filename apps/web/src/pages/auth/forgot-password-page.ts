@@ -181,7 +181,8 @@ export class ForgotPasswordPage {
       submitButton.textContent = 'Email Sent';
       submitButton.disabled = true;
     } finally {
-      this.showLoading(false);
+      // Don't re-enable the button here - it should stay disabled after successful submission
+      // this.showLoading(false);
     }
   }
 
