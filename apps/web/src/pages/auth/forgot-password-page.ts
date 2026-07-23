@@ -11,6 +11,7 @@ import { logger } from '../../app/client-logger.js';
 export class ForgotPasswordPage {
   private element: HTMLElement;
   private authController?: AuthController;
+  private isSubmitting = false;
 
   constructor(authController?: AuthController) {
     this.authController = authController;
@@ -139,11 +140,18 @@ export class ForgotPasswordPage {
       return;
     }
 
+    // Prevent multiple simultaneous submissions
+    if (this.isSubmitting) {
+      return;
+    }
+    this.isSubmitting = true;
+
     const form = this.element.querySelector('[data-forgot-password-form]') as HTMLFormElement;
     const emailInput = this.element.querySelector('#email') as HTMLInputElement;
     
     if (!form || !emailInput) {
       console.error('Form or email input not found');
+      this.isSubmitting = false;
       return;
     }
     
@@ -152,6 +160,7 @@ export class ForgotPasswordPage {
 
     // Validation
     if (!this.validateEmail(emailInput)) {
+      this.isSubmitting = false;
       return;
     }
 
@@ -194,6 +203,7 @@ export class ForgotPasswordPage {
     } finally {
       // Don't re-enable the button here - it should stay disabled after successful submission
       // this.showLoading(false);
+      this.isSubmitting = false;
     }
   }
 
