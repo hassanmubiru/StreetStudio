@@ -1236,7 +1236,7 @@ export class AuthController {
    */
   public async getSSOProviderForDomain(email: string): Promise<any | null> {
     try {
-      const { ssoConfigService } = await import('../services/sso-config.js');
+      const { ssoConfigService } = await import('../../services/sso-config.js');
       return await ssoConfigService.getProviderForDomain(email);
     } catch (error) {
       logger.warn('Failed to get SSO provider for domain', {
