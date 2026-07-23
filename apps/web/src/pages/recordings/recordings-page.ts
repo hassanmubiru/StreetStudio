@@ -158,8 +158,10 @@ export class RecordingsPage {
 
       // Start recording session
       const sources: CaptureSources = {
-        screen: { displayId: 'primary' },
-        audio: { system: true, microphone: false }
+        surface: 'screen',
+        camera: false,
+        microphone: false,
+        systemAudio: true
       };
       
       await this.recorder.start(sources);
