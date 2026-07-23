@@ -52,6 +52,12 @@ export class NavigationController {
   private mobileNavigation?: MobileNavigation;
   private breadcrumbNavigation?: BreadcrumbNavigation;
   private stateChangeListeners: Set<(state: NavigationState) => void> = new Set();
+  private workspaceStore: any;
+  private notificationStore: any;
+  private uploadStore: any;
+  private unsubscribeWorkspace?: () => void;
+  private unsubscribeNotifications?: () => void;
+  private unsubscribeUploads?: () => void;
 
   constructor() {
     this.state = {
@@ -61,9 +67,48 @@ export class NavigationController {
       currentRoute: window.location.pathname,
     };
 
+    // Initialize stores
+    this.initializeStores();
+
     // Listen for route changes
     this.setupRouteListener();
     this.setupResizeListener();
+  }
+
+  /**
+   * Initialize store connections
+   */
+  private initializeStores(): void {
+    try {
+      this.workspaceStore = getWorkspaceStore();
+      this.notificationStore = getNotificationStore();
+      this.uploadStore = getUploadStore();
+
+      // Subscribe to workspace changes for breadcrumbs and state
+      this.unsubscribeWorkspace = this.workspaceStore.subscribe((workspaceState: WorkspaceState) => {
+        this.updateState({
+          breadcrumbs: workspaceState.breadcrumbs,
+          sidebarCollapsed: workspaceState.sidebarCollapsed
+        });
+      });
+
+      // Subscribe to notification changes for badges
+      this.unsubscribeNotifications = this.notificationStore.subscribe((notificationState: any) => {
+        this.updateNavigationBadges({
+          notifications: notificationState.unreadCount
+        });
+      });
+
+      // Subscribe to upload changes for progress indicators
+      this.unsubscribeUploads = this.uploadStore.subscribe((uploadState: any) => {
+        this.updateUploadProgress(uploadState);
+      });
+
+      logger.debug('Navigation stores initialized');
+    } catch (error) {
+      logger.warn('Failed to initialize navigation stores', { error });
+      // Continue without store integration
+    }
   }
 
   /**
@@ -210,6 +255,8 @@ export class NavigationController {
    * Trigger organization change
    */
   public changeOrganization(organizationId: Uuid): void {
+    logger.info('Organization change triggered', { organizationId });
+    
     for (const handler of this.orgChangeHandlers) {
       try {
         handler(organizationId);
@@ -217,6 +264,9 @@ export class NavigationController {
         console.error('Organization change handler error:', error);
       }
     }
+    
+    // Update navigation elements after organization change
+    this.updateNavigationItems(this.getContextualNavigationItems());
   }
 
   /**
@@ -227,6 +277,13 @@ export class NavigationController {
     this.updateState({ sidebarCollapsed: collapsed });
     this.sidebarNavigation?.setCollapsed(collapsed);
     this.saveSidebarState(collapsed);
+    
+    // Update workspace store
+    try {
+      this.workspaceStore?.setSidebarCollapsed(collapsed);
+    } catch (error) {
+      logger.warn('Failed to update workspace store sidebar state', { error });
+    }
   }
 
   /**
@@ -255,12 +312,119 @@ export class NavigationController {
     // Close mobile menu if open
     this.closeMobileMenu();
     
+    // Update workspace store with navigation
+    try {
+      this.workspaceStore?.navigateToRoute(href);
+    } catch (error) {
+      logger.warn('Failed to update workspace store navigation', { error });
+    }
+    
     // Update current route
     this.updateState({ currentRoute: href });
     
     // Let router handle the actual navigation
     const event = new CustomEvent('navigate', { detail: { href } });
     window.dispatchEvent(event);
+  }
+
+  /**
+   * Update navigation badges (notifications, uploads, etc.)
+   */
+  private updateNavigationBadges(badges: { notifications?: number; uploads?: number }): void {
+    this.topNavigation?.updateBadges?.(badges);
+    this.mobileNavigation?.updateBadges?.(badges);
+  }
+
+  /**
+   * Update upload progress in navigation
+   */
+  private updateUploadProgress(uploadState: any): void {
+    if (uploadState.isUploading) {
+      this.showUploadProgress(uploadState.totalProgress, uploadState.totalSpeed);
+    } else {
+      this.hideUploadProgress();
+    }
+  }
+
+  /**
+   * Show upload progress in navigation
+   */
+  private showUploadProgress(progress: number, speed: number): void {
+    // Add upload progress indicator to navigation
+    const indicator = document.getElementById('upload-progress-indicator');
+    if (!indicator) {
+      this.createUploadProgressIndicator();
+    }
+    
+    this.updateUploadProgressIndicator(progress, speed);
+  }
+
+  /**
+   * Hide upload progress indicator
+   */
+  private hideUploadProgress(): void {
+    const indicator = document.getElementById('upload-progress-indicator');
+    if (indicator) {
+      indicator.style.display = 'none';
+    }
+  }
+
+  /**
+   * Create upload progress indicator
+   */
+  private createUploadProgressIndicator(): void {
+    const headerContainer = document.getElementById('app-header');
+    if (!headerContainer) return;
+
+    const indicator = document.createElement('div');
+    indicator.id = 'upload-progress-indicator';
+    indicator.className = 'fixed top-16 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-200';
+    indicator.style.display = 'none';
+    
+    indicator.innerHTML = `
+      <div class="flex items-center space-x-2">
+        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-sm font-medium" id="upload-progress-text">Uploading...</span>
+      </div>
+      <div class="mt-1 bg-blue-700 rounded-full h-1">
+        <div id="upload-progress-bar" class="bg-white h-1 rounded-full transition-all duration-200" style="width: 0%"></div>
+      </div>
+    `;
+
+    document.body.appendChild(indicator);
+  }
+
+  /**
+   * Update upload progress indicator
+   */
+  private updateUploadProgressIndicator(progress: number, speed: number): void {
+    const indicator = document.getElementById('upload-progress-indicator');
+    const progressText = document.getElementById('upload-progress-text');
+    const progressBar = document.getElementById('upload-progress-bar');
+    
+    if (!indicator || !progressText || !progressBar) return;
+
+    indicator.style.display = 'block';
+    
+    const speedText = speed > 0 ? ` (${this.formatSpeed(speed)})` : '';
+    progressText.textContent = `Uploading ${Math.round(progress)}%${speedText}`;
+    progressBar.style.width = `${progress}%`;
+  }
+
+  /**
+   * Format upload speed for display
+   */
+  private formatSpeed(bytesPerSecond: number): string {
+    if (bytesPerSecond < 1024) {
+      return `${Math.round(bytesPerSecond)} B/s`;
+    } else if (bytesPerSecond < 1024 * 1024) {
+      return `${Math.round(bytesPerSecond / 1024)} KB/s`;
+    } else {
+      return `${Math.round(bytesPerSecond / (1024 * 1024) * 10) / 10} MB/s`;
+    }
   }
 
   /**
@@ -409,6 +573,108 @@ export class NavigationController {
   }
 
   /**
+   * Get contextual navigation items based on current state
+   */
+  private getContextualNavigationItems(): NavigationItem[] {
+    const baseItems: NavigationItem[] = [
+      {
+        id: 'dashboard',
+        label: 'Dashboard',
+        href: '/dashboard',
+        icon: 'home',
+        active: this.state.currentRoute === '/dashboard'
+      },
+      {
+        id: 'projects',
+        label: 'Projects',
+        href: '/projects',
+        icon: 'folder',
+        active: this.state.currentRoute.startsWith('/projects')
+      },
+      {
+        id: 'recordings',
+        label: 'Recordings',
+        href: '/recordings',
+        icon: 'video',
+        active: this.state.currentRoute.startsWith('/recordings')
+      },
+      {
+        id: 'library',
+        label: 'Library',
+        href: '/library',
+        icon: 'collection',
+        active: this.state.currentRoute.startsWith('/library')
+      }
+    ];
+
+    // Add upload status if uploads are active
+    try {
+      const uploadState = this.uploadStore?.getState();
+      if (uploadState?.isUploading) {
+        baseItems.push({
+          id: 'uploads',
+          label: 'Uploads',
+          href: '/uploads',
+          icon: 'upload',
+          badge: uploadState.queuedUploads + (uploadState.isUploading ? 1 : 0)
+        });
+      }
+    } catch (error) {
+      logger.warn('Failed to get upload state for navigation', { error });
+    }
+
+    return baseItems;
+  }
+
+  /**
+   * Setup deep link support
+   */
+  public setupDeepLinkSupport(): void {
+    // Handle direct URL access with query parameters and hash
+    const urlParams = new URLSearchParams(window.location.search);
+    const hash = window.location.hash;
+    
+    if (urlParams.size > 0 || hash) {
+      const deepLinkState: Record<string, any> = {};
+      
+      // Parse query parameters
+      urlParams.forEach((value, key) => {
+        deepLinkState[key] = value;
+      });
+      
+      // Parse hash if present
+      if (hash) {
+        deepLinkState.hash = hash.substring(1);
+      }
+      
+      // Store deep link state
+      try {
+        this.workspaceStore?.setDeepLinkState(window.location.pathname, deepLinkState);
+      } catch (error) {
+        logger.warn('Failed to set deep link state', { error });
+      }
+    }
+  }
+
+  /**
+   * Navigate with state preservation
+   */
+  public navigateWithState(path: string, state?: Record<string, any>): void {
+    // Update workspace store with state
+    try {
+      if (state) {
+        this.workspaceStore?.setDeepLinkState(path, state);
+      }
+      this.workspaceStore?.navigateToRoute(path, state);
+    } catch (error) {
+      logger.warn('Failed to navigate with state', { error });
+    }
+    
+    // Trigger navigation
+    this.handleNavigation(path);
+  }
+
+  /**
    * Clean up resources
    */
   public destroy(): void {
@@ -417,7 +683,20 @@ export class NavigationController {
     this.mobileNavigation?.destroy();
     this.breadcrumbNavigation?.destroy();
     
+    // Unsubscribe from stores
+    this.unsubscribeWorkspace?.();
+    this.unsubscribeNotifications?.();
+    this.unsubscribeUploads?.();
+    
     this.orgChangeHandlers.clear();
     this.stateChangeListeners.clear();
+    
+    // Remove upload progress indicator
+    const indicator = document.getElementById('upload-progress-indicator');
+    if (indicator?.parentNode) {
+      indicator.parentNode.removeChild(indicator);
+    }
+    
+    logger.debug('Navigation controller destroyed');
   }
 }

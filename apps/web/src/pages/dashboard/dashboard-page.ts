@@ -38,16 +38,29 @@ export class DashboardPage {
   private data: DashboardData | null = null;
   private refreshTimer: number | null = null;
   private isLoading = false;
+  private initializationPromise: Promise<void>;
 
   constructor(session: DashboardSession) {
     this.session = session;
     this.element = document.createElement('div');
     this.element.className = 'flex-1 relative overflow-hidden';
-    this.initialize();
+    
+    // Start initialization asynchronously, but don't wait for it in constructor
+    this.initializationPromise = this.initialize().catch(error => {
+      console.error('Dashboard initialization failed:', error);
+      this.showErrorState();
+    });
   }
 
   public getElement(): HTMLElement {
     return this.element;
+  }
+
+  /**
+   * Wait for initialization to complete (useful for testing)
+   */
+  public async waitForInitialization(): Promise<void> {
+    return this.initializationPromise;
   }
 
   private async initialize(): Promise<void> {
