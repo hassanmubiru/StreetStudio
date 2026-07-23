@@ -14,6 +14,8 @@ import { ErrorBoundary } from './error-boundary.js';
 import { KeyboardShortcuts } from './keyboard-shortcuts.js';
 import { apiClient } from '../services/api.js';
 import { initializeCollaborationSocket } from '../services/websocket.js';
+import { ProjectsPage } from '../pages/projects/projects-page.js';
+import { ProjectDetailPage } from '../pages/projects/project-detail-page.js';
 import type { Uuid } from '@streetstudio/shared';
 
 export interface AppConfig {
@@ -674,13 +676,15 @@ export class StreetStudioApp {
     this.layoutController.renderAppPage(page.getElement());
   }
   private async renderProjects(): Promise<void> {
-    // TODO: Create projects page
-    this.layoutController.renderAppPage(this.createPlaceholderPage('Projects'));
+    const projectsPage = new ProjectsPage();
+    const element = await projectsPage.getElement();
+    this.layoutController.renderAppPage(element);
   }
 
   private async renderProject(projectId: string): Promise<void> {
-    // TODO: Create project page
-    this.layoutController.renderAppPage(this.createPlaceholderPage(`Project ${projectId}`));
+    const projectDetailPage = new ProjectDetailPage(projectId);
+    const element = await projectDetailPage.getElement();
+    this.layoutController.renderAppPage(element);
   }
 
   private async renderRecordings(): Promise<void> {
