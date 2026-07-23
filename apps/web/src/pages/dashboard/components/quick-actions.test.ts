@@ -313,8 +313,9 @@ describe('QuickActions', () => {
   });
 
   describe('Accessibility Features', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       quickActions = new QuickActions();
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
 
     it('should have proper ARIA labels for all buttons', () => {
@@ -362,8 +363,9 @@ describe('QuickActions', () => {
   });
 
   describe('Responsive Design', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       quickActions = new QuickActions();
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
 
     it('should have responsive grid classes', () => {
@@ -395,8 +397,9 @@ describe('QuickActions', () => {
   });
 
   describe('Dark Mode Support', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       quickActions = new QuickActions();
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
 
     it('should have dark mode classes for heading', () => {
@@ -469,8 +472,9 @@ describe('QuickActions', () => {
   });
 
   describe('Notification System', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       quickActions = new QuickActions();
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
 
     it('should auto-dismiss notifications after timeout', () => {
