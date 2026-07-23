@@ -195,3 +195,157 @@ export class BulkOperationsController {
       errors
     };
   }
+  private async performDownloadOperation(videoIds: string[]): Promise<BulkOperationResult> {
+    try {
+      // For download operations, we typically create a download package
+      // and provide a download link rather than downloading individually
+      const downloadResult = await this.mockApiCall('POST', '/api/videos/bulk/download', {
+        videoIds: videoIds
+      });
+      
+      // Trigger download in browser
+      if (downloadResult.downloadUrl) {
+        const link = document.createElement('a');
+        link.href = downloadResult.downloadUrl;
+        link.download = `videos-${Date.now()}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      return {
+        success: true,
+        processedCount: videoIds.length,
+        errors: []
+      };
+    } catch (error) {
+      return {
+        success: false,
+        processedCount: 0,
+        errors: [{ 
+          videoId: 'all', 
+          message: error instanceof Error ? error.message : 'Download operation failed' 
+        }]
+      };
+    }
+  }
+
+  private async performArchiveOperation(videoIds: string[]): Promise<BulkOperationResult> {
+    const errors: BulkOperationError[] = [];
+    let processedCount = 0;
+
+    const batchSize = 20;
+    for (let i = 0; i < videoIds.length; i += batchSize) {
+      const batch = videoIds.slice(i, i + batchSize);
+      
+      try {
+        await this.mockApiCall('POST', '/api/videos/bulk/archive', {
+          videoIds: batch
+        });
+        
+        processedCount += batch.length;
+      } catch (error) {
+        batch.forEach(videoId => {
+          errors.push({
+            videoId,
+            message: error instanceof Error ? error.message : 'Archive operation failed'
+          });
+        });
+      }
+    }
+
+    return {
+      success: errors.length === 0,
+      processedCount,
+      errors
+    };
+  }
+
+  private async performPermissionOperation(
+    videoIds: string[], 
+    options: PermissionOperationOptions
+  ): Promise<BulkOperationResult> {
+    if (!options.permissions || options.permissions.length === 0) {
+      throw new Error('Permissions must be specified for permission operation');
+    }
+
+    const errors: BulkOperationError[] = [];
+    let processedCount = 0;
+
+    const batchSize = 15;
+    for (let i = 0; i < videoIds.length; i += batchSize) {
+      const batch = videoIds.slice(i, i + batchSize);
+      
+      try {
+        await this.mockApiCall('POST', '/api/videos/bulk/permissions', {
+          videoIds: batch,
+          permissions: options.permissions,
+          memberIds: options.memberIds,
+          teamIds: options.teamIds
+        });
+        
+        processedCount += batch.length;
+      } catch (error) {
+        batch.forEach(videoId => {
+          errors.push({
+            videoId,
+            message: error instanceof Error ? error.message : 'Permission update failed'
+          });
+        });
+      }
+    }
+
+    return {
+      success: errors.length === 0,
+      processedCount,
+      errors
+    };
+  }
+
+  private validateDeleteOperation(videoIds: string[]): { valid: boolean; message?: string } {
+    // Add validation logic for delete operations
+    // For example, check if any videos are currently being processed
+    return { valid: true };
+  }
+
+  private validateMoveOperation(videoIds: string[]): { valid: boolean; message?: string } {
+    // Add validation logic for move operations
+    // For example, check if user has permission to move videos
+    return { valid: true };
+  }
+
+  private async mockApiCall(method: string, url: string, data?: any): Promise<any> {
+    // Mock API call for development - replace with actual API client
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // Simulate occasional failures for testing
+        if (Math.random() < 0.1) {
+          reject(new Error('Network error'));
+        } else {
+          resolve({ 
+            success: true, 
+            downloadUrl: url.includes('download') ? `/downloads/batch-${Date.now()}.zip` : undefined 
+          });
+        }
+      }, 500 + Math.random() * 1000); // Simulate network delay
+    });
+  }
+
+  public async cancelOperation(operationId: string): Promise<void> {
+    // Implementation for canceling long-running bulk operations
+    try {
+      await this.mockApiCall('POST', `/api/operations/${operationId}/cancel`);
+    } catch (error) {
+      console.error('Failed to cancel operation:', error);
+      throw error;
+    }
+  }
+
+  public getMaxBatchSize(): number {
+    return this.maxBatchSize;
+  }
+
+  public getSupportedActions(): BulkAction[] {
+    return ['move', 'delete', 'share', 'download', 'archive', 'permissions'];
+  }
+}
