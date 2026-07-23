@@ -344,6 +344,18 @@ export class LoginPage {
       }
     });
 
+    // SSO provider handlers
+    const ssoButtons = this.element.querySelectorAll('[data-sso-provider]');
+    ssoButtons.forEach(button => {
+      button.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const providerId = (event.currentTarget as HTMLElement).getAttribute('data-sso-provider');
+        if (providerId) {
+          await this.handleSSOLogin(providerId, button as HTMLButtonElement);
+        }
+      });
+    });
+
     // OAuth provider handlers
     const oauthButtons = this.element.querySelectorAll('[data-oauth-provider]');
     oauthButtons.forEach(button => {
@@ -368,6 +380,14 @@ export class LoginPage {
       input.addEventListener('blur', () => {
         this.validateField(input);
       });
+    });
+
+    // Email input blur handler for SSO domain detection
+    emailInput.addEventListener('blur', async () => {
+      const email = emailInput.value.trim();
+      if (email && this.isValidEmail(email)) {
+        await this.checkForSSODomain(email);
+      }
     });
 
     // Handle URL parameters (e.g., from registration success)
