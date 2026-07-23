@@ -129,10 +129,45 @@ describe('Password Reset Security Property Tests', () => {
               
               // Verify button is disabled after submission (consistent behavior)
               if (!submitButton.disabled || submitButton.textContent !== 'Email Sent') {
-                throw new Error('Submit button should be disabled and show "Email Sent" after submission');
+                // Debug information for failing case
+                const buttonText = submitButton.textContent;
+                const isDisabled = submitButton.disabled;
+                const formElements = {
+                  formFound: !!form,
+                  emailFieldFound: !!emailField,
+                  submitButtonFound: !!submitButton,
+                  successMessageFound: !!successMessage,
+                  successMessageHidden: successMessage ? successMessage.classList.contains('hidden') : 'no element',
+                  emailValue: emailField ? emailField.value : 'no field',
+                  buttonDisabled: isDisabled,
+                  buttonText: buttonText,
+                  apiCallCount: mockAuthController.requestPasswordReset.mock.calls.length
+                };
+                throw new Error(`Submit button should be disabled and show "Email Sent" after submission for email "${emailInput}". Debug info: ${JSON.stringify(formElements, null, 2)}`);
               }
             } else {
-              throw new Error('Valid email format should show success message for security uniformity');
+              // Debug information for this case too
+              const successMessageExists = !!successMessage;
+              const successMessageHidden = successMessage ? successMessage.classList.contains('hidden') : 'no element';
+              const errorMessageExists = !!errorMessage;
+              const errorMessageHidden = errorMessage ? errorMessage.classList.contains('hidden') : 'no element';
+              const emailError = pageElement.querySelector('#email-error') as HTMLElement;
+              const hasEmailError = emailError && !emailError.classList.contains('hidden');
+              
+              const debugInfo = {
+                email: emailInput,
+                successMessageExists,
+                successMessageHidden,
+                errorMessageExists, 
+                errorMessageHidden,
+                hasEmailError,
+                emailErrorText: emailError ? emailError.textContent : 'no error element',
+                apiCallCount: mockAuthController.requestPasswordReset.mock.calls.length,
+                submitButtonText: submitButton.textContent,
+                submitButtonDisabled: submitButton.disabled
+              };
+              
+              throw new Error(`Valid email format should show success message for security uniformity. Email: "${emailInput}". Debug: ${JSON.stringify(debugInfo, null, 2)}`);
             }
           } else {
             // Invalid email format should show validation error (not success message)
