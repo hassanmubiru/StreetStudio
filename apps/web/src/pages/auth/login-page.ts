@@ -302,7 +302,18 @@ export class LoginPage {
       errorMessage.classList.add('hidden');
 
       try {
-        const result = await this.authController.login(email, password);
+        const result = await this.authController.loginWithEmailCheck(email, password);
+
+        if (result.shouldRedirectSSO) {
+          // Auto-redirect to SSO provider
+          logger.info('Auto-redirecting to SSO provider', {
+            provider: result.shouldRedirectSSO.id,
+            email,
+          });
+          
+          await this.handleSSOLogin(result.shouldRedirectSSO.id);
+          return;
+        }
 
         if (result.success) {
           // Login successful - router will handle redirect
