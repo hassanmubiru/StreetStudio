@@ -1163,7 +1163,7 @@ export class AuthController {
     this.setState({ isLoading: true, error: undefined });
 
     try {
-      const { ssoConfigService } = await import('../services/sso-config.js');
+      const { ssoConfigService } = await import('../../services/sso-config.js');
       await ssoConfigService.initiatSSO(providerId, returnUrl);
       
       logger.info('SSO flow initiated', { provider: providerId });
@@ -1190,7 +1190,7 @@ export class AuthController {
    */
   public async shouldAutoRedirectSSO(email: string): Promise<any | null> {
     try {
-      const { ssoConfigService } = await import('../services/sso-config.js');
+      const { ssoConfigService } = await import('../../services/sso-config.js');
       return await ssoConfigService.shouldAutoRedirect(email);
     } catch (error) {
       logger.warn('Failed to check SSO auto-redirect', {
