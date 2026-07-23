@@ -200,7 +200,11 @@ export class ForgotPasswordPage {
   /**
    * Validate email field
    */
-  private validateEmail(input: HTMLInputElement): boolean {
+  private validateEmail(input: HTMLInputElement | null): boolean {
+    if (!input) {
+      return false;
+    }
+    
     const email = input.value.trim();
     
     if (!email) {
