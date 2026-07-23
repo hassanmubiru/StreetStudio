@@ -821,3 +821,258 @@ export class ProjectDetailPage {
     window.history.pushState(null, '', `/videos/${videoId}`);
     window.dispatchEvent(new PopStateEvent('popstate'));
   }
+  private showFolderMenu(folderId: string, event: MouseEvent): void {
+    const folder = this.findFolderById(folderId);
+    if (!folder) return;
+
+    this.showContextMenu(event, [
+      {
+        label: 'Open Folder',
+        icon: 'folder-open',
+        action: () => this.navigateToFolder(folderId)
+      },
+      {
+        label: 'Rename Folder',
+        icon: 'edit',
+        action: () => this.renameFolderDialog(folderId)
+      },
+      { type: 'separator' },
+      {
+        label: 'Delete Folder',
+        icon: 'trash',
+        action: () => this.deleteFolderDialog(folderId),
+        destructive: true
+      }
+    ]);
+  }
+
+  private showVideoMenu(videoId: string, event: MouseEvent): void {
+    this.showContextMenu(event, [
+      {
+        label: 'Play Video',
+        icon: 'play',
+        action: () => this.playVideo(videoId)
+      },
+      {
+        label: 'Edit Video',
+        icon: 'edit',
+        action: () => this.editVideo(videoId)
+      },
+      {
+        label: 'Download',
+        icon: 'download',
+        action: () => this.downloadVideo(videoId)
+      },
+      { type: 'separator' },
+      {
+        label: 'Move to...',
+        icon: 'folder',
+        action: () => this.showMoveDialog(videoId)
+      },
+      { type: 'separator' },
+      {
+        label: 'Delete Video',
+        icon: 'trash',
+        action: () => this.deleteVideoDialog(videoId),
+        destructive: true
+      }
+    ]);
+  }
+
+  private showContextMenu(event: MouseEvent, items: any[]): void {
+    // Context menu implementation
+    const menu = document.createElement('div');
+    menu.className = 'fixed bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 min-w-48';
+    
+    menu.innerHTML = items.map(item => {
+      if (item.type === 'separator') {
+        return '<hr class="my-1 border-gray-200 dark:border-gray-600">';
+      }
+      
+      const textColor = item.destructive 
+        ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
+        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700';
+      
+      return `
+        <button class="w-full px-4 py-2 text-left text-sm ${textColor} flex items-center"
+                data-action="${item.label}">
+          <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${this.getIconPath(item.icon)}
+          </svg>
+          ${item.label}
+        </button>
+      `;
+    }).join('');
+
+    // Position menu
+    const rect = { left: event.clientX, top: event.clientY };
+    menu.style.left = `${rect.left}px`;
+    menu.style.top = `${rect.top}px`;
+
+    document.body.appendChild(menu);
+
+    // Handle actions
+    menu.addEventListener('click', (e) => {
+      const button = (e.target as HTMLElement).closest('[data-action]');
+      if (button) {
+        const actionLabel = button.getAttribute('data-action');
+        const item = items.find(i => i.label === actionLabel);
+        if (item && item.action) {
+          item.action();
+        }
+        this.closeContextMenu();
+      }
+    });
+
+    // Close on outside click
+    setTimeout(() => {
+      document.addEventListener('click', () => this.closeContextMenu());
+    }, 10);
+  }
+
+  private getIconPath(icon: string): string {
+    const icons = {
+      'folder-open': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"/>',
+      'edit': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>',
+      'play': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H15M9 10V9a2 2 0 012-2h2a2 2 0 012 2v1M9 10v5a2 2 0 002 2h2a2 2 0 002-2v-5"/>',
+      'download': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>',
+      'folder': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"/>',
+      'trash': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>'
+    };
+    return icons[icon as keyof typeof icons] || '';
+  }
+
+  private closeContextMenu(): void {
+    const menu = document.querySelector('.fixed.bg-white.dark\\:bg-gray-800');
+    menu?.remove();
+  }
+
+  // Utility methods
+  private updateProjectHeader(): void {
+    if (!this.container || !this.project) return;
+
+    const nameEl = this.container.querySelector('[data-project-name]');
+    const titleEl = this.container.querySelector('[data-project-title]');
+    const statsEl = this.container.querySelector('[data-project-stats]');
+
+    if (nameEl) nameEl.textContent = this.project.name;
+    if (titleEl) titleEl.textContent = this.project.name;
+    if (statsEl) {
+      // Mock stats - should come from API
+      statsEl.innerHTML = `
+        <span class="flex items-center mr-4">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"/>
+          </svg>
+          ${this.folderTree.length} folders
+        </span>
+        <span class="flex items-center">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+          12 videos
+        </span>
+      `;
+    }
+  }
+
+  private updateCurrentPath(): void {
+    if (!this.container) return;
+
+    const pathEl = this.container.querySelector('[data-current-path]');
+    if (!pathEl) return;
+
+    if (!this.currentFolderId) {
+      pathEl.innerHTML = '';
+      return;
+    }
+
+    // Build breadcrumb path
+    const path = this.buildFolderPath(this.currentFolderId);
+    pathEl.innerHTML = path.map((folder, index) => `
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <button class="text-blue-600 dark:text-blue-400 hover:underline ml-2"
+              data-navigate-folder="${folder.id}">
+        ${folder.name}
+      </button>
+    `).join('');
+
+    // Attach navigation handlers
+    pathEl.querySelectorAll('[data-navigate-folder]').forEach(button => {
+      button.addEventListener('click', () => {
+        const folderId = button.getAttribute('data-navigate-folder');
+        this.navigateToFolder(folderId);
+      });
+    });
+  }
+
+  private buildFolderPath(folderId: string): FolderItem[] {
+    const path: FolderItem[] = [];
+    let current = this.findFolderById(folderId);
+    
+    while (current) {
+      path.unshift(current);
+      current = current.parentFolderId ? this.findFolderById(current.parentFolderId) : null;
+    }
+    
+    return path;
+  }
+
+  private formatDuration(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    } else {
+      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+  }
+
+  private formatRelativeTime(timestamp: string): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return 'Just now';
+  }
+
+  private showFolderLoading(): void {
+    if (this.container) {
+      const loadingEl = this.container.querySelector('[data-loading-folders]');
+      const treeEl = this.container.querySelector('[data-folder-tree-content]');
+      loadingEl?.classList.remove('hidden');
+      treeEl?.classList.add('hidden');
+    }
+  }
+
+  private hideFolderLoading(): void {
+    if (this.container) {
+      const loadingEl = this.container.querySelector('[data-loading-folders]');
+      loadingEl?.classList.add('hidden');
+    }
+  }
+
+  // Placeholder methods for menu actions
+  private renameFolderDialog(folderId: string): void { console.log('Rename folder', folderId); }
+  private deleteFolderDialog(folderId: string): void { console.log('Delete folder', folderId); }
+  private editVideo(videoId: string): void { console.log('Edit video', videoId); }
+  private downloadVideo(videoId: string): void { console.log('Download video', videoId); }
+  private showMoveDialog(videoId: string): void { console.log('Move video', videoId); }
+  private deleteVideoDialog(videoId: string): void { console.log('Delete video', videoId); }
+
+  public refresh(): Promise<void> {
+    return this.loadFolderStructure();
+  }
+}
