@@ -109,3 +109,23 @@ export async function setupGlobalCSS(): Promise<void> {
   
   styleElement.textContent = globalStyles;
 }
+
+async function loadProjectStyles(): Promise<void> {
+  try {
+    const response = await fetch('/src/styles/projects.css');
+    if (response.ok) {
+      const projectCSS = await response.text();
+      
+      let projectStyleElement = document.getElementById('streetstudio-project-styles') as HTMLStyleElement;
+      if (!projectStyleElement) {
+        projectStyleElement = document.createElement('style');
+        projectStyleElement.id = 'streetstudio-project-styles';
+        document.head.appendChild(projectStyleElement);
+      }
+      
+      projectStyleElement.textContent = projectCSS;
+    }
+  } catch (error) {
+    console.warn('Could not load project styles:', error);
+  }
+}
