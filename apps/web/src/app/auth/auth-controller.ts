@@ -1144,7 +1144,7 @@ export class AuthController {
    */
   public async getOAuthProviders(): Promise<any[]> {
     try {
-      const { oauthConfigService } = await import('../services/oauth-config.js');
+      const { oauthConfigService } = await import('../../services/oauth-config.js');
       return await oauthConfigService.getEnabledProviders();
     } catch (error) {
       logger.warn('Failed to get OAuth providers', {
