@@ -51,6 +51,10 @@ export class DashboardPage {
   }
 
   private async initialize(): Promise<void> {
+    // Show loading state immediately
+    this.isLoading = true;
+    this.render();
+    
     await this.loadDashboardData();
     this.render();
     this.setupEventListeners();
@@ -208,9 +212,7 @@ export class DashboardPage {
    * Render the dashboard with current data
    */
   private render(): void {
-    this.element.className = 'flex-1 relative overflow-hidden';
-    
-    if (this.isLoading) {
+    if (this.isLoading && !this.data) {
       this.renderLoadingState();
       return;
     }
