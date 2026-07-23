@@ -60,7 +60,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - **Property 1: Authentication Security Consistency**
     - **Validates: Requirements 1.3**
     
-  - [ ] 2.4 Write property tests for password reset security
+  - [x] 2.4 Write property tests for password reset security
     - **Property 2: Password Reset Security Uniformity**
     - **Validates: Requirements 1.5**
 
@@ -101,7 +101,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Add breadcrumb navigation for deep application states
     - _Requirements: 2.4, 8.1_
 
-  - [ ] 3.5 Write unit tests for dashboard components
+  - [-] 3.5 Write unit tests for dashboard components
     - Test dashboard widget rendering and data loading
     - Test navigation state management and context switching
     - Test responsive layout behavior across breakpoints
