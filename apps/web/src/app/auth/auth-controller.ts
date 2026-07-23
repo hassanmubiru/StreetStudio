@@ -1065,34 +1065,6 @@ export class AuthController {
     logger.info('AuthController destroyed');
   }
 
-  /**
-   * Destroy the controller and clean up resources
-   */
-  public destroy(): void {
-    if (this.refreshTimer) {
-      clearTimeout(this.refreshTimer);
-    }
-    
-    if (this.sessionTimeoutTimer) {
-      clearTimeout(this.sessionTimeoutTimer);
-    }
-    
-    if (this.activityTimer) {
-      clearTimeout(this.activityTimer);
-    }
-    
-    this.listeners.clear();
-    this.memoryTokenStorage.clear();
-    
-    // Remove event listeners
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    events.forEach(event => {
-      document.removeEventListener(event, this.resetSessionTimeout);
-    });
-    
-    logger.info('AuthController destroyed');
-  }
-
   // OAuth Integration Methods
 
   /**
