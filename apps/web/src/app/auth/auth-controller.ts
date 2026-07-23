@@ -1206,7 +1206,7 @@ export class AuthController {
    */
   public async isSSOAvailable(): Promise<boolean> {
     try {
-      const { ssoConfigService } = await import('../services/sso-config.js');
+      const { ssoConfigService } = await import('../../services/sso-config.js');
       return await ssoConfigService.isSSOAvailable();
     } catch (error) {
       logger.warn('Failed to check SSO availability', {
