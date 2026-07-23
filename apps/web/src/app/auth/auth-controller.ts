@@ -1250,7 +1250,7 @@ export class AuthController {
   /**
    * Get stored OAuth/SSO callback error
    */
-  public getStoredCallbackError(): { error: string; provider?: string } | null {
+  public async getStoredCallbackError(): Promise<{ error: string; provider?: string } | null> {
     try {
       const { OAuthCallbackHandler } = await import('../services/oauth-callback-handler.js');
       return OAuthCallbackHandler.getAndClearStoredError();
