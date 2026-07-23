@@ -158,3 +158,104 @@ export class ProjectsPage {
     this.attachEventListeners(container);
     return container;
   }
+  private attachEventListeners(container: HTMLElement): void {
+    // Search functionality
+    const searchInput = container.querySelector('[data-search-input]') as HTMLInputElement;
+    searchInput?.addEventListener('input', (e) => {
+      this.searchQuery = (e.target as HTMLInputElement).value;
+      this.filterProjects();
+      this.renderProjects();
+    });
+
+    // Sort functionality
+    const sortSelect = container.querySelector('[data-sort-select]') as HTMLSelectElement;
+    sortSelect?.addEventListener('change', (e) => {
+      const value = (e.target as HTMLSelectElement).value;
+      const [sortBy, order] = value.split(':') as [typeof this.sortBy, typeof this.sortOrder];
+      this.sortBy = sortBy;
+      this.sortOrder = order;
+      this.filterProjects();
+      this.renderProjects();
+    });
+
+    // View mode toggles
+    const gridViewBtn = container.querySelector('[data-view-grid]');
+    const listViewBtn = container.querySelector('[data-view-list]');
+
+    gridViewBtn?.addEventListener('click', () => {
+      this.viewMode = 'grid';
+      this.updateViewMode(container);
+      this.renderProjects();
+    });
+
+    listViewBtn?.addEventListener('click', () => {
+      this.viewMode = 'list';
+      this.updateViewMode(container);
+      this.renderProjects();
+    });
+
+    // Create project buttons
+    const createButtons = container.querySelectorAll('[data-create-project], [data-create-project-empty]');
+    createButtons.forEach(button => {
+      button.addEventListener('click', () => this.showCreateProjectDialog());
+    });
+
+    // Keyboard shortcuts
+    container.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case 'k':
+            e.preventDefault();
+            searchInput?.focus();
+            break;
+          case 'n':
+            e.preventDefault();
+            this.showCreateProjectDialog();
+            break;
+        }
+      }
+    });
+  }
+
+  private updateViewMode(container: HTMLElement): void {
+    const gridBtn = container.querySelector('[data-view-grid]');
+    const listBtn = container.querySelector('[data-view-list]');
+    const gridContainer = container.querySelector('[data-projects-grid]');
+    const listContainer = container.querySelector('[data-projects-list]');
+
+    // Update button states
+    gridBtn?.classList.toggle('active', this.viewMode === 'grid');
+    listBtn?.classList.toggle('active', this.viewMode === 'list');
+
+    // Show/hide containers
+    if (this.viewMode === 'grid') {
+      gridContainer?.classList.remove('hidden');
+      listContainer?.classList.add('hidden');
+      gridContainer?.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'xl:grid-cols-4', 'gap-6');
+    } else {
+      gridContainer?.classList.add('hidden');
+      listContainer?.classList.remove('hidden');
+    }
+  }
+
+  private async loadProjects(): Promise<void> {
+    this.isLoading = true;
+    this.showLoading();
+
+    try {
+      const response = await apiClient.get('/projects');
+      this.projects = response.data.map(this.enrichProjectData);
+      this.filterProjects();
+      this.renderProjects();
+      this.updateProjectCount();
+    } catch (error) {
+      handleError(error as Error, 'api', {
+        feature: 'project-management',
+        endpoint: '/projects'
+      });
+      this.showErrorState();
+    } finally {
+      this.isLoading = false;
+      this.hideLoading();
+    }
+  }
