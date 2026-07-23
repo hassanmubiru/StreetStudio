@@ -529,3 +529,223 @@ export class ProjectsPage {
       }
     }
   }
+  private async showCreateProjectDialog(): Promise<void> {
+    const dialog = document.createElement('div');
+    dialog.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+    dialog.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Create New Project</h2>
+          <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-close-dialog>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        
+        <form class="p-6" data-create-project-form>
+          <div class="space-y-4">
+            <div>
+              <label for="project-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Project Name *
+              </label>
+              <input
+                type="text"
+                id="project-name"
+                name="name"
+                required
+                maxlength="100"
+                class="form-input w-full"
+                placeholder="Enter project name"
+                aria-describedby="name-help"
+              />
+              <p id="name-help" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Choose a descriptive name for your project
+              </p>
+            </div>
+            
+            <div>
+              <label for="project-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Description
+              </label>
+              <textarea
+                id="project-description"
+                name="description"
+                rows="3"
+                maxlength="500"
+                class="form-textarea w-full"
+                placeholder="Describe the purpose of this project (optional)"
+              ></textarea>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Privacy Settings
+              </label>
+              <div class="space-y-2">
+                <label class="flex items-center">
+                  <input type="radio" name="privacy" value="organization" class="form-radio" checked>
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    <strong>Organization</strong> - All organization members can view
+                  </span>
+                </label>
+                <label class="flex items-center">
+                  <input type="radio" name="privacy" value="private" class="form-radio">
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    <strong>Private</strong> - Only invited members can view
+                  </span>
+                </label>
+              </div>
+            </div>
+            
+            <div data-member-invitation-section>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Invite Team Members
+              </label>
+              <div class="space-y-2">
+                <div class="flex space-x-2">
+                  <input
+                    type="email"
+                    placeholder="Enter email address"
+                    class="form-input flex-1"
+                    data-member-email-input
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-secondary px-3"
+                    data-add-member
+                    aria-label="Add member"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="invited-members-list" data-invited-members>
+                  <!-- Invited members will appear here -->
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button type="button" class="btn btn-secondary" data-close-dialog>
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <span data-submit-text>Create Project</span>
+              <span data-loading-text class="hidden">Creating...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    // Handle form events
+    const form = dialog.querySelector('[data-create-project-form]') as HTMLFormElement;
+    const memberEmailInput = dialog.querySelector('[data-member-email-input]') as HTMLInputElement;
+    const addMemberBtn = dialog.querySelector('[data-add-member]');
+    const invitedMembersList = dialog.querySelector('[data-invited-members]');
+    const closeButtons = dialog.querySelectorAll('[data-close-dialog]');
+
+    let invitedEmails: string[] = [];
+
+    // Close dialog handlers
+    closeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.body.removeChild(dialog);
+      });
+    });
+
+    // Close on backdrop click
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        document.body.removeChild(dialog);
+      }
+    });
+
+    // Close on escape key
+    const escapeHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        document.body.removeChild(dialog);
+        document.removeEventListener('keydown', escapeHandler);
+      }
+    };
+    document.addEventListener('keydown', escapeHandler);
+
+    // Add member functionality
+    const addMember = () => {
+      const email = memberEmailInput.value.trim();
+      if (email && this.isValidEmail(email) && !invitedEmails.includes(email)) {
+        invitedEmails.push(email);
+        memberEmailInput.value = '';
+        this.renderInvitedMembers(invitedMembersList!, invitedEmails);
+      }
+    };
+
+    addMemberBtn?.addEventListener('click', addMember);
+    memberEmailInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addMember();
+      }
+    });
+
+    // Form submission
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await this.createProject(form, invitedEmails, dialog);
+    });
+
+    // Focus the name input
+    setTimeout(() => {
+      const nameInput = dialog.querySelector('#project-name') as HTMLInputElement;
+      nameInput?.focus();
+    }, 100);
+  }
+
+  private renderInvitedMembers(container: HTMLElement, emails: string[]): void {
+    container.innerHTML = emails.map(email => `
+      <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2">
+        <div class="flex items-center">
+          <div class="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-2">
+            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <span class="text-sm text-gray-700 dark:text-gray-300">${email}</span>
+        </div>
+        <button 
+          type="button" 
+          class="text-gray-400 hover:text-red-500 ml-2"
+          data-remove-email="${email}"
+          aria-label="Remove ${email}"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    `).join('');
+
+    // Attach remove handlers
+    container.querySelectorAll('[data-remove-email]').forEach(button => {
+      button.addEventListener('click', () => {
+        const emailToRemove = button.getAttribute('data-remove-email');
+        if (emailToRemove) {
+          const index = emails.indexOf(emailToRemove);
+          if (index > -1) {
+            emails.splice(index, 1);
+            this.renderInvitedMembers(container, emails);
+          }
+        }
+      });
+    });
+  }
+
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }

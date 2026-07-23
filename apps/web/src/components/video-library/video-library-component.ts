@@ -515,3 +515,90 @@ export class VideoLibraryComponent {
     
     container.appendChild(gridContainer);
   }
+  private renderTimelineView(container: HTMLElement, videos: VideoDto[]): void {
+    const timelineContainer = document.createElement('div');
+    timelineContainer.className = 'timeline-view p-4';
+    
+    // Group videos by date
+    const groupedVideos = this.groupVideosByDate(videos);
+    
+    Object.entries(groupedVideos).forEach(([date, dayVideos]) => {
+      const dateGroup = document.createElement('div');
+      dateGroup.className = 'mb-8';
+      
+      const dateHeader = document.createElement('div');
+      dateHeader.className = 'flex items-center gap-4 mb-4';
+      dateHeader.innerHTML = `
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${date}</h3>
+        <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
+        <span class="text-sm text-gray-500 dark:text-gray-400">${dayVideos.length} videos</span>
+      `;
+      
+      const videosList = document.createElement('div');
+      videosList.className = 'space-y-3';
+      
+      dayVideos.forEach(video => {
+        const item = document.createElement('div');
+        item.className = 'video-item flex items-center gap-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700';
+        item.setAttribute('data-video-id', video.id);
+        
+        const isSelected = this.state.selectedVideos.has(video.id);
+        const metadata = this.metadataRenderer.render(video);
+        
+        item.innerHTML = `
+          <input type="checkbox" class="video-select rounded border-gray-300 dark:border-gray-600" 
+                 ${isSelected ? 'checked' : ''}>
+          <div class="w-20 h-14 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden flex-shrink-0">
+            <img src="/api/videos/${video.id}/thumbnail" alt="Thumbnail" class="w-full h-full object-cover"
+                 onerror="this.style.display='none'">
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-medium text-gray-900 dark:text-white truncate">${video.title}</h3>
+            <div class="flex items-center gap-4 mt-1">
+              <span class="text-sm text-gray-500 dark:text-gray-400">${this.formatDuration(video.durationSeconds)}</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">${this.formatTime(video.createdAt)}</span>
+              ${metadata.statusBadge}
+            </div>
+            ${metadata.progressBar}
+          </div>
+          <button class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                  onclick="openVideo('${video.id}')">
+            View
+          </button>
+        `;
+        
+        videosList.appendChild(item);
+      });
+      
+      dateGroup.appendChild(dateHeader);
+      dateGroup.appendChild(videosList);
+      timelineContainer.appendChild(dateGroup);
+    });
+    
+    container.appendChild(timelineContainer);
+  }
+
+  private renderEmptyState(container: HTMLElement): void {
+    container.innerHTML = `
+      <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No videos found</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          ${this.state.filterText ? 'Try adjusting your search or filters.' : 'Get started by uploading your first video.'}
+        </p>
+        ${!this.state.filterText ? `
+          <div class="mt-6">
+            <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+              </svg>
+              Upload Video
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
