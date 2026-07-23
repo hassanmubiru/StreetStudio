@@ -1221,7 +1221,7 @@ export class AuthController {
    */
   public async getSSOProviders(): Promise<any[]> {
     try {
-      const { ssoConfigService } = await import('../services/sso-config.js');
+      const { ssoConfigService } = await import('../../services/sso-config.js');
       return await ssoConfigService.getEnabledProviders();
     } catch (error) {
       logger.warn('Failed to get SSO providers', {
