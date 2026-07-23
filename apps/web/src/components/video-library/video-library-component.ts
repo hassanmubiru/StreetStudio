@@ -401,3 +401,117 @@ export class VideoLibraryComponent {
         break;
     }
   }
+  private renderListView(container: HTMLElement, videos: VideoDto[]): void {
+    const listContainer = document.createElement('div');
+    listContainer.className = 'divide-y divide-gray-200 dark:divide-gray-700';
+    
+    // Header with select all checkbox
+    const header = document.createElement('div');
+    header.className = 'flex items-center p-4 bg-gray-50 dark:bg-gray-800 font-medium text-sm text-gray-700 dark:text-gray-300';
+    header.innerHTML = `
+      <div class="w-10">
+        <input type="checkbox" class="select-all rounded border-gray-300 dark:border-gray-600">
+      </div>
+      <div class="flex-1">Name</div>
+      <div class="w-24">Duration</div>
+      <div class="w-32">Status</div>
+      <div class="w-40">Created</div>
+      <div class="w-20">Actions</div>
+    `;
+    
+    listContainer.appendChild(header);
+    
+    // Video rows
+    videos.forEach(video => {
+      const row = document.createElement('div');
+      row.className = 'video-item flex items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-800';
+      row.setAttribute('data-video-id', video.id);
+      
+      const isSelected = this.state.selectedVideos.has(video.id);
+      const metadata = this.metadataRenderer.render(video);
+      
+      row.innerHTML = `
+        <div class="w-10">
+          <input type="checkbox" class="video-select rounded border-gray-300 dark:border-gray-600" 
+                 ${isSelected ? 'checked' : ''}>
+        </div>
+        <div class="flex-1 flex items-center gap-3">
+          <div class="w-16 h-12 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden flex-shrink-0">
+            <img src="/api/videos/${video.id}/thumbnail" alt="Thumbnail" class="w-full h-full object-cover"
+                 onerror="this.style.display='none'">
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-sm font-medium text-gray-900 dark:text-white truncate">${video.title}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">${video.id}</p>
+          </div>
+        </div>
+        <div class="w-24 text-sm text-gray-600 dark:text-gray-400">
+          ${this.formatDuration(video.durationSeconds)}
+        </div>
+        <div class="w-32">
+          ${metadata.statusBadge}
+        </div>
+        <div class="w-40 text-sm text-gray-600 dark:text-gray-400">
+          ${this.formatDate(video.createdAt)}
+        </div>
+        <div class="w-20">
+          <button class="text-blue-600 dark:text-blue-400 hover:underline text-sm" 
+                  onclick="openVideo('${video.id}')">
+            View
+          </button>
+        </div>
+      `;
+      
+      listContainer.appendChild(row);
+    });
+    
+    container.appendChild(listContainer);
+  }
+
+  private renderGridView(container: HTMLElement, videos: VideoDto[]): void {
+    const gridContainer = document.createElement('div');
+    gridContainer.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4';
+    
+    videos.forEach(video => {
+      const card = document.createElement('div');
+      card.className = 'video-item bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700';
+      card.setAttribute('data-video-id', video.id);
+      
+      const isSelected = this.state.selectedVideos.has(video.id);
+      const metadata = this.metadataRenderer.render(video);
+      
+      card.innerHTML = `
+        <div class="relative">
+          <div class="aspect-video bg-gray-200 dark:bg-gray-700 rounded-t-lg overflow-hidden">
+            <img src="/api/videos/${video.id}/thumbnail" alt="Thumbnail" class="w-full h-full object-cover"
+                 onerror="this.style.display='none'">
+          </div>
+          <div class="absolute top-2 left-2">
+            <input type="checkbox" class="video-select rounded border-white bg-white/80 backdrop-blur-sm" 
+                   ${isSelected ? 'checked' : ''}>
+          </div>
+          <div class="absolute bottom-2 right-2">
+            <span class="bg-black/70 text-white text-xs px-2 py-1 rounded">
+              ${this.formatDuration(video.durationSeconds)}
+            </span>
+          </div>
+        </div>
+        <div class="p-3">
+          <h3 class="font-medium text-gray-900 dark:text-white truncate mb-1">${video.title}</h3>
+          <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
+            <span>${this.formatDate(video.createdAt)}</span>
+            ${metadata.statusBadge}
+          </div>
+          ${metadata.progressBar}
+          <button class="w-full mt-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                  onclick="openVideo('${video.id}')">
+            View Video
+          </button>
+        </div>
+      `;
+      
+      gridContainer.appendChild(card);
+    });
+    
+    container.appendChild(gridContainer);
+  }
