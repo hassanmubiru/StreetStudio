@@ -1065,7 +1065,225 @@ export class AuthController {
     logger.info('AuthController destroyed');
   }
 
+  /**
+   * Destroy the controller and clean up resources
+   */
+  public destroy(): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+    }
+    
+    if (this.sessionTimeoutTimer) {
+      clearTimeout(this.sessionTimeoutTimer);
+    }
+    
+    if (this.activityTimer) {
+      clearTimeout(this.activityTimer);
+    }
+    
+    this.listeners.clear();
+    this.memoryTokenStorage.clear();
+    
+    // Remove event listeners
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      document.removeEventListener(event, this.resetSessionTimeout);
+    });
+    
+    logger.info('AuthController destroyed');
+  }
+
   // OAuth Integration Methods
+
+  /**
+   * Initiate OAuth authentication flow
+   */
+  public async initiateOAuth(providerId: string, returnUrl?: string): Promise<void> {
+    this.setState({ isLoading: true, error: undefined });
+
+    try {
+      const { oauthConfigService } = await import('../services/oauth-config.js');
+      await oauthConfigService.initiateOAuth(providerId, returnUrl);
+      
+      logger.info('OAuth flow initiated', { provider: providerId });
+      
+    } catch (error) {
+      const errorMessage = (error as Error).message || 'OAuth authentication failed to start';
+      
+      this.setState({
+        isLoading: false,
+        error: errorMessage,
+      });
+
+      handleError(error as Error, 'authentication', {
+        operation: 'initiate-oauth',
+        provider: providerId,
+      });
+      
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Check if OAuth providers are available
+   */
+  public async isOAuthAvailable(): Promise<boolean> {
+    try {
+      const { oauthConfigService } = await import('../services/oauth-config.js');
+      return await oauthConfigService.isOAuthAvailable();
+    } catch (error) {
+      logger.warn('Failed to check OAuth availability', {
+        error: (error as Error).message,
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Get available OAuth providers
+   */
+  public async getOAuthProviders(): Promise<any[]> {
+    try {
+      const { oauthConfigService } = await import('../services/oauth-config.js');
+      return await oauthConfigService.getEnabledProviders();
+    } catch (error) {
+      logger.warn('Failed to get OAuth providers', {
+        error: (error as Error).message,
+      });
+      return [];
+    }
+  }
+
+  // SSO Integration Methods
+
+  /**
+   * Initiate SSO authentication flow
+   */
+  public async initiateSSO(providerId: string, returnUrl?: string): Promise<void> {
+    this.setState({ isLoading: true, error: undefined });
+
+    try {
+      const { ssoConfigService } = await import('../services/sso-config.js');
+      await ssoConfigService.initiatSSO(providerId, returnUrl);
+      
+      logger.info('SSO flow initiated', { provider: providerId });
+      
+    } catch (error) {
+      const errorMessage = (error as Error).message || 'SSO authentication failed to start';
+      
+      this.setState({
+        isLoading: false,
+        error: errorMessage,
+      });
+
+      handleError(error as Error, 'authentication', {
+        operation: 'initiate-sso',
+        provider: providerId,
+      });
+      
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Check if SSO should auto-redirect for a given email
+   */
+  public async shouldAutoRedirectSSO(email: string): Promise<any | null> {
+    try {
+      const { ssoConfigService } = await import('../services/sso-config.js');
+      return await ssoConfigService.shouldAutoRedirect(email);
+    } catch (error) {
+      logger.warn('Failed to check SSO auto-redirect', {
+        email,
+        error: (error as Error).message,
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Check if SSO is available
+   */
+  public async isSSOAvailable(): Promise<boolean> {
+    try {
+      const { ssoConfigService } = await import('../services/sso-config.js');
+      return await ssoConfigService.isSSOAvailable();
+    } catch (error) {
+      logger.warn('Failed to check SSO availability', {
+        error: (error as Error).message,
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Get available SSO providers
+   */
+  public async getSSOProviders(): Promise<any[]> {
+    try {
+      const { ssoConfigService } = await import('../services/sso-config.js');
+      return await ssoConfigService.getEnabledProviders();
+    } catch (error) {
+      logger.warn('Failed to get SSO providers', {
+        error: (error as Error).message,
+      });
+      return [];
+    }
+  }
+
+  /**
+   * Get SSO provider for a specific email domain
+   */
+  public async getSSOProviderForDomain(email: string): Promise<any | null> {
+    try {
+      const { ssoConfigService } = await import('../services/sso-config.js');
+      return await ssoConfigService.getProviderForDomain(email);
+    } catch (error) {
+      logger.warn('Failed to get SSO provider for domain', {
+        email,
+        error: (error as Error).message,
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Get stored OAuth/SSO callback error
+   */
+  public getStoredCallbackError(): { error: string; provider?: string } | null {
+    try {
+      const { OAuthCallbackHandler } = await import('../services/oauth-callback-handler.js');
+      return OAuthCallbackHandler.getAndClearStoredError();
+    } catch (error) {
+      logger.warn('Failed to get stored callback error', {
+        error: (error as Error).message,
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Enhanced login with SSO auto-redirect support
+   */
+  public async loginWithEmailCheck(email: string, password: string): Promise<{ success: boolean; error?: string; shouldRedirectSSO?: any }> {
+    // Check for SSO auto-redirect first
+    const ssoProvider = await this.shouldAutoRedirectSSO(email);
+    
+    if (ssoProvider) {
+      logger.info('Auto-redirecting to SSO', {
+        email,
+        provider: ssoProvider.id,
+      });
+      
+      return {
+        success: false,
+        shouldRedirectSSO: ssoProvider,
+      };
+    }
+
+    // Proceed with regular login
+    return this.login(email, password);
+  }
 
   /**
    * Utility method for delays

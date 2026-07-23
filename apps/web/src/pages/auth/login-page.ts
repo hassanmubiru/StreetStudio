@@ -8,6 +8,7 @@
 
 import type { AuthController } from '../../app/auth/auth-controller.js';
 import { oauthConfigService, type OAuthProvider } from '../../services/oauth-config.js';
+import { ssoConfigService, type SSOProvider } from '../../services/sso-config.js';
 import { logger } from '../../app/client-logger.js';
 
 export class LoginPage {
