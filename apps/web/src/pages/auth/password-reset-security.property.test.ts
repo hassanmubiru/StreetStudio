@@ -105,7 +105,7 @@ describe('Password Reset Security Property Tests', () => {
           form.dispatchEvent(formEvent);
 
           // Wait for async operations
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 200));
 
           // Verify uniform security response regardless of input
           const successMessage = pageElement.querySelector('[data-success-message]') as HTMLElement;
