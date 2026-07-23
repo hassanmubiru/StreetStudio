@@ -370,7 +370,7 @@ export class CursorSettings {
       cursorHighlight.classList.add('hidden');
     });
 
-    previewArea.addEventListener('mousemove', (e) => {
+    previewArea.addEventListener('mousemove', (e: MouseEvent) => {
       const rect = previewArea.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -379,7 +379,7 @@ export class CursorSettings {
       cursorHighlight.style.top = `${y}px`;
     });
 
-    previewArea.addEventListener('click', (e) => {
+    previewArea.addEventListener('click', (e: MouseEvent) => {
       if (this.settings.clickAnimation) {
         this.showClickAnimation(e.clientX - previewArea.getBoundingClientRect().left, e.clientY - previewArea.getBoundingClientRect().top);
       }

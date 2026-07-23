@@ -1,5 +1,10 @@
 import { RecordingController } from '../../components/recording/recording-controller.js';
-import { formatTime } from '../../utils/format-time.js';
+import { formatDuration } from '../../utils/format-time.js';
+
+// Create a format function for elapsed time from milliseconds
+function formatTime(milliseconds: number): string {
+  return formatDuration(Math.floor(milliseconds / 1000));
+}
 
 /**
  * Recordings Page Component
@@ -275,4 +280,13 @@ export class RecordingsPage {
       error.remove();
     }, 5000);
   }
+
+  public getElement(): HTMLElement {
+    return this.container;
+  }
+
+  public destroy(): void {
+    this.recordingController?.destroy();
+  }
+}
 }

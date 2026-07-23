@@ -716,3 +716,81 @@ export class VideoLibraryComponent {
       selectAllCheckbox.indeterminate = this.state.selectedVideos.size > 0 && !allSelected;
     }
   }
+  private formatDuration(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    } else {
+      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+  }
+
+  private formatDate(isoString: string): string {
+    return new Date(isoString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+
+  private formatTime(isoString: string): string {
+    return new Date(isoString).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+
+  private getUserPreferredLayout(): ViewLayout {
+    return (localStorage.getItem('videoLibrary.viewLayout') as ViewLayout) || 'grid';
+  }
+
+  private saveUserPreference(key: string, value: string): void {
+    localStorage.setItem(`videoLibrary.${key}`, value);
+  }
+
+  private async loadVideosForProject(): Promise<void> {
+    try {
+      // Mock data for now - in real implementation, this would call the API
+      this.videos = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          organizationId: '123e4567-e89b-12d3-a456-426614174001',
+          folderId: this.currentProject?.id,
+          title: 'Product Demo Recording',
+          durationSeconds: 120,
+          status: 'ready',
+          developerMode: false,
+          createdAt: '2024-01-15T10:30:00Z'
+        },
+        {
+          id: '123e4567-e89b-12d3-a456-426614174002',
+          organizationId: '123e4567-e89b-12d3-a456-426614174001',
+          folderId: this.currentProject?.id,
+          title: 'Bug Reproduction Steps',
+          durationSeconds: 45,
+          status: 'processing',
+          developerMode: true,
+          createdAt: '2024-01-14T15:45:00Z'
+        },
+        {
+          id: '123e4567-e89b-12d3-a456-426614174003',
+          organizationId: '123e4567-e89b-12d3-a456-426614174001',
+          folderId: this.currentProject?.id,
+          title: 'Feature Walkthrough',
+          durationSeconds: 300,
+          status: 'ready',
+          developerMode: false,
+          createdAt: '2024-01-13T09:15:00Z'
+        }
+      ] as VideoDto[];
+      
+      this.renderVideoContent();
+    } catch (error) {
+      console.error('Failed to load videos:', error);
+    }
+  }
+}
