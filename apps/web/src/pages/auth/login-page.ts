@@ -478,6 +478,39 @@ export class LoginPage {
   }
 
   /**
+   * Handle SSO login
+   */
+  private async handleSSOLogin(providerId: string, button?: HTMLButtonElement): Promise<void> {
+    try {
+      if (button) {
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Redirecting...';
+      }
+
+      await this.authController.initiateSSO(providerId);
+
+    } catch (error) {
+      logger.error('SSO login failed', {
+        provider: providerId,
+        error: (error as Error).message,
+      });
+
+      const errorText = this.element.querySelector('#error-text') as HTMLElement;
+      const errorMessage = this.element.querySelector('#error-message') as HTMLElement;
+      
+      errorText.textContent = `Failed to connect with ${this.getSSOProviderDisplayName(providerId)}. Please try again.`;
+      errorMessage.classList.remove('hidden');
+
+      // Reset button
+      if (button) {
+        button.disabled = false;
+        button.textContent = button.querySelector('span:not(.sr-only)')?.textContent || providerId;
+      }
+    }
+  }
+
+  /**
    * Handle OAuth login
    */
   private async handleOAuthLogin(providerId: string, button: HTMLButtonElement): Promise<void> {
