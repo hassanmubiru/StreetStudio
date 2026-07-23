@@ -94,7 +94,19 @@ describe('Password Reset Security Property Tests', () => {
           const submitButton = pageElement.querySelector('[data-submit-button]') as HTMLButtonElement;
 
           if (!form || !emailField || !submitButton) {
-            throw new Error('Required form elements not found');
+            const debugInfo = {
+              pageElement: !!pageElement,
+              pageElementInDOM: document.body.contains(pageElement),
+              formSelector: '[data-forgot-password-form]',
+              formElements: pageElement.querySelectorAll('[data-forgot-password-form]').length,
+              emailSelector: '#email', 
+              emailElements: pageElement.querySelectorAll('#email').length,
+              submitSelector: '[data-submit-button]',
+              submitElements: pageElement.querySelectorAll('[data-submit-button]').length,
+              pageHTML: pageElement.innerHTML.substring(0, 500),
+              emailInput: emailInput.trim()
+            };
+            throw new Error(`Required form elements not found. Debug: ${JSON.stringify(debugInfo, null, 2)}`);
           }
 
           // Set the email value
