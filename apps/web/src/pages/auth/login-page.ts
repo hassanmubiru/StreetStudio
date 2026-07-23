@@ -279,7 +279,10 @@ export class LoginPage {
     const emailInput = this.element.querySelector('#email') as HTMLInputElement;
     const passwordInput = this.element.querySelector('#password') as HTMLInputElement;
 
-    // Form submission handler
+    // Store email input reference for SSO auto-redirect
+    this.emailInput = emailInput;
+
+    // Form submission handler with SSO auto-redirect check
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
 

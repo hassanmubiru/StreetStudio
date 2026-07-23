@@ -671,9 +671,11 @@ export class DashboardPage {
    */
   public destroy(): void {
     this.stopAutoRefresh();
-    // Remove event listeners
-    document.removeEventListener('click', this.setupEventListeners);
-    document.removeEventListener('streetstudio:real-time-update', this.setupEventListeners);
-    document.removeEventListener('visibilitychange', this.setupEventListeners);
+    
+    // Remove event listeners by replacing element content
+    this.element.innerHTML = '';
+    
+    // Clear data
+    this.data = null;
   }
 }
