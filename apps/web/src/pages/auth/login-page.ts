@@ -519,7 +519,7 @@ export class LoginPage {
       button.disabled = true;
       button.textContent = 'Connecting...';
 
-      await oauthConfigService.initiateOAuth(providerId);
+      await this.authController.initiateOAuth(providerId);
 
     } catch (error) {
       logger.error('OAuth login failed', {
@@ -530,13 +530,137 @@ export class LoginPage {
       const errorText = this.element.querySelector('#error-text') as HTMLElement;
       const errorMessage = this.element.querySelector('#error-message') as HTMLElement;
       
-      errorText.textContent = `Failed to connect with ${providerId}. Please try again.`;
+      errorText.textContent = `Failed to connect with ${this.getOAuthProviderDisplayName(providerId)}. Please try again.`;
       errorMessage.classList.remove('hidden');
 
       // Reset button
       button.disabled = false;
       button.textContent = button.querySelector('span:not(.sr-only)')?.textContent || providerId;
     }
+  }
+
+  /**
+   * Check for SSO domain and show hint
+   */
+  private async checkForSSODomain(email: string): Promise<void> {
+    try {
+      const ssoProvider = await this.authController.getSSOProviderForDomain(email);
+      
+      if (ssoProvider) {
+        this.showSSOHint(ssoProvider);
+      } else {
+        this.hideSSOHint();
+      }
+    } catch (error) {
+      logger.warn('Failed to check SSO domain', {
+        email,
+        error: (error as Error).message,
+      });
+    }
+  }
+
+  /**
+   * Show SSO hint for detected domain
+   */
+  private showSSOHint(provider: SSOProvider): void {
+    // Remove existing hint
+    this.hideSSOHint();
+    
+    const emailInput = this.emailInput;
+    if (!emailInput) return;
+
+    const hint = document.createElement('div');
+    hint.id = 'sso-hint';
+    hint.className = 'mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md';
+    hint.innerHTML = `
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <div class="ml-3 flex-1">
+          <p class="text-sm text-blue-800 dark:text-blue-300">
+            Your organization uses ${provider.displayName} for sign-in.
+            <button 
+              type="button" 
+              data-sso-provider="${provider.id}"
+              class="ml-1 font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 underline"
+            >
+              Sign in with ${provider.displayName}
+            </button>
+          </p>
+        </div>
+      </div>
+    `;
+
+    // Insert after email input container
+    const emailContainer = emailInput.parentElement;
+    if (emailContainer) {
+      emailContainer.insertAdjacentElement('afterend', hint);
+      
+      // Add click handler to SSO button in hint
+      const ssoButton = hint.querySelector('[data-sso-provider]') as HTMLButtonElement;
+      if (ssoButton) {
+        ssoButton.addEventListener('click', async () => {
+          await this.handleSSOLogin(provider.id);
+        });
+      }
+    }
+  }
+
+  /**
+   * Hide SSO hint
+   */
+  private hideSSOHint(): void {
+    const existingHint = document.getElementById('sso-hint');
+    if (existingHint) {
+      existingHint.remove();
+    }
+  }
+
+  /**
+   * Check for OAuth/SSO callback errors and display them
+   */
+  private async checkForCallbackErrors(): Promise<void> {
+    try {
+      const callbackError = await this.authController.getStoredCallbackError();
+      
+      if (callbackError) {
+        const errorText = this.element.querySelector('#error-text') as HTMLElement;
+        const errorMessage = this.element.querySelector('#error-message') as HTMLElement;
+        
+        if (errorText && errorMessage) {
+          errorText.textContent = callbackError.error;
+          errorMessage.classList.remove('hidden');
+        }
+        
+        logger.warn('Displayed stored callback error', {
+          error: callbackError.error,
+          provider: callbackError.provider,
+        });
+      }
+    } catch (error) {
+      logger.warn('Failed to check for callback errors', {
+        error: (error as Error).message,
+      });
+    }
+  }
+
+  /**
+   * Get display name for OAuth provider
+   */
+  private getOAuthProviderDisplayName(providerId: string): string {
+    const provider = this.oauthProviders.find(p => p.id === providerId);
+    return provider?.displayName || providerId;
+  }
+
+  /**
+   * Get display name for SSO provider
+   */
+  private getSSOProviderDisplayName(providerId: string): string {
+    const provider = this.ssoProviders.find(p => p.id === providerId);
+    return provider?.displayName || providerId;
   }
 
   /**

@@ -9,6 +9,10 @@ import { TopNavigation } from './components/top-navigation';
 import { SidebarNavigation } from './components/sidebar-navigation';
 import { MobileNavigation } from './components/mobile-navigation';
 import { BreadcrumbNavigation } from './components/breadcrumb-navigation';
+import { getWorkspaceStore, type WorkspaceState } from '../../stores/workspace-store';
+import { getNotificationStore } from '../../stores/notification-store';
+import { getUploadStore } from '../../stores/upload-store';
+import { logger } from '../client-logger';
 
 export interface OrganizationChangeHandler {
   (organizationId: Uuid): void;
