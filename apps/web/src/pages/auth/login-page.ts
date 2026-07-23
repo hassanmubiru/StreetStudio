@@ -145,6 +145,7 @@ export class LoginPage {
             </span>
           </button>
 
+          ${this.renderSSOSection()}
           ${this.renderOAuthSection()}
 
           <!-- Sign Up Link -->
@@ -157,6 +158,57 @@ export class LoginPage {
             </span>
           </div>
         </form>
+      </div>
+    `;
+  }
+
+  /**
+   * Render SSO provider section dynamically
+   */
+  private renderSSOSection(): string {
+    if (!this.ssoProviders || this.ssoProviders.length === 0) {
+      return '';
+    }
+
+    const providerButtons = this.ssoProviders.map(provider => {
+      const customStyle = provider.buttonColor 
+        ? `style="background-color: ${provider.buttonColor}; color: ${provider.buttonTextColor || '#ffffff'}; border-color: ${provider.buttonColor};"` 
+        : '';
+      
+      return `
+        <button
+          type="button"
+          data-sso-provider="${provider.id}"
+          class="w-full inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+            !provider.buttonColor 
+              ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600' 
+              : 'hover:opacity-90'
+          }"
+          ${customStyle}
+          aria-label="Sign in with ${provider.displayName}"
+        >
+          <span class="sr-only">Sign in with ${provider.displayName}</span>
+          ${provider.iconSvg ? `<svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" aria-hidden="true">${provider.iconSvg}</svg>` : ''}
+          <span>${provider.displayName}</span>
+        </button>
+      `;
+    }).join('');
+
+    return `
+      <!-- SSO Options -->
+      <div class="mt-6">
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">Sign in with your organization</span>
+          </div>
+        </div>
+
+        <div class="mt-6 space-y-3">
+          ${providerButtons}
+        </div>
       </div>
     `;
   }

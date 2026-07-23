@@ -644,8 +644,26 @@ export class DashboardPage {
    * Refresh dashboard data
    */
   public async refresh(): Promise<void> {
-    await this.loadDashboardData();
-    this.render();
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    
+    // Update refresh button state immediately
+    const refreshButton = this.element.querySelector('#refresh-dashboard') as HTMLButtonElement;
+    if (refreshButton) {
+      refreshButton.disabled = true;
+    }
+    
+    try {
+      await this.loadDashboardData();
+      this.render();
+    } finally {
+      this.isLoading = false;
+      // Re-enable refresh button
+      if (refreshButton) {
+        refreshButton.disabled = false;
+      }
+    }
   }
 
   /**
