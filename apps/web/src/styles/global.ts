@@ -7,6 +7,9 @@
 import { ValidationCSS } from '../utils/validation.js';
 
 export async function setupGlobalCSS(): Promise<void> {
+  // Load project-specific styles
+  await loadProjectStyles();
+  
   // Inject global styles
   const globalStyles = `
     /* Reset and base styles */
