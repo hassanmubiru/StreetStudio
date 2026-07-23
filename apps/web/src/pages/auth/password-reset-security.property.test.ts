@@ -118,11 +118,16 @@ describe('Password Reset Security Property Tests', () => {
           // Set the email value and immediately verify it was set correctly
           const trimmedEmail = emailInput.trim();
           emailField.value = trimmedEmail;
+          emailField.setAttribute('value', trimmedEmail);
           
           // Verify the value was set correctly
           if (emailField.value !== trimmedEmail) {
             throw new Error(`Email field value not set correctly. Expected: "${trimmedEmail}", Got: "${emailField.value}"`);
           }
+          
+          // Also trigger input event to ensure any event handlers are called
+          const inputEvent = new Event('input', { bubbles: true });
+          emailField.dispatchEvent(inputEvent);
 
           // Trigger form submission
           const formEvent = new Event('submit', { bubbles: true, cancelable: true });
