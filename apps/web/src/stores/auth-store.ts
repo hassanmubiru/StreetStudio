@@ -250,6 +250,20 @@ export class AuthStore {
   }
 
   /**
+   * Set current organization (synchronous version for UI updates)
+   */
+  public setOrganization(organization: OrganizationDto): void {
+    this.updateState({
+      currentOrganization: organization
+    });
+
+    logger.info('Organization updated in auth store', {
+      organizationId: organization.id,
+      organizationName: organization.name
+    });
+  }
+
+  /**
    * Switch organization
    */
   public async switchOrganization(organizationId: string): Promise<boolean> {

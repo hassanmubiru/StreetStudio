@@ -9,6 +9,9 @@ import { TopNavigation } from './components/top-navigation';
 import { SidebarNavigation } from './components/sidebar-navigation';
 import { MobileNavigation } from './components/mobile-navigation';
 import { BreadcrumbNavigation } from './components/breadcrumb-navigation';
+import { OrganizationSwitcher } from './components/organization-switcher';
+import { WorkspaceContext } from './components/workspace-context';
+import { EnhancedBreadcrumbNavigation } from './components/enhanced-breadcrumb-navigation';
 import { getWorkspaceStore, type WorkspaceState } from '../../stores/workspace-store';
 import { getNotificationStore } from '../../stores/notification-store';
 import { getUploadStore } from '../../stores/upload-store';
@@ -51,6 +54,9 @@ export class NavigationController {
   private sidebarNavigation?: SidebarNavigation;
   private mobileNavigation?: MobileNavigation;
   private breadcrumbNavigation?: BreadcrumbNavigation;
+  private organizationSwitcher?: OrganizationSwitcher;
+  private workspaceContext?: WorkspaceContext;
+  private enhancedBreadcrumbNavigation?: EnhancedBreadcrumbNavigation;
   private stateChangeListeners: Set<(state: NavigationState) => void> = new Set();
   private workspaceStore: any;
   private notificationStore: any;
@@ -134,6 +140,33 @@ export class NavigationController {
         onUserMenuAction: (action) => this.handleUserMenuAction(action),
       });
       this.topNavigation.initialize();
+
+      // Setup enhanced organization switcher
+      const orgSwitcherContainer = document.createElement('div');
+      orgSwitcherContainer.id = 'organization-switcher-container';
+      headerContainer.appendChild(orgSwitcherContainer);
+
+      this.organizationSwitcher = new OrganizationSwitcher(orgSwitcherContainer, {
+        onOrganizationChange: (orgId) => this.handleOrganizationSwitch(orgId),
+        onCreateOrganization: () => this.handleCreateOrganization(),
+        onManageOrganizations: () => this.handleManageOrganizations(),
+        showCreateOption: true,
+        showManageOption: true
+      });
+      this.organizationSwitcher.initialize();
+
+      // Setup workspace context manager
+      const workspaceContextContainer = document.createElement('div');
+      workspaceContextContainer.id = 'workspace-context-container';
+      headerContainer.appendChild(workspaceContextContainer);
+
+      this.workspaceContext = new WorkspaceContext(workspaceContextContainer, {
+        onWorkspaceChange: (workspace) => this.handleWorkspaceChange(workspace),
+        onProjectChange: (project) => this.handleProjectChange(project),
+        onFolderChange: (folder) => this.handleFolderChange(folder),
+        onNavigationUpdate: (breadcrumbs) => this.handleBreadcrumbUpdate(breadcrumbs)
+      });
+      this.workspaceContext.initialize();
     }
 
     if (sidebarContainer) {
@@ -153,14 +186,14 @@ export class NavigationController {
     });
     this.mobileNavigation.initialize();
 
-    // Setup breadcrumb navigation
-    this.setupBreadcrumbNavigation();
+    // Setup enhanced breadcrumb navigation
+    this.setupEnhancedBreadcrumbNavigation();
   }
 
   /**
-   * Setup breadcrumb navigation
+   * Setup enhanced breadcrumb navigation
    */
-  private setupBreadcrumbNavigation(): void {
+  private setupEnhancedBreadcrumbNavigation(): void {
     // Find or create breadcrumb container
     let breadcrumbContainer = document.getElementById('breadcrumb-navigation');
     if (!breadcrumbContainer) {
@@ -174,6 +207,11 @@ export class NavigationController {
     }
 
     if (breadcrumbContainer) {
+      // Use enhanced breadcrumb navigation for better features
+      this.enhancedBreadcrumbNavigation = new EnhancedBreadcrumbNavigation(breadcrumbContainer);
+      this.enhancedBreadcrumbNavigation.initialize();
+      
+      // Keep legacy breadcrumb for compatibility
       this.breadcrumbNavigation = new BreadcrumbNavigation(breadcrumbContainer);
       this.breadcrumbNavigation.initialize();
     }
@@ -675,6 +713,227 @@ export class NavigationController {
   }
 
   /**
+   * Handle organization switch from organization switcher
+   */
+  private async handleOrganizationSwitch(organizationId: Uuid): Promise<void> {
+    logger.info('Handling organization switch', { organizationId });
+    
+    try {
+      // Update navigation state first
+      this.updateState({
+        breadcrumbs: [],
+        currentRoute: '/dashboard' // Redirect to dashboard on org switch
+      });
+      
+      // Clear workspace context
+      this.workspaceContext?.refresh();
+      
+      // Trigger organization change through existing flow
+      this.changeOrganization(organizationId);
+      
+      // Navigate to dashboard with new organization context
+      this.handleNavigation('/dashboard');
+      
+      // Update all navigation components with new context
+      const authStore = getAuthStore();
+      const authState = authStore.getState();
+      if (authState.currentUser && authState.currentOrganization) {
+        this.setAuthContext(authState.currentUser, authState.currentOrganization);
+      }
+      
+    } catch (error) {
+      logger.error('Failed to handle organization switch', { error, organizationId });
+    }
+  }
+
+  /**
+   * Handle create organization action
+   */
+  private handleCreateOrganization(): void {
+    logger.info('Navigate to create organization');
+    this.handleNavigation('/organizations/create');
+  }
+
+  /**
+   * Handle manage organizations action
+   */
+  private handleManageOrganizations(): void {
+    logger.info('Navigate to manage organizations');
+    this.handleNavigation('/organizations/manage');
+  }
+
+  /**
+   * Handle workspace change
+   */
+  private handleWorkspaceChange(workspace: any): void {
+    logger.info('Workspace changed', { workspaceId: workspace.id, workspaceName: workspace.name });
+    
+    // Update workspace in workspace store
+    try {
+      this.workspaceStore?.setCurrentWorkspace(workspace);
+    } catch (error) {
+      logger.warn('Failed to update workspace store', { error });
+    }
+    
+    // Update navigation context
+    this.updateWorkspaceContext();
+  }
+
+  /**
+   * Handle project change
+   */
+  private handleProjectChange(project: any): void {
+    if (project) {
+      logger.info('Project changed', { projectId: project.id, projectName: project.name });
+    } else {
+      logger.info('Project cleared');
+    }
+    
+    // Update navigation context
+    this.updateWorkspaceContext();
+  }
+
+  /**
+   * Handle folder change
+   */
+  private handleFolderChange(folder: any): void {
+    if (folder) {
+      logger.info('Folder changed', { folderId: folder.id, folderName: folder.name });
+    } else {
+      logger.info('Folder cleared');
+    }
+    
+    // Update navigation context
+    this.updateWorkspaceContext();
+  }
+
+  /**
+   * Handle breadcrumb updates from workspace context
+   */
+  private handleBreadcrumbUpdate(breadcrumbs: BreadcrumbItem[]): void {
+    this.setBreadcrumbs(breadcrumbs);
+  }
+
+  /**
+   * Update workspace context in enhanced breadcrumb navigation
+   */
+  private updateWorkspaceContext(): void {
+    try {
+      const contextData = this.workspaceContext?.getContextData();
+      if (contextData && this.enhancedBreadcrumbNavigation) {
+        const context = {
+          organization: contextData.currentWorkspace ? { 
+            name: this.state.currentOrganization?.name || 'Organization',
+            href: '/dashboard'
+          } : undefined,
+          workspace: contextData.currentWorkspace ? {
+            name: contextData.currentWorkspace.name,
+            href: `/workspace/${contextData.currentWorkspace.id}`
+          } : undefined,
+          project: contextData.currentProject ? {
+            name: contextData.currentProject.name,
+            href: `/projects/${contextData.currentProject.id}`
+          } : undefined,
+          folder: contextData.currentFolder ? {
+            name: contextData.currentFolder.name,
+            href: `/projects/${contextData.currentProject?.id}/folders/${contextData.currentFolder.id}`
+          } : undefined,
+          current: {
+            name: this.getCurrentPageName(),
+            href: this.state.currentRoute
+          }
+        };
+        
+        this.enhancedBreadcrumbNavigation.setWorkspaceContext(context);
+      }
+    } catch (error) {
+      logger.warn('Failed to update workspace context in breadcrumbs', { error });
+    }
+  }
+
+  /**
+   * Get current page name for breadcrumbs
+   */
+  private getCurrentPageName(): string {
+    const path = this.state.currentRoute;
+    
+    // Map routes to human-readable names
+    const routeNames: Record<string, string> = {
+      '/dashboard': 'Dashboard',
+      '/projects': 'Projects',
+      '/recordings': 'Recordings',
+      '/library': 'Library',
+      '/search': 'Search',
+      '/settings': 'Settings',
+      '/notifications': 'Notifications',
+      '/organizations/create': 'Create Organization',
+      '/organizations/manage': 'Manage Organizations'
+    };
+    
+    // Check exact matches first
+    if (routeNames[path]) {
+      return routeNames[path];
+    }
+    
+    // Handle dynamic routes
+    if (path.startsWith('/projects/')) {
+      if (path.includes('/folders/')) {
+        return 'Folder';
+      } else if (path.endsWith('/settings')) {
+        return 'Project Settings';
+      } else {
+        return 'Project';
+      }
+    }
+    
+    if (path.startsWith('/videos/')) {
+      return 'Video';
+    }
+    
+    if (path.startsWith('/users/')) {
+      return 'User Profile';
+    }
+    
+    // Default fallback
+    return path.split('/').pop()?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Page';
+  }
+
+  /**
+   * Set breadcrumb navigation with enhanced features
+   */
+  public setBreadcrumbs(breadcrumbs: BreadcrumbItem[]): void {
+    this.updateState({ breadcrumbs });
+    
+    // Update both navigation components
+    this.breadcrumbNavigation?.updateBreadcrumbs(breadcrumbs);
+    
+    // Also update enhanced navigation if available
+    this.enhancedBreadcrumbNavigation?.updateBreadcrumbs(breadcrumbs);
+  }
+
+  /**
+   * Set current organization and user with enhanced context
+   */
+  public setAuthContext(user: MemberDto, organization?: OrganizationDto): void {
+    this.updateState({
+      currentUser: user,
+      currentOrganization: organization,
+    });
+
+    // Update all navigation components
+    this.topNavigation?.updateAuthContext(user, organization);
+    this.sidebarNavigation?.updateAuthContext(user, organization);
+    this.mobileNavigation?.updateAuthContext(user, organization);
+    
+    // Update organization switcher
+    this.organizationSwitcher?.updateContext(user, organization);
+    
+    // Refresh workspace context
+    if (organization) {
+      this.workspaceContext?.refresh();
+    }
+  }
+  /**
    * Clean up resources
    */
   public destroy(): void {
@@ -682,6 +941,9 @@ export class NavigationController {
     this.sidebarNavigation?.destroy();
     this.mobileNavigation?.destroy();
     this.breadcrumbNavigation?.destroy();
+    this.organizationSwitcher?.destroy();
+    this.workspaceContext?.destroy();
+    this.enhancedBreadcrumbNavigation?.destroy();
     
     // Unsubscribe from stores
     this.unsubscribeWorkspace?.();

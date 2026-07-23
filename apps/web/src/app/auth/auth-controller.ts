@@ -1102,7 +1102,7 @@ export class AuthController {
     this.setState({ isLoading: true, error: undefined });
 
     try {
-      const { oauthConfigService } = await import('../services/oauth-config.js');
+      const { oauthConfigService } = await import('../../services/oauth-config.js');
       await oauthConfigService.initiateOAuth(providerId, returnUrl);
       
       logger.info('OAuth flow initiated', { provider: providerId });
@@ -1129,7 +1129,7 @@ export class AuthController {
    */
   public async isOAuthAvailable(): Promise<boolean> {
     try {
-      const { oauthConfigService } = await import('../services/oauth-config.js');
+      const { oauthConfigService } = await import('../../services/oauth-config.js');
       return await oauthConfigService.isOAuthAvailable();
     } catch (error) {
       logger.warn('Failed to check OAuth availability', {
