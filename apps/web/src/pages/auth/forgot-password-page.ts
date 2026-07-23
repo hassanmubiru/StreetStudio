@@ -140,11 +140,18 @@ export class ForgotPasswordPage {
     }
 
     const form = this.element.querySelector('[data-forgot-password-form]') as HTMLFormElement;
+    const emailInput = this.element.querySelector('#email') as HTMLInputElement;
+    
+    if (!form || !emailInput) {
+      console.error('Form or email input not found');
+      return;
+    }
+    
     const formData = new FormData(form);
     const email = (formData.get('email') as string)?.trim();
 
     // Validation
-    if (!this.validateEmail(this.element.querySelector('#email') as HTMLInputElement)) {
+    if (!this.validateEmail(emailInput)) {
       return;
     }
 
@@ -162,8 +169,10 @@ export class ForgotPasswordPage {
       
       // Disable form after submission
       const submitButton = this.element.querySelector('[data-submit-button]') as HTMLButtonElement;
-      submitButton.textContent = 'Email Sent';
-      submitButton.disabled = true;
+      if (submitButton) {
+        submitButton.textContent = 'Email Sent';
+        submitButton.disabled = true;
+      }
 
       logger.info('Password reset requested', { 
         email: email.substring(0, 3) + '***' // Log partial email for privacy
@@ -178,8 +187,10 @@ export class ForgotPasswordPage {
       this.showSuccess();
       
       const submitButton = this.element.querySelector('[data-submit-button]') as HTMLButtonElement;
-      submitButton.textContent = 'Email Sent';
-      submitButton.disabled = true;
+      if (submitButton) {
+        submitButton.textContent = 'Email Sent';
+        submitButton.disabled = true;
+      }
     } finally {
       // Don't re-enable the button here - it should stay disabled after successful submission
       // this.showLoading(false);
