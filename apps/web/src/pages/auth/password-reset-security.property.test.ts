@@ -88,7 +88,7 @@ describe('Password Reset Security Property Tests', () => {
             mockAuthController.requestPasswordReset.mockRejectedValueOnce(new Error('API Error'));
           }
 
-          // Simulate form submission with the generated email
+          // Get form elements
           const form = pageElement.querySelector('[data-forgot-password-form]') as HTMLFormElement;
           const emailField = pageElement.querySelector('#email') as HTMLInputElement;
           const submitButton = pageElement.querySelector('[data-submit-button]') as HTMLButtonElement;
@@ -109,15 +109,23 @@ describe('Password Reset Security Property Tests', () => {
             throw new Error(`Required form elements not found. Debug: ${JSON.stringify(debugInfo, null, 2)}`);
           }
 
-          // Set the email value
-          emailField.value = emailInput.trim();
+          // Set the email value and immediately verify it was set correctly
+          const trimmedEmail = emailInput.trim();
+          emailField.value = trimmedEmail;
+          
+          // Verify the value was set correctly
+          if (emailField.value !== trimmedEmail) {
+            throw new Error(`Email field value not set correctly. Expected: "${trimmedEmail}", Got: "${emailField.value}"`);
+          }
 
           // Trigger form submission
           const formEvent = new Event('submit', { bubbles: true, cancelable: true });
           form.dispatchEvent(formEvent);
 
-          // Wait for async operations
-          await new Promise(resolve => setTimeout(resolve, 200));
+          // Wait for async operations with multiple smaller waits to check state
+          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise(resolve => setTimeout(resolve, 100));
 
           // Verify uniform security response regardless of input
           const successMessage = pageElement.querySelector('[data-success-message]') as HTMLElement;
@@ -206,10 +214,10 @@ describe('Password Reset Security Property Tests', () => {
               throw new Error('API should be called for valid email formats');
             }
             
-            // Verify the API was called with the trimmed email
+            // Verify the API was called with the correct trimmed email
             const apiCall = mockAuthController.requestPasswordReset.mock.calls[0];
-            if (apiCall[0] !== emailInput.trim()) {
-              throw new Error(`API should be called with trimmed email. Expected: "${emailInput.trim()}", Got: "${apiCall[0]}"`);
+            if (apiCall[0] !== trimmedEmail) {
+              throw new Error(`API should be called with trimmed email. Expected: "${trimmedEmail}", Got: "${apiCall[0]}"`);
             }
           }
 
