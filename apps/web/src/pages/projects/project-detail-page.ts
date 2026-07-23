@@ -311,7 +311,7 @@ export class ProjectDetailPage {
     treeContainer.classList.remove('hidden');
 
     // Attach folder tree event listeners
-    this.attachFolderTreeEvents(treeContainer);
+    this.attachFolderTreeEvents(treeContainer as HTMLElement);
   }
 
   private renderFolderTreeItems(folders: FolderItem[], level = 0): string {
@@ -370,7 +370,7 @@ export class ProjectDetailPage {
     // Folder selection
     container.addEventListener('click', (e) => {
       const folderItem = (e.target as HTMLElement).closest('[data-folder-item]');
-      if (folderItem && !e.target?.closest('[data-toggle-folder]') && !e.target?.closest('[data-folder-menu]')) {
+      if (folderItem && !(e.target as HTMLElement)?.closest('[data-toggle-folder]') && !(e.target as HTMLElement)?.closest('[data-folder-menu]')) {
         const folderId = folderItem.getAttribute('data-folder-item');
         this.navigateToFolder(folderId);
       }
