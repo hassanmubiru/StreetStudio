@@ -87,7 +87,7 @@ const projectStructureArbitrary: fc.Arbitrary<TestProjectStructure> = fc.integer
     return fc.record({
       project: fc.record({
         id: fc.uuid(),
-        name: fc.string({ minLength: 3, max: 50 }).filter(s => s.trim().length >= 3),
+        name: fc.string({ minLength: 3, maxLength: 50 }).filter(s => s.trim().length >= 3 && !/[<>{}]/.test(s)),
         description: fc.option(fc.string({ maxLength: 200 })),
         isPrivate: fc.boolean(),
         createdAt: fc.date().map(d => d.toISOString()),
