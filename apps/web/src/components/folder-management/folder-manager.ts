@@ -732,3 +732,76 @@ export class FolderManager {
       });
     }
   }
+  private removeFolderFromHierarchy(folderId: string): void {
+    const folder = this.flatFolderMap.get(folderId);
+    if (!folder) return;
+
+    if (folder.parentFolderId) {
+      const parent = this.flatFolderMap.get(folder.parentFolderId);
+      if (parent && parent.children) {
+        parent.children = parent.children.filter(child => child.id !== folderId);
+      }
+    } else {
+      this.folders = this.folders.filter(f => f.id !== folderId);
+    }
+  }
+
+  // Public methods for external control
+  public async refresh(): Promise<void> {
+    await this.loadFolders();
+  }
+
+  public selectFolderById(folderId: string | null): void {
+    this.config.currentFolderId = folderId;
+    
+    this.flatFolderMap.forEach(folder => {
+      folder.isSelected = folder.id === folderId;
+    });
+    
+    this.renderFolderTree();
+  }
+
+  public expandToFolder(folderId: string): void {
+    const folder = this.flatFolderMap.get(folderId);
+    if (!folder) return;
+
+    // Expand all parents up to this folder
+    let current = folder;
+    while (current.parentFolderId) {
+      const parent = this.flatFolderMap.get(current.parentFolderId);
+      if (parent) {
+        parent.isExpanded = true;
+        current = parent;
+      } else {
+        break;
+      }
+    }
+    
+    this.renderFolderTree();
+  }
+
+  public getFolderPath(folderId: string): ExtendedFolderDto[] {
+    const path: ExtendedFolderDto[] = [];
+    let current = this.flatFolderMap.get(folderId);
+    
+    while (current) {
+      path.unshift(current);
+      current = current.parentFolderId ? this.flatFolderMap.get(current.parentFolderId) : undefined;
+    }
+    
+    return path;
+  }
+
+  public getCurrentFolder(): ExtendedFolderDto | null {
+    return this.config.currentFolderId ? this.flatFolderMap.get(this.config.currentFolderId) || null : null;
+  }
+
+  // Cleanup
+  public destroy(): void {
+    // Remove any open menus
+    document.querySelectorAll('.folder-context-menu').forEach(menu => menu.remove());
+    
+    // Clear event listeners
+    this.container = null;
+  }
+}
