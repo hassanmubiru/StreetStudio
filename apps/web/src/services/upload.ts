@@ -21,9 +21,13 @@ export interface UploadOptions {
   chunkSize?: number;
   maxRetries?: number;
   retryDelay?: number;
+  maxConcurrentUploads?: number;
+  enableResume?: boolean;
+  resumeFromStorage?: boolean;
   onProgress?: (progress: UploadProgress) => void;
   onChunkComplete?: (chunkIndex: number, totalChunks: number) => void;
   onError?: (error: UploadError) => void;
+  onResume?: (resumedChunks: number) => void;
   validateFile?: (file: File) => Promise<void>;
   metadata?: Record<string, any>;
 }
@@ -47,26 +51,167 @@ export interface ChunkInfo {
   end: number;
   size: number;
   checksum?: string;
+  uploaded?: boolean;
+  etag?: string;
+  retryCount?: number;
+}
+
+/**
+ * Resume information for interrupted uploads
+ */
+export interface ResumeInfo {
+  uploadId: string;
+  fileName: string;
+  fileSize: number;
+  fileLastModified: number;
+  chunks: ChunkInfo[];
+  completedChunks: number[];
+  metadata?: Record<string, any>;
 }
 
 export class UploadManager {
   private activeUploads = new Map<string, UploadSession>();
   private maxConcurrentUploads = 3;
   private defaultChunkSize = 5 * 1024 * 1024; // 5MB chunks
+  private resumeStorage = new Map<string, ResumeInfo>(); // In-memory resume storage
+  
+  /**
+   * Resume information for interrupted uploads
+   */
+  private interface ResumeInfo {
+    uploadId: string;
+    fileName: string;
+    fileSize: number;
+    fileLastModified: number;
+    chunks: ChunkInfo[];
+    completedChunks: number[];
+    metadata?: Record<string, any>;
+  }
+
+  constructor() {
+    this.loadResumeInfoFromStorage();
+    this.setupResumeCleanup();
+  }
+
+  /**
+   * Load resume information from localStorage on initialization
+   */
+  private loadResumeInfoFromStorage(): void {
+    try {
+      const stored = localStorage.getItem('streetstudio_upload_resume');
+      if (stored) {
+        const resumeData = JSON.parse(stored);
+        this.resumeStorage = new Map(Object.entries(resumeData));
+      }
+    } catch (error) {
+      logger.warn('Failed to load resume information from storage:', error);
+    }
+  }
+
+  /**
+   * Save resume information to localStorage
+   */
+  private saveResumeInfoToStorage(): void {
+    try {
+      const resumeData = Object.fromEntries(this.resumeStorage);
+      localStorage.setItem('streetstudio_upload_resume', JSON.stringify(resumeData));
+    } catch (error) {
+      logger.warn('Failed to save resume information to storage:', error);
+    }
+  }
+
+  /**
+   * Setup cleanup of old resume information (older than 7 days)
+   */
+  private setupResumeCleanup(): void {
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    
+    for (const [key, resumeInfo] of this.resumeStorage.entries()) {
+      if (resumeInfo.fileLastModified < sevenDaysAgo) {
+        this.resumeStorage.delete(key);
+      }
+    }
+    
+    this.saveResumeInfoToStorage();
+  }
+
+  /**
+   * Generate a resume key for a file
+   */
+  private generateResumeKey(file: File): string {
+    return `${file.name}_${file.size}_${file.lastModified}`;
+  }
+
+  /**
+   * Check if a file can be resumed
+   */
+  public canResumeUpload(file: File): boolean {
+    const resumeKey = this.generateResumeKey(file);
+    return this.resumeStorage.has(resumeKey);
+  }
+
+  /**
+   * Get resume information for a file
+   */
+  public getResumeInfo(file: File): ResumeInfo | null {
+    const resumeKey = this.generateResumeKey(file);
+    return this.resumeStorage.get(resumeKey) || null;
+  }
+
+  /**
+   * Configure upload manager settings
+   */
+  public configure(options: {
+    maxConcurrentUploads?: number;
+    defaultChunkSize?: number;
+  }): void {
+    if (options.maxConcurrentUploads) {
+      this.maxConcurrentUploads = options.maxConcurrentUploads;
+    }
+    if (options.defaultChunkSize) {
+      this.defaultChunkSize = options.defaultChunkSize;
+    }
+  }
 
   /**
    * Upload a file with chunked uploading and error handling
    */
   public async uploadFile(file: File, options: UploadOptions = {}): Promise<UploadResult> {
     const uploadId = crypto.randomUUID();
-    const session = new UploadSession(uploadId, file, options);
+    const resumeKey = this.generateResumeKey(file);
+    
+    // Apply manager-level configuration
+    const finalOptions: UploadOptions = {
+      chunkSize: this.defaultChunkSize,
+      maxConcurrentUploads: this.maxConcurrentUploads,
+      enableResume: true,
+      resumeFromStorage: true,
+      maxRetries: 3,
+      retryDelay: 1000,
+      ...options
+    };
+
+    // Check for resumeable upload
+    let resumeInfo: ResumeInfo | null = null;
+    if (finalOptions.enableResume && finalOptions.resumeFromStorage) {
+      resumeInfo = this.getResumeInfo(file);
+      if (resumeInfo) {
+        logger.info(`Found resumeable upload for ${file.name}`, {
+          uploadId,
+          completedChunks: resumeInfo.completedChunks.length,
+          totalChunks: resumeInfo.chunks.length
+        });
+      }
+    }
+
+    const session = new UploadSession(uploadId, file, finalOptions, resumeInfo);
 
     try {
-      // Check if we can start upload
-      if (this.activeUploads.size >= this.maxConcurrentUploads) {
+      // Check concurrent upload limit
+      if (this.activeUploads.size >= finalOptions.maxConcurrentUploads!) {
         throw this.createUploadError(
           'quota',
-          'Too many active uploads. Please wait for others to complete.',
+          `Too many active uploads. Maximum ${finalOptions.maxConcurrentUploads} concurrent uploads allowed.`,
           false
         );
       }
@@ -74,9 +219,9 @@ export class UploadManager {
       this.activeUploads.set(uploadId, session);
 
       // Validate file if validator provided
-      if (options.validateFile) {
+      if (finalOptions.validateFile) {
         try {
-          await options.validateFile(file);
+          await finalOptions.validateFile(file);
         } catch (error) {
           throw this.createUploadError(
             'validation',
@@ -92,9 +237,33 @@ export class UploadManager {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
+        chunkSize: finalOptions.chunkSize,
+        resuming: !!resumeInfo
       });
 
+      // Save resume info before starting
+      if (finalOptions.enableResume) {
+        const newResumeInfo: ResumeInfo = resumeInfo || {
+          uploadId,
+          fileName: file.name,
+          fileSize: file.size,
+          fileLastModified: file.lastModified,
+          chunks: session.getChunks(),
+          completedChunks: [],
+          metadata: finalOptions.metadata
+        };
+        
+        this.resumeStorage.set(resumeKey, newResumeInfo);
+        this.saveResumeInfoToStorage();
+      }
+
       const result = await session.start();
+
+      // Clean up resume info on successful completion
+      if (finalOptions.enableResume) {
+        this.resumeStorage.delete(resumeKey);
+        this.saveResumeInfoToStorage();
+      }
 
       this.activeUploads.delete(uploadId);
       
@@ -109,6 +278,17 @@ export class UploadManager {
       this.activeUploads.delete(uploadId);
       
       const uploadError = error as UploadError;
+      
+      // Update resume info with current progress if error is retryable
+      if (finalOptions.enableResume && uploadError.retryable) {
+        const currentResumeInfo = this.resumeStorage.get(resumeKey);
+        if (currentResumeInfo) {
+          currentResumeInfo.completedChunks = session.getCompletedChunks();
+          this.resumeStorage.set(resumeKey, currentResumeInfo);
+          this.saveResumeInfoToStorage();
+        }
+      }
+      
       logger.error(`Upload failed: ${file.name}`, {
         uploadId,
         error: uploadError.message,
@@ -199,21 +379,38 @@ class UploadSession {
   private id: string;
   private file: File;
   private options: UploadOptions;
+  private resumeInfo: ResumeInfo | null;
+  private chunks: ChunkInfo[] = [];
+  private completedChunks: number[] = [];
   private isAborted = false;
   private startTime = 0;
   private uploadedBytes = 0;
   private lastProgressTime = 0;
   private speeds: number[] = [];
 
-  constructor(id: string, file: File, options: UploadOptions) {
+  constructor(id: string, file: File, options: UploadOptions, resumeInfo: ResumeInfo | null = null) {
     this.id = id;
     this.file = file;
+    this.resumeInfo = resumeInfo;
     this.options = {
       chunkSize: 5 * 1024 * 1024, // 5MB default
       maxRetries: 3,
       retryDelay: 1000,
+      enableResume: true,
       ...options,
     };
+
+    // Initialize or restore chunks
+    if (resumeInfo) {
+      this.chunks = resumeInfo.chunks;
+      this.completedChunks = [...resumeInfo.completedChunks];
+      this.uploadedBytes = this.completedChunks.length * this.options.chunkSize!;
+      
+      // Notify about resume
+      options.onResume?.(this.completedChunks.length);
+    } else {
+      this.chunks = this.createChunks();
+    }
   }
 
   public getId(): string {
