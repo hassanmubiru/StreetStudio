@@ -9,6 +9,13 @@ import { apiClient } from '../../services/api.js';
 import type { ProjectDto, FolderDto, VideoDto } from '@streetstudio/shared';
 import { handleError } from '../../app/error-handler.js';
 import { logger } from '../../app/client-logger.js';
+import { 
+  FolderManager, 
+  FolderBreadcrumbs, 
+  FolderPermissions,
+  type BreadcrumbItem,
+  type FolderPermission 
+} from '../../components/folder-management/index.js';
 
 export interface FolderItem extends FolderDto {
   children?: FolderItem[];
