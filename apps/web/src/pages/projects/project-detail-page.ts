@@ -1248,4 +1248,12 @@ export class ProjectDetailPage {
   public refresh(): Promise<void> {
     return this.loadFolderStructure();
   }
+
+  // Cleanup method
+  public destroy(): void {
+    this.folderManager?.destroy();
+    this.permissionsDisplay = null;
+    this.breadcrumbs = null;
+    this.container = null;
+  }
 }
