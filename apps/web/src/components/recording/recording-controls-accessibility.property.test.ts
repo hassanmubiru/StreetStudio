@@ -290,8 +290,9 @@ function checkControlsAccessibility(
     const containerRect = container.getBoundingClientRect();
 
     criticalElements.forEach((element, index) => {
-      const elementId = `critical-${element.id}-${index}`;
-      const el = container.querySelector(`#${elementId}`) as HTMLElement;
+      // Use the same sanitized ID as in creation
+      const sanitizedId = `critical-${element.id.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}-${index}`;
+      const el = container.querySelector(`#${sanitizedId}`) as HTMLElement;
       
       if (el) {
         const elementRect = el.getBoundingClientRect();

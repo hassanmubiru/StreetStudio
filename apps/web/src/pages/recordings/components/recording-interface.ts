@@ -673,4 +673,26 @@ export class RecordingInterface {
   public getElement(): HTMLElement {
     return this.container;
   }
+
+  /**
+   * Get current recording state
+   */
+  public getCurrentRecordingState(): { state: RecordingState; session?: RecordingSession } {
+    return this.recordingStateManager.getCurrentState();
+  }
+
+  /**
+   * Cleanup resources
+   */
+  public destroy(): void {
+    if (this.recordingStateManager) {
+      this.recordingStateManager.destroy();
+    }
+    
+    // Clean up notifications
+    const notifications = this.container.querySelectorAll('.notification, .permission-help');
+    notifications.forEach(el => el.remove());
+    
+    logger.info('Recording interface destroyed');
+  }
 }
