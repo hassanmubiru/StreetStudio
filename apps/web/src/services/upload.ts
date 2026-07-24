@@ -466,29 +466,54 @@ class UploadSession {
   }
 
   private async uploadInChunks(): Promise<UploadResult> {
-    const chunks = this.createChunks();
-    
-    // Initialize upload session
-    const initResponse = await apiClient.post('/uploads/init', {
-      fileName: this.file.name,
-      fileSize: this.file.size,
-      fileType: this.file.type,
-      chunkCount: chunks.length,
-      metadata: this.options.metadata,
-    });
+    // Initialize upload session (or restore existing one)
+    let uploadId: string;
+    let uploadUrl: string;
 
-    const { uploadId, uploadUrl } = initResponse.data;
+    if (this.resumeInfo) {
+      // Verify existing upload session is still valid
+      try {
+        const statusResponse = await apiClient.get(`/uploads/${this.resumeInfo.uploadId}/status`);
+        uploadId = this.resumeInfo.uploadId;
+        uploadUrl = statusResponse.data.uploadUrl;
+        
+        logger.info(`Resuming upload session ${uploadId}`, {
+          completedChunks: this.completedChunks.length,
+          totalChunks: this.chunks.length
+        });
+      } catch (error) {
+        // Session expired, create new one
+        logger.warn(`Upload session ${this.resumeInfo.uploadId} expired, starting fresh`);
+        const initResponse = await this.initializeNewUpload();
+        uploadId = initResponse.uploadId;
+        uploadUrl = initResponse.uploadUrl;
+        
+        // Reset progress
+        this.completedChunks = [];
+        this.uploadedBytes = 0;
+      }
+    } else {
+      // Create new upload session
+      const initResponse = await this.initializeNewUpload();
+      uploadId = initResponse.uploadId;
+      uploadUrl = initResponse.uploadUrl;
+    }
 
     try {
-      // Upload chunks
-      for (let i = 0; i < chunks.length; i++) {
+      // Upload remaining chunks
+      const chunksToUpload = this.chunks.filter(chunk => 
+        !this.completedChunks.includes(chunk.index)
+      );
+
+      for (const chunk of chunksToUpload) {
         if (this.isAborted) {
           throw this.createUploadError('abort', 'Upload was cancelled', false);
         }
 
-        await this.uploadChunk(chunks[i]!, uploadId, uploadUrl);
+        await this.uploadChunkWithRetry(chunk, uploadId, uploadUrl);
         
-        this.options.onChunkComplete?.(i, chunks.length);
+        this.completedChunks.push(chunk.index);
+        this.options.onChunkComplete?.(chunk.index, this.chunks.length);
       }
 
       // Complete upload
@@ -497,15 +522,32 @@ class UploadSession {
       return completeResponse.data;
 
     } catch (error) {
-      // Clean up failed upload
-      try {
-        await apiClient.delete(`/uploads/${uploadId}`);
-      } catch (cleanupError) {
-        logger.warn(`Failed to cleanup upload ${uploadId}:`, (cleanupError as Error).message);
+      // Clean up failed upload only if it's a new upload (not resumed)
+      if (!this.resumeInfo) {
+        try {
+          await apiClient.delete(`/uploads/${uploadId}`);
+        } catch (cleanupError) {
+          logger.warn(`Failed to cleanup upload ${uploadId}:`, (cleanupError as Error).message);
+        }
       }
       
       throw error;
     }
+  }
+
+  private async initializeNewUpload(): Promise<{ uploadId: string; uploadUrl: string }> {
+    const initResponse = await apiClient.post('/uploads/init', {
+      fileName: this.file.name,
+      fileSize: this.file.size,
+      fileType: this.file.type,
+      chunkCount: this.chunks.length,
+      metadata: this.options.metadata,
+    });
+
+    return {
+      uploadId: initResponse.data.uploadId,
+      uploadUrl: initResponse.data.uploadUrl
+    };
   }
 
   private async uploadSimple(): Promise<UploadResult> {
