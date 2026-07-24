@@ -330,7 +330,8 @@ function checkControlsAccessibility(
   } else {
     // If no controls, all elements are accessible
     criticalElements.forEach((element, index) => {
-      accessibleCriticalElements.push(`critical-${element.id}-${index}`);
+      const sanitizedId = `critical-${element.id.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}-${index}`;
+      accessibleCriticalElements.push(sanitizedId);
     });
   }
 
@@ -421,8 +422,10 @@ describe('Recording Controls Accessibility Properties', () => {
 
           // 2. Critical elements must not be obscured by recording controls
           const criticalObscured = screenContent.criticalElements.filter(
-            (el, idx) => accessibility.obscuredCriticalElements.includes(`critical-${el.id}-${idx}`) &&
-            el.priority === 'critical'
+            (el, idx) => {
+              const sanitizedId = `critical-${el.id.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}-${idx}`;
+              return accessibility.obscuredCriticalElements.includes(sanitizedId) && el.priority === 'critical';
+            }
           );
           
           expect(criticalObscured.length).toBe(0); // NO critical elements should be obscured
