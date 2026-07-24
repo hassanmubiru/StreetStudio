@@ -417,6 +417,38 @@ export class ScreenSelector {
     this.updateSelectedCount();
   }
 
+  /**
+   * Get the currently selected source
+   */
+  public getSelectedSource(): { id: string; name: string; thumbnail?: string } | null {
+    return this.selectedSource;
+  }
+
+  /**
+   * Set the selected source
+   */
+  public setSelectedSource(source: { id: string; name: string; thumbnail?: string } | null): void {
+    this.selectedSource = source;
+    
+    // Update UI to reflect selection
+    const sourceItems = this.container.querySelectorAll('.source-item');
+    sourceItems.forEach(item => {
+      const itemId = item.getAttribute('data-source-id');
+      if (itemId === source?.id) {
+        item.classList.add('selected', 'border-blue-500', 'bg-blue-50');
+        item.setAttribute('aria-selected', 'true');
+      } else {
+        item.classList.remove('selected', 'border-blue-500', 'bg-blue-50');
+        item.setAttribute('aria-selected', 'false');
+      }
+    });
+
+    // Call callback if provided
+    if (source && this.onSourceSelected) {
+      this.onSourceSelected(source);
+    }
+  }
+
   public getElement(): HTMLElement {
     // Initialize with screen sources
     setTimeout(() => {

@@ -318,12 +318,12 @@ function checkControlsAccessibility(
           
           // Consider element obscured if more than 25% is covered
           if (overlapPercentage > 0.25) {
-            obscuredCriticalElements.push(elementId);
+            obscuredCriticalElements.push(sanitizedId);
           } else {
-            accessibleCriticalElements.push(elementId);
+            accessibleCriticalElements.push(sanitizedId);
           }
         } else {
-          accessibleCriticalElements.push(elementId);
+          accessibleCriticalElements.push(sanitizedId);
         }
       }
     });
