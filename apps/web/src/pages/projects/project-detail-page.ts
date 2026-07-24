@@ -447,11 +447,133 @@ export class ProjectDetailPage {
       }
     });
   }
-  private async navigateToFolder(folderId: string | null): Promise<void> {
+  private async handleFolderSelection(folderId: string | null): Promise<void> {
     this.currentFolderId = folderId;
-    this.updateCurrentPath();
-    this.renderFolderTree(); // Re-render to update selection
+    
+    // Update breadcrumbs
+    if (this.breadcrumbs) {
+      const breadcrumbPath = await this.buildBreadcrumbPath();
+      this.breadcrumbs.updatePath(breadcrumbPath);
+    }
+    
+    // Update permissions display
+    await this.updatePermissionsDisplay();
+    
+    // Load folder content
     await this.loadFolderContent(folderId);
+    
+    logger.debug('Folder selected', { folderId, feature: 'project-detail' });
+  }
+
+  private handleFolderCreated(folder: FolderDto): void {
+    logger.info('Folder created successfully', { 
+      folderId: folder.id, 
+      name: folder.name,
+      feature: 'project-detail' 
+    });
+    
+    // Optionally show success notification
+    // this.showNotification('Folder created successfully', 'success');
+  }
+
+  private handleFolderRenamed(folder: FolderDto): void {
+    // Update breadcrumbs if the current folder or parent was renamed
+    if (this.breadcrumbs) {
+      this.buildBreadcrumbPath().then(path => {
+        this.breadcrumbs!.updatePath(path);
+      });
+    }
+    
+    logger.info('Folder renamed successfully', { 
+      folderId: folder.id, 
+      newName: folder.name,
+      feature: 'project-detail' 
+    });
+  }
+
+  private handleFolderDeleted(folderId: string): void {
+    // If the deleted folder was selected, navigate to parent
+    if (this.currentFolderId === folderId) {
+      this.handleFolderSelection(null); // Navigate to root
+    }
+    
+    logger.info('Folder deleted successfully', { 
+      folderId,
+      feature: 'project-detail' 
+    });
+  }
+
+  private async buildBreadcrumbPath(): Promise<BreadcrumbItem[]> {
+    if (!this.currentFolderId) return [];
+    
+    // Get folder path from folder manager
+    const path = this.folderManager?.getFolderPath(this.currentFolderId) || [];
+    
+    return path.map(folder => ({
+      id: folder.id,
+      name: folder.name,
+      type: 'folder' as const,
+      depth: folder.depth
+    }));
+  }
+
+  private async updatePermissionsDisplay(): Promise<void> {
+    if (!this.currentFolderId || !this.container) {
+      // Hide permissions display if no folder selected
+      const existingPermissions = this.container.querySelector('.folder-permissions-container');
+      existingPermissions?.remove();
+      return;
+    }
+
+    const currentFolder = this.folderManager?.getCurrentFolder();
+    if (!currentFolder) return;
+
+    // Mock permissions for demonstration
+    // In a real implementation, these would come from an API
+    const permissions: FolderPermission[] = [
+      { action: 'read', allowed: true },
+      { action: 'create_folder', allowed: currentFolder.canCreateSubfolder || false },
+      { action: 'rename', allowed: currentFolder.canRename || false },
+      { action: 'delete', allowed: currentFolder.canDelete || false, 
+        reason: !currentFolder.canDelete ? 'Folder contains content' : undefined },
+      { action: 'upload_video', allowed: true },
+      { action: 'move_content', allowed: true }
+    ];
+
+    // Mock current user
+    const mockUser = {
+      id: 'current-user',
+      organizationId: this.project?.organizationId || '',
+      email: 'user@example.com',
+      role: 'Editor',
+      joinedAt: new Date().toISOString()
+    };
+
+    // Create or update permissions display
+    if (this.permissionsDisplay) {
+      this.permissionsDisplay.updateFolder(currentFolder);
+      this.permissionsDisplay.updatePermissions(permissions);
+    } else {
+      this.permissionsDisplay = new FolderPermissions({
+        folder: currentFolder,
+        currentUser: mockUser,
+        permissions
+      });
+    }
+
+    // Add to sidebar
+    const sidebar = this.container.querySelector('aside');
+    if (sidebar) {
+      let permissionsContainer = sidebar.querySelector('.folder-permissions-container');
+      if (!permissionsContainer) {
+        permissionsContainer = document.createElement('div');
+        permissionsContainer.className = 'folder-permissions-container p-4 border-t border-gray-200 dark:border-gray-700';
+        sidebar.appendChild(permissionsContainer);
+      }
+      
+      permissionsContainer.innerHTML = '';
+      permissionsContainer.appendChild(this.permissionsDisplay.getElement());
+    }
   }
 
   private toggleFolder(folderId: string): void {
