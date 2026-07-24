@@ -54,12 +54,13 @@ const folderNameArbitrary = fc.oneof(
   fc.constantFrom('v1', 'v2', 'release', 'staging', 'production', 'development'),
   // Descriptive folder names
   fc.string({ minLength: 3, maxLength: 30 })
-    .filter(s => /^[a-zA-Z0-9][a-zA-Z0-9\s\-_.]*[a-zA-Z0-9]$/.test(s))
-    .map(s => s.replace(/\s+/g, '-').toLowerCase()),
+    .filter(s => /^[a-zA-Z0-9][a-zA-Z0-9\s\-_.]*[a-zA-Z0-9]$/.test(s.trim()))
+    .map(s => s.trim().replace(/\s+/g, '-').toLowerCase())
+    .filter(s => s.length >= 3), // Ensure minimum length after processing
   // Date-based folders
   fc.date({ min: new Date('2020-01-01'), max: new Date('2024-12-31') })
     .map(d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'))
-);
+).filter(name => name.length >= 3 && name.length <= 30); // Additional safety filter
 
 /**
  * Arbitrary generator for video titles
