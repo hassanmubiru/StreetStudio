@@ -1,6 +1,10 @@
 import { ScreenSelector } from './screen-selector.js';
 import { RecordingControls } from './recording-controls.js';
 import { CursorSettings } from './cursor-settings.js';
+import { RecordingStateManager } from '../../../components/recording/recording-state-manager.js';
+import { KeyboardShortcuts } from '../../../app/keyboard-shortcuts.js';
+import { createRecordingStore, getRecordingStore, type RecordingState, type RecordingSession } from '../../../stores/recording-store.js';
+import { logger } from '../../../app/client-logger.js';
 
 /**
  * Main Recording Interface Component
@@ -11,7 +15,10 @@ export class RecordingInterface {
   private screenSelector: ScreenSelector;
   private recordingControls: RecordingControls;
   private cursorSettings: CursorSettings;
+  private recordingStateManager: RecordingStateManager;
+  private keyboardShortcuts: KeyboardShortcuts;
   private drawingEnabled = false;
+  private currentState: RecordingState = 'idle';
 
   constructor(options: {
     screenSelector: ScreenSelector;
