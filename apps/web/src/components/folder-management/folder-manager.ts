@@ -520,3 +520,215 @@ export class FolderManager {
 
     document.body.appendChild(dialog);
   }
+  private createFolderDialog(title: string, initialValue: string, parentFolderId?: string | null, isRename = false): HTMLElement {
+    const dialog = document.createElement('div');
+    dialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    
+    const parentFolder = parentFolderId ? this.flatFolderMap.get(parentFolderId) : null;
+    const currentDepth = parentFolder ? parentFolder.depth + 1 : 0;
+    const maxDepthReached = currentDepth >= 10;
+    
+    dialog.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">${title}</h3>
+        
+        ${parentFolderId && !isRename ? `
+          <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <p class="text-sm text-blue-800 dark:text-blue-200">
+              <span class="font-medium">Parent:</span> ${parentFolder?.name || 'Root'}
+            </p>
+            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              New folder will be at level ${currentDepth + 1} of 10
+            </p>
+          </div>
+        ` : ''}
+        
+        ${maxDepthReached && !isRename ? `
+          <div class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+            <p class="text-sm text-red-800 dark:text-red-200">
+              <span class="font-medium">Maximum depth reached!</span>
+            </p>
+            <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+              Cannot create folders deeper than 10 levels.
+            </p>
+          </div>
+        ` : ''}
+        
+        <div class="mb-6">
+          <label for="folder-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Folder Name
+          </label>
+          <input type="text" 
+                 id="folder-name"
+                 data-folder-name
+                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                 placeholder="Enter folder name..."
+                 value="${initialValue}"
+                 maxlength="255"
+                 ${maxDepthReached && !isRename ? 'disabled' : ''}>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Maximum 255 characters
+          </p>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+          <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors"
+                  data-cancel>
+            Cancel
+          </button>
+          <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  data-create-folder
+                  ${maxDepthReached && !isRename ? 'disabled' : ''}>
+            ${isRename ? 'Save' : 'Create Folder'}
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Event listeners
+    const nameInput = dialog.querySelector('[data-folder-name]') as HTMLInputElement;
+    const cancelBtn = dialog.querySelector('[data-cancel]');
+    const createBtn = dialog.querySelector('[data-create-folder]') as HTMLButtonElement;
+
+    cancelBtn?.addEventListener('click', () => dialog.remove());
+    
+    // Close on backdrop click
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.remove();
+    });
+
+    // Enter key to submit
+    nameInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !createBtn.disabled) {
+        createBtn.click();
+      } else if (e.key === 'Escape') {
+        dialog.remove();
+      }
+    });
+
+    // Validate input
+    nameInput?.addEventListener('input', () => {
+      const value = nameInput.value.trim();
+      createBtn.disabled = !value || value.length > 255 || (maxDepthReached && !isRename);
+    });
+
+    return dialog;
+  }
+  // API operations
+  private async createFolder(name: string, parentFolderId: string | null): Promise<void> {
+    try {
+      const requestData = {
+        name: name.trim(),
+        projectId: this.config.projectId,
+        parentFolderId: parentFolderId || undefined
+      };
+
+      const response = await apiClient.post('/folders', requestData);
+      const newFolder = response.data as FolderDto;
+      
+      // Add to local state
+      const extendedFolder = this.createExtendedFolder(newFolder);
+      this.flatFolderMap.set(newFolder.id, extendedFolder);
+      
+      // Update hierarchy
+      if (parentFolderId) {
+        const parent = this.flatFolderMap.get(parentFolderId);
+        if (parent) {
+          if (!parent.children) parent.children = [];
+          parent.children.push(extendedFolder);
+          parent.isExpanded = true; // Expand parent to show new folder
+        }
+      } else {
+        this.folders.push(extendedFolder);
+      }
+      
+      this.renderFolderTree();
+      this.config.onFolderCreate?.(newFolder);
+      
+      logger.info('Folder created', { 
+        folderId: newFolder.id, 
+        name: newFolder.name,
+        parentFolderId,
+        feature: 'folder-management' 
+      });
+      
+    } catch (error) {
+      handleError(error as Error, 'api', {
+        feature: 'folder-management',
+        operation: 'create-folder',
+        folderName: name,
+        parentFolderId
+      });
+    }
+  }
+
+  private async renameFolder(folderId: string, newName: string): Promise<void> {
+    const folder = this.flatFolderMap.get(folderId);
+    if (!folder) return;
+
+    const oldName = folder.name;
+    
+    try {
+      const response = await apiClient.patch(`/folders/${folderId}`, { 
+        name: newName.trim() 
+      });
+      const updatedFolder = response.data as FolderDto;
+      
+      // Update local state
+      Object.assign(folder, updatedFolder);
+      this.renderFolderTree();
+      this.config.onFolderRename?.(updatedFolder);
+      
+      logger.info('Folder renamed', { 
+        folderId, 
+        oldName, 
+        newName: updatedFolder.name,
+        feature: 'folder-management' 
+      });
+      
+    } catch (error) {
+      handleError(error as Error, 'api', {
+        feature: 'folder-management',
+        operation: 'rename-folder',
+        folderId,
+        oldName,
+        newName
+      });
+    }
+  }
+
+  private async deleteFolder(folderId: string): Promise<void> {
+    const folder = this.flatFolderMap.get(folderId);
+    if (!folder) return;
+
+    try {
+      await apiClient.delete(`/folders/${folderId}`);
+      
+      // Remove from local state
+      this.removeFolderFromHierarchy(folderId);
+      this.flatFolderMap.delete(folderId);
+      
+      // Update selection if deleted folder was selected
+      if (this.config.currentFolderId === folderId) {
+        this.config.currentFolderId = folder.parentFolderId || null;
+        this.config.onFolderSelect?.(this.config.currentFolderId);
+      }
+      
+      this.renderFolderTree();
+      this.config.onFolderDelete?.(folderId);
+      
+      logger.info('Folder deleted', { 
+        folderId, 
+        name: folder.name,
+        feature: 'folder-management' 
+      });
+      
+    } catch (error) {
+      handleError(error as Error, 'api', {
+        feature: 'folder-management',
+        operation: 'delete-folder',
+        folderId,
+        folderName: folder.name
+      });
+    }
+  }

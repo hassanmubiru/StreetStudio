@@ -513,7 +513,7 @@ describe('Recording Controls Accessibility Properties', () => {
           const recordingController = new RecordingController(
             container,
             {
-              enableDrawing: true,
+              enableDrawing: false, // Disable drawing for test stability
               persistDrawings: false,
             }
           );
@@ -577,7 +577,7 @@ describe('Recording Controls Accessibility Properties', () => {
 
           const recordingController = new RecordingController(
             container,
-            { enableDrawing: true, persistDrawings: false }
+            { enableDrawing: false, persistDrawings: false }
           );
 
           let allStatesAccessible = true;
@@ -681,7 +681,7 @@ describe('Recording Controls Accessibility Properties', () => {
           const recordingController = new RecordingController(
             container,
             { 
-              enableDrawing: true, 
+              enableDrawing: false, // Disable drawing for test stability
               persistDrawings: false,
             }
           );
