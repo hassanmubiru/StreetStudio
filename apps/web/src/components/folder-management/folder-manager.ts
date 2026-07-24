@@ -247,3 +247,89 @@ export class FolderManager {
       `;
     }).join('');
   }
+  private handleTreeClick(e: Event): void {
+    const target = e.target as HTMLElement;
+    
+    // Handle expand/collapse
+    const toggleBtn = target.closest('[data-toggle]');
+    if (toggleBtn) {
+      e.stopPropagation();
+      const folderId = toggleBtn.getAttribute('data-toggle')!;
+      this.toggleFolder(folderId);
+      return;
+    }
+    
+    // Handle folder actions menu
+    const menuBtn = target.closest('[data-folder-menu]');
+    if (menuBtn) {
+      e.stopPropagation();
+      const folderId = menuBtn.getAttribute('data-folder-menu')!;
+      this.showFolderMenu(folderId, e as MouseEvent);
+      return;
+    }
+    
+    // Handle folder selection
+    const folderRow = target.closest('[data-folder-item]');
+    if (folderRow) {
+      const folderId = folderRow.getAttribute('data-folder-item')!;
+      this.selectFolder(folderId);
+    }
+  }
+
+  private handleTreeDoubleClick(e: Event): void {
+    const target = e.target as HTMLElement;
+    const folderRow = target.closest('[data-folder-item]');
+    
+    if (folderRow) {
+      const folderId = folderRow.getAttribute('data-folder-item')!;
+      this.navigateToFolder(folderId);
+    }
+  }
+
+  private handleContextMenu(e: Event): void {
+    e.preventDefault();
+    const target = e.target as HTMLElement;
+    const folderRow = target.closest('[data-folder-item]');
+    
+    if (folderRow) {
+      const folderId = folderRow.getAttribute('data-folder-item')!;
+      this.showFolderMenu(folderId, e as MouseEvent);
+    } else {
+      // Right-click on empty space - show root menu
+      this.showCreateFolderDialog(this.config.currentFolderId);
+    }
+  }
+
+  private toggleFolder(folderId: string): void {
+    const folder = this.flatFolderMap.get(folderId);
+    if (folder) {
+      folder.isExpanded = !folder.isExpanded;
+      this.renderFolderTree();
+      
+      logger.debug('Folder toggled', { 
+        folderId, 
+        expanded: folder.isExpanded,
+        feature: 'folder-management' 
+      });
+    }
+  }
+
+  private selectFolder(folderId: string): void {
+    // Update selection state
+    this.flatFolderMap.forEach(folder => {
+      folder.isSelected = folder.id === folderId;
+    });
+    
+    this.config.currentFolderId = folderId;
+    this.renderFolderTree();
+    
+    // Notify parent component
+    this.config.onFolderSelect?.(folderId);
+    
+    logger.debug('Folder selected', { folderId, feature: 'folder-management' });
+  }
+
+  private navigateToFolder(folderId: string): void {
+    this.selectFolder(folderId);
+    // Additional navigation logic could be added here
+  }

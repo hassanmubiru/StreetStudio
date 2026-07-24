@@ -41,6 +41,415 @@ export class RecordingInterface {
     this.container.className = 'recording-interface h-full flex flex-col';
     this.container.setAttribute('role', 'region');
     this.container.setAttribute('aria-label', 'Recording Interface');
+    this.container.setAttribute('data-keyboard-context', 'recordings');
+  }
+
+  /**
+   * Initialize the recording system
+   */
+  private async initializeRecordingSystem(): Promise<void> {
+    try {
+      // Initialize recording store
+      createRecordingStore();
+      
+      // Initialize recording state manager
+      this.recordingStateManager = new RecordingStateManager(
+        this.keyboardShortcuts,
+        {
+          enableKeyboardShortcuts: true,
+          enableSessionRecovery: true,
+          enablePermissionGuidance: true,
+          autoSaveInterval: 5
+        },
+        {
+          onStateChange: (state, session) => this.handleStateChange(state, session),
+          onPermissionDenied: (error, guidance) => this.handlePermissionDenied(error, guidance),
+          onSessionRecovered: (session) => this.handleSessionRecovered(session),
+          onRecordingComplete: (session) => this.handleRecordingComplete(session),
+          onError: (error, session) => this.handleError(error, session)
+        }
+      );
+
+      // Initialize the state manager
+      const initialized = await this.recordingStateManager.initialize();
+      if (!initialized) {
+        throw new Error('Failed to initialize recording state manager');
+      }
+
+      // Set keyboard context
+      this.keyboardShortcuts.setContext('recordings');
+
+      // Setup control event handlers
+      this.setupControlEventHandlers();
+
+      logger.info('Recording interface initialized successfully');
+
+    } catch (error) {
+      logger.error('Recording interface initialization failed', { error });
+      this.showError('Failed to initialize recording system. Please refresh the page.');
+    }
+  }
+
+  /**
+   * Setup control event handlers
+   */
+  private setupControlEventHandlers(): void {
+    // Update recording controls with proper callbacks
+    this.recordingControls = new RecordingControls({
+      onRecord: () => this.handleRecordAction(),
+      onPause: () => this.handlePauseAction(),
+      onStop: () => this.handleStopAction(),
+      onToggleDrawing: () => this.toggleDrawing()
+    });
+
+    // Update the interface with new controls
+    const controlsContainer = this.container.querySelector('.recording-preview-panel .preview-content');
+    if (controlsContainer) {
+      controlsContainer.innerHTML = '';
+      controlsContainer.appendChild(this.recordingControls.getElement());
+    }
+  }
+
+  /**
+   * Handle record action
+   */
+  private async handleRecordAction(): Promise<void> {
+    if (this.currentState === 'paused') {
+      this.recordingStateManager.resumeRecording();
+    } else {
+      // Get selected screen from screen selector if available
+      const selectedSource = this.screenSelector.getSelectedSource();
+      
+      const metadata = {
+        title: `Screen Recording ${new Date().toLocaleString()}`,
+        description: 'Screen recording created with StreetStudio'
+      };
+
+      await this.recordingStateManager.startRecording(metadata);
+    }
+  }
+
+  /**
+   * Handle pause action
+   */
+  private handlePauseAction(): void {
+    this.recordingStateManager.pauseRecording();
+  }
+
+  /**
+   * Handle stop action
+   */
+  private handleStopAction(): void {
+    this.recordingStateManager.stopRecording();
+  }
+
+  /**
+   * Handle recording state changes
+   */
+  private handleStateChange(state: RecordingState, session?: RecordingSession): void {
+    this.currentState = state;
+    
+    // Update UI based on state
+    this.updateRecordingUI(state, session);
+    
+    // Update controls state
+    this.updateControlsState(state);
+    
+    // Handle state-specific logic
+    switch (state) {
+      case 'recording':
+        this.recordingControls.setFloatingMode(true);
+        this.startDurationDisplay(session);
+        break;
+        
+      case 'paused':
+        this.showPausedIndicator();
+        break;
+        
+      case 'stopped':
+        this.recordingControls.setFloatingMode(false);
+        this.showCompletedState(session);
+        break;
+        
+      case 'error':
+        this.recordingControls.setFloatingMode(false);
+        if (session?.error) {
+          this.showError(session.error);
+        }
+        break;
+    }
+  }
+
+  /**
+   * Handle permission denied
+   */
+  private handlePermissionDenied(error: string, guidance: string): void {
+    this.showPermissionHelp(error, guidance);
+  }
+
+  /**
+   * Handle session recovered
+   */
+  private handleSessionRecovered(session: RecordingSession): void {
+    this.showSessionRecoveryNotification(session);
+  }
+
+  /**
+   * Handle recording complete
+   */
+  private handleRecordingComplete(session: RecordingSession): void {
+    this.showRecordingComplete(session);
+  }
+
+  /**
+   * Handle errors
+   */
+  private handleError(error: string, session?: RecordingSession): void {
+    this.showError(error);
+    logger.error('Recording error', { error, sessionId: session?.id });
+  }
+
+  /**
+   * Update recording UI based on state
+   */
+  private updateRecordingUI(state: RecordingState, session?: RecordingSession): void {
+    const statusIndicator = this.container.querySelector('.recording-status-indicator');
+    const timeElement = this.container.querySelector('#recording-time');
+    
+    if (statusIndicator) {
+      if (state === 'recording' || state === 'paused') {
+        statusIndicator.classList.remove('hidden');
+      } else {
+        statusIndicator.classList.add('hidden');
+      }
+    }
+
+    if (timeElement && session) {
+      const formattedDuration = this.recordingStateManager.getFormattedDuration();
+      timeElement.textContent = formattedDuration;
+    }
+  }
+
+  /**
+   * Update controls state
+   */
+  private updateControlsState(state: RecordingState): void {
+    switch (state) {
+      case 'idle':
+      case 'stopped':
+        this.recordingControls.setRecordingState('stopped');
+        this.recordingControls.setEnabled(true);
+        break;
+        
+      case 'recording':
+        this.recordingControls.setRecordingState('recording');
+        this.recordingControls.setEnabled(true);
+        break;
+        
+      case 'paused':
+        this.recordingControls.setRecordingState('paused');
+        this.recordingControls.setEnabled(true);
+        break;
+        
+      case 'requesting-permission':
+      case 'permission-granted':
+        this.recordingControls.setEnabled(false);
+        break;
+        
+      case 'error':
+        this.recordingControls.setRecordingState('stopped');
+        this.recordingControls.setEnabled(true);
+        break;
+    }
+  }
+
+  /**
+   * Start duration display updates
+   */
+  private startDurationDisplay(session?: RecordingSession): void {
+    const updateDuration = () => {
+      if (this.recordingStateManager.isRecording()) {
+        const formattedTime = this.recordingStateManager.getFormattedDuration();
+        this.recordingControls.updateElapsedTime(formattedTime);
+        requestAnimationFrame(updateDuration);
+      }
+    };
+    
+    requestAnimationFrame(updateDuration);
+  }
+
+  /**
+   * Show paused indicator
+   */
+  private showPausedIndicator(): void {
+    const notification = this.createNotification(
+      'Recording Paused',
+      'Your screen recording is paused. Click Resume to continue.',
+      'warning'
+    );
+    this.showNotification(notification);
+  }
+
+  /**
+   * Show completed state
+   */
+  private showCompletedState(session?: RecordingSession): void {
+    if (session && session.recordedChunks.length > 0) {
+      const notification = this.createNotification(
+        'Recording Complete',
+        `Recording saved with ${session.recordedChunks.length} segments. Duration: ${this.recordingStateManager.getFormattedDuration()}`,
+        'success'
+      );
+      this.showNotification(notification);
+    }
+  }
+
+  /**
+   * Show permission help
+   */
+  private showPermissionHelp(error: string, guidance: string): void {
+    const helpElement = document.createElement('div');
+    helpElement.className = 'permission-help bg-blue-50 border border-blue-200 rounded-lg p-6 mx-6 my-4';
+    
+    helpElement.innerHTML = `
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-lg font-medium text-blue-900">
+            Screen Recording Permission Needed
+          </h3>
+          <div class="mt-2 text-sm text-blue-700">
+            <p>${error}</p>
+            <div class="mt-3 whitespace-pre-line">${guidance}</div>
+          </div>
+          <div class="mt-4">
+            <button 
+              type="button"
+              class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onclick="this.closest('.permission-help').remove()"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Insert after header
+    const header = this.container.querySelector('.recording-header');
+    if (header && header.nextSibling) {
+      header.parentNode?.insertBefore(helpElement, header.nextSibling);
+    }
+  }
+
+  /**
+   * Show session recovery notification
+   */
+  private showSessionRecoveryNotification(session: RecordingSession): void {
+    const notification = this.createNotification(
+      'Session Recovered',
+      `Found an interrupted recording session from ${new Date(session.lastActivity).toLocaleString()}. The recording data may have been lost.`,
+      'warning'
+    );
+    this.showNotification(notification);
+  }
+
+  /**
+   * Show recording complete notification
+   */
+  private showRecordingComplete(session: RecordingSession): void {
+    const duration = this.recordingStateManager.getFormattedDuration();
+    const notification = this.createNotification(
+      'Recording Complete!',
+      `Screen recording finished successfully. Duration: ${duration}. The recording has been saved to your library.`,
+      'success'
+    );
+    this.showNotification(notification);
+  }
+
+  /**
+   * Show error message
+   */
+  private showError(error: string): void {
+    const notification = this.createNotification(
+      'Recording Error',
+      error,
+      'error'
+    );
+    this.showNotification(notification);
+  }
+
+  /**
+   * Create notification element
+   */
+  private createNotification(title: string, message: string, type: 'success' | 'warning' | 'error' | 'info'): HTMLElement {
+    const colorClasses = {
+      success: 'bg-green-50 border-green-200 text-green-800',
+      warning: 'bg-yellow-50 border-yellow-200 text-yellow-800', 
+      error: 'bg-red-50 border-red-200 text-red-800',
+      info: 'bg-blue-50 border-blue-200 text-blue-800'
+    };
+
+    const iconSvgs = {
+      success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>',
+      warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>',
+      error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>',
+      info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+    };
+
+    const notification = document.createElement('div');
+    notification.className = `notification border rounded-lg p-4 mb-4 ${colorClasses[type]}`;
+    notification.setAttribute('role', 'alert');
+    
+    notification.innerHTML = `
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${iconSvgs[type]}
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium">${title}</h3>
+          <div class="mt-1 text-sm">${message}</div>
+        </div>
+        <div class="ml-auto pl-3">
+          <button 
+            type="button"
+            class="inline-flex rounded-md p-1.5 hover:bg-opacity-20 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            onclick="this.closest('.notification').remove()"
+            aria-label="Close notification"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `;
+
+    return notification;
+  }
+
+  /**
+   * Show notification in the interface
+   */
+  private showNotification(notification: HTMLElement): void {
+    const container = this.container.querySelector('.recording-main');
+    if (container) {
+      // Insert at the top of main content
+      container.insertBefore(notification, container.firstChild);
+      
+      // Auto-remove after 10 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.remove();
+        }
+      }, 10000);
+    }
   }
 
   private buildInterface(): void {
