@@ -421,6 +421,14 @@ class UploadSession {
     return this.file.name;
   }
 
+  public getChunks(): ChunkInfo[] {
+    return this.chunks;
+  }
+
+  public getCompletedChunks(): number[] {
+    return [...this.completedChunks];
+  }
+
   public async start(): Promise<UploadResult> {
     this.startTime = Date.now();
     this.lastProgressTime = this.startTime;

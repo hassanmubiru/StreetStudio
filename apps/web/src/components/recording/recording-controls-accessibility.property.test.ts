@@ -59,10 +59,10 @@ const arbitraryScreenContent = fc.record({
         fc.constant('select'),
         fc.constant('textarea')
       ),
-      x: fc.float({ min: 0, max: 1, noNaN: true }), // Relative position (0-1)
-      y: fc.float({ min: 0, max: 1, noNaN: true }),
-      width: fc.float({ min: 0.01, max: 0.3, noNaN: true }), // Relative size
-      height: fc.float({ min: 0.01, max: 0.1, noNaN: true }),
+      x: fc.float({ min: Math.fround(0), max: Math.fround(1), noNaN: true }), // Relative position (0-1)
+      y: fc.float({ min: Math.fround(0), max: Math.fround(1), noNaN: true }),
+      width: fc.float({ min: Math.fround(0.01), max: Math.fround(0.3), noNaN: true }), // Relative size
+      height: fc.float({ min: Math.fround(0.01), max: Math.fround(0.1), noNaN: true }),
       priority: fc.oneof(
         fc.constant('critical'),
         fc.constant('important'), 
@@ -81,10 +81,10 @@ const arbitraryScreenContent = fc.record({
         fc.constant('video'),
         fc.constant('form')
       ),
-      x: fc.float({ min: 0, max: 1, noNaN: true }),
-      y: fc.float({ min: 0, max: 1, noNaN: true }),
-      width: fc.float({ min: 0.1, max: 1, noNaN: true }),
-      height: fc.float({ min: 0.1, max: 1, noNaN: true }),
+      x: fc.float({ min: Math.fround(0), max: Math.fround(1), noNaN: true }),
+      y: fc.float({ min: Math.fround(0), max: Math.fround(1), noNaN: true }),
+      width: fc.float({ min: Math.fround(0.1), max: Math.fround(1), noNaN: true }),
+      height: fc.float({ min: Math.fround(0.1), max: Math.fround(1), noNaN: true }),
     }),
     { minLength: 0, maxLength: 10 }
   ),
