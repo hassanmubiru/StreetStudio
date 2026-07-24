@@ -263,24 +263,18 @@ describe('Project Organization Consistency Properties', () => {
           try {
             // Test folder hierarchy representation without async DOM manipulation
             if (structure.folders.length > 0) {
+              // First validate the generated structure is logically consistent
+              const isLogicallyValid = validateFolderHierarchyLogic(structure.folders);
+              if (!isLogicallyValid) {
+                return false; // Invalid test data structure
+              }
+              
               const hierarchy = buildFolderTreeFromStructure(structure.folders);
               const isHierarchyValid = validateFolderHierarchy(hierarchy);
               
-              // Verify depth calculation consistency
-              structure.folders.forEach(folder => {
-                if (folder.depth < 0 || folder.depth > 10) {
-                  return false; // Invalid depth
-                }
-                
-                if (folder.parentFolderId) {
-                  const parent = structure.folders.find(f => f.id === folder.parentFolderId);
-                  if (parent && folder.depth !== parent.depth + 1) {
-                    return false; // Inconsistent depth
-                  }
-                }
-              });
-              
-              return isHierarchyValid;
+              if (!isHierarchyValid) {
+                return false; // Hierarchy representation is invalid
+              }
             }
 
             // For empty folder structures, the test passes (trivially valid)
