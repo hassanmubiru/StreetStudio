@@ -348,6 +348,49 @@ export class UploadManager {
     this.activeUploads.clear();
   }
 
+  /**
+   * Get upload queue status
+   */
+  public getQueueStatus(): {
+    active: number;
+    maxConcurrent: number;
+    canAcceptMore: boolean;
+  } {
+    return {
+      active: this.activeUploads.size,
+      maxConcurrent: this.maxConcurrentUploads,
+      canAcceptMore: this.activeUploads.size < this.maxConcurrentUploads
+    };
+  }
+
+  /**
+   * Clear all resume information
+   */
+  public clearResumeData(): void {
+    this.resumeStorage.clear();
+    this.saveResumeInfoToStorage();
+    logger.info('Cleared all resume data');
+  }
+
+  /**
+   * Get all resumeable uploads
+   */
+  public getResumeableUploads(): Array<{
+    fileName: string;
+    fileSize: number;
+    completedChunks: number;
+    totalChunks: number;
+    resumeKey: string;
+  }> {
+    return Array.from(this.resumeStorage.entries()).map(([key, info]) => ({
+      fileName: info.fileName,
+      fileSize: info.fileSize,
+      completedChunks: info.completedChunks.length,
+      totalChunks: info.chunks.length,
+      resumeKey: key
+    }));
+  }
+
   private createUploadError(
     type: UploadError['type'],
     message: string,

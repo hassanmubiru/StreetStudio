@@ -164,3 +164,86 @@ export class FolderManager {
       canDelete: true  // TODO: Check permissions and ensure folder is empty
     };
   }
+  private renderFolderTree(): void {
+    if (!this.container) return;
+
+    const treeContainer = this.container.querySelector('[data-folder-tree]');
+    if (!treeContainer) return;
+
+    const html = this.folders.length > 0 
+      ? this.renderFolderItems(this.folders, 0)
+      : `<div class="empty-state text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+           <svg class="mx-auto h-8 w-8 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"/>
+           </svg>
+           <p>No folders yet</p>
+           <p class="text-xs mt-1">Create your first folder to organize content</p>
+         </div>`;
+
+    treeContainer.innerHTML = html;
+  }
+
+  private renderFolderItems(folders: ExtendedFolderDto[], level: number): string {
+    return folders.map(folder => {
+      const indent = level * 20;
+      const hasChildren = folder.children && folder.children.length > 0;
+      
+      return `
+        <div class="folder-item mb-1" data-folder-id="${folder.id}">
+          <!-- Folder row -->
+          <div class="folder-row flex items-center py-2 px-3 rounded-lg cursor-pointer transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 ${
+            folder.isSelected ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' : ''
+          }" 
+               style="margin-left: ${indent}px"
+               data-folder-item="${folder.id}"
+               title="${folder.name} (Level ${folder.depth + 1})">
+            
+            <!-- Expand/Collapse button -->
+            ${hasChildren ? `
+              <button class="expand-btn flex-shrink-0 w-5 h-5 mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors"
+                      data-toggle="${folder.id}"
+                      aria-label="${folder.isExpanded ? 'Collapse' : 'Expand'} folder">
+                <svg class="w-4 h-4 transform transition-transform ${folder.isExpanded ? 'rotate-90' : ''}" 
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            ` : '<div class="w-5 h-5 mr-2"></div>'}
+            
+            <!-- Folder icon -->
+            <div class="flex-shrink-0 mr-2">
+              <svg class="w-4 h-4 ${folder.isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}" 
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"/>
+              </svg>
+            </div>
+            
+            <!-- Folder name -->
+            <span class="folder-name flex-1 text-sm font-medium truncate" 
+                  data-name="${folder.name}">${folder.name}</span>
+            
+            <!-- Depth indicator -->
+            <span class="depth-indicator text-xs text-gray-400 mx-2">L${folder.depth + 1}</span>
+            
+            <!-- Actions menu -->
+            <button class="actions-btn flex-shrink-0 w-6 h-6 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-opacity"
+                    data-folder-menu="${folder.id}"
+                    aria-label="Folder actions">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Children (if expanded) -->
+          ${hasChildren && folder.isExpanded ? `
+            <div class="folder-children">
+              ${this.renderFolderItems(folder.children!, level + 1)}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
