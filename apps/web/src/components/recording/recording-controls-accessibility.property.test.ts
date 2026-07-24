@@ -434,9 +434,10 @@ describe('Recording Controls Accessibility Properties', () => {
           const importantElements = screenContent.criticalElements.filter(el => el.priority === 'important');
           if (importantElements.length > 0) {
             const obscuredImportant = importantElements.filter(
-              (el, idx) => {
+              (el) => {
                 const globalIdx = screenContent.criticalElements.indexOf(el);
-                return accessibility.obscuredCriticalElements.includes(`critical-${el.id}-${globalIdx}`);
+                const sanitizedId = `critical-${el.id.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}-${globalIdx}`;
+                return accessibility.obscuredCriticalElements.includes(sanitizedId);
               }
             );
             const accessibilityRatio = (importantElements.length - obscuredImportant.length) / importantElements.length;
