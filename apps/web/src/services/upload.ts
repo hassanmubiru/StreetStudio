@@ -589,15 +589,18 @@ class UploadSession {
         start,
         end,
         size: end - start,
+        uploaded: false,
+        retryCount: 0
       });
     }
     
     return chunks;
   }
 
-  private async uploadChunk(chunk: ChunkInfo, uploadId: string, uploadUrl: string): Promise<void> {
+  private async uploadChunkWithRetry(chunk: ChunkInfo, uploadId: string, uploadUrl: string): Promise<void> {
     const blob = this.file.slice(chunk.start, chunk.end);
     let lastError: Error;
+    chunk.retryCount = chunk.retryCount || 0;
 
     for (let attempt = 0; attempt < this.options.maxRetries!; attempt++) {
       if (this.isAborted) {
@@ -607,19 +610,29 @@ class UploadSession {
       try {
         await this.uploadChunkAttempt(blob, chunk, uploadId, uploadUrl);
         
+        // Mark chunk as uploaded
+        chunk.uploaded = true;
+        
         // Update progress
-        this.uploadedBytes += chunk.size;
+        this.uploadedBytes = this.calculateUploadedBytes();
         this.updateProgress();
         
         return;
 
       } catch (error) {
         lastError = error as Error;
+        chunk.retryCount = (chunk.retryCount || 0) + 1;
         
         if (attempt < this.options.maxRetries! - 1) {
-          const delay = this.options.retryDelay! * Math.pow(2, attempt);
-          logger.warn(`Chunk ${chunk.index} upload failed, retrying in ${delay}ms`, {
+          // Exponential backoff: retryDelay * (2^attempt) + random jitter
+          const baseDelay = this.options.retryDelay! * Math.pow(2, attempt);
+          const jitter = Math.random() * 1000; // Up to 1 second jitter
+          const delay = baseDelay + jitter;
+          
+          logger.warn(`Chunk ${chunk.index} upload failed, retrying in ${Math.round(delay)}ms`, {
             attempt: attempt + 1,
+            chunkIndex: chunk.index,
+            retryCount: chunk.retryCount,
             error: lastError.message,
           });
           
@@ -634,6 +647,16 @@ class UploadSession {
       true,
       lastError!
     );
+  }
+
+  /**
+   * Calculate total uploaded bytes based on completed chunks
+   */
+  private calculateUploadedBytes(): number {
+    return this.completedChunks.reduce((total, chunkIndex) => {
+      const chunk = this.chunks[chunkIndex];
+      return total + (chunk ? chunk.size : 0);
+    }, 0);
   }
 
   private async uploadChunkAttempt(

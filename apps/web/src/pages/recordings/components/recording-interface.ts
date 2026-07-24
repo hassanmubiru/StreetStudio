@@ -24,13 +24,17 @@ export class RecordingInterface {
     screenSelector: ScreenSelector;
     recordingControls: RecordingControls;
     cursorSettings: CursorSettings;
+    keyboardShortcuts: KeyboardShortcuts;
   }) {
     this.screenSelector = options.screenSelector;
     this.recordingControls = options.recordingControls;
     this.cursorSettings = options.cursorSettings;
+    this.keyboardShortcuts = options.keyboardShortcuts;
+    
     this.container = document.createElement('div');
     this.setupContainer();
     this.buildInterface();
+    this.initializeRecordingSystem();
   }
 
   private setupContainer(): void {

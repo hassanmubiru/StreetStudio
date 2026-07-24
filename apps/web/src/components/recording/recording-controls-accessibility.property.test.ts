@@ -12,6 +12,84 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fc from 'fast-check';
 import { RecordingController, type RecordingOptions } from './recording-controller.js';
 
+// Mock canvas context for drawing overlay
+const mockCanvas2DContext = {
+  clearRect: vi.fn(),
+  fillRect: vi.fn(),
+  strokeRect: vi.fn(),
+  fillText: vi.fn(),
+  strokeText: vi.fn(),
+  beginPath: vi.fn(),
+  moveTo: vi.fn(),
+  lineTo: vi.fn(),
+  stroke: vi.fn(),
+  fill: vi.fn(),
+  arc: vi.fn(),
+  rect: vi.fn(),
+  setLineDash: vi.fn(),
+  save: vi.fn(),
+  restore: vi.fn(),
+  translate: vi.fn(),
+  scale: vi.fn(),
+  rotate: vi.fn(),
+  getImageData: vi.fn(),
+  putImageData: vi.fn(),
+  drawImage: vi.fn(),
+  createLinearGradient: vi.fn(),
+  createRadialGradient: vi.fn(),
+  createPattern: vi.fn(),
+  measureText: vi.fn(() => ({ width: 0 })),
+  isPointInPath: vi.fn(),
+  isPointInStroke: vi.fn(),
+  clip: vi.fn(),
+  font: '12px Arial',
+  fillStyle: '#000000',
+  strokeStyle: '#000000',
+  lineWidth: 1,
+  lineCap: 'butt',
+  lineJoin: 'miter',
+  globalAlpha: 1,
+  globalCompositeOperation: 'source-over',
+  shadowBlur: 0,
+  shadowColor: 'rgba(0, 0, 0, 0)',
+  shadowOffsetX: 0,
+  shadowOffsetY: 0,
+  canvas: null as any,
+};
+
+// Mock HTMLCanvasElement.getContext
+HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation((contextType: string) => {
+  if (contextType === '2d') {
+    const context = { ...mockCanvas2DContext };
+    context.canvas = {
+      width: 800,
+      height: 600,
+      style: {},
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      getBoundingClientRect: vi.fn(() => ({
+        left: 0,
+        top: 0,
+        right: 800,
+        bottom: 600,
+        width: 800,
+        height: 600,
+        x: 0,
+        y: 0,
+        toJSON: vi.fn(),
+      })),
+    } as any;
+    return context;
+  }
+  return null;
+});
+
+// Mock window.scrollTo
+Object.defineProperty(global.window, 'scrollTo', {
+  value: vi.fn(),
+  writable: true,
+});
+
 // Mock navigator.mediaDevices for testing
 Object.defineProperty(global.navigator, 'mediaDevices', {
   value: {
