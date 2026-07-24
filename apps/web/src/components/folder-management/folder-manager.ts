@@ -79,3 +79,88 @@ export class FolderManager {
         </div>
       </div>
     `;
+    this.attachEventListeners(container);
+    return container;
+  }
+
+  private attachEventListeners(container: HTMLElement): void {
+    // Create folder button
+    const createBtn = container.querySelector('.btn-create-folder');
+    createBtn?.addEventListener('click', () => {
+      this.showCreateFolderDialog(this.config.currentFolderId);
+    });
+
+    // Folder tree events - delegated
+    const tree = container.querySelector('[data-folder-tree]');
+    tree?.addEventListener('click', this.handleTreeClick.bind(this));
+    tree?.addEventListener('dblclick', this.handleTreeDoubleClick.bind(this));
+    
+    // Context menu
+    tree?.addEventListener('contextmenu', this.handleContextMenu.bind(this));
+  }
+
+  private async loadFolders(): Promise<void> {
+    if (!this.container) return;
+
+    const loadingEl = this.container.querySelector('[data-loading]');
+    loadingEl?.classList.remove('hidden');
+
+    try {
+      const response = await apiClient.get(`/projects/${this.config.projectId}/folders`);
+      const folders = response.data as FolderDto[];
+      
+      this.processFolders(folders);
+      this.renderFolderTree();
+      
+    } catch (error) {
+      handleError(error as Error, 'api', {
+        feature: 'folder-management',
+        operation: 'load-folders'
+      });
+    } finally {
+      loadingEl?.classList.add('hidden');
+    }
+  }
+
+  private processFolders(folders: FolderDto[]): void {
+    // Reset state
+    this.folders = [];
+    this.flatFolderMap.clear();
+
+    // Convert to extended folders with permissions
+    const extendedFolders = folders.map(folder => this.createExtendedFolder(folder));
+    
+    // Build flat map
+    extendedFolders.forEach(folder => {
+      this.flatFolderMap.set(folder.id, folder);
+    });
+
+    // Build hierarchy
+    const rootFolders: ExtendedFolderDto[] = [];
+    
+    extendedFolders.forEach(folder => {
+      if (folder.parentFolderId) {
+        const parent = this.flatFolderMap.get(folder.parentFolderId);
+        if (parent) {
+          if (!parent.children) parent.children = [];
+          parent.children.push(folder);
+        }
+      } else {
+        rootFolders.push(folder);
+      }
+    });
+
+    this.folders = rootFolders;
+  }
+
+  private createExtendedFolder(folder: FolderDto): ExtendedFolderDto {
+    return {
+      ...folder,
+      children: [],
+      isExpanded: folder.depth < 2, // Expand first 2 levels by default
+      isSelected: folder.id === this.config.currentFolderId,
+      canCreateSubfolder: folder.depth < 9, // Max 10 levels (0-9)
+      canRename: true, // TODO: Check permissions
+      canDelete: true  // TODO: Check permissions and ensure folder is empty
+    };
+  }

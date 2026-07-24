@@ -251,8 +251,9 @@ function createScreenContentSimulation(
     container.appendChild(el);
   });
 
-  // Simulate scroll position
-  window.scrollTo(screenContent.scrollX, screenContent.scrollY);
+  // Simulate scroll position (remove scrollTo call to avoid jsdom warnings)
+  // In a real implementation, this would set scroll position
+  // window.scrollTo(screenContent.scrollX, screenContent.scrollY);
 
   return { container };
 }
@@ -343,6 +344,13 @@ describe('Recording Controls Accessibility Properties', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Reset canvas context mock
+    Object.keys(mockCanvas2DContext).forEach(key => {
+      if (typeof mockCanvas2DContext[key as keyof typeof mockCanvas2DContext] === 'function') {
+        (mockCanvas2DContext[key as keyof typeof mockCanvas2DContext] as any).mockClear?.();
+      }
+    });
     
     // Reset MediaRecorder mock
     mockRecorder = {

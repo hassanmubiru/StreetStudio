@@ -449,16 +449,19 @@ class UploadSession {
   }
 
   public getProgress(): UploadProgress {
-    const percentage = this.file.size > 0 ? (this.uploadedBytes / this.file.size) * 100 : 0;
+    const totalBytes = this.file.size;
+    const uploadedBytes = this.calculateUploadedBytes();
+    const percentage = totalBytes > 0 ? (uploadedBytes / totalBytes) * 100 : 0;
+    
     const avgSpeed = this.speeds.length > 0 
       ? this.speeds.reduce((sum, speed) => sum + speed, 0) / this.speeds.length 
       : 0;
-    const remainingBytes = this.file.size - this.uploadedBytes;
+    const remainingBytes = totalBytes - uploadedBytes;
     const timeRemaining = avgSpeed > 0 ? remainingBytes / avgSpeed : 0;
 
     return {
-      loaded: this.uploadedBytes,
-      total: this.file.size,
+      loaded: uploadedBytes,
+      total: totalBytes,
       percentage,
       speed: avgSpeed,
       timeRemaining,
@@ -691,7 +694,8 @@ class UploadSession {
     const timeDelta = now - this.lastProgressTime;
     
     if (timeDelta > 0) {
-      const bytesPerMs = this.uploadedBytes / (now - this.startTime);
+      const currentUploadedBytes = this.calculateUploadedBytes();
+      const bytesPerMs = currentUploadedBytes / (now - this.startTime);
       const speed = bytesPerMs * 1000; // bytes per second
       
       this.speeds.push(speed);
