@@ -583,15 +583,19 @@ function validateFolderHierarchyLogic(folders: FolderDto[]): boolean {
   for (const folder of folders) {
     if (folder.parentFolderId) {
       const parent = folders.find(f => f.id === folder.parentFolderId);
-      if (parent) {
-        // Check depth consistency
-        if (folder.depth !== parent.depth + 1) {
-          return false;
-        }
-        // Check for circular references
-        if (checkCircularReference(folder, parent, folders)) {
-          return false;
-        }
+      if (!parent) {
+        // Parent doesn't exist - this is invalid
+        return false;
+      }
+      
+      // Check depth consistency
+      if (folder.depth !== parent.depth + 1) {
+        return false;
+      }
+      
+      // Check for circular references
+      if (checkCircularReference(folder, parent, folders)) {
+        return false;
       }
     } else {
       // Root folders should have depth 0
@@ -599,6 +603,21 @@ function validateFolderHierarchyLogic(folders: FolderDto[]): boolean {
         return false;
       }
     }
+    
+    // Check depth bounds
+    if (folder.depth < 0 || folder.depth > 10) {
+      return false;
+    }
   }
+  
+  // Check for duplicate IDs
+  const ids = new Set();
+  for (const folder of folders) {
+    if (ids.has(folder.id)) {
+      return false; // Duplicate ID found
+    }
+    ids.add(folder.id);
+  }
+  
   return true;
 }

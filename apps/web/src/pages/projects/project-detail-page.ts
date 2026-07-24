@@ -46,9 +46,48 @@ export class ProjectDetailPage {
     if (!this.container) {
       this.container = this.createContainer();
       await this.loadProject();
-      await this.loadFolderStructure();
+      await this.initializeFolderManagement();
     }
     return this.container;
+  }
+
+  private async initializeFolderManagement(): Promise<void> {
+    if (!this.container || !this.project) return;
+
+    // Initialize folder manager
+    this.folderManager = new FolderManager({
+      projectId: this.projectId,
+      currentFolderId: this.currentFolderId,
+      onFolderSelect: (folderId) => this.handleFolderSelection(folderId),
+      onFolderCreate: (folder) => this.handleFolderCreated(folder),
+      onFolderRename: (folder) => this.handleFolderRenamed(folder),
+      onFolderDelete: (folderId) => this.handleFolderDeleted(folderId)
+    });
+
+    // Replace the existing folder tree with the new folder manager
+    const sidebarContent = this.container.querySelector('[data-folder-tree]');
+    if (sidebarContent) {
+      const folderManagerElement = await this.folderManager.getElement();
+      sidebarContent.innerHTML = '';
+      sidebarContent.appendChild(folderManagerElement);
+    }
+
+    // Initialize breadcrumbs
+    this.breadcrumbs = new FolderBreadcrumbs({
+      project: this.project,
+      currentPath: await this.buildBreadcrumbPath(),
+      onNavigate: (folderId) => this.handleFolderSelection(folderId)
+    });
+
+    // Replace existing breadcrumb area
+    const pathArea = this.container.querySelector('[data-current-path]');
+    if (pathArea?.parentElement) {
+      const breadcrumbElement = this.breadcrumbs.getElement();
+      pathArea.parentElement.replaceWith(breadcrumbElement);
+    }
+
+    // Initialize permissions display (shown when folder is selected)
+    await this.updatePermissionsDisplay();
   }
   private createContainer(): HTMLElement {
     const container = document.createElement('div');
