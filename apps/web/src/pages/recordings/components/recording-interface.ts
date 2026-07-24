@@ -636,21 +636,20 @@ export class RecordingInterface {
     // Remove drawing overlay implementation here
   }
 
-  public updateRecordingStatus(isRecording: boolean, elapsedTime?: string): void {
-    const statusIndicator = this.container.querySelector('.recording-status-indicator');
-    const timeElement = this.container.querySelector('#recording-time');
-    
-    if (statusIndicator) {
-      if (isRecording) {
-        statusIndicator.classList.remove('hidden');
-      } else {
-        statusIndicator.classList.add('hidden');
-      }
+  /**
+   * Toggle drawing tools
+   */
+  private toggleDrawing(): void {
+    if (this.drawingEnabled) {
+      this.disableDrawing();
+    } else {
+      this.enableDrawing();
     }
+  }
 
-    if (timeElement && elapsedTime) {
-      timeElement.textContent = elapsedTime;
-    }
+  public updateRecordingStatus(isRecording: boolean, elapsedTime?: string): void {
+    // This method is now handled by the state manager
+    // Update the UI through the state change handler
   }
 
   public showPreview(stream: MediaStream): void {

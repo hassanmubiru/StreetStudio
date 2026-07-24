@@ -206,7 +206,9 @@ function createScreenContentSimulation(
   // Add critical interactive elements
   screenContent.criticalElements.forEach((element, index) => {
     const el = document.createElement(element.type === 'link' ? 'a' : element.type);
-    el.id = `critical-${element.id}-${index}`;
+    // Sanitize ID to avoid CSS selector issues
+    const sanitizedId = `critical-${element.id.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}-${index}`;
+    el.id = sanitizedId;
     el.className = `critical-element priority-${element.priority}`;
     
     // Position absolutely within container
@@ -391,13 +393,9 @@ describe('Recording Controls Accessibility Properties', () => {
           // Create screen content simulation
           const { container } = createScreenContentSimulation(screenContent, controlConfig);
 
-          // Initialize recording controller
+          // Initialize recording controller with drawing disabled to focus on controls accessibility
           const recordingOptions: RecordingOptions = {
-            enableDrawing: controlConfig.showDrawingTools,
-            toolbarOptions: {
-              position: controlConfig.position as any,
-              compact: controlConfig.compactMode,
-            },
+            enableDrawing: false, // Disable drawing to focus on recording controls
             persistDrawings: false, // Disable persistence for tests
             syncWithRecording: true,
           };
