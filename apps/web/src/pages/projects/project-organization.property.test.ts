@@ -163,29 +163,39 @@ function buildValidHierarchy(folders: FolderDto[], maxDepth: number): FolderDto[
   if (folders.length === 0) return [];
   
   const result = [...folders];
-  const maxFoldersPerLevel = Math.max(1, Math.ceil(folders.length / maxDepth));
   
-  // Create hierarchy by assigning parent-child relationships
-  for (let depth = 1; depth < maxDepth && depth * maxFoldersPerLevel < result.length; depth++) {
-    const startIndex = depth * maxFoldersPerLevel;
-    const endIndex = Math.min(startIndex + maxFoldersPerLevel, result.length);
-    
-    for (let i = startIndex; i < endIndex; i++) {
-      // Assign to a parent from the previous level
-      const parentIndex = Math.floor(Math.random() * Math.min(maxFoldersPerLevel, startIndex));
-      if (parentIndex < startIndex) {
-        result[i].parentFolderId = result[parentIndex].id;
-        result[i].depth = depth;
-      }
-    }
-  }
-  
-  // Ensure root folders have depth 0 and no parent
-  result.forEach(folder => {
-    if (!folder.parentFolderId) {
-      folder.depth = 0;
+  // Ensure all folders have unique IDs
+  result.forEach((folder, index) => {
+    if (index > 0) {
+      folder.id = `folder-${index}-${Math.random().toString(36).substr(2, 9)}`;
     }
   });
+  
+  // Start with all folders as root level (depth 0)
+  result.forEach(folder => {
+    folder.parentFolderId = null;
+    folder.depth = 0;
+  });
+  
+  // Create hierarchy by randomly assigning some folders as children
+  const maxFoldersPerLevel = Math.max(1, Math.ceil(result.length / (maxDepth + 1)));
+  
+  for (let depth = 1; depth <= maxDepth && depth * maxFoldersPerLevel < result.length; depth++) {
+    const startIndex = depth * maxFoldersPerLevel;
+    const endIndex = Math.min(startIndex + maxFoldersPerLevel, result.length);
+    const potentialParents = result.slice(0, startIndex).filter(f => f.depth === depth - 1);
+    
+    if (potentialParents.length === 0) break; // No parents available for this depth
+    
+    for (let i = startIndex; i < endIndex; i++) {
+      // Assign to a random parent from the previous level
+      const parentIndex = Math.floor(Math.random() * potentialParents.length);
+      const parent = potentialParents[parentIndex];
+      
+      result[i].parentFolderId = parent.id;
+      result[i].depth = depth;
+    }
+  }
   
   return result;
 }

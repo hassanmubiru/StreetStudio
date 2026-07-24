@@ -33,6 +33,11 @@ export class ProjectDetailPage {
   private draggedItem: { type: 'folder' | 'video'; id: string; element: HTMLElement } | null = null;
   private isLoading = false;
 
+  // New folder management components
+  private folderManager: FolderManager | null = null;
+  private breadcrumbs: FolderBreadcrumbs | null = null;
+  private permissionsDisplay: FolderPermissions | null = null;
+
   constructor(projectId: string) {
     this.projectId = projectId;
   }
