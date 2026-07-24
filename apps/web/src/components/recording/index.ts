@@ -5,6 +5,7 @@
  */
 
 export { RecordingController } from './recording-controller.js';
+export { RecordingStateManager } from './recording-state-manager.js';
 
 export type {
   RecordingSession,
