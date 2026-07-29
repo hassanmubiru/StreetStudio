@@ -384,3 +384,87 @@ describe('AccessibilitySettingsPage', () => {
       expect(document.documentElement.classList.contains('keyboard-nav')).toBe(false);
     });
   });
+
+  describe('Save and Discard', () => {
+    it('should disable save button when not dirty', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const saveBtn = el.querySelector('#a11y-save-settings') as HTMLButtonElement;
+      expect(saveBtn.disabled).toBe(true);
+    });
+
+    it('should enable save button when dirty', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const toggle = el.querySelector('#high-contrast-toggle') as HTMLInputElement;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      const saveBtn = el.querySelector('#a11y-save-settings') as HTMLButtonElement;
+      expect(saveBtn.disabled).toBe(false);
+    });
+
+    it('should save preferences to localStorage on save', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const toggle = el.querySelector('#high-contrast-toggle') as HTMLInputElement;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      const saveBtn = el.querySelector('#a11y-save-settings') as HTMLButtonElement;
+      saveBtn.click();
+
+      expect(localStorage.setItem).toHaveBeenCalledWith(
+        STORAGE_KEY,
+        expect.stringContaining('"highContrast":true')
+      );
+    });
+
+    it('should dispatch accessibility-settings-save event on save', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const saveSpy = vi.fn();
+      el.addEventListener('accessibility-settings-save', saveSpy);
+
+      const toggle = el.querySelector('#reduced-motion-toggle') as HTMLInputElement;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      const saveBtn = el.querySelector('#a11y-save-settings') as HTMLButtonElement;
+      saveBtn.click();
+
+      expect(saveSpy).toHaveBeenCalled();
+      expect(saveSpy.mock.calls[0][0].detail.preferences.reducedMotion).toBe(true);
+    });
+
+    it('should reset dirty state after discard', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const toggle = el.querySelector('#high-contrast-toggle') as HTMLInputElement;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+      expect(page.isDirtyState()).toBe(true);
+
+      const discardBtn = el.querySelector('#a11y-discard-changes') as HTMLButtonElement;
+      discardBtn.click();
+
+      expect(page.isDirtyState()).toBe(false);
+    });
+
+    it('should show save status messages', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const status = el.querySelector('#a11y-save-status');
+      expect(status?.textContent).toBe('All changes saved');
+    });
+  });

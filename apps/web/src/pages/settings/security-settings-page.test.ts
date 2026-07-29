@@ -105,3 +105,68 @@ describe('SecuritySettingsPage', () => {
       expect(el.querySelector('#login-history-heading')).toBeTruthy();
     });
   });
+
+  describe('Password Change Section', () => {
+    it('should render password form with required fields', () => {
+      page = new SecuritySettingsPage();
+      const el = page.getElement();
+
+      expect(el.querySelector('#current-password')).toBeTruthy();
+      expect(el.querySelector('#new-password')).toBeTruthy();
+      expect(el.querySelector('#confirm-password')).toBeTruthy();
+      expect(el.querySelector('#change-password-btn')).toBeTruthy();
+    });
+
+    it('should have correct autocomplete attributes', () => {
+      page = new SecuritySettingsPage();
+      const el = page.getElement();
+
+      const currentPw = el.querySelector('#current-password') as HTMLInputElement;
+      expect(currentPw.getAttribute('autocomplete')).toBe('current-password');
+
+      const newPw = el.querySelector('#new-password') as HTMLInputElement;
+      expect(newPw.getAttribute('autocomplete')).toBe('new-password');
+    });
+
+    it('should update password strength indicator on new password input', () => {
+      page = new SecuritySettingsPage();
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const newPw = el.querySelector('#new-password') as HTMLInputElement;
+      newPw.value = 'StrongPass1!';
+      newPw.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const indicator = el.querySelector('#password-strength-indicator');
+      expect(indicator?.innerHTML).toContain('Strong');
+    });
+
+    it('should show strength feedback for weak passwords', () => {
+      page = new SecuritySettingsPage();
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const newPw = el.querySelector('#new-password') as HTMLInputElement;
+      newPw.value = 'abc';
+      newPw.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const desc = el.querySelector('#password-strength-desc');
+      expect(desc?.textContent).toContain('at least');
+    });
+
+    it('should validate password match on confirm input', () => {
+      page = new SecuritySettingsPage();
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const newPw = el.querySelector('#new-password') as HTMLInputElement;
+      newPw.value = 'MyPassword1!';
+      newPw.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const confirmPw = el.querySelector('#confirm-password') as HTMLInputElement;
+      confirmPw.value = 'Different1!';
+      confirmPw.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const error = el.querySelector('#confirm-password-error');
+      expect(error?.textContent).toBe('Passwords do not match');
+    });

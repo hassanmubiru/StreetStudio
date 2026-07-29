@@ -683,3 +683,39 @@ export class OrganizationSettingsPage {
     `;
     return bar;
   }
+
+  // --- Event Handling ---
+
+  private setupEventListeners(): void {
+    // Tab switching
+    const tabs = this.element.querySelectorAll('[role="tab"]');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabKey = (tab as HTMLElement).dataset.tab as SettingsTab;
+        if (tabKey && tabKey !== this.activeTab) {
+          this.activeTab = tabKey;
+          this.render();
+        }
+      });
+    });
+
+    // Save / Discard
+    this.element.querySelector('#save-settings')?.addEventListener('click', () => this.handleSave());
+    this.element.querySelector('#discard-settings')?.addEventListener('click', () => this.handleDiscard());
+
+    // Section-specific listeners
+    switch (this.activeTab) {
+      case 'branding':
+        this.setupBrandingListeners();
+        break;
+      case 'security':
+        this.setupSecurityListeners();
+        break;
+      case 'storage':
+        this.setupStorageListeners();
+        break;
+      case 'integrations':
+        this.setupIntegrationListeners();
+        break;
+    }
+  }

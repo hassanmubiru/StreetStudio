@@ -487,3 +487,79 @@ describe('BillingSettingsPage', () => {
       expect(section?.textContent).toContain('No payment methods on file');
     });
   });
+
+  describe('Billing History Section', () => {
+    it('should display invoice table', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const table = el.querySelector('table[aria-label="Billing history"]');
+      expect(table).toBeTruthy();
+    });
+
+    it('should display correct number of invoice rows', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const rows = el.querySelectorAll('table[aria-label="Billing history"] tbody tr');
+      expect(rows.length).toBe(2);
+    });
+
+    it('should display invoice date and description', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const firstRow = el.querySelector('table[aria-label="Billing history"] tbody tr');
+      expect(firstRow?.textContent).toContain('Jan');
+      expect(firstRow?.textContent).toContain('Pro Plan - January 2024');
+    });
+
+    it('should display formatted amount', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const firstRow = el.querySelector('table[aria-label="Billing history"] tbody tr');
+      expect(firstRow?.textContent).toContain('$29.00');
+    });
+
+    it('should display status badges', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const firstRow = el.querySelector('table[aria-label="Billing history"] tbody tr');
+      expect(firstRow?.textContent).toContain('paid');
+    });
+
+    it('should show download links for invoices', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const downloadLinks = el.querySelectorAll('.invoice-download');
+      expect(downloadLinks.length).toBe(2);
+
+      const firstLink = downloadLinks[0] as HTMLAnchorElement;
+      expect(firstLink.href).toContain('/api/invoices/inv_1/download');
+      expect(firstLink.hasAttribute('download')).toBe(true);
+    });
+
+    it('should have accessible download link labels', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const downloadLink = el.querySelector('.invoice-download[data-invoice-id="inv_1"]');
+      expect(downloadLink?.getAttribute('aria-label')).toContain('Download invoice');
+    });
+
+    it('should handle empty invoice list', async () => {
+      const emptyData = { ...mockBillingData, invoices: [] };
+      (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: emptyData, status: 200, success: true,
+      });
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const section = el.querySelector('#history-heading')?.closest('section');
+      expect(section?.textContent).toContain('No billing history available');
+    });
+  });
