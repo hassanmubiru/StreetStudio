@@ -1007,3 +1007,82 @@ describe('createSecurityValidator', () => {
     expect(result.isValid).toBe(true);
   });
 });
+
+describe('Default Settings Factories', () => {
+  it('should create default branding settings', () => {
+    const settings = createDefaultBrandingSettings();
+    expect(settings.logoUrl).toBeNull();
+    expect(settings.primaryColor).toBe('#2563eb');
+    expect(settings.accentColor).toBe('#7c3aed');
+    expect(settings.faviconUrl).toBeNull();
+    expect(settings.customCss).toBe('');
+  });
+
+  it('should create default security settings', () => {
+    const settings = createDefaultSecuritySettings();
+    expect(settings.enforceSSO).toBe(false);
+    expect(settings.requireMFA).toBe(false);
+    expect(settings.passwordMinLength).toBe(8);
+    expect(settings.passwordRequireUppercase).toBe(true);
+    expect(settings.passwordRequireNumbers).toBe(true);
+    expect(settings.passwordRequireSpecialChars).toBe(false);
+    expect(settings.sessionTimeoutMinutes).toBe(480);
+    expect(settings.maxLoginAttempts).toBe(5);
+    expect(settings.ipAllowlist).toEqual([]);
+    expect(settings.dataRetentionDays).toBe(365);
+    expect(settings.complianceMode).toBe('none');
+  });
+
+  it('should create default storage settings', () => {
+    const settings = createDefaultStorageSettings();
+    expect(settings.storageQuotaGB).toBe(100);
+    expect(settings.usedStorageGB).toBe(0);
+    expect(settings.retentionPolicy).toBe('indefinite');
+    expect(settings.autoDeleteProcessedOriginals).toBe(false);
+    expect(settings.preferredRegion).toBe('us-east-1');
+  });
+
+  it('should create default integration settings', () => {
+    const settings = createDefaultIntegrationSettings();
+    expect(settings.slackWebhookUrl).toBe('');
+    expect(settings.slackEnabled).toBe(false);
+    expect(settings.teamsWebhookUrl).toBe('');
+    expect(settings.teamsEnabled).toBe(false);
+    expect(settings.webhookEndpoints).toEqual([]);
+    expect(settings.ssoProvider).toBe('');
+    expect(settings.ssoEntityId).toBe('');
+    expect(settings.ssoMetadataUrl).toBe('');
+  });
+});
+
+describe('Constants', () => {
+  it('should have correct logo max size', () => {
+    expect(LOGO_MAX_SIZE).toBe(2 * 1024 * 1024);
+  });
+
+  it('should have correct allowed logo types', () => {
+    expect(LOGO_ALLOWED_TYPES).toContain('image/png');
+    expect(LOGO_ALLOWED_TYPES).toContain('image/svg+xml');
+    expect(LOGO_ALLOWED_TYPES).toContain('image/jpeg');
+    expect(LOGO_ALLOWED_TYPES).toContain('image/webp');
+  });
+
+  it('should have correct max webhook endpoints', () => {
+    expect(MAX_WEBHOOK_ENDPOINTS).toBe(10);
+  });
+
+  it('should define storage regions', () => {
+    expect(STORAGE_REGIONS.length).toBeGreaterThan(0);
+    for (const region of STORAGE_REGIONS) {
+      expect(region.value).toBeTruthy();
+      expect(region.label).toBeTruthy();
+    }
+  });
+
+  it('should define webhook events', () => {
+    expect(WEBHOOK_EVENTS.length).toBeGreaterThan(0);
+    expect(WEBHOOK_EVENTS).toContain('video.uploaded');
+    expect(WEBHOOK_EVENTS).toContain('comment.created');
+    expect(WEBHOOK_EVENTS).toContain('member.joined');
+  });
+});
