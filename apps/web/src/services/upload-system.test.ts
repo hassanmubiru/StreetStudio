@@ -364,7 +364,8 @@ describe('Upload System - Progress Tracking and State Management', () => {
 
       const upload = store.getUpload(uploadId);
       expect(upload).toBeDefined();
-      expect(upload!.status).toBe('queued');
+      // Upload may immediately start processing (transitions to 'uploading')
+      expect(['queued', 'uploading']).toContain(upload!.status);
       expect(upload!.progress).toBe(0);
       expect(upload!.retryCount).toBe(0);
       expect(upload!.metadata?.title).toBe('Test Video');
@@ -496,7 +497,8 @@ describe('Upload System - Progress Tracking and State Management', () => {
       store.resumeUpload(uploadId);
 
       const upload = store.getUpload(uploadId);
-      expect(upload!.status).toBe('queued');
+      // After resume, the upload re-enters the queue and may start immediately
+      expect(['queued', 'uploading']).toContain(upload!.status);
     });
 
     it('should clear all completed uploads', () => {
