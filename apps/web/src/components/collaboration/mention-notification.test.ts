@@ -73,3 +73,56 @@ function makeNotification(overrides: Partial<NotificationItem> = {}): Notificati
   };
 }
 
+// --------------------------------------------------------------------------
+// extractMentionQuery
+// --------------------------------------------------------------------------
+
+describe('extractMentionQuery', () => {
+  it('extracts query after @ at start of text', () => {
+    const result = extractMentionQuery('@ali', 4);
+    expect(result).toEqual({ query: 'ali', triggerIndex: 0 });
+  });
+
+  it('extracts query after @ preceded by space', () => {
+    const result = extractMentionQuery('hello @bob', 10);
+    expect(result).toEqual({ query: 'bob', triggerIndex: 6 });
+  });
+
+  it('returns null when no @ trigger is active', () => {
+    const result = extractMentionQuery('hello world', 11);
+    expect(result).toBeNull();
+  });
+
+  it('returns null for cursor at position 0', () => {
+    const result = extractMentionQuery('@test', 0);
+    expect(result).toBeNull();
+  });
+
+  it('handles empty query after @', () => {
+    const result = extractMentionQuery('hey @', 5);
+    expect(result).toEqual({ query: '', triggerIndex: 4 });
+  });
+});
+
+// --------------------------------------------------------------------------
+// insertMentionIntoText
+// --------------------------------------------------------------------------
+
+describe('insertMentionIntoText', () => {
+  it('replaces @query with full mention', () => {
+    const result = insertMentionIntoText('hello @ali', 10, mockMembers[0]);
+    expect(result.text).toBe('hello @Alice Johnson ');
+    expect(result.member).toBe(mockMembers[0]);
+  });
+
+  it('preserves text after cursor', () => {
+    const result = insertMentionIntoText('hi @bo and more', 6, mockMembers[1]);
+    expect(result.text).toBe('hi @Bob Smith  and more');
+  });
+
+  it('returns correct cursor position after insertion', () => {
+    const result = insertMentionIntoText('@ali', 4, mockMembers[0]);
+    expect(result.cursorPosition).toBe('@Alice Johnson '.length);
+  });
+});
+
