@@ -435,3 +435,123 @@ export class MemberManagement {
       </div>
     `;
   }
+
+  private setupEventListeners(): void {
+    this.element.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      const action = target.closest('[data-action]')?.getAttribute('data-action');
+
+      switch (action) {
+        case 'invite-member':
+          this.showInvitationModal();
+          break;
+        case 'cancel-invite':
+          this.hideInvitationModal();
+          break;
+        case 'remove-member':
+          const memberId = target.closest('[data-member-id]')?.getAttribute('data-member-id');
+          const memberName = target.closest('[data-member-name]')?.getAttribute('data-member-name');
+          if (memberId) this.showRemovalModal(memberId as Uuid, memberName || '');
+          break;
+        case 'cancel-removal':
+          this.hideRemovalModal();
+          break;
+        case 'view-profile':
+          const profileId = target.closest('[data-member-id]')?.getAttribute('data-member-id');
+          if (profileId && this.config.onNavigateToProfile) {
+            this.config.onNavigateToProfile(profileId as Uuid);
+          }
+          break;
+        case 'revoke-invitation':
+          const invitationId = target.closest('[data-invitation-id]')?.getAttribute('data-invitation-id');
+          if (invitationId) this.revokeInvitation(invitationId as Uuid);
+          break;
+      }
+    });
+
+    // Search input
+    const searchInput = this.element.querySelector('[data-field="member-search"]');
+    searchInput?.addEventListener('input', (event) => {
+      this.searchQuery = (event.target as HTMLInputElement).value;
+      this.updateMembersList();
+    });
+
+    // Sort columns
+    this.element.addEventListener('click', (event) => {
+      const sortCol = (event.target as HTMLElement).closest('[data-sort]');
+      if (sortCol) {
+        const field = sortCol.getAttribute('data-sort') as 'name' | 'role' | 'activity';
+        if (this.sortField === field) {
+          this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          this.sortField = field;
+          this.sortDirection = 'asc';
+        }
+        this.updateMembersList();
+      }
+    });
+
+    // Invitation form submit
+    const invitationForm = this.element.querySelector('[data-invitation-form]');
+    invitationForm?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      this.handleInvitationSubmit();
+    });
+
+    // Removal form submit
+    const removalForm = this.element.querySelector('[data-removal-form]');
+    removalForm?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      this.handleRemovalSubmit();
+    });
+
+    // Content handling radio buttons
+    this.element.addEventListener('change', (event) => {
+      const target = event.target as HTMLInputElement;
+      if (target.name === 'contentHandling') {
+        const transferSection = this.element.querySelector('[data-transfer-target-section]');
+        if (target.value === 'transfer') {
+          transferSection?.classList.remove('hidden');
+        } else {
+          transferSection?.classList.add('hidden');
+        }
+      }
+    });
+  }
+
+  private showInvitationModal(): void {
+    const modal = this.element.querySelector('[data-invitation-modal]');
+    modal?.classList.remove('hidden');
+    const emailInput = modal?.querySelector('#invite-email') as HTMLInputElement;
+    emailInput?.focus();
+  }
+
+  private hideInvitationModal(): void {
+    const modal = this.element.querySelector('[data-invitation-modal]');
+    modal?.classList.add('hidden');
+    const form = modal?.querySelector('form') as HTMLFormElement;
+    form?.reset();
+    // Clear error messages
+    const errors = modal?.querySelectorAll('[data-field-error]');
+    errors?.forEach(el => el.classList.add('hidden'));
+  }
+
+  private showRemovalModal(memberId: Uuid, memberName: string): void {
+    const modal = this.element.querySelector('[data-removal-modal]');
+    modal?.classList.remove('hidden');
+    const hiddenInput = modal?.querySelector('[data-removal-member-id]') as HTMLInputElement;
+    if (hiddenInput) hiddenInput.value = memberId;
+    const description = modal?.querySelector('[data-removal-description]');
+    if (description) {
+      description.textContent = `Are you sure you want to remove "${memberName}" from the organization? This action cannot be undone.`;
+    }
+  }
+
+  private hideRemovalModal(): void {
+    const modal = this.element.querySelector('[data-removal-modal]');
+    modal?.classList.add('hidden');
+    const form = modal?.querySelector('form') as HTMLFormElement;
+    form?.reset();
+    const transferSection = this.element.querySelector('[data-transfer-target-section]');
+    transferSection?.classList.add('hidden');
+  }

@@ -410,3 +410,168 @@ export class ProfileSettingsPage {
         </tr>
       `;
     }
+
+    section.innerHTML = `
+      <h2 id="notifications-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Notification Preferences</h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Choose how you want to be notified about activity.</p>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[400px]" role="grid" aria-label="Notification preferences">
+          <thead>
+            <tr class="text-left">
+              <th class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">Category</th>
+              ${channels.map(ch => `<th class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 text-center">${ch.label}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </div>
+    `;
+    return section;
+  }
+
+  private renderSaveBar(): HTMLElement {
+    const bar = document.createElement('div');
+    bar.className = 'sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 -mx-4 sm:-mx-6 lg:-mx-8 flex items-center justify-between';
+    bar.setAttribute('role', 'toolbar');
+    bar.setAttribute('aria-label', 'Save actions');
+
+    const statusText = this.isSaving ? 'Saving...' : this.isDirty ? 'Unsaved changes' : 'All changes saved';
+    const statusClass = this.isDirty ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400';
+
+    bar.innerHTML = `
+      <span id="save-status" class="text-sm ${statusClass}" aria-live="polite">${statusText}</span>
+      <div class="flex gap-3">
+        <button
+          id="discard-changes"
+          type="button"
+          class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
+          ${!this.isDirty ? 'disabled' : ''}
+        >
+          Discard
+        </button>
+        <button
+          id="save-profile"
+          type="button"
+          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          ${!this.isDirty || this.isSaving ? 'disabled' : ''}
+        >
+          ${this.isSaving ? 'Saving...' : 'Save Changes'}
+        </button>
+      </div>
+    `;
+    return bar;
+  }
+
+  private setupEventListeners(): void {
+    // Avatar upload
+    const avatarInput = this.element.querySelector('#avatar-upload') as HTMLInputElement;
+    avatarInput?.addEventListener('change', (e) => this.handleAvatarUpload(e));
+
+    // Remove avatar
+    const removeBtn = this.element.querySelector('#remove-avatar');
+    removeBtn?.addEventListener('click', () => this.handleRemoveAvatar());
+
+    // Display name input
+    const displayNameInput = this.element.querySelector('#display-name') as HTMLInputElement;
+    displayNameInput?.addEventListener('input', (e) => {
+      const value = (e.target as HTMLInputElement).value;
+      this.profileData.displayName = value;
+      this.markDirty();
+      this.validateDisplayName(value);
+    });
+
+    // Bio textarea
+    const bioInput = this.element.querySelector('#bio') as HTMLTextAreaElement;
+    bioInput?.addEventListener('input', (e) => {
+      const value = (e.target as HTMLTextAreaElement).value;
+      this.profileData.bio = value;
+      this.markDirty();
+      this.updateBioCounter(value);
+    });
+
+    // Timezone select
+    const tzSelect = this.element.querySelector('#timezone-select') as HTMLSelectElement;
+    tzSelect?.addEventListener('change', (e) => {
+      this.profileData.timezone = (e.target as HTMLSelectElement).value;
+      this.markDirty();
+    });
+
+    // Detect timezone button
+    const detectBtn = this.element.querySelector('#detect-timezone');
+    detectBtn?.addEventListener('click', () => this.handleDetectTimezone());
+
+    // Notification toggles
+    const toggles = this.element.querySelectorAll('.notification-toggle') as NodeListOf<HTMLInputElement>;
+    toggles.forEach(toggle => {
+      toggle.addEventListener('change', (e) => {
+        const input = e.target as HTMLInputElement;
+        const channel = input.dataset.channel as keyof NotificationPreferences;
+        const category = input.dataset.category as keyof NotificationCategorySettings;
+        this.profileData.notificationPreferences[channel][category] = input.checked;
+        this.markDirty();
+      });
+    });
+
+    // Save button
+    const saveBtn = this.element.querySelector('#save-profile');
+    saveBtn?.addEventListener('click', () => this.handleSave());
+
+    // Discard button
+    const discardBtn = this.element.querySelector('#discard-changes');
+    discardBtn?.addEventListener('click', () => this.handleDiscard());
+  }
+
+  private handleAvatarUpload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const validation = validateAvatarFile(file);
+    const errorEl = this.element.querySelector('#avatar-error');
+
+    if (!validation.valid) {
+      if (errorEl) errorEl.textContent = validation.error || '';
+      input.value = '';
+      return;
+    }
+
+    if (errorEl) errorEl.textContent = '';
+
+    // Create preview URL
+    if (this.avatarPreviewUrl) {
+      URL.revokeObjectURL(this.avatarPreviewUrl);
+    }
+    this.avatarPreviewUrl = URL.createObjectURL(file);
+    this.pendingAvatarFile = file;
+    this.markDirty();
+
+    // Update preview
+    const previewContainer = this.element.querySelector('#avatar-preview');
+    if (previewContainer) {
+      previewContainer.innerHTML = `<img src="${this.avatarPreviewUrl}" alt="Profile avatar preview" class="w-24 h-24 rounded-full object-cover" />`;
+    }
+  }
+
+  private handleRemoveAvatar(): void {
+    if (this.avatarPreviewUrl) {
+      URL.revokeObjectURL(this.avatarPreviewUrl);
+      this.avatarPreviewUrl = null;
+    }
+    this.pendingAvatarFile = null;
+    this.profileData.avatarUrl = null;
+    this.markDirty();
+    this.render();
+  }
+
+  private handleDetectTimezone(): void {
+    const detected = detectTimezone();
+    this.profileData.timezone = detected;
+    this.markDirty();
+
+    const tzSelect = this.element.querySelector('#timezone-select') as HTMLSelectElement;
+    if (tzSelect) {
+      tzSelect.value = detected;
+    }
+  }
