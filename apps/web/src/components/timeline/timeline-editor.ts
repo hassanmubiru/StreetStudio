@@ -902,3 +902,58 @@ export class TimelineEditor {
     this.renderClips();
     this.notifyStateChange();
   }
+
+  /** Select a clip by ID */
+  public selectClip(clipId: string | null): void {
+    this.state.selectedClipId = clipId;
+    this.callbacks.onClipSelect?.(clipId);
+    this.renderClips();
+    this.notifyStateChange();
+  }
+
+  // ─── Zoom and Navigation ──────────────────────────────────────────────────
+
+  /** Set the zoom level */
+  public setZoom(level: number): void {
+    const newZoom = clamp(level, this.options.minZoom, this.options.maxZoom);
+    if (newZoom === this.state.zoomLevel) return;
+
+    this.state.zoomLevel = newZoom;
+    this.updateZoomUI();
+    this.updatePlayheadPosition();
+    this.renderRuler();
+    this.renderClips();
+    this.renderWaveform();
+    this.callbacks.onZoomChange?.(newZoom);
+    this.notifyStateChange();
+  }
+
+  /** Zoom in by a fixed increment */
+  public zoomIn(): void {
+    this.setZoom(this.state.zoomLevel * 1.25);
+  }
+
+  /** Zoom out by a fixed increment */
+  public zoomOut(): void {
+    this.setZoom(this.state.zoomLevel / 1.25);
+  }
+
+  /** Fit the entire timeline into view */
+  public zoomToFit(): void {
+    if (this.state.duration <= 0) return;
+    const trackWidth = this.trackElement.clientWidth;
+    if (trackWidth <= 0) return;
+    const requiredZoom = trackWidth / (this.state.duration * PIXELS_PER_FRAME_BASE);
+    this.setZoom(requiredZoom);
+    this.setScrollOffset(0);
+  }
+
+  /** Set the horizontal scroll offset in frames */
+  public setScrollOffset(offset: number): void {
+    this.state.scrollOffset = Math.max(0, offset);
+    this.updatePlayheadPosition();
+    this.renderRuler();
+    this.renderClips();
+    this.renderWaveform();
+    this.notifyStateChange();
+  }

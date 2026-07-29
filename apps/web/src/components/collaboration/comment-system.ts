@@ -665,3 +665,59 @@ export class TimelineCommentMarkers {
     this.activeMarkerId = commentId;
     this.updateActiveState();
   }
+
+  private render(): void {
+    this.container.innerHTML = '';
+
+    for (const marker of this.markers) {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'comment-marker';
+      el.setAttribute('data-comment-id', marker.commentId);
+      el.setAttribute('aria-label', `Comment at ${formatTimestamp(marker.timestampSeconds)}`);
+      el.setAttribute('title', formatTimestamp(marker.timestampSeconds));
+      el.style.position = 'absolute';
+      el.style.left = `${marker.position}%`;
+      el.style.top = '50%';
+      el.style.transform = 'translate(-50%, -50%)';
+      el.style.width = '8px';
+      el.style.height = '8px';
+      el.style.borderRadius = '50%';
+      el.style.border = 'none';
+      el.style.cursor = 'pointer';
+      el.style.backgroundColor = marker.commentId === this.activeMarkerId
+        ? 'var(--color-primary, #3b82f6)'
+        : 'var(--color-comment-marker, #f59e0b)';
+
+      el.addEventListener('click', () => {
+        this.callbacks.onSeek?.(marker.timestampSeconds);
+        this.setActiveMarker(marker.commentId);
+      });
+
+      // Keyboard support
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          this.callbacks.onSeek?.(marker.timestampSeconds);
+          this.setActiveMarker(marker.commentId);
+        }
+      });
+
+      this.container.appendChild(el);
+    }
+  }
+
+  private updateActiveState(): void {
+    const allMarkers = this.container.querySelectorAll('.comment-marker');
+    allMarkers.forEach(el => {
+      const id = el.getAttribute('data-comment-id');
+      (el as HTMLElement).style.backgroundColor = id === this.activeMarkerId
+        ? 'var(--color-primary, #3b82f6)'
+        : 'var(--color-comment-marker, #f59e0b)';
+    });
+  }
+
+  public getElement(): HTMLElement {
+    return this.container;
+  }
+}
