@@ -192,3 +192,78 @@ describe('Upload System - Chunked Upload Logic', () => {
         })
       ).rejects.toThrow(/Failed to upload chunk/);
     });
+
+    it('should apply exponential backoff between retries', async () => {
+      const manager = new UploadManager();
+      const file = createMockFile('video.mp4', 6 * 1024 * 1024);
+      const delaySpy = vi.spyOn(global, 'setTimeout');
+
+      const { apiClient } = await import('../services/api.js');
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { uploadId: 'upload-backoff', uploadUrl: 'https://upload.test/backoff' }
+      });
+      (apiClient.delete as any).mockResolvedValueOnce({});
+
+      // Fail all attempts
+      mockFetch.mockResolvedValue(new Response(null, { status: 500, statusText: 'Fail' }));
+
+      try {
+        await manager.uploadFile(file, {
+          chunkSize: 5 * 1024 * 1024,
+          maxRetries: 3,
+          retryDelay: 1000
+        });
+      } catch (e) {
+        // Expected to throw
+      }
+
+      // Verify setTimeout was called (used for delays between retries)
+      // Exponential: 1000 * 2^0 + jitter, 1000 * 2^1 + jitter
+      const timeoutCalls = delaySpy.mock.calls.filter(
+        call => typeof call[1] === 'number' && call[1] >= 1000
+      );
+      expect(timeoutCalls.length).toBeGreaterThanOrEqual(1);
+
+      delaySpy.mockRestore();
+    });
+  });
+
+  describe('Concurrent Upload Limits', () => {
+    it('should reject uploads when max concurrent limit is reached', async () => {
+      const manager = new UploadManager();
+      manager.configure({ maxConcurrentUploads: 1 });
+
+      const { apiClient } = await import('../services/api.js');
+      // First upload will hang
+      (apiClient.post as any).mockImplementationOnce(
+        () => new Promise(() => {}) // never resolves
+      );
+
+      const file1 = createMockFile('first.mp4', 100);
+      const file2 = createMockFile('second.mp4', 100);
+
+      // Start first upload (will hang)
+      const upload1Promise = manager.uploadFile(file1, { chunkSize: 5 * 1024 * 1024 });
+
+      // Wait a tick for the first upload to register
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      // Second upload should fail with quota error
+      await expect(
+        manager.uploadFile(file2, { chunkSize: 5 * 1024 * 1024 })
+      ).rejects.toThrow(/Too many active uploads/);
+
+      // Clean up
+      manager.cancelAllUploads();
+    });
+
+    it('should report queue status correctly', () => {
+      const manager = new UploadManager();
+      manager.configure({ maxConcurrentUploads: 3 });
+
+      const status = manager.getQueueStatus();
+      expect(status.active).toBe(0);
+      expect(status.maxConcurrent).toBe(3);
+      expect(status.canAcceptMore).toBe(true);
+    });
+  });

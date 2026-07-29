@@ -388,63 +388,66 @@ describe('AdaptiveVideoPlayer', () => {
 
   describe('fullscreen', () => {
     beforeEach(() => {
+      // jsdom doesn't implement fullscreen API; stub it
+      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
+      (document as any).exitFullscreen = vi.fn().mockResolvedValue(undefined);
       player = new AdaptiveVideoPlayer(container, { enableFullscreen: true }, callbacks);
     });
 
     it('toggleFullscreen() calls requestFullscreen when not fullscreen', async () => {
-      const requestSpy = vi.spyOn(container, 'requestFullscreen').mockResolvedValue();
       await player.toggleFullscreen();
-      expect(requestSpy).toHaveBeenCalled();
+      expect(container.requestFullscreen).toHaveBeenCalled();
     });
 
     it('toggleFullscreen() calls exitFullscreen when in fullscreen', async () => {
       Object.defineProperty(document, 'fullscreenElement', { value: container, configurable: true });
       document.dispatchEvent(new Event('fullscreenchange'));
 
-      const exitSpy = vi.spyOn(document, 'exitFullscreen').mockResolvedValue();
       await player.toggleFullscreen();
-      expect(exitSpy).toHaveBeenCalled();
+      expect(document.exitFullscreen).toHaveBeenCalled();
 
       Object.defineProperty(document, 'fullscreenElement', { value: null, configurable: true });
     });
 
     it('does nothing when fullscreen is disabled', async () => {
       player.destroy();
+      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
       player = new AdaptiveVideoPlayer(container, { enableFullscreen: false }, callbacks);
-      const requestSpy = vi.spyOn(container, 'requestFullscreen').mockResolvedValue();
       await player.toggleFullscreen();
-      expect(requestSpy).not.toHaveBeenCalled();
+      expect(container.requestFullscreen).not.toHaveBeenCalled();
     });
   });
 
   describe('picture-in-picture', () => {
     beforeEach(() => {
       player = new AdaptiveVideoPlayer(container, { enablePictureInPicture: true }, callbacks);
+      // jsdom doesn't implement PIP API; stub it on the video element
+      const video = player.getVideoElement();
+      (video as any).requestPictureInPicture = vi.fn().mockResolvedValue({});
+      (document as any).exitPictureInPicture = vi.fn().mockResolvedValue(undefined);
     });
 
     it('togglePictureInPicture() calls requestPictureInPicture', async () => {
       const video = player.getVideoElement();
-      const pipSpy = vi.spyOn(video, 'requestPictureInPicture').mockResolvedValue({} as any);
       await player.togglePictureInPicture();
-      expect(pipSpy).toHaveBeenCalled();
+      expect(video.requestPictureInPicture).toHaveBeenCalled();
     });
 
     it('togglePictureInPicture() exits PIP when active', async () => {
       const video = player.getVideoElement();
       video.dispatchEvent(new Event('enterpictureinpicture'));
 
-      const exitSpy = vi.spyOn(document, 'exitPictureInPicture').mockResolvedValue();
       await player.togglePictureInPicture();
-      expect(exitSpy).toHaveBeenCalled();
+      expect(document.exitPictureInPicture).toHaveBeenCalled();
     });
 
     it('does nothing when PIP is disabled', async () => {
       player.destroy();
       player = new AdaptiveVideoPlayer(container, { enablePictureInPicture: false }, callbacks);
       const video = player.getVideoElement();
-      const pipSpy = vi.spyOn(video, 'requestPictureInPicture').mockResolvedValue({} as any);
+      (video as any).requestPictureInPicture = vi.fn().mockResolvedValue({});
       await player.togglePictureInPicture();
-      expect(pipSpy).not.toHaveBeenCalled();
+      expect(video.requestPictureInPicture).not.toHaveBeenCalled();
     });
   });
 
