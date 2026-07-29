@@ -128,3 +128,57 @@ export class AdvancedSearchPage {
 
     return filters;
   }
+
+  private handleSearchSubmit(event: Event): void {
+    event.preventDefault();
+    const form = event.target as HTMLFormElement;
+    const input = form.querySelector('input[name="query"]') as HTMLInputElement;
+    this.query = input?.value || '';
+    this.performSearch();
+  }
+
+  private handleFilterChange(filterType: string, value: any): void {
+    switch (filterType) {
+      case 'dateRange':
+        this.filters.dateRange = value || undefined;
+        break;
+      case 'contentType':
+        this.filters.contentType = value || undefined;
+        break;
+      case 'creator':
+        this.filters.creator = value || undefined;
+        break;
+      case 'scope':
+        this.filters.scope = value || undefined;
+        break;
+      case 'sortBy':
+        this.filters.sortBy = value || undefined;
+        break;
+    }
+    this.performSearch();
+  }
+
+  private handleClearFilters(): void {
+    this.filters = this.advancedSearchService.clearFilters();
+    this.performSearch();
+  }
+
+  private handleSaveSearch(name: string): void {
+    if (!name.trim()) return;
+    this.advancedSearchService.saveSearch(name, this.query, this.filters);
+    this.savedSearches = this.advancedSearchService.getSavedSearches();
+    this.showSaveDialog = false;
+    this.render();
+  }
+
+  private handleLoadSavedSearch(savedSearch: SavedSearch): void {
+    this.query = savedSearch.query;
+    this.filters = { ...savedSearch.filters };
+    this.performSearch();
+  }
+
+  private handleRemoveSavedSearch(id: string): void {
+    this.advancedSearchService.removeSavedSearch(id);
+    this.savedSearches = this.advancedSearchService.getSavedSearches();
+    this.render();
+  }

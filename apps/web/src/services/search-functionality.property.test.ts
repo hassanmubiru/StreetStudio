@@ -8,6 +8,8 @@
  * results and respond consistently to the keyboard shortcut (Cmd/Ctrl+K) activation.
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fc from 'fast-check';
 import { SearchService, type SearchResponse } from './search.js';
