@@ -575,3 +575,57 @@ export class ProfileSettingsPage {
       tzSelect.value = detected;
     }
   }
+
+  private async handleSave(): Promise<void> {
+    // Validate
+    const result = this.validator.validate({
+      displayName: this.profileData.displayName,
+      bio: this.profileData.bio,
+    });
+
+    if (!result.isValid) {
+      this.showValidationErrors(result);
+      return;
+    }
+
+    this.isSaving = true;
+    this.updateSaveBar();
+
+    // Dispatch save event for external handling
+    this.element.dispatchEvent(new CustomEvent('profile-save', {
+      bubbles: true,
+      detail: {
+        profileData: this.getProfileData(),
+        avatarFile: this.pendingAvatarFile,
+      },
+    }));
+
+    // Simulate save completion for UI (actual save handled by parent)
+    setTimeout(() => {
+      this.isSaving = false;
+      this.isDirty = false;
+      this.pendingAvatarFile = null;
+      if (this.avatarPreviewUrl) {
+        this.profileData.avatarUrl = this.avatarPreviewUrl;
+        this.avatarPreviewUrl = null;
+      }
+      this.updateSaveBar();
+    }, 500);
+  }
+
+  private handleDiscard(): void {
+    if (this.avatarPreviewUrl) {
+      URL.revokeObjectURL(this.avatarPreviewUrl);
+      this.avatarPreviewUrl = null;
+    }
+    this.pendingAvatarFile = null;
+    this.isDirty = false;
+    this.render();
+  }
+
+  private markDirty(): void {
+    if (!this.isDirty) {
+      this.isDirty = true;
+      this.updateSaveBar();
+    }
+  }

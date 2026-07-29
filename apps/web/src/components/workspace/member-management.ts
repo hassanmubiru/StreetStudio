@@ -636,3 +636,65 @@ export class MemberManagement {
       if (confirmBtn) confirmBtn.disabled = false;
     }
   }
+
+  private async revokeInvitation(invitationId: Uuid): Promise<void> {
+    try {
+      await apiClient.delete(
+        `/organizations/${this.config.organizationId}/invitations/${invitationId}`
+      );
+
+      this.pendingInvitations = this.pendingInvitations.filter(
+        inv => inv.id !== invitationId
+      );
+      this.render();
+      this.setupEventListeners();
+
+      logger.info('Invitation revoked', { invitationId });
+    } catch (error) {
+      logger.error('Failed to revoke invitation', { error, invitationId });
+    }
+  }
+
+  private updateMembersList(): void {
+    const filteredMembers = this.getFilteredMembers();
+    const tableContainer = this.element.querySelector('[data-members-table]')?.parentElement;
+    if (tableContainer) {
+      tableContainer.innerHTML = this.renderMembersTable(filteredMembers);
+    }
+    const countEl = this.element.querySelector('[data-member-count]');
+    if (countEl) {
+      countEl.textContent = `${filteredMembers.length} member${filteredMembers.length !== 1 ? 's' : ''}`;
+    }
+  }
+
+  private getFilteredMembers(): OrganizationMember[] {
+    let filtered = [...this.members];
+
+    // Filter by search query
+    if (this.searchQuery) {
+      const query = this.searchQuery.toLowerCase();
+      filtered = filtered.filter(member =>
+        member.displayName.toLowerCase().includes(query) ||
+        member.email.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      switch (this.sortField) {
+        case 'name':
+          comparison = a.displayName.localeCompare(b.displayName);
+          break;
+        case 'role':
+          comparison = a.role.localeCompare(b.role);
+          break;
+        case 'activity':
+          comparison = new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime();
+          break;
+      }
+      return this.sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+  }
