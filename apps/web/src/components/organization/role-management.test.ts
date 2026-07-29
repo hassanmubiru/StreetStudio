@@ -701,3 +701,179 @@ describe('TeamManagement', () => {
     const items = container.querySelectorAll('.team-list-item');
     expect(items.length).toBe(2);
   });
+
+  it('shows create team button for admins', () => {
+    new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    expect(container.querySelector('.team-create-btn')).not.toBeNull();
+  });
+
+  it('hides create team button for non-admins', () => {
+    new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [],
+      availableMembers: members,
+      isAdmin: false,
+    }, callbacks);
+
+    expect(container.querySelector('.team-create-btn')).toBeNull();
+  });
+
+  it('shows team detail when team is selected', () => {
+    const mgmt = new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [makeTeam()],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    mgmt.selectTeam('team-1');
+    expect(container.querySelector('.team-detail')).not.toBeNull();
+    expect(container.querySelector('.team-detail-name')?.textContent).toBe('Engineering');
+  });
+
+  it('shows team members in detail view', () => {
+    const mgmt = new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [makeTeam({ memberIds: ['user-1', 'user-2'] })],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    mgmt.selectTeam('team-1');
+    const memberItems = container.querySelectorAll('.team-member-item');
+    expect(memberItems.length).toBe(2);
+  });
+
+  it('shows member search for adding members', () => {
+    const mgmt = new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [makeTeam({ memberIds: ['user-1'] })],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    mgmt.selectTeam('team-1');
+    expect(container.querySelector('.team-member-search')).not.toBeNull();
+  });
+
+  it('shows available members to add', () => {
+    const mgmt = new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [makeTeam({ memberIds: ['user-1'] })],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    mgmt.selectTeam('team-1');
+    const available = container.querySelectorAll('.team-available-member-item');
+    expect(available.length).toBe(2); // Bob and Charlie
+  });
+
+  it('calls onAddMember when add button is clicked', async () => {
+    const mgmt = new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [makeTeam({ memberIds: ['user-1'] })],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    mgmt.selectTeam('team-1');
+    const addBtn = container.querySelector('.team-member-add-btn') as HTMLButtonElement;
+    addBtn.click();
+
+    await vi.waitFor(() => {
+      expect(callbacks.onAddMember).toHaveBeenCalledWith('team-1', expect.any(String));
+    });
+  });
+
+  it('calls onRemoveMember when remove button is clicked', async () => {
+    const mgmt = new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [makeTeam({ memberIds: ['user-1', 'user-2'] })],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    mgmt.selectTeam('team-1');
+    const removeBtn = container.querySelector('.team-member-remove-btn') as HTMLButtonElement;
+    removeBtn.click();
+
+    await vi.waitFor(() => {
+      expect(callbacks.onRemoveMember).toHaveBeenCalledWith('team-1', expect.any(String));
+    });
+  });
+
+  it('shows team editor when create button is clicked', () => {
+    new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    const createBtn = container.querySelector('.team-create-btn') as HTMLButtonElement;
+    createBtn.click();
+    expect(container.querySelector('.team-editor')).not.toBeNull();
+    expect(container.querySelector('.team-name-input')).not.toBeNull();
+  });
+
+  it('validates team name in editor', () => {
+    const mgmt = new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    mgmt.startCreateTeam();
+    const nameInput = container.querySelector('.team-name-input') as HTMLInputElement;
+    nameInput.value = '';
+    const saveBtn = container.querySelector('.team-save-btn') as HTMLButtonElement;
+    saveBtn.click();
+
+    const error = container.querySelector('#team-name-error');
+    expect(error?.textContent).toBe('Team name is required');
+  });
+
+  it('calls onCreateTeam with correct data', async () => {
+    const mgmt = new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    mgmt.startCreateTeam();
+    const nameInput = container.querySelector('.team-name-input') as HTMLInputElement;
+    const descInput = container.querySelector('.team-desc-input') as HTMLInputElement;
+    nameInput.value = 'New Team';
+    descInput.value = 'A new team';
+
+    const saveBtn = container.querySelector('.team-save-btn') as HTMLButtonElement;
+    saveBtn.click();
+
+    await vi.waitFor(() => {
+      expect(callbacks.onCreateTeam).toHaveBeenCalledWith({
+        name: 'New Team',
+        description: 'A new team',
+      });
+    });
+  });
+
+  it('shows empty message when no teams exist', () => {
+    new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    expect(container.querySelector('.team-list-empty')?.textContent).toContain('No teams');
+  });
+});

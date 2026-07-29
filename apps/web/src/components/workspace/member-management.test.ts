@@ -508,3 +508,256 @@ describe('MemberManagement', () => {
       expect(pendingSection).toBeFalsy();
     });
   });
+
+  // ============================================================
+  // Section 5: Member Removal with Confirmation
+  // Validates: Requirement 8.8
+  // ============================================================
+
+  describe('Member Removal (Requirement 8.8)', () => {
+    it('should show removal modal with confirmation when remove is clicked', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const removeBtn = element.querySelector(
+        '[data-member-id="member-2"] [data-action="remove-member"]'
+      ) as HTMLElement;
+      removeBtn.click();
+
+      const modal = element.querySelector('[data-removal-modal]');
+      expect(modal?.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should display member name in removal confirmation', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const removeBtn = element.querySelector(
+        '[data-member-id="member-2"] [data-action="remove-member"]'
+      ) as HTMLElement;
+      removeBtn.click();
+
+      const description = element.querySelector('[data-removal-description]');
+      expect(description?.textContent).toContain('Bob Smith');
+    });
+
+    it('should offer content retention option', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const retainRadio = element.querySelector('input[value="retain"]') as HTMLInputElement;
+      const transferRadio = element.querySelector('input[value="transfer"]') as HTMLInputElement;
+
+      expect(retainRadio).toBeTruthy();
+      expect(transferRadio).toBeTruthy();
+      // Retain should be checked by default
+      expect(retainRadio?.checked).toBe(true);
+    });
+
+    it('should show transfer target dropdown when transfer is selected', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const transferRadio = element.querySelector('input[value="transfer"]') as HTMLInputElement;
+      transferRadio.checked = true;
+      transferRadio.dispatchEvent(new Event('change', { bubbles: true }));
+
+      const transferSection = element.querySelector('[data-transfer-target-section]');
+      expect(transferSection?.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should hide removal modal on cancel', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      // Open modal
+      const removeBtn = element.querySelector(
+        '[data-member-id="member-2"] [data-action="remove-member"]'
+      ) as HTMLElement;
+      removeBtn.click();
+
+      // Cancel
+      const cancelBtn = element.querySelector('[data-action="cancel-removal"]') as HTMLElement;
+      cancelBtn.click();
+
+      const modal = element.querySelector('[data-removal-modal]');
+      expect(modal?.classList.contains('hidden')).toBe(true);
+    });
+
+    it('should call API to remove member on confirm', async () => {
+      mockApiClient.delete.mockResolvedValue({ data: {} });
+      const onMemberRemoved = vi.fn();
+
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1',
+        onMemberRemoved
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      // Open removal modal
+      const removeBtn = element.querySelector(
+        '[data-member-id="member-2"] [data-action="remove-member"]'
+      ) as HTMLElement;
+      removeBtn.click();
+
+      // Submit removal form
+      const form = element.querySelector('[data-removal-form]') as HTMLFormElement;
+      form.dispatchEvent(new Event('submit', { cancelable: true }));
+
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(mockApiClient.delete).toHaveBeenCalledWith(
+        '/organizations/org-1/members/member-2',
+        expect.anything()
+      );
+    });
+  });
+
+  // ============================================================
+  // Section 6: Member Profile Navigation
+  // Validates: Requirement 8.1
+  // ============================================================
+
+  describe('Member Profile Navigation', () => {
+    it('should call onNavigateToProfile when member name is clicked', async () => {
+      const onNavigateToProfile = vi.fn();
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1',
+        onNavigateToProfile
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const viewProfileBtn = element.querySelector(
+        '[data-member-id="member-2"] [data-action="view-profile"]'
+      ) as HTMLElement;
+      viewProfileBtn.click();
+
+      expect(onNavigateToProfile).toHaveBeenCalledWith('member-2');
+    });
+  });
+
+  // ============================================================
+  // Section 7: Error Handling and Edge Cases
+  // ============================================================
+
+  describe('Error Handling', () => {
+    it('should render empty state when API fails', async () => {
+      mockApiClient.get.mockRejectedValue(new Error('Network error'));
+
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      expect(management.getMembers()).toHaveLength(0);
+      expect(management.getRoles()).toHaveLength(0);
+    });
+
+    it('should handle member data access via getters', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      await management.getElement();
+
+      expect(management.getMembers()).toHaveLength(3);
+      expect(management.getRoles()).toHaveLength(3);
+      expect(management.getPendingInvitations()).toHaveLength(1);
+    });
+
+    it('should clean up on destroy', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      management.destroy();
+
+      expect(management.getMembers()).toHaveLength(0);
+      expect(element.innerHTML).toBe('');
+    });
+  });
+
+  // ============================================================
+  // Section 8: Accessibility
+  // ============================================================
+
+  describe('Accessibility', () => {
+    it('should have proper ARIA labels on the members table', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const table = element.querySelector('table');
+      expect(table?.getAttribute('role')).toBe('table');
+      expect(table?.getAttribute('aria-label')).toBe('Organization members');
+    });
+
+    it('should have aria-label on invite button', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const inviteBtn = element.querySelector('[data-action="invite-member"]');
+      expect(inviteBtn?.getAttribute('aria-label')).toBe('Invite new member');
+    });
+
+    it('should have aria-label on search input', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const searchInput = element.querySelector('[data-field="member-search"]');
+      expect(searchInput?.getAttribute('aria-label')).toBe('Search members');
+    });
+
+    it('should have aria-modal on invitation dialog', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const dialog = element.querySelector('[role="dialog"]');
+      expect(dialog?.getAttribute('aria-modal')).toBe('true');
+    });
+  });
+});
