@@ -41,3 +41,41 @@ export interface VideoMetadataFormConfig {
   onChange?: (data: VideoMetadataFormData) => void;
   autoSave?: boolean;
 }
+
+export class VideoMetadataForm {
+  private container: HTMLElement;
+  private config: Required<VideoMetadataFormConfig>;
+  private formData: VideoMetadataFormData;
+  private validator: FormValidator;
+  private tagInput: HTMLInputElement | null = null;
+  private tagSuggestionsContainer: HTMLElement | null = null;
+  private activeSuggestionIndex = -1;
+  private availableTags: TagSuggestion[] = [];
+  private projects: ProjectOption[] = [];
+  private validationErrors: Record<string, string[]> = {};
+
+  private readonly DEFAULT_CONFIG: Required<VideoMetadataFormConfig> = {
+    initialData: {},
+    projects: [],
+    existingTags: [],
+    showDeveloperMode: true,
+    onSubmit: () => {},
+    onChange: () => {},
+    autoSave: false,
+  };
+
+  constructor(container: HTMLElement, config: VideoMetadataFormConfig = {}) {
+    this.container = container;
+    this.config = { ...this.DEFAULT_CONFIG, ...config } as Required<VideoMetadataFormConfig>;
+    this.projects = this.config.projects;
+    this.availableTags = this.config.existingTags;
+
+    this.formData = {
+      title: this.config.initialData.title || '',
+      description: this.config.initialData.description || '',
+      projectId: this.config.initialData.projectId || null,
+      folderId: this.config.initialData.folderId || null,
+      tags: this.config.initialData.tags || [],
+      isPrivate: this.config.initialData.isPrivate ?? false,
+      developerMode: this.config.initialData.developerMode ?? false,
+    };
