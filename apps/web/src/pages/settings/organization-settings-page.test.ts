@@ -239,3 +239,67 @@ describe('OrganizationSettingsPage', () => {
       const hexInput = el.querySelector('#primary-color-hex') as HTMLInputElement;
       expect(hexInput.value).toBe('#00ff00');
     });
+
+    it('should show error for invalid hex color input', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const hexInput = el.querySelector('#primary-color-hex') as HTMLInputElement;
+      hexInput.value = '#gggggg';
+      hexInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const error = el.querySelector('#primary-color-error');
+      expect(error?.textContent).toContain('Invalid hex color');
+    });
+
+    it('should render custom CSS textarea', () => {
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        branding: { ...createDefaultBrandingSettings(), customCss: '.test { color: red; }' },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const textarea = el.querySelector('#custom-css') as HTMLTextAreaElement;
+      expect(textarea).toBeTruthy();
+      expect(textarea.value).toBe('.test { color: red; }');
+      expect(textarea.getAttribute('maxlength')).toBe(String(CUSTOM_CSS_MAX_LENGTH));
+    });
+
+    it('should update custom CSS setting on input', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const textarea = el.querySelector('#custom-css') as HTMLTextAreaElement;
+      textarea.value = 'body { background: blue; }';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(page.getSettings().branding.customCss).toBe('body { background: blue; }');
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should validate logo file on upload', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const input = el.querySelector('#logo-upload') as HTMLInputElement;
+      const invalidFile = new File(['x'], 'doc.pdf', { type: 'application/pdf' });
+      Object.defineProperty(input, 'files', { value: [invalidFile] });
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+
+      const error = el.querySelector('#logo-error');
+      expect(error?.textContent).toContain('not supported');
+    });
+
+    it('should show remove button when logo exists', () => {
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        branding: { ...createDefaultBrandingSettings(), logoUrl: 'https://example.com/logo.png' },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('#remove-logo')).toBeTruthy();
+    });
+  });
