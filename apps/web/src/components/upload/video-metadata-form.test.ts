@@ -6,6 +6,8 @@
  * Requirements: 3.9, 4.4
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { VideoMetadataForm } from './video-metadata-form.js';
 import type { VideoMetadataFormData, VideoMetadataFormConfig } from './video-metadata-form.js';

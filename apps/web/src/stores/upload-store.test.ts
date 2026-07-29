@@ -7,6 +7,8 @@
  * Requirements: 3.7, 3.8, 3.9
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { UploadStore, createUploadStore, getUploadStore } from './upload-store.js';
 import type { UploadState, UploadItem } from './upload-store.js';

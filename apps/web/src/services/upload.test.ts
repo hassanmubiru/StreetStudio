@@ -7,6 +7,8 @@
  * Requirements: 3.7, 3.8, 3.9
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { UploadManager, uploadVideo, uploadImage } from './upload.js';
 import type { UploadOptions, UploadProgress, UploadError } from './upload.js';
