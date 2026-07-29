@@ -358,3 +358,60 @@ describe('TimelineEditor', () => {
       expect(editor.getState().playheadFrame).toBe(0);
     });
   });
+
+  describe('play/pause toggle', () => {
+    it('toggles between play and pause', () => {
+      expect(editor.getState().isPlaying).toBe(false);
+      editor.togglePlayPause();
+      expect(editor.getState().isPlaying).toBe(true);
+      editor.togglePlayPause();
+      expect(editor.getState().isPlaying).toBe(false);
+    });
+
+    it('updates play button text', () => {
+      const btn = container.querySelector('.btn-play-pause');
+      expect(btn?.textContent).toBe('▶');
+      editor.togglePlayPause();
+      expect(btn?.textContent).toBe('⏸');
+    });
+  });
+
+  describe('zoom controls', () => {
+    it('zooms in', () => {
+      const initialZoom = editor.getState().zoomLevel;
+      editor.zoomIn();
+      expect(editor.getState().zoomLevel).toBeGreaterThan(initialZoom);
+      expect(callbacks.onZoomChange).toHaveBeenCalled();
+    });
+
+    it('zooms out', () => {
+      editor.setZoom(2);
+      const zoomBefore = editor.getState().zoomLevel;
+      editor.zoomOut();
+      expect(editor.getState().zoomLevel).toBeLessThan(zoomBefore);
+    });
+
+    it('clamps zoom to min', () => {
+      editor.setZoom(0.001);
+      expect(editor.getState().zoomLevel).toBeGreaterThanOrEqual(0.1);
+    });
+
+    it('clamps zoom to max', () => {
+      editor.setZoom(999);
+      expect(editor.getState().zoomLevel).toBeLessThanOrEqual(10);
+    });
+
+    it('zoom to fit adjusts based on duration', () => {
+      editor.addClip(createTestClip({ outPoint: 600 }));
+      editor.zoomToFit();
+      // After fit, the entire timeline should be visible
+      expect(editor.getState().zoomLevel).toBeGreaterThan(0);
+    });
+
+    it('setZoom does nothing if value is same', () => {
+      editor.setZoom(1);
+      (callbacks.onZoomChange as ReturnType<typeof vi.fn>).mockClear();
+      editor.setZoom(1);
+      expect(callbacks.onZoomChange).not.toHaveBeenCalled();
+    });
+  });

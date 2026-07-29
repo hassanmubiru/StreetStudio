@@ -361,3 +361,95 @@ describe('ThreadedCommentDisplay', () => {
     badge.click();
     expect(callbacks.onSeek).toHaveBeenCalledWith(60);
   });
+
+  it('renders nested replies with indentation', () => {
+    const display = new ThreadedCommentDisplay(container, defaultOptions, callbacks);
+    const comments: CommentWithState[] = [
+      {
+        ...makeComment({ id: 'c1' }),
+        status: 'visible',
+        author: { id: 'user-1', displayName: 'Alice' },
+        replies: [
+          {
+            ...makeComment({ id: 'c2', parentCommentId: 'c1', body: 'Reply here' }),
+            status: 'visible',
+            author: { id: 'user-2', displayName: 'Bob' },
+            replies: [],
+            isCollapsed: false,
+          },
+        ],
+        isCollapsed: false,
+      },
+    ];
+    display.setComments(comments);
+    const items = container.querySelectorAll('.comment-item');
+    expect(items.length).toBe(2);
+    expect((items[1] as HTMLElement).style.marginLeft).toBe('24px');
+  });
+
+  it('shows reply button that triggers onReply callback', () => {
+    const onReply = vi.fn();
+    const display = new ThreadedCommentDisplay(container, defaultOptions, callbacks, onReply);
+    const comments: CommentWithState[] = [
+      {
+        ...makeComment({ id: 'c1' }),
+        status: 'visible',
+        author: { id: 'user-1', displayName: 'Alice' },
+        replies: [],
+        isCollapsed: false,
+      },
+    ];
+    display.setComments(comments);
+    const replyBtn = container.querySelector('.comment-action-btn') as HTMLButtonElement;
+    replyBtn.click();
+    expect(onReply).toHaveBeenCalledWith('c1', 'Alice');
+  });
+
+  it('shows delete button for own comments', () => {
+    const display = new ThreadedCommentDisplay(container, defaultOptions, callbacks);
+    const comments: CommentWithState[] = [
+      {
+        ...makeComment({ id: 'c1', authorId: 'user-1' }),
+        status: 'visible',
+        author: { id: 'user-1', displayName: 'Me' },
+        replies: [],
+        isCollapsed: false,
+      },
+    ];
+    display.setComments(comments);
+    const deleteBtn = container.querySelector('.comment-delete-btn');
+    expect(deleteBtn).not.toBeNull();
+  });
+
+  it('shows moderation button for admins', () => {
+    const display = new ThreadedCommentDisplay(container, adminOptions, callbacks);
+    const comments: CommentWithState[] = [
+      {
+        ...makeComment({ id: 'c1', authorId: 'user-2' }),
+        status: 'visible',
+        author: { id: 'user-2', displayName: 'Other' },
+        replies: [],
+        isCollapsed: false,
+      },
+    ];
+    display.setComments(comments);
+    const modBtn = container.querySelector('.comment-moderate-btn');
+    expect(modBtn).not.toBeNull();
+  });
+
+  it('hides moderation button for non-admins', () => {
+    const display = new ThreadedCommentDisplay(container, defaultOptions, callbacks);
+    const comments: CommentWithState[] = [
+      {
+        ...makeComment({ id: 'c1', authorId: 'user-2' }),
+        status: 'visible',
+        author: { id: 'user-2', displayName: 'Other' },
+        replies: [],
+        isCollapsed: false,
+      },
+    ];
+    display.setComments(comments);
+    const modBtn = container.querySelector('.comment-moderate-btn');
+    expect(modBtn).toBeNull();
+  });
+});
