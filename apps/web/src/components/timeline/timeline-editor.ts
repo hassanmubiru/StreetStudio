@@ -563,3 +563,64 @@ export class TimelineEditor {
     };
     document.addEventListener('keydown', this.keydownHandler);
   }
+
+  private setupResizeObserver(): void {
+    this.resizeObserver = new ResizeObserver(() => {
+      if (this.isDestroyed) return;
+      this.updateWaveformSize();
+      this.renderRuler();
+      this.renderClips();
+      this.updatePlayheadPosition();
+    });
+    this.resizeObserver.observe(this.timelineElement);
+  }
+
+  // ─── Mouse Handlers ───────────────────────────────────────────────────────
+
+  private handleTrackMouseDown(e: MouseEvent): void {
+    const rect = this.trackElement.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+
+    // Check if clicking on a trim handle
+    const trimHandle = this.getTrimHandleAtPosition(x);
+    if (trimHandle) {
+      this.startTrimDrag(trimHandle.clipId, trimHandle.mode, e);
+      return;
+    }
+
+    // Otherwise position the playhead
+    this.isDraggingPlayhead = true;
+    const frame = this.pixelToFrameInTrack(x);
+    this.seekToFrame(frame);
+  }
+
+  private handleTrackMouseMove(e: MouseEvent): void {
+    if (this.isDraggingTrimHandle || this.isDraggingPlayhead) return;
+
+    const rect = this.trackElement.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+
+    // Update cursor based on what's under the mouse
+    const trimHandle = this.getTrimHandleAtPosition(x);
+    if (trimHandle) {
+      this.trackElement.style.cursor = 'col-resize';
+    } else {
+      this.trackElement.style.cursor = 'pointer';
+    }
+  }
+
+  private handleDocumentMouseMove(e: MouseEvent): void {
+    if (this.isDraggingPlayhead) {
+      const rect = this.trackElement.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const frame = this.pixelToFrameInTrack(x);
+      this.seekToFrame(frame);
+    }
+
+    if (this.isDraggingTrimHandle && this.activeTrimOperation) {
+      const rect = this.trackElement.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const frame = this.pixelToFrameInTrack(x);
+      this.updateTrimDrag(frame);
+    }
+  }

@@ -332,3 +332,59 @@ export class CommentInput {
     this.timestampToggle.setAttribute('aria-pressed', String(this.includeTimestamp));
     this.timestampDisplay.style.opacity = this.includeTimestamp ? '1' : '0.4';
   }
+
+  private async handleSubmit(): Promise<void> {
+    const body = this.textareaEl.value.trim();
+    if (!body || this.isSubmitting) return;
+
+    this.isSubmitting = true;
+    this.submitBtn.disabled = true;
+    this.submitBtn.textContent = 'Posting...';
+
+    const input: CreateCommentInput = {
+      body,
+      parentCommentId: this.replyToId ?? undefined,
+      timestampSeconds: this.includeTimestamp ? this.currentTime : undefined,
+    };
+
+    try {
+      await this.callbacks.onSubmit?.(input);
+      this.textareaEl.value = '';
+      this.cancelReply();
+    } finally {
+      this.isSubmitting = false;
+      this.submitBtn.disabled = false;
+      this.submitBtn.textContent = 'Comment';
+    }
+  }
+
+  /** Set reply-to state, updating UI. */
+  public setReplyTo(commentId: Uuid, authorName: string): void {
+    this.replyToId = commentId;
+    this.replyIndicator.style.display = 'flex';
+    this.replyIndicator.innerHTML = `
+      <span>Replying to <strong>${authorName}</strong></span>
+      <button type="button" class="cancel-reply-btn" aria-label="Cancel reply">&times;</button>
+    `;
+    const cancelBtn = this.replyIndicator.querySelector('.cancel-reply-btn');
+    cancelBtn?.addEventListener('click', () => this.cancelReply());
+    this.textareaEl.focus();
+  }
+
+  /** Cancel active reply. */
+  public cancelReply(): void {
+    this.replyToId = null;
+    this.replyIndicator.style.display = 'none';
+    this.replyIndicator.innerHTML = '';
+  }
+
+  /** Update the current playback time (called externally from player). */
+  public updateCurrentTime(time: number): void {
+    this.currentTime = time;
+    this.timestampDisplay.textContent = formatTimestamp(time);
+  }
+
+  public getElement(): HTMLElement {
+    return this.container;
+  }
+}
