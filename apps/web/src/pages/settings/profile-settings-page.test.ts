@@ -82,3 +82,225 @@ describe('ProfileSettingsPage', () => {
       expect(page.isDirtyState()).toBe(false);
     });
   });
+
+  describe('Avatar Section', () => {
+    it('should show avatar image when avatarUrl is provided', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const img = el.querySelector('#avatar-preview img') as HTMLImageElement;
+      expect(img).toBeTruthy();
+      expect(img.src).toBe('https://example.com/avatar.jpg');
+    });
+
+    it('should show initials when no avatar URL', () => {
+      page = new ProfileSettingsPage({ ...mockProfileData, avatarUrl: null });
+      const el = page.getElement();
+
+      const initials = el.querySelector('#avatar-preview');
+      expect(initials?.textContent?.trim()).toBe('JD');
+    });
+
+    it('should show remove button when avatar exists', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      expect(el.querySelector('#remove-avatar')).toBeTruthy();
+    });
+
+    it('should not show remove button when no avatar', () => {
+      page = new ProfileSettingsPage({ ...mockProfileData, avatarUrl: null });
+      const el = page.getElement();
+
+      expect(el.querySelector('#remove-avatar')).toBeFalsy();
+    });
+
+    it('should have file input with correct accept types', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const input = el.querySelector('#avatar-upload') as HTMLInputElement;
+      expect(input.getAttribute('accept')).toBe(AVATAR_ALLOWED_TYPES.join(','));
+    });
+
+    it('should mark as dirty when avatar is removed', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const removeBtn = el.querySelector('#remove-avatar') as HTMLButtonElement;
+      removeBtn.click();
+
+      expect(page.isDirtyState()).toBe(true);
+    });
+  });
+
+  describe('Display Name Editing', () => {
+    it('should update profile data on input', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const input = el.querySelector('#display-name') as HTMLInputElement;
+      input.value = 'New Name';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(page.getProfileData().displayName).toBe('New Name');
+    });
+
+    it('should mark as dirty when display name changes', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const input = el.querySelector('#display-name') as HTMLInputElement;
+      input.value = 'Changed';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should show validation error for empty display name', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const input = el.querySelector('#display-name') as HTMLInputElement;
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const error = el.querySelector('#display-name-error');
+      expect(error?.textContent).toBeTruthy();
+    });
+
+    it('should show validation error for too-short display name', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const input = el.querySelector('#display-name') as HTMLInputElement;
+      input.value = 'A';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const error = el.querySelector('#display-name-error');
+      expect(error?.textContent).toContain('at least');
+    });
+
+    it('should have correct maxlength attribute', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const input = el.querySelector('#display-name') as HTMLInputElement;
+      expect(input.getAttribute('maxlength')).toBe(String(DISPLAY_NAME_MAX_LENGTH));
+    });
+  });
+
+  describe('Bio Editing', () => {
+    it('should render bio textarea with correct content', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const bio = el.querySelector('#bio') as HTMLTextAreaElement;
+      expect(bio.value).toBe(mockProfileData.bio);
+    });
+
+    it('should update character counter on input', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const bio = el.querySelector('#bio') as HTMLTextAreaElement;
+      bio.value = 'Hello world';
+      bio.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const counter = el.querySelector('#bio-counter');
+      expect(counter?.textContent).toBe(`11/${BIO_MAX_LENGTH}`);
+    });
+
+    it('should show red counter when bio exceeds max length', () => {
+      const longBio = 'x'.repeat(BIO_MAX_LENGTH + 1);
+      page = new ProfileSettingsPage({ ...mockProfileData, bio: longBio });
+      const el = page.getElement();
+
+      const counter = el.querySelector('#bio-counter');
+      expect(counter?.className).toContain('text-red-600');
+    });
+
+    it('should have maxlength attribute set', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const bio = el.querySelector('#bio') as HTMLTextAreaElement;
+      expect(bio.getAttribute('maxlength')).toBe(String(BIO_MAX_LENGTH));
+    });
+
+    it('should mark as dirty when bio changes', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const bio = el.querySelector('#bio') as HTMLTextAreaElement;
+      bio.value = 'Updated bio';
+      bio.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(page.isDirtyState()).toBe(true);
+      expect(page.getProfileData().bio).toBe('Updated bio');
+    });
+  });
+
+  describe('Timezone Selection', () => {
+    it('should render timezone select with correct value', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const select = el.querySelector('#timezone-select') as HTMLSelectElement;
+      expect(select.value).toBe('America/New_York');
+    });
+
+    it('should group timezones by region', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const optgroups = el.querySelectorAll('#timezone-select optgroup');
+      expect(optgroups.length).toBeGreaterThan(0);
+
+      const labels = Array.from(optgroups).map(og => og.getAttribute('label'));
+      expect(labels).toContain('Americas');
+      expect(labels).toContain('Europe');
+      expect(labels).toContain('Asia');
+    });
+
+    it('should update timezone on selection change', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const select = el.querySelector('#timezone-select') as HTMLSelectElement;
+      select.value = 'Europe/London';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getProfileData().timezone).toBe('Europe/London');
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should detect timezone on button click', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const detectBtn = el.querySelector('#detect-timezone') as HTMLButtonElement;
+      detectBtn.click();
+
+      // detectTimezone returns the Intl result - in test env it should be 'UTC' or detected
+      const detected = detectTimezone();
+      expect(page.getProfileData().timezone).toBe(detected);
+    });
+
+    it('should have detect timezone button with accessible label', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const detectBtn = el.querySelector('#detect-timezone');
+      expect(detectBtn?.getAttribute('aria-label')).toBe('Automatically detect my timezone');
+    });
+  });

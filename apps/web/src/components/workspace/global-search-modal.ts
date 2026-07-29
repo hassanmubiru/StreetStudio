@@ -350,19 +350,19 @@ export class GlobalSearchModal {
       return this.renderResults();
     }
 
-    // Show suggestions when no results or still loading
+    // Show "no results" if query typed and search completed with no results
+    if (this.query.trim() && !this.isLoading && this.results.length === 0) {
+      return this.renderNoResults();
+    }
+
+    // Show suggestions when no query (recent searches)
     if (this.suggestions.length > 0 && !this.query.trim()) {
       return this.renderSuggestions();
     }
 
-    // Show suggestions while typing
-    if (this.suggestions.length > 0 && this.query.trim() && !this.isLoading) {
+    // Show suggestions while still loading
+    if (this.suggestions.length > 0 && this.query.trim() && this.isLoading) {
       return this.renderSuggestions();
-    }
-
-    // Show empty state if query typed but no results
-    if (this.query.trim() && !this.isLoading && this.results.length === 0) {
-      return this.renderNoResults();
     }
 
     // Default empty state
