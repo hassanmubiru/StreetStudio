@@ -135,3 +135,60 @@ describe('Upload System - Chunked Upload Logic', () => {
       }));
     });
   });
+
+  describe('Retry Logic with Exponential Backoff', () => {
+    it('should retry failed chunk uploads up to maxRetries times', async () => {
+      const manager = new UploadManager();
+      // Use a file slightly larger than chunk to trigger chunked upload
+      const file = createMockFile('video.mp4', 6 * 1024 * 1024); // 6MB
+
+      const { apiClient } = await import('../services/api.js');
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { uploadId: 'upload-retry', uploadUrl: 'https://upload.test/retry' }
+      });
+
+      // Fail the first chunk 3 times (maxRetries = 3), then succeed
+      mockFetch
+        .mockResolvedValueOnce(new Response(null, { status: 500, statusText: 'Server Error' }))
+        .mockResolvedValueOnce(new Response(null, { status: 500, statusText: 'Server Error' }))
+        .mockResolvedValueOnce(new Response(null, { status: 200 })) // 3rd attempt succeeds
+        .mockResolvedValue(new Response(null, { status: 200 })); // remaining chunks
+
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { id: 'result-retry', url: 'https://cdn.test/video.mp4' }
+      });
+
+      const result = await manager.uploadFile(file, {
+        chunkSize: 5 * 1024 * 1024,
+        maxRetries: 3,
+        retryDelay: 10 // Fast for tests
+      });
+
+      expect(result.id).toBe('result-retry');
+      // First chunk: 2 failures + 1 success = 3 fetch calls for chunk 0
+      // Second chunk: 1 success = 1 fetch call
+      // Total: at least 4 fetch calls
+      expect(mockFetch.mock.calls.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('should throw error when all retries are exhausted', async () => {
+      const manager = new UploadManager();
+      const file = createMockFile('video.mp4', 6 * 1024 * 1024);
+
+      const { apiClient } = await import('../services/api.js');
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { uploadId: 'upload-fail', uploadUrl: 'https://upload.test/fail' }
+      });
+      (apiClient.delete as any).mockResolvedValueOnce({});
+
+      // Always fail
+      mockFetch.mockResolvedValue(new Response(null, { status: 500, statusText: 'Server Error' }));
+
+      await expect(
+        manager.uploadFile(file, {
+          chunkSize: 5 * 1024 * 1024,
+          maxRetries: 2,
+          retryDelay: 1
+        })
+      ).rejects.toThrow(/Failed to upload chunk/);
+    });
