@@ -387,11 +387,11 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Build search result display with previews and contextual information
     - _Requirements: 14.1, 14.3, 14.5_
 
-  - [ ] 12.2 Write property tests for search functionality
+  - [-] 12.2 Write property tests for search functionality
     - **Property 11: Search Functionality Consistency**
     - **Validates: Requirements 14.1**
 
-  - [ ] 12.3 Implement advanced search and filtering
+  - [-] 12.3 Implement advanced search and filtering
     - Create advanced search interface with multiple filter options
     - Build date range, content type, and creator filters
     - Add faceted search with dynamic filter options
