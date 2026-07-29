@@ -167,3 +167,47 @@ export class ProfileSettingsPage {
     this.element.setAttribute('data-main-content', '');
     this.render();
   }
+
+  public getElement(): HTMLElement {
+    return this.element;
+  }
+
+  public getProfileData(): ProfileData {
+    return { ...this.profileData };
+  }
+
+  public isDirtyState(): boolean {
+    return this.isDirty;
+  }
+
+  /**
+   * Update profile data externally (e.g., after successful save)
+   */
+  public updateData(data: Partial<ProfileData>): void {
+    this.profileData = { ...this.profileData, ...data };
+    this.isDirty = false;
+    this.render();
+  }
+
+  private render(): void {
+    this.element.innerHTML = '';
+    this.element.appendChild(this.renderHeader());
+    this.element.appendChild(this.renderAvatarSection());
+    this.element.appendChild(this.renderProfileForm());
+    this.element.appendChild(this.renderTimezoneSection());
+    this.element.appendChild(this.renderNotificationPreferences());
+    this.element.appendChild(this.renderSaveBar());
+    this.setupEventListeners();
+  }
+
+  private renderHeader(): HTMLElement {
+    const header = document.createElement('div');
+    header.className = 'mb-8';
+    header.innerHTML = `
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Profile Settings</h1>
+      <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        Manage your profile information, timezone, and notification preferences.
+      </p>
+    `;
+    return header;
+  }
