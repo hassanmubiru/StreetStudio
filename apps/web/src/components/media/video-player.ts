@@ -258,3 +258,63 @@ export class AdaptiveVideoPlayer {
       </div>
     `;
   }
+
+  private setupVideoEventListeners(): void {
+    const video = this.videoElement;
+
+    video.addEventListener('play', () => {
+      this.state.isPlaying = true;
+      this.state.isPaused = false;
+      this.updatePlayButton();
+      this.callbacks.onPlay?.();
+    });
+
+    video.addEventListener('pause', () => {
+      this.state.isPlaying = false;
+      this.state.isPaused = true;
+      this.updatePlayButton();
+      this.callbacks.onPause?.();
+    });
+
+    video.addEventListener('timeupdate', () => {
+      this.state.currentTime = video.currentTime;
+      this.updateTimeDisplay();
+      this.updateSeekBar();
+      this.callbacks.onTimeUpdate?.(video.currentTime);
+    });
+
+    video.addEventListener('durationchange', () => {
+      this.state.duration = video.duration;
+      this.updateTimeDisplay();
+      this.callbacks.onDurationChange?.(video.duration);
+    });
+
+    video.addEventListener('volumechange', () => {
+      this.state.volume = video.volume;
+      this.state.isMuted = video.muted;
+      this.updateVolumeUI();
+      this.callbacks.onVolumeChange?.(video.volume, video.muted);
+    });
+
+    video.addEventListener('ratechange', () => {
+      this.state.playbackRate = video.playbackRate;
+      this.updateSpeedSelect();
+      this.callbacks.onRateChange?.(video.playbackRate);
+    });
+
+    video.addEventListener('ended', () => {
+      this.state.isPlaying = false;
+      this.state.isPaused = true;
+      this.updatePlayButton();
+      this.callbacks.onEnded?.();
+    });
+
+    video.addEventListener('waiting', () => {
+      this.state.isBuffering = true;
+      this.callbacks.onBuffering?.(true);
+    });
+
+    video.addEventListener('canplay', () => {
+      this.state.isBuffering = false;
+      this.callbacks.onBuffering?.(false);
+    });

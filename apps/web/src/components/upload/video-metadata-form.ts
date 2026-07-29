@@ -115,3 +115,59 @@ export class VideoMetadataForm {
     this.tagInput = this.container.querySelector('#tag-input');
     this.tagSuggestionsContainer = this.container.querySelector('#tag-suggestions');
   }
+
+  private getFormHTML(): string {
+    const projectOptions = this.projects
+      .map(p => `<option value="${p.id}"${p.id === this.formData.projectId ? ' selected' : ''}>${p.name}</option>`)
+      .join('');
+
+    const tagsHTML = this.formData.tags
+      .map(tag => `<span class="tag-chip" data-tag="${tag}">${tag}<button type="button" class="tag-remove" aria-label="Remove tag ${tag}">&times;</button></span>`)
+      .join('');
+
+    return `
+      <div class="form-group">
+        <label for="video-title" class="form-label">
+          Title <span class="required-indicator" aria-hidden="true">*</span>
+        </label>
+        <input
+          type="text"
+          id="video-title"
+          name="title"
+          class="form-input"
+          value="${this.escapeHTML(this.formData.title)}"
+          placeholder="Enter video title"
+          required
+          aria-required="true"
+          maxlength="255"
+        />
+        <div class="field-hint" id="title-hint">
+          <span class="char-count" id="title-char-count">${this.formData.title.length}/255</span>
+        </div>
+        <div class="field-error" id="title-error" role="alert" aria-live="polite"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="video-description" class="form-label">Description</label>
+        <textarea
+          id="video-description"
+          name="description"
+          class="form-input form-textarea"
+          placeholder="Add a description for your video"
+          maxlength="2000"
+          rows="4"
+        >${this.escapeHTML(this.formData.description)}</textarea>
+        <div class="field-hint" id="description-hint">
+          <span class="char-count" id="description-char-count">${this.formData.description.length}/2000</span>
+        </div>
+        <div class="field-error" id="description-error" role="alert" aria-live="polite"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="video-project" class="form-label">Project</label>
+        <select id="video-project" name="projectId" class="form-input form-select">
+          <option value="">No project</option>
+          ${projectOptions}
+        </select>
+        <div class="field-hint">Assign this video to a project for better organization</div>
+      </div>

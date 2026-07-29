@@ -103,3 +103,55 @@ export class UploadProgressInterface {
       this.handleStateUpdate(state);
     });
   }
+
+  private handleStateUpdate(state: UploadState): void {
+    const hasUploads = state.uploads.length > 0;
+
+    // Show panel when uploads start
+    if (hasUploads && !this.isVisible) {
+      this.show();
+    }
+
+    // Detect newly completed uploads for background notifications
+    if (this.config.enableBackgroundUpload) {
+      this.checkForCompletionNotifications(state);
+    }
+
+    // Auto-minimize when all complete
+    if (this.config.autoMinimizeOnComplete && !state.isUploading && hasUploads) {
+      const allDone = state.uploads.every(
+        u => u.status === 'completed' || u.status === 'failed' || u.status === 'cancelled'
+      );
+      if (allDone) {
+        setTimeout(() => this.minimize(), 2000);
+      }
+    }
+
+    this.updateDisplay(state);
+  }
+
+  private checkForCompletionNotifications(state: UploadState): void {
+    const currentCompleted = state.completedUploads;
+    const currentFailed = state.failedUploads;
+
+    // Notify on new completions
+    if (currentCompleted > this.previousCompletedCount) {
+      const newlyCompleted = state.uploads.filter(
+        u => u.status === 'completed'
+      );
+      if (newlyCompleted.length > 0 && document.visibilityState === 'hidden') {
+        this.notificationService.notifyUploadComplete(newlyCompleted);
+      }
+    }
+
+    // Notify on new failures
+    if (currentFailed > this.previousFailedCount) {
+      const newlyFailed = state.uploads.filter(u => u.status === 'failed');
+      if (newlyFailed.length > 0) {
+        this.notificationService.notifyUploadFailed(newlyFailed);
+      }
+    }
+
+    this.previousCompletedCount = currentCompleted;
+    this.previousFailedCount = currentFailed;
+  }
