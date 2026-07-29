@@ -422,7 +422,9 @@ export class TeamManagement {
         this.isCreating = false;
         this.render();
       } catch {
-        errorEl.textContent = 'Failed to create team. Please try again.';
+        if (errorEl && errorEl.isConnected) {
+          errorEl.textContent = 'Failed to create team. Please try again.';
+        }
       }
     });
 
