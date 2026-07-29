@@ -430,3 +430,47 @@ describe('rolePermissionsToEntries', () => {
     expect(entries.every(e => e.granted === false)).toBe(true);
   });
 });
+
+describe('entriesToPermissionStrings', () => {
+  it('converts granted entries to permission strings', () => {
+    const entries: PermissionEntry[] = [
+      { resourceId: 'projects', actionId: 'view', granted: true },
+      { resourceId: 'projects', actionId: 'edit', granted: false },
+      { resourceId: 'videos', actionId: 'view', granted: true },
+    ];
+    const strings = entriesToPermissionStrings(entries);
+    expect(strings).toEqual(['projects:view', 'videos:view']);
+  });
+
+  it('returns empty array when none granted', () => {
+    const entries: PermissionEntry[] = [
+      { resourceId: 'projects', actionId: 'view', granted: false },
+    ];
+    expect(entriesToPermissionStrings(entries)).toEqual([]);
+  });
+});
+
+// --------------------------------------------------------------------------
+// Role Management - Component
+// --------------------------------------------------------------------------
+
+describe('RoleManagement', () => {
+  let container: HTMLElement;
+  let callbacks: RoleManagementCallbacks;
+
+  beforeEach(() => {
+    container = createContainer();
+    callbacks = defaultRoleCallbacks();
+  });
+
+  it('renders with role="region" and aria-label', () => {
+    new RoleManagement(container, defaultRoleOptions, callbacks);
+    expect(container.getAttribute('role')).toBe('region');
+    expect(container.getAttribute('aria-label')).toBe('Role management');
+  });
+
+  it('renders header with title and description', () => {
+    new RoleManagement(container, defaultRoleOptions, callbacks);
+    expect(container.querySelector('.role-management-title')?.textContent).toBe('Roles & Permissions');
+    expect(container.querySelector('.role-management-description')).not.toBeNull();
+  });
