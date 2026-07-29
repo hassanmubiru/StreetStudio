@@ -484,6 +484,351 @@ describe('AdaptiveVideoPlayer', () => {
     });
   });
 
+  describe('adaptive quality selection and streaming', () => {
+    beforeEach(() => {
+      player = new AdaptiveVideoPlayer(container, { adaptiveBitrate: true }, callbacks);
+    });
+
+    it('setQuality() does not throw when no streaming instance', () => {
+      expect(() => player.setQuality(0)).not.toThrow();
+    });
+
+    it('setQuality() delegates to hlsInstance.currentLevel when HLS active', async () => {
+      const mockHls = {
+        loadSource: vi.fn(),
+        attachMedia: vi.fn(),
+        on: vi.fn(),
+        destroy: vi.fn(),
+        currentLevel: -1,
+      };
+      const MockHlsClass = vi.fn(() => mockHls);
+      (MockHlsClass as any).isSupported = () => true;
+      (MockHlsClass as any).Events = { MANIFEST_PARSED: 'hlsManifestParsed', LEVEL_SWITCHED: 'hlsLevelSwitched', ERROR: 'hlsError' };
+      (window as any).Hls = MockHlsClass;
+
+      const sources: VideoSource[] = [{ url: 'stream.m3u8', type: 'hls' }];
+      await player.loadSource(sources);
+
+      player.setQuality(2);
+      expect(mockHls.currentLevel).toBe(2);
+
+      delete (window as any).Hls;
+    });
+
+    it('loads HLS source using Hls.js when available and adaptiveBitrate is enabled', async () => {
+      const mockHls = {
+        loadSource: vi.fn(),
+        attachMedia: vi.fn(),
+        on: vi.fn(),
+        destroy: vi.fn(),
+        currentLevel: -1,
+      };
+      const MockHlsClass = vi.fn(() => mockHls);
+      (MockHlsClass as any).isSupported = () => true;
+      (MockHlsClass as any).Events = { MANIFEST_PARSED: 'hlsManifestParsed', LEVEL_SWITCHED: 'hlsLevelSwitched', ERROR: 'hlsError' };
+      (window as any).Hls = MockHlsClass;
+
+      const sources: VideoSource[] = [{ url: 'stream.m3u8', type: 'hls' }];
+      await player.loadSource(sources);
+
+      expect(mockHls.loadSource).toHaveBeenCalledWith('stream.m3u8');
+      expect(mockHls.attachMedia).toHaveBeenCalledWith(player.getVideoElement());
+
+      delete (window as any).Hls;
+    });
+
+    it('loads DASH source using dashjs when available and adaptiveBitrate is enabled', async () => {
+      const mockDashPlayer = {
+        initialize: vi.fn(),
+        on: vi.fn(),
+        getBitrateInfoListFor: vi.fn().mockReturnValue([]),
+        reset: vi.fn(),
+        setQualityFor: vi.fn(),
+      };
+      const mockDashjs = {
+        MediaPlayer: () => ({ create: () => mockDashPlayer }),
+      };
+      (window as any).dashjs = mockDashjs;
+
+      const sources: VideoSource[] = [{ url: 'stream.mpd', type: 'dash' }];
+      await player.loadSource(sources);
+
+      expect(mockDashPlayer.initialize).toHaveBeenCalledWith(
+        player.getVideoElement(),
+        'stream.mpd',
+        false,
+      );
+
+      delete (window as any).dashjs;
+    });
+
+    it('setQuality() delegates to dashInstance when DASH active', async () => {
+      const mockDashPlayer = {
+        initialize: vi.fn(),
+        on: vi.fn(),
+        getBitrateInfoListFor: vi.fn().mockReturnValue([]),
+        reset: vi.fn(),
+        setQualityFor: vi.fn(),
+      };
+      const mockDashjs = {
+        MediaPlayer: () => ({ create: () => mockDashPlayer }),
+      };
+      (window as any).dashjs = mockDashjs;
+
+      const sources: VideoSource[] = [{ url: 'stream.mpd', type: 'dash' }];
+      await player.loadSource(sources);
+
+      player.setQuality(1);
+      expect(mockDashPlayer.setQualityFor).toHaveBeenCalledWith('video', 1);
+
+      delete (window as any).dashjs;
+    });
+
+    it('prefers HLS source over direct source when adaptiveBitrate is enabled', async () => {
+      const mockHls = {
+        loadSource: vi.fn(),
+        attachMedia: vi.fn(),
+        on: vi.fn(),
+        destroy: vi.fn(),
+        currentLevel: -1,
+      };
+      const MockHlsClass = vi.fn(() => mockHls);
+      (MockHlsClass as any).isSupported = () => true;
+      (MockHlsClass as any).Events = { MANIFEST_PARSED: 'hlsManifestParsed', LEVEL_SWITCHED: 'hlsLevelSwitched', ERROR: 'hlsError' };
+      (window as any).Hls = MockHlsClass;
+
+      const sources: VideoSource[] = [
+        { url: 'test.mp4', type: 'mp4' },
+        { url: 'stream.m3u8', type: 'hls' },
+      ];
+      await player.loadSource(sources);
+
+      // HLS source should be used, not direct mp4
+      expect(mockHls.loadSource).toHaveBeenCalledWith('stream.m3u8');
+
+      delete (window as any).Hls;
+    });
+
+    it('falls back to direct source when adaptiveBitrate is disabled', async () => {
+      player.destroy();
+      player = new AdaptiveVideoPlayer(container, { adaptiveBitrate: false }, callbacks);
+
+      const sources: VideoSource[] = [
+        { url: 'stream.m3u8', type: 'hls' },
+        { url: 'test.mp4', type: 'mp4' },
+      ];
+      await player.loadSource(sources);
+
+      // Should use direct mp4 since adaptive is disabled
+      expect(player.getVideoElement().src).toContain('test.mp4');
+    });
+
+    it('fires onQualityChange callback when quality switches (via HLS)', async () => {
+      const mockHls = {
+        loadSource: vi.fn(),
+        attachMedia: vi.fn(),
+        on: vi.fn(),
+        destroy: vi.fn(),
+        currentLevel: -1,
+      };
+      const MockHlsClass = vi.fn(() => mockHls);
+      (MockHlsClass as any).isSupported = () => true;
+      (MockHlsClass as any).Events = { MANIFEST_PARSED: 'hlsManifestParsed', LEVEL_SWITCHED: 'hlsLevelSwitched', ERROR: 'hlsError' };
+      (window as any).Hls = MockHlsClass;
+
+      const onQualityChange = vi.fn();
+      player.destroy();
+      player = new AdaptiveVideoPlayer(container, { adaptiveBitrate: true }, { ...callbacks, onQualityChange });
+
+      const sources: VideoSource[] = [{ url: 'stream.m3u8', type: 'hls' }];
+      await player.loadSource(sources);
+
+      // Simulate MANIFEST_PARSED to populate qualities
+      const manifestCallback = mockHls.on.mock.calls.find(
+        (call: any[]) => call[0] === 'hlsManifestParsed'
+      )?.[1];
+      if (manifestCallback) {
+        manifestCallback(null, {
+          levels: [
+            { height: 360, bitrate: 800000, width: 640 },
+            { height: 720, bitrate: 2500000, width: 1280 },
+            { height: 1080, bitrate: 5000000, width: 1920 },
+          ],
+        });
+      }
+
+      // Simulate LEVEL_SWITCHED
+      const levelSwitchCallback = mockHls.on.mock.calls.find(
+        (call: any[]) => call[0] === 'hlsLevelSwitched'
+      )?.[1];
+      if (levelSwitchCallback) {
+        levelSwitchCallback(null, { level: 1 });
+      }
+
+      expect(onQualityChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          index: 1,
+          label: '720p',
+          height: 720,
+          active: true,
+        })
+      );
+
+      delete (window as any).Hls;
+    });
+
+    it('fires onError callback on fatal streaming error', async () => {
+      const mockHls = {
+        loadSource: vi.fn(),
+        attachMedia: vi.fn(),
+        on: vi.fn(),
+        destroy: vi.fn(),
+        startLoad: vi.fn(),
+        recoverMediaError: vi.fn(),
+        currentLevel: -1,
+      };
+      const MockHlsClass = vi.fn(() => mockHls);
+      (MockHlsClass as any).isSupported = () => true;
+      (MockHlsClass as any).Events = { MANIFEST_PARSED: 'hlsManifestParsed', LEVEL_SWITCHED: 'hlsLevelSwitched', ERROR: 'hlsError' };
+      (window as any).Hls = MockHlsClass;
+
+      const sources: VideoSource[] = [{ url: 'stream.m3u8', type: 'hls' }];
+      await player.loadSource(sources);
+
+      // Simulate a fatal error
+      const errorCallback = mockHls.on.mock.calls.find(
+        (call: any[]) => call[0] === 'hlsError'
+      )?.[1];
+      if (errorCallback) {
+        errorCallback(null, { fatal: true, type: 'networkError', details: 'manifestLoadError' });
+      }
+
+      expect(callbacks.onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: -1,
+          message: 'Streaming error occurred',
+        })
+      );
+
+      delete (window as any).Hls;
+    });
+
+    it('availableQualities is populated after HLS manifest is parsed', async () => {
+      const mockHls = {
+        loadSource: vi.fn(),
+        attachMedia: vi.fn(),
+        on: vi.fn(),
+        destroy: vi.fn(),
+        currentLevel: -1,
+      };
+      const MockHlsClass = vi.fn(() => mockHls);
+      (MockHlsClass as any).isSupported = () => true;
+      (MockHlsClass as any).Events = { MANIFEST_PARSED: 'hlsManifestParsed', LEVEL_SWITCHED: 'hlsLevelSwitched', ERROR: 'hlsError' };
+      (window as any).Hls = MockHlsClass;
+
+      const sources: VideoSource[] = [{ url: 'stream.m3u8', type: 'hls' }];
+      await player.loadSource(sources);
+
+      // Simulate MANIFEST_PARSED
+      const manifestCallback = mockHls.on.mock.calls.find(
+        (call: any[]) => call[0] === 'hlsManifestParsed'
+      )?.[1];
+      if (manifestCallback) {
+        manifestCallback(null, {
+          levels: [
+            { height: 360, bitrate: 800000, width: 640 },
+            { height: 720, bitrate: 2500000, width: 1280 },
+          ],
+        });
+      }
+
+      const state = player.getState();
+      expect(state.availableQualities).toHaveLength(2);
+      expect(state.availableQualities[0]).toEqual(
+        expect.objectContaining({ label: '360p', height: 360 })
+      );
+      expect(state.availableQualities[1]).toEqual(
+        expect.objectContaining({ label: '720p', height: 720 })
+      );
+
+      delete (window as any).Hls;
+    });
+  });
+
+  describe('timeline seeking and position memory', () => {
+    it('startTime option sets initial position on loadedmetadata', () => {
+      player = new AdaptiveVideoPlayer(container, { startTime: 42 }, callbacks);
+      const video = player.getVideoElement();
+      // Simulate loadedmetadata event
+      video.dispatchEvent(new Event('loadedmetadata'));
+      expect(video.currentTime).toBe(42);
+    });
+
+    it('startTime of 0 does not change position on loadedmetadata', () => {
+      player = new AdaptiveVideoPlayer(container, { startTime: 0 }, callbacks);
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'currentTime', { value: 0, writable: true, configurable: true });
+      video.dispatchEvent(new Event('loadedmetadata'));
+      expect(video.currentTime).toBe(0);
+    });
+
+    it('fires onSeeked callback when seeked event occurs', () => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'currentTime', { value: 30, writable: true, configurable: true });
+      video.dispatchEvent(new Event('seeked'));
+      expect(callbacks.onSeeked).toHaveBeenCalledWith(30);
+    });
+
+    it('seek bar input triggers seek to correct time', () => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'duration', { value: 200, writable: true });
+      video.dispatchEvent(new Event('durationchange'));
+
+      const seekBar = container.querySelector('.seek-bar') as HTMLInputElement;
+      seekBar.value = '50'; // 50% of duration = 100 seconds
+      seekBar.dispatchEvent(new Event('input'));
+      expect(player.getState().currentTime).toBe(100);
+    });
+
+    it('seek bar updates as time progresses', () => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'duration', { value: 100, writable: true });
+      video.dispatchEvent(new Event('durationchange'));
+
+      Object.defineProperty(video, 'currentTime', { value: 25, writable: true, configurable: true });
+      video.dispatchEvent(new Event('timeupdate'));
+
+      const seekBar = container.querySelector('.seek-bar') as HTMLInputElement;
+      expect(parseFloat(seekBar.value)).toBe(25);
+    });
+
+    it('time display updates correctly during playback', () => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'duration', { value: 300, writable: true });
+      video.dispatchEvent(new Event('durationchange'));
+
+      Object.defineProperty(video, 'currentTime', { value: 125, writable: true, configurable: true });
+      video.dispatchEvent(new Event('timeupdate'));
+
+      const currentTimeEl = container.querySelector('.current-time');
+      expect(currentTimeEl?.textContent).toBe('2:05');
+    });
+
+    it('duration display shows video length after durationchange', () => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'duration', { value: 3661, writable: true });
+      video.dispatchEvent(new Event('durationchange'));
+
+      const durationEl = container.querySelector('.duration-display');
+      expect(durationEl?.textContent).toBe('1:01:01');
+    });
+  });
+
   describe('event callbacks', () => {
     beforeEach(() => {
       player = new AdaptiveVideoPlayer(container, {}, callbacks);
