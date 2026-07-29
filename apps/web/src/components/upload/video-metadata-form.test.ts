@@ -277,3 +277,49 @@ describe('VideoMetadataForm', () => {
       const existingCount = data.tags.filter(t => t === 'existing').length;
       expect(existingCount).toBe(1);
     });
+
+    it('should remove tags when remove button is clicked', () => {
+      form.setFormData({ title: 'Video', tags: ['tag1', 'tag2'] });
+
+      const removeBtn = container.querySelector('.tag-remove') as HTMLButtonElement;
+      removeBtn?.click();
+
+      const data = form.getFormData();
+      expect(data.tags.length).toBeLessThan(2);
+    });
+
+    it('should remove last tag on backspace with empty input', () => {
+      form.setFormData({ title: 'Video', tags: ['alpha', 'beta'] });
+
+      const tagInput = container.querySelector('#tag-input') as HTMLInputElement;
+      tagInput.value = '';
+
+      const keyEvent = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true });
+      tagInput.dispatchEvent(keyEvent);
+
+      const data = form.getFormData();
+      expect(data.tags).not.toContain('beta');
+    });
+
+    it('should show tag suggestions on input', () => {
+      const tagInput = container.querySelector('#tag-input') as HTMLInputElement;
+      tagInput.value = 'tut';
+      tagInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const suggestions = container.querySelector('#tag-suggestions');
+      expect(suggestions?.style.display).toBe('block');
+      expect(suggestions?.textContent).toContain('tutorial');
+    });
+
+    it('should hide suggestions on Escape', () => {
+      const tagInput = container.querySelector('#tag-input') as HTMLInputElement;
+      tagInput.value = 'tut';
+      tagInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const keyEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      tagInput.dispatchEvent(keyEvent);
+
+      const suggestions = container.querySelector('#tag-suggestions');
+      expect(suggestions?.style.display).toBe('none');
+    });
+  });
