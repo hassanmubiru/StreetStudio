@@ -645,3 +645,62 @@ describe('Upload System - Metadata Form Validation', () => {
       expect(result.errors.description).toContain('Description cannot contain < > { } characters');
     });
   });
+
+  describe('Single Field Validation', () => {
+    it('should validate individual fields', () => {
+      const result = videoMetadataValidator.validateField('title', '');
+      expect(result.isValid).toBe(false);
+      expect(result.firstError).toBe('Title is required');
+    });
+
+    it('should return valid for unknown fields', () => {
+      const result = videoMetadataValidator.validateField('unknownField', 'value');
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('VideoMetadataForm Component', () => {
+    it('should render form with all required fields', async () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      const { VideoMetadataForm } = await import('../components/upload/video-metadata-form.js');
+      const form = new VideoMetadataForm(container, {
+        projects: [{ id: 'proj-1' as any, name: 'Test Project' }],
+        existingTags: [{ name: 'tutorial', count: 5 }]
+      });
+
+      // Verify form elements exist
+      expect(container.querySelector('#video-title')).toBeDefined();
+      expect(container.querySelector('#video-description')).toBeDefined();
+      expect(container.querySelector('#video-project')).toBeDefined();
+      expect(container.querySelector('#tag-input')).toBeDefined();
+      expect(container.querySelector('#video-private')).toBeDefined();
+
+      form.destroy();
+      document.body.removeChild(container);
+    });
+
+    it('should return correct initial form data', async () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      const { VideoMetadataForm } = await import('../components/upload/video-metadata-form.js');
+      const form = new VideoMetadataForm(container, {
+        initialData: {
+          title: 'Initial Title',
+          description: 'Initial description',
+          isPrivate: true,
+          tags: ['tag1', 'tag2']
+        }
+      });
+
+      const data = form.getFormData();
+      expect(data.title).toBe('Initial Title');
+      expect(data.description).toBe('Initial description');
+      expect(data.isPrivate).toBe(true);
+      expect(data.tags).toEqual(['tag1', 'tag2']);
+
+      form.destroy();
+      document.body.removeChild(container);
+    });
