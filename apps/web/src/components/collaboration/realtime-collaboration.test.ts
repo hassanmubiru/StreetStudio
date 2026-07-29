@@ -689,3 +689,51 @@ describe('Collaborative Viewing', () => {
     });
   });
 });
+
+// ==========================================================================
+// Activity Feed Tests
+// ==========================================================================
+
+describe('Activity Feed', () => {
+  describe('getActivityIcon', () => {
+    it('returns comment icon for comment_added', () => {
+      expect(getActivityIcon('comment_added')).toBe('💬');
+    });
+
+    it('returns reply icon for comment_reply', () => {
+      expect(getActivityIcon('comment_reply')).toBe('↩️');
+    });
+
+    it('returns video icon for video_uploaded', () => {
+      expect(getActivityIcon('video_uploaded')).toBe('📹');
+    });
+
+    it('returns folder icon for project_created', () => {
+      expect(getActivityIcon('project_created')).toBe('📁');
+    });
+  });
+
+  describe('formatRelativeTime', () => {
+    it('formats recent time as "just now"', () => {
+      const now = new Date();
+      expect(formatRelativeTime(now.toISOString(), now)).toBe('just now');
+    });
+
+    it('formats minutes ago', () => {
+      const now = new Date();
+      const past = new Date(now.getTime() - 5 * 60000).toISOString();
+      expect(formatRelativeTime(past, now)).toBe('5m ago');
+    });
+
+    it('formats hours ago', () => {
+      const now = new Date();
+      const past = new Date(now.getTime() - 3 * 3600000).toISOString();
+      expect(formatRelativeTime(past, now)).toBe('3h ago');
+    });
+
+    it('formats days ago', () => {
+      const now = new Date();
+      const past = new Date(now.getTime() - 2 * 86400000).toISOString();
+      expect(formatRelativeTime(past, now)).toBe('2d ago');
+    });
+  });

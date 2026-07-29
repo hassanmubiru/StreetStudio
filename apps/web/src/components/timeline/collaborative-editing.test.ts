@@ -425,3 +425,73 @@ describe('EditHistoryManager', () => {
     expect(history.getCurrentVersion()).toBe(0);
   });
 });
+
+// ─── CollaborativeEditingManager ──────────────────────────────────────────────
+
+describe('CollaborativeEditingManager', () => {
+  let manager: CollaborativeEditingManager;
+  const defaultOptions: CollaborativeEditingOptions = {
+    currentUserId: 'me',
+    currentUserName: 'Current User',
+    videoId: 'video-1',
+    presenceTimeoutMs: 30000,
+    maxHistorySize: 50,
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    manager = new CollaborativeEditingManager(defaultOptions);
+  });
+
+  afterEach(() => {
+    manager.destroy();
+    vi.useRealTimers();
+  });
+
+  describe('session management', () => {
+    it('startSession creates an active session', () => {
+      const session = manager.startSession();
+
+      expect(session.id).toBeDefined();
+      expect(session.videoId).toBe('video-1');
+      expect(session.isActive).toBe(true);
+      expect(manager.isSessionActive()).toBe(true);
+    });
+
+    it('startSession adds current user as participant', () => {
+      manager.startSession();
+
+      const session = manager.getSession();
+      expect(session!.participants).toHaveLength(1);
+      expect(session!.participants[0].userId).toBe('me');
+      expect(session!.participants[0].displayName).toBe('Current User');
+    });
+
+    it('endSession deactivates the session', () => {
+      manager.startSession();
+      manager.endSession();
+
+      expect(manager.isSessionActive()).toBe(false);
+      expect(manager.getSession()).toBeNull();
+    });
+
+    it('calls onSessionStart callback', () => {
+      const onStart = vi.fn();
+      const mgr = new CollaborativeEditingManager(defaultOptions, { onSessionStart: onStart });
+      mgr.startSession();
+
+      expect(onStart).toHaveBeenCalledTimes(1);
+      expect(onStart.mock.calls[0][0].videoId).toBe('video-1');
+      mgr.destroy();
+    });
+
+    it('calls onSessionEnd callback', () => {
+      const onEnd = vi.fn();
+      const mgr = new CollaborativeEditingManager(defaultOptions, { onSessionEnd: onEnd });
+      const session = mgr.startSession();
+      mgr.endSession();
+
+      expect(onEnd).toHaveBeenCalledWith(session.id);
+      mgr.destroy();
+    });
+  });

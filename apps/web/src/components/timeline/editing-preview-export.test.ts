@@ -578,3 +578,59 @@ describe('ExportManager', () => {
       expect(manager.getHistory()).toHaveLength(0);
     });
   });
+
+  describe('retry', () => {
+    it('retries a failed export', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.failJob(job, new Error('Timeout'));
+      expect(manager.canRetry(job.id)).toBe(true);
+      const retried = manager.retryExport(job.id);
+      expect(retried).not.toBeNull();
+      expect(retried?.status).toBe('processing');
+    });
+
+    it('cannot retry a completed export', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.completeJob(job);
+      expect(manager.canRetry(job.id)).toBe(false);
+      expect(manager.retryExport(job.id)).toBeNull();
+    });
+
+    it('returns null for non-existent job', () => {
+      expect(manager.retryExport('non-existent')).toBeNull();
+    });
+  });
+
+  describe('completion', () => {
+    it('sets download URL on completion', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.completeJob(job, 'https://cdn.example.com/video.mp4');
+      expect(manager.getJob(job.id)?.downloadUrl).toBe(
+        'https://cdn.example.com/video.mp4'
+      );
+    });
+
+    it('sets completedAt timestamp', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.completeJob(job);
+      expect(manager.getJob(job.id)?.completedAt).toBeDefined();
+    });
+
+    it('decrements active count', () => {
+      manager.startExport(createExportOptions({ videoId: 'v1' }));
+      const job2 = manager.startExport(createExportOptions({ videoId: 'v2' }));
+      expect(manager.getActiveCount()).toBe(2);
+      manager.completeJob(job2);
+      expect(manager.getActiveCount()).toBe(1);
+    });
+  });
+
+  describe('destroy', () => {
+    it('cancels active jobs and clears queue', () => {
+      manager.startExport(createExportOptions({ videoId: 'v1' }));
+      manager.destroy();
+      expect(manager.getActiveCount()).toBe(0);
+      expect(manager.getQueuedCount()).toBe(0);
+    });
+  });
+});
