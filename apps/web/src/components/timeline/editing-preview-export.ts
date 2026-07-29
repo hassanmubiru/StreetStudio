@@ -92,3 +92,111 @@ export interface ExportOptions {
   startFrame?: number;
   endFrame?: number;
 }
+
+export interface PreviewCallbacks {
+  onPreviewReady?: () => void;
+  onPreviewUpdate?: (time: number) => void;
+  onPreviewError?: (error: Error) => void;
+  onBufferingChange?: (isBuffering: boolean) => void;
+}
+
+export interface ExportCallbacks {
+  onExportStart?: (job: ExportJob) => void;
+  onExportProgress?: (progress: ExportProgress) => void;
+  onExportComplete?: (job: ExportJob) => void;
+  onExportError?: (job: ExportJob, error: Error) => void;
+  onExportCancelled?: (job: ExportJob) => void;
+}
+
+export interface BackgroundProcessCallbacks {
+  onStatusUpdate?: (jobId: string, status: ExportStatus) => void;
+  onConnectionChange?: (connected: boolean) => void;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+export const QUALITY_OPTIONS: ExportQualityOption[] = [
+  {
+    quality: 'low',
+    label: '480p',
+    description: 'Fast export, smaller file size',
+    resolution: { width: 854, height: 480 },
+    bitrate: 1500,
+    format: 'mp4',
+  },
+  {
+    quality: 'medium',
+    label: '720p',
+    description: 'Good balance of quality and size',
+    resolution: { width: 1280, height: 720 },
+    bitrate: 3000,
+    format: 'mp4',
+  },
+  {
+    quality: 'high',
+    label: '1080p',
+    description: 'High quality, larger file',
+    resolution: { width: 1920, height: 1080 },
+    bitrate: 6000,
+    format: 'mp4',
+  },
+  {
+    quality: 'original',
+    label: 'Original',
+    description: 'Same quality as source video',
+    resolution: { width: 0, height: 0 }, // determined by source
+    bitrate: 0, // determined by source
+    format: 'mp4',
+  },
+];
+
+export const MAX_CONCURRENT_EXPORTS = 2;
+export const EXPORT_POLL_INTERVAL_MS = 2000;
+export const PREVIEW_DEBOUNCE_MS = 300;
+export const MAX_EXPORT_HISTORY = 50;
+
+// ─── Utility Functions ────────────────────────────────────────────────────────
+
+/** Generate a unique export ID */
+export function generateExportId(): string {
+  return `export-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/** Estimate file size in bytes based on quality, bitrate, and duration */
+export function estimateFileSize(
+  bitrateKbps: number,
+  durationSeconds: number
+): number {
+  if (bitrateKbps <= 0 || durationSeconds <= 0) return 0;
+  return Math.round((bitrateKbps * 1000 * durationSeconds) / 8);
+}
+
+/** Format bytes into a human-readable string */
+export function formatFileSize(bytes: number): string {
+  if (bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const k = 1024;
+  const i = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(k)),
+    units.length - 1
+  );
+  const value = bytes / Math.pow(k, i);
+  return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+/** Format milliseconds into a human-readable duration string */
+export function formatDuration(ms: number): string {
+  if (ms <= 0) return '0s';
+  const seconds = Math.ceil(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (minutes < 60) {
+    return remainingSeconds > 0
+      ? `${minutes}m ${remainingSeconds}s`
+      : `${minutes}m`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours}h ${remainingMinutes}m`;
+}
