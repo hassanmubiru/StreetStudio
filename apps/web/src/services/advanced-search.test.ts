@@ -392,8 +392,8 @@ describe('AdvancedSearchService', () => {
 
       const searches = service.getSavedSearches();
       expect(searches).toHaveLength(2);
-      expect(searches[0].name).toBe('Second'); // Most recent first
-      expect(searches[1].name).toBe('First');
+      expect(searches[0]!.name).toBe('Second'); // Most recent first
+      expect(searches[1]!.name).toBe('First');
     });
 
     test('should get saved search by ID', () => {
