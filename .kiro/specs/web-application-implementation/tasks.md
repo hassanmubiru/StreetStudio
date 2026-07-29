@@ -324,21 +324,21 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Implement permission inheritance and override controls
     - _Requirements: 8.3, 8.4, 8.5_
 
-  - [ ] 10.3 Create organization settings and configuration
+  - [-] 10.3 Create organization settings and configuration
     - Build branding customization interface with logo and color uploads
     - Implement security policy configuration with compliance controls
     - Add storage preferences and quota management display
     - Create integration configuration for third-party services
     - _Requirements: 8.6, 8.10_
 
-  - [ ] 10.4 Add billing and subscription management
+  - [-] 10.4 Add billing and subscription management
     - Create billing information display with usage metrics
     - Implement payment method management for paid features
     - Build subscription upgrade/downgrade workflows
     - Add billing history and invoice download functionality
     - _Requirements: 8.7_
 
-  - [ ] 10.5 Write unit tests for organization management
+  - [-] 10.5 Write unit tests for organization management
     - Test member invitation and role assignment
     - Test permission configuration and team management
     - Test organization settings and billing interfaces
@@ -352,14 +352,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Build notification preference controls with granular categories
     - _Requirements: 9.1, 9.3_
 
-  - [ ] 11.2 Implement security settings
+  - [-] 11.2 Implement security settings
     - Create password change interface with strength validation
     - Build two-factor authentication setup with QR code generation
     - Add active session management with device information display
     - Implement login history with suspicious activity alerts
     - _Requirements: 9.2, 9.6_
 
-  - [ ] 11.3 Create accessibility and preference settings
+  - [-] 11.3 Create accessibility and preference settings
     - Build accessibility preference controls (high contrast, reduced motion)
     - Implement screen reader optimization settings
     - Add keyboard navigation preference configuration
