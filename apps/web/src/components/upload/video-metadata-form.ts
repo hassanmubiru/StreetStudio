@@ -576,3 +576,149 @@ export class VideoMetadataForm {
       el.setAttribute('aria-invalid', 'false');
     });
   }
+
+  private updateCharCount(field: string, current: number, max: number): void {
+    const countEl = this.container.querySelector(`#${field}-char-count`);
+    if (countEl) {
+      countEl.textContent = `${current}/${max}`;
+      countEl.classList.toggle('near-limit', current > max * 0.9);
+      countEl.classList.toggle('at-limit', current >= max);
+    }
+  }
+
+  private notifyChange(): void {
+    this.config.onChange(this.getFormData());
+  }
+
+  private async loadProjectsIfNeeded(): Promise<void> {
+    if (this.projects.length > 0) return;
+
+    try {
+      const response = await apiClient.get<{ projects: ProjectOption[] }>('/projects', {
+        skipErrorHandling: true,
+      });
+      this.projects = response.data.projects || [];
+      this.updateProjectSelect();
+    } catch (error) {
+      logger.warn('Failed to load projects for metadata form', { error });
+    }
+  }
+
+  private async loadTagsIfNeeded(): Promise<void> {
+    if (this.availableTags.length > 0) return;
+
+    try {
+      const response = await apiClient.get<{ tags: TagSuggestion[] }>('/tags', {
+        skipErrorHandling: true,
+      });
+      this.availableTags = response.data.tags || [];
+    } catch (error) {
+      logger.warn('Failed to load existing tags', { error });
+    }
+  }
+
+  private updateProjectSelect(): void {
+    const select = this.container.querySelector('#video-project') as HTMLSelectElement;
+    if (!select) return;
+
+    const options = this.projects
+      .map(p => `<option value="${p.id}"${p.id === this.formData.projectId ? ' selected' : ''}>${p.name}</option>`)
+      .join('');
+
+    select.innerHTML = `<option value="">No project</option>${options}`;
+  }
+
+  private highlightMatch(text: string, query: string): string {
+    const lowerText = text.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    const index = lowerText.indexOf(lowerQuery);
+    if (index === -1) return this.escapeHTML(text);
+
+    const before = text.slice(0, index);
+    const match = text.slice(index, index + query.length);
+    const after = text.slice(index + query.length);
+    return `${this.escapeHTML(before)}<mark>${this.escapeHTML(match)}</mark>${this.escapeHTML(after)}`;
+  }
+
+  private escapeHTML(str: string): string {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Public API
+
+  /**
+   * Get current form data
+   */
+  public getFormData(): VideoMetadataFormData {
+    return { ...this.formData, tags: [...this.formData.tags] };
+  }
+
+  /**
+   * Set form data programmatically
+   */
+  public setFormData(data: Partial<VideoMetadataFormData>): void {
+    if (data.title !== undefined) this.formData.title = data.title;
+    if (data.description !== undefined) this.formData.description = data.description;
+    if (data.projectId !== undefined) this.formData.projectId = data.projectId;
+    if (data.folderId !== undefined) this.formData.folderId = data.folderId;
+    if (data.tags !== undefined) this.formData.tags = [...data.tags];
+    if (data.isPrivate !== undefined) this.formData.isPrivate = data.isPrivate;
+    if (data.developerMode !== undefined) this.formData.developerMode = data.developerMode;
+
+    this.render();
+    this.setupEventListeners();
+  }
+
+  /**
+   * Update available projects
+   */
+  public setProjects(projects: ProjectOption[]): void {
+    this.projects = projects;
+    this.updateProjectSelect();
+  }
+
+  /**
+   * Update available tags
+   */
+  public setAvailableTags(tags: TagSuggestion[]): void {
+    this.availableTags = tags;
+  }
+
+  /**
+   * Check if form is valid without showing errors
+   */
+  public isValid(): boolean {
+    const result = this.validator.validate({
+      title: this.formData.title,
+      description: this.formData.description,
+    });
+    return result.isValid;
+  }
+
+  /**
+   * Reset form to initial state
+   */
+  public reset(): void {
+    this.formData = {
+      title: '',
+      description: '',
+      projectId: null,
+      folderId: null,
+      tags: [],
+      isPrivate: false,
+      developerMode: false,
+    };
+    this.clearAllErrors();
+    this.render();
+    this.setupEventListeners();
+  }
+
+  /**
+   * Destroy and clean up
+   */
+  public destroy(): void {
+    this.container.innerHTML = '';
+  }
+}

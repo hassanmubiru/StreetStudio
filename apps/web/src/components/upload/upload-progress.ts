@@ -495,3 +495,43 @@ export class UploadProgressInterface {
         return '';
     }
   }
+
+  private updateErrorSection(state: UploadState): void {
+    const errorSection = this.container.querySelector('.upload-errors-section') as HTMLElement;
+    if (!errorSection) return;
+
+    const failedUploads = state.uploads.filter(u => u.status === 'failed');
+
+    if (failedUploads.length === 0) {
+      errorSection.style.display = 'none';
+      return;
+    }
+
+    errorSection.style.display = 'block';
+    errorSection.innerHTML = failedUploads.map(upload => {
+      const errorInfo = this.parseUploadError(upload);
+      return `
+        <div class="upload-error-item" data-upload-id="${upload.id}">
+          <div class="error-icon" aria-hidden="true">⚠️</div>
+          <div class="error-content">
+            <div class="error-file-name">${this.truncateFileName(errorInfo.fileName)}</div>
+            <div class="error-message">${errorInfo.message}</div>
+            <div class="error-suggestion">${errorInfo.suggestion}</div>
+          </div>
+          ${errorInfo.retryable ? `
+            <button type="button" class="btn-error-retry" data-action="retry" data-upload-id="${upload.id}" aria-label="Retry upload of ${upload.file.name}">
+              Retry
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+
+    // Attach retry handlers
+    errorSection.querySelectorAll('[data-action="retry"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const uploadId = (e.currentTarget as HTMLElement).getAttribute('data-upload-id');
+        if (uploadId) this.uploadStore.retryUpload(uploadId);
+      });
+    });
+  }

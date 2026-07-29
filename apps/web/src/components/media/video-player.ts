@@ -683,3 +683,56 @@ export class AdaptiveVideoPlayer {
       if (prevRate) this.setPlaybackRate(prevRate);
     }
   }
+
+  public async toggleFullscreen(): Promise<void> {
+    if (!this.options.enableFullscreen) return;
+
+    try {
+      if (this.state.isFullscreen) {
+        await document.exitFullscreen();
+      } else {
+        await this.container.requestFullscreen();
+      }
+    } catch (error) {
+      console.warn('Fullscreen not available:', error);
+    }
+  }
+
+  public async togglePictureInPicture(): Promise<void> {
+    if (!this.options.enablePictureInPicture) return;
+
+    try {
+      if (this.state.isPictureInPicture) {
+        await document.exitPictureInPicture();
+      } else {
+        await this.videoElement.requestPictureInPicture();
+      }
+    } catch (error) {
+      console.warn('Picture-in-Picture not available:', error);
+    }
+  }
+
+  public setQuality(levelIndex: number): void {
+    if (this.hlsInstance) {
+      this.hlsInstance.currentLevel = levelIndex;
+    } else if (this.dashInstance) {
+      this.dashInstance.setQualityFor('video', levelIndex);
+    }
+  }
+
+  // --- UI Update Methods ---
+
+  private updatePlayButton(): void {
+    const playBtn = this.controlsElement.querySelector('.play-btn');
+    if (!playBtn) return;
+
+    if (this.state.isPlaying) {
+      playBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+      playBtn.setAttribute('aria-label', 'Pause');
+      playBtn.setAttribute('title', 'Pause (Space)');
+    } else {
+      playBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>`;
+      playBtn.setAttribute('aria-label', 'Play');
+      playBtn.setAttribute('title', 'Play (Space)');
+    }
+  }
