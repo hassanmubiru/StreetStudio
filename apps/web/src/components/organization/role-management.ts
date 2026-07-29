@@ -470,7 +470,9 @@ export class RoleManagement {
         this.isCreating = false;
         this.render();
       } catch {
-        errorEl.textContent = 'Failed to save role. Please try again.';
+        if (errorEl && errorEl.isConnected) {
+          errorEl.textContent = 'Failed to save role. Please try again.';
+        }
       }
     });
 

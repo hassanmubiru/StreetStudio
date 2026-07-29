@@ -1054,3 +1054,142 @@ describe('PermissionInheritance', () => {
     expect(sourceItems[0].textContent).toContain('Design');
     expect(sourceItems[1].textContent).toContain('Editor');
   });
+
+  it('shows override summary when overrides exist', () => {
+    new PermissionInheritance(container, {
+      memberId: 'user-1',
+      memberName: 'Alice',
+      sources: [{ type: 'role', id: 'r1', name: 'Admin', priority: 1 }],
+      permissionsBySource: new Map([['r1', ['projects:view', 'projects:edit']]]),
+      overrides: [
+        { resourceId: 'projects', actionId: 'edit', granted: false, sourceType: 'direct', sourceId: 'direct' },
+      ],
+      resources,
+      actions,
+      isAdmin: true,
+    }, {
+      onAddOverride: vi.fn().mockResolvedValue(true),
+      onRemoveOverride: vi.fn().mockResolvedValue(true),
+      onChangeSourcePriority: vi.fn().mockResolvedValue(true),
+    });
+
+    const summary = container.querySelector('.permission-override-summary');
+    expect(summary?.textContent).toContain('1 permission overridden');
+  });
+
+  it('renders resource groups in collapsed state', () => {
+    new PermissionInheritance(container, {
+      memberId: 'user-1',
+      memberName: 'Alice',
+      sources: [{ type: 'role', id: 'r1', name: 'Admin', priority: 1 }],
+      permissionsBySource: new Map([['r1', ['projects:view']]]),
+      overrides: [],
+      resources,
+      actions,
+      isAdmin: true,
+    }, {
+      onAddOverride: vi.fn().mockResolvedValue(true),
+      onRemoveOverride: vi.fn().mockResolvedValue(true),
+      onChangeSourcePriority: vi.fn().mockResolvedValue(true),
+    });
+
+    const header = container.querySelector('.permission-resource-header') as HTMLButtonElement;
+    expect(header.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('expands resource group on click', () => {
+    new PermissionInheritance(container, {
+      memberId: 'user-1',
+      memberName: 'Alice',
+      sources: [{ type: 'role', id: 'r1', name: 'Admin', priority: 1 }],
+      permissionsBySource: new Map([['r1', ['projects:view']]]),
+      overrides: [],
+      resources,
+      actions,
+      isAdmin: true,
+    }, {
+      onAddOverride: vi.fn().mockResolvedValue(true),
+      onRemoveOverride: vi.fn().mockResolvedValue(true),
+      onChangeSourcePriority: vi.fn().mockResolvedValue(true),
+    });
+
+    const header = container.querySelector('.permission-resource-header') as HTMLButtonElement;
+    header.click();
+
+    // After click it should re-render with expanded state
+    const expandedHeader = container.querySelector('.permission-resource-header') as HTMLButtonElement;
+    expect(expandedHeader.getAttribute('aria-expanded')).toBe('true');
+    expect(container.querySelector('.permission-resource-details')).not.toBeNull();
+  });
+
+  it('shows override button for admins', () => {
+    const comp = new PermissionInheritance(container, {
+      memberId: 'user-1',
+      memberName: 'Alice',
+      sources: [{ type: 'role', id: 'r1', name: 'Admin', priority: 1 }],
+      permissionsBySource: new Map([['r1', ['projects:view']]]),
+      overrides: [],
+      resources,
+      actions,
+      isAdmin: true,
+    }, {
+      onAddOverride: vi.fn().mockResolvedValue(true),
+      onRemoveOverride: vi.fn().mockResolvedValue(true),
+      onChangeSourcePriority: vi.fn().mockResolvedValue(true),
+    });
+
+    // Expand the resource group first
+    const header = container.querySelector('.permission-resource-header') as HTMLButtonElement;
+    header.click();
+
+    const overrideBtns = container.querySelectorAll('.perm-override-btn');
+    expect(overrideBtns.length).toBe(2); // view and edit actions
+  });
+
+  it('hides override button for non-admins', () => {
+    new PermissionInheritance(container, {
+      memberId: 'user-1',
+      memberName: 'Alice',
+      sources: [{ type: 'role', id: 'r1', name: 'Admin', priority: 1 }],
+      permissionsBySource: new Map([['r1', ['projects:view']]]),
+      overrides: [],
+      resources,
+      actions,
+      isAdmin: false,
+    }, {
+      onAddOverride: vi.fn().mockResolvedValue(true),
+      onRemoveOverride: vi.fn().mockResolvedValue(true),
+      onChangeSourcePriority: vi.fn().mockResolvedValue(true),
+    });
+
+    const header = container.querySelector('.permission-resource-header') as HTMLButtonElement;
+    header.click();
+
+    const overrideBtns = container.querySelectorAll('.perm-override-btn');
+    expect(overrideBtns.length).toBe(0);
+  });
+
+  it('returns correct resolved permissions', () => {
+    const comp = new PermissionInheritance(container, {
+      memberId: 'user-1',
+      memberName: 'Alice',
+      sources: [{ type: 'role', id: 'r1', name: 'Admin', priority: 1 }],
+      permissionsBySource: new Map([['r1', ['projects:view']]]),
+      overrides: [],
+      resources,
+      actions,
+      isAdmin: true,
+    }, {
+      onAddOverride: vi.fn().mockResolvedValue(true),
+      onRemoveOverride: vi.fn().mockResolvedValue(true),
+      onChangeSourcePriority: vi.fn().mockResolvedValue(true),
+    });
+
+    const resolved = comp.getResolvedPermissions();
+    expect(resolved.length).toBe(2);
+    const viewPerm = resolved.find(r => r.actionId === 'view');
+    expect(viewPerm?.granted).toBe(true);
+    const editPerm = resolved.find(r => r.actionId === 'edit');
+    expect(editPerm?.granted).toBe(false);
+  });
+});
