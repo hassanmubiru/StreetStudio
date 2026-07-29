@@ -535,3 +535,125 @@ export class UploadProgressInterface {
       });
     });
   }
+
+  // --- Public API ---
+
+  public show(): void {
+    const panel = this.container.querySelector('.upload-progress-panel') as HTMLElement;
+    if (panel) {
+      panel.style.display = 'flex';
+      this.isVisible = true;
+      this.isMinimized = false;
+    }
+  }
+
+  public hide(): void {
+    const panel = this.container.querySelector('.upload-progress-panel') as HTMLElement;
+    if (panel) {
+      panel.style.display = 'none';
+      this.isVisible = false;
+    }
+  }
+
+  public minimize(): void {
+    const body = this.container.querySelector('.upload-progress-body') as HTMLElement;
+    const footer = this.container.querySelector('.upload-progress-footer') as HTMLElement;
+    const minimizeBtn = this.container.querySelector('.btn-minimize') as HTMLElement;
+    if (body) body.style.display = 'none';
+    if (footer) footer.style.display = 'none';
+    if (minimizeBtn) minimizeBtn.textContent = '□';
+    this.isMinimized = true;
+  }
+
+  public expand(): void {
+    const body = this.container.querySelector('.upload-progress-body') as HTMLElement;
+    const footer = this.container.querySelector('.upload-progress-footer') as HTMLElement;
+    const minimizeBtn = this.container.querySelector('.btn-minimize') as HTMLElement;
+    if (body) body.style.display = 'block';
+    if (footer) footer.style.display = 'flex';
+    if (minimizeBtn) minimizeBtn.textContent = '─';
+    this.isMinimized = false;
+  }
+
+  public toggleMinimize(): void {
+    if (this.isMinimized) {
+      this.expand();
+    } else {
+      this.minimize();
+    }
+  }
+
+  public getIsVisible(): boolean {
+    return this.isVisible;
+  }
+
+  public getIsMinimized(): boolean {
+    return this.isMinimized;
+  }
+
+  // --- Formatting Utilities ---
+
+  public formatSpeed(bytesPerSecond: number): string {
+    if (bytesPerSecond <= 0) return '-- /s';
+    const units = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+    let size = bytesPerSecond;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+  }
+
+  public formatTimeRemaining(seconds: number): string {
+    if (!isFinite(seconds) || seconds <= 0) return '--';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
+    if (hours > 0) return `${hours}h ${minutes}m remaining`;
+    if (minutes > 0) return `${minutes}m ${secs}s remaining`;
+    return `${secs}s remaining`;
+  }
+
+  public formatFileSize(bytes: number): string {
+    if (bytes <= 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+  }
+
+  private truncateFileName(name: string, maxLength = 30): string {
+    if (name.length <= maxLength) return name;
+    const ext = name.lastIndexOf('.');
+    if (ext > 0) {
+      const extension = name.slice(ext);
+      const baseName = name.slice(0, ext);
+      const available = maxLength - extension.length - 3;
+      return baseName.slice(0, available) + '...' + extension;
+    }
+    return name.slice(0, maxLength - 3) + '...';
+  }
+
+  // --- Cleanup ---
+
+  public destroy(): void {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+    this.notificationService.destroy();
+
+    const panel = this.container.querySelector('.upload-progress-panel');
+    if (panel) panel.remove();
+
+    logger.info('Upload progress interface destroyed');
+  }
+}

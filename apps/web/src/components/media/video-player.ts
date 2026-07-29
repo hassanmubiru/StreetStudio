@@ -736,3 +736,127 @@ export class AdaptiveVideoPlayer {
       playBtn.setAttribute('title', 'Play (Space)');
     }
   }
+
+  private updateTimeDisplay(): void {
+    const currentTimeEl = this.controlsElement.querySelector('.current-time');
+    const durationEl = this.controlsElement.querySelector('.duration-display');
+
+    if (currentTimeEl) {
+      currentTimeEl.textContent = this.formatTime(this.state.currentTime);
+    }
+    if (durationEl && this.state.duration > 0) {
+      durationEl.textContent = this.formatTime(this.state.duration);
+    }
+  }
+
+  private updateSeekBar(): void {
+    const seekBar = this.controlsElement.querySelector('.seek-bar') as HTMLInputElement;
+    if (seekBar && this.state.duration > 0) {
+      const percentage = (this.state.currentTime / this.state.duration) * 100;
+      seekBar.value = String(percentage);
+    }
+  }
+
+  private updateVolumeUI(): void {
+    const volumeBar = this.controlsElement.querySelector('.volume-bar') as HTMLInputElement;
+    const muteBtn = this.controlsElement.querySelector('.mute-btn');
+
+    if (volumeBar) {
+      volumeBar.value = String(this.state.isMuted ? 0 : this.state.volume);
+    }
+
+    if (muteBtn) {
+      if (this.state.isMuted || this.state.volume === 0) {
+        muteBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`;
+        muteBtn.setAttribute('aria-label', 'Unmute');
+        muteBtn.setAttribute('title', 'Unmute (M)');
+      } else {
+        muteBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>`;
+        muteBtn.setAttribute('aria-label', 'Mute');
+        muteBtn.setAttribute('title', 'Mute (M)');
+      }
+    }
+  }
+
+  private updateSpeedSelect(): void {
+    const speedSelect = this.controlsElement.querySelector('.speed-select') as HTMLSelectElement;
+    if (speedSelect) {
+      speedSelect.value = String(this.state.playbackRate);
+    }
+  }
+
+  private updateFullscreenButton(): void {
+    const fullscreenBtn = this.controlsElement.querySelector('.fullscreen-btn');
+    if (!fullscreenBtn) return;
+
+    if (this.state.isFullscreen) {
+      fullscreenBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`;
+      fullscreenBtn.setAttribute('aria-label', 'Exit fullscreen');
+      fullscreenBtn.setAttribute('title', 'Exit Fullscreen (F)');
+    } else {
+      fullscreenBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>`;
+      fullscreenBtn.setAttribute('aria-label', 'Fullscreen');
+      fullscreenBtn.setAttribute('title', 'Fullscreen (F)');
+    }
+  }
+
+  // --- Adaptive Streaming Helpers ---
+
+  private getStartLevel(): number {
+    switch (this.options.preferredQuality) {
+      case 'low': return 0;
+      case 'medium': return -1; // auto, starting lower
+      case 'high': return -1; // auto, hls.js will pick highest
+      default: return -1; // auto
+    }
+  }
+
+  private updateAvailableQualities(levels: any[]): void {
+    this.state.availableQualities = levels.map((level: any, index: number) => ({
+      index,
+      label: `${level.height}p`,
+      bitrate: level.bitrate,
+      width: level.width,
+      height: level.height,
+      active: false,
+    }));
+  }
+
+  private updateAvailableQualitiesFromDash(bitrateList: any[]): void {
+    this.state.availableQualities = bitrateList.map((info: any, index: number) => ({
+      index,
+      label: `${info.height}p`,
+      bitrate: info.bitrate,
+      width: info.width,
+      height: info.height,
+      active: false,
+    }));
+  }
+
+  private handleQualitySwitch(levelIndex: number): void {
+    this.state.availableQualities.forEach((q, i) => {
+      q.active = i === levelIndex;
+    });
+    this.state.currentQuality = this.state.availableQualities[levelIndex] || null;
+    if (this.state.currentQuality) {
+      this.callbacks.onQualityChange?.(this.state.currentQuality);
+    }
+  }
+
+  private handleStreamingError(data: any): void {
+    const playerError: PlayerError = {
+      code: -1,
+      message: 'Streaming error occurred',
+      details: data.details || data.type,
+    };
+    this.callbacks.onError?.(playerError);
+
+    // Attempt recovery
+    if (this.hlsInstance) {
+      if (data.type === 'networkError') {
+        this.hlsInstance.startLoad();
+      } else if (data.type === 'mediaError') {
+        this.hlsInstance.recoverMediaError();
+      }
+    }
+  }
