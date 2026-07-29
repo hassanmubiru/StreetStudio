@@ -213,9 +213,10 @@ describe('BillingSettingsPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.restoreAllMocks();
     document.body.innerHTML = '<div id="app"></div>';
     (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
-      data: mockBillingData,
+      data: structuredClone(mockBillingData),
       status: 200,
       success: true,
     });
