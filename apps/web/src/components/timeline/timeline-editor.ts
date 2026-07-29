@@ -624,3 +624,169 @@ export class TimelineEditor {
       this.updateTrimDrag(frame);
     }
   }
+
+  private handleDocumentMouseUp(): void {
+    if (this.isDraggingPlayhead) {
+      this.isDraggingPlayhead = false;
+    }
+
+    if (this.isDraggingTrimHandle && this.activeTrimOperation) {
+      this.endTrimDrag();
+    }
+  }
+
+  private handleWheel(e: WheelEvent): void {
+    e.preventDefault();
+    if (e.ctrlKey || e.metaKey) {
+      // Zoom with ctrl+scroll
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      this.setZoom(this.state.zoomLevel + delta);
+    } else {
+      // Horizontal scroll
+      const frameDelta = e.deltaX > 0 ? 5 : -5;
+      this.setScrollOffset(this.state.scrollOffset + frameDelta);
+    }
+  }
+
+  // ─── Trim Operations ──────────────────────────────────────────────────────
+
+  private getTrimHandleAtPosition(x: number): { clipId: string; mode: TrimMode } | null {
+    for (const clip of this.state.clips) {
+      const inPixel = frameToPixel(clip.inPoint - this.state.scrollOffset, this.state.zoomLevel);
+      const outPixel = frameToPixel(clip.outPoint - this.state.scrollOffset, this.state.zoomLevel);
+
+      if (Math.abs(x - inPixel) <= TRIM_HANDLE_WIDTH / 2) {
+        return { clipId: clip.id, mode: 'in' };
+      }
+      if (Math.abs(x - outPixel) <= TRIM_HANDLE_WIDTH / 2) {
+        return { clipId: clip.id, mode: 'out' };
+      }
+    }
+    return null;
+  }
+
+  private startTrimDrag(clipId: string, mode: TrimMode, _e: MouseEvent): void {
+    const clip = this.state.clips.find(c => c.id === clipId);
+    if (!clip) return;
+
+    this.isDraggingTrimHandle = true;
+    const originalFrame = mode === 'in' ? clip.inPoint : clip.outPoint;
+    this.activeTrimOperation = {
+      clipId,
+      mode,
+      originalFrame,
+      newFrame: originalFrame,
+    };
+
+    this.state.trimMode = mode;
+    this.callbacks.onTrimStart?.(this.activeTrimOperation);
+    this.notifyStateChange();
+  }
+
+  private updateTrimDrag(frame: number): void {
+    if (!this.activeTrimOperation) return;
+
+    const clip = this.state.clips.find(c => c.id === this.activeTrimOperation!.clipId);
+    if (!clip) return;
+
+    let clampedFrame: number;
+    if (this.activeTrimOperation.mode === 'in') {
+      // In point cannot exceed out point - MIN_CLIP_FRAMES
+      clampedFrame = clamp(frame, clip.startFrame, clip.outPoint - MIN_CLIP_FRAMES);
+      clip.inPoint = clampedFrame;
+    } else {
+      // Out point cannot be less than in point + MIN_CLIP_FRAMES
+      clampedFrame = clamp(frame, clip.inPoint + MIN_CLIP_FRAMES, clip.endFrame);
+      clip.outPoint = clampedFrame;
+    }
+
+    this.activeTrimOperation.newFrame = clampedFrame;
+    clip.duration = clip.outPoint - clip.inPoint;
+    this.callbacks.onTrimUpdate?.(this.activeTrimOperation);
+    this.renderClips();
+    this.notifyStateChange();
+  }
+
+  private endTrimDrag(): void {
+    if (!this.activeTrimOperation) return;
+
+    this.isDraggingTrimHandle = false;
+    this.state.trimMode = null;
+    this.callbacks.onTrimEnd?.({ ...this.activeTrimOperation });
+    this.activeTrimOperation = null;
+    this.renderClips();
+    this.notifyStateChange();
+  }
+
+  // ─── Split Operation ──────────────────────────────────────────────────────
+
+  /** Split the clip at the current playhead position */
+  public splitAtPlayhead(): SplitOperation | null {
+    const playhead = this.state.playheadFrame;
+    const clip = this.getClipAtFrame(playhead);
+    if (!clip) return null;
+
+    // Cannot split at the very start or end of a clip
+    if (playhead <= clip.inPoint || playhead >= clip.outPoint) return null;
+
+    const leftId = generateId();
+    const rightId = generateId();
+
+    const leftClip: TimelineClip = {
+      id: leftId,
+      startFrame: clip.startFrame,
+      endFrame: clip.startFrame + (playhead - clip.inPoint),
+      inPoint: clip.inPoint,
+      outPoint: playhead,
+      duration: playhead - clip.inPoint,
+      sourceUrl: clip.sourceUrl,
+      thumbnailUrl: clip.thumbnailUrl,
+      type: clip.type,
+    };
+
+    const rightClip: TimelineClip = {
+      id: rightId,
+      startFrame: clip.startFrame + (playhead - clip.inPoint),
+      endFrame: clip.endFrame,
+      inPoint: playhead,
+      outPoint: clip.outPoint,
+      duration: clip.outPoint - playhead,
+      sourceUrl: clip.sourceUrl,
+      thumbnailUrl: clip.thumbnailUrl,
+      type: clip.type,
+    };
+
+    // Replace original clip with the two new clips
+    const clipIndex = this.state.clips.indexOf(clip);
+    this.state.clips.splice(clipIndex, 1, leftClip, rightClip);
+    this.recalculateDuration();
+
+    const operation: SplitOperation = {
+      clipId: clip.id,
+      splitFrame: playhead,
+      leftClipId: leftId,
+      rightClipId: rightId,
+    };
+
+    // Show split preview briefly
+    this.showSplitPreview(playhead);
+    this.callbacks.onSplit?.(operation);
+    this.renderClips();
+    this.notifyStateChange();
+    return operation;
+  }
+
+  /** Show a visual split preview at a given frame */
+  private showSplitPreview(frame: number): void {
+    const pixel = frameToPixel(frame - this.state.scrollOffset, this.state.zoomLevel);
+    this.splitPreviewElement.style.left = `${pixel}px`;
+    this.splitPreviewElement.style.display = 'block';
+    this.state.splitPreviewFrame = frame;
+
+    setTimeout(() => {
+      if (!this.isDestroyed) {
+        this.splitPreviewElement.style.display = 'none';
+        this.state.splitPreviewFrame = null;
+      }
+    }, 1500);
+  }

@@ -388,3 +388,185 @@ export class CommentInput {
     return this.container;
   }
 }
+
+// --------------------------------------------------------------------------
+// ThreadedCommentDisplay - Threaded comment display with proper nesting
+// --------------------------------------------------------------------------
+
+/** Maximum nesting depth for visual indentation. */
+const MAX_DISPLAY_DEPTH = 5;
+
+/**
+ * ThreadedCommentDisplay renders a threaded list of comments
+ * with proper nesting, expand/collapse, and reply functionality.
+ */
+export class ThreadedCommentDisplay {
+  private container: HTMLElement;
+  private comments: CommentWithState[] = [];
+  private callbacks: CommentSystemCallbacks;
+  private options: CommentSystemOptions;
+  private onReply?: (commentId: Uuid, authorName: string) => void;
+
+  constructor(
+    container: HTMLElement,
+    options: CommentSystemOptions,
+    callbacks: CommentSystemCallbacks,
+    onReply?: (commentId: Uuid, authorName: string) => void
+  ) {
+    this.container = container;
+    this.options = options;
+    this.callbacks = callbacks;
+    this.onReply = onReply;
+    this.container.className = 'threaded-comments';
+    this.container.setAttribute('role', 'list');
+    this.container.setAttribute('aria-label', 'Comments');
+  }
+
+  /** Update the displayed comments. */
+  public setComments(comments: CommentWithState[]): void {
+    this.comments = comments;
+    this.render();
+  }
+
+  private render(): void {
+    this.container.innerHTML = '';
+    if (this.comments.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'comments-empty';
+      empty.textContent = 'No comments yet. Be the first to comment!';
+      this.container.appendChild(empty);
+      return;
+    }
+    for (const comment of this.comments) {
+      this.container.appendChild(this.renderComment(comment, 0));
+    }
+  }
+
+  private renderComment(comment: CommentWithState, depth: number): HTMLElement {
+    const item = document.createElement('div');
+    item.className = 'comment-item';
+    item.setAttribute('role', 'listitem');
+    item.setAttribute('data-comment-id', comment.id);
+    item.style.marginLeft = `${Math.min(depth, MAX_DISPLAY_DEPTH) * 24}px`;
+
+    // Header: author name + timestamp badge
+    const header = document.createElement('div');
+    header.className = 'comment-header';
+
+    const authorSpan = document.createElement('span');
+    authorSpan.className = 'comment-author';
+    authorSpan.textContent = comment.author?.displayName ?? 'Unknown';
+    header.appendChild(authorSpan);
+
+    if (comment.timestampSeconds != null) {
+      const badge = document.createElement('button');
+      badge.type = 'button';
+      badge.className = 'comment-timestamp-badge';
+      badge.textContent = formatTimestamp(comment.timestampSeconds);
+      badge.setAttribute('aria-label', `Jump to ${formatTimestamp(comment.timestampSeconds)}`);
+      badge.addEventListener('click', () => {
+        this.callbacks.onSeek?.(comment.timestampSeconds!);
+      });
+      header.appendChild(badge);
+    }
+
+    const dateSpan = document.createElement('span');
+    dateSpan.className = 'comment-date';
+    dateSpan.textContent = this.formatRelativeDate(comment.createdAt);
+    header.appendChild(dateSpan);
+
+    item.appendChild(header);
+
+    // Body
+    const body = document.createElement('p');
+    body.className = 'comment-body';
+    body.textContent = comment.body;
+    item.appendChild(body);
+
+    // Actions row
+    const actions = document.createElement('div');
+    actions.className = 'comment-actions';
+
+    // Reply button
+    const replyBtn = document.createElement('button');
+    replyBtn.type = 'button';
+    replyBtn.className = 'comment-action-btn';
+    replyBtn.textContent = 'Reply';
+    replyBtn.setAttribute('aria-label', `Reply to ${comment.author?.displayName ?? 'comment'}`);
+    replyBtn.addEventListener('click', () => {
+      this.onReply?.(comment.id, comment.author?.displayName ?? 'Unknown');
+    });
+    actions.appendChild(replyBtn);
+
+    // Moderation actions (admin only)
+    if (this.options.isAdmin) {
+      const moderateBtn = document.createElement('button');
+      moderateBtn.type = 'button';
+      moderateBtn.className = 'comment-action-btn comment-moderate-btn';
+      moderateBtn.textContent = '•••';
+      moderateBtn.setAttribute('aria-label', 'Moderate comment');
+      moderateBtn.setAttribute('aria-haspopup', 'menu');
+      moderateBtn.addEventListener('click', (e) => {
+        this.showModerationMenu(comment, e.currentTarget as HTMLElement);
+      });
+      actions.appendChild(moderateBtn);
+    }
+
+    // Delete button (own comments or admin)
+    if (comment.authorId === this.options.currentUserId || this.options.isAdmin) {
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'comment-action-btn comment-delete-btn';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.setAttribute('aria-label', 'Delete comment');
+      deleteBtn.addEventListener('click', () => {
+        this.callbacks.onDelete?.(comment.id);
+      });
+      actions.appendChild(deleteBtn);
+    }
+
+    item.appendChild(actions);
+
+    // Threaded replies
+    if (comment.replies.length > 0) {
+      const repliesContainer = document.createElement('div');
+      repliesContainer.className = 'comment-replies';
+      repliesContainer.setAttribute('role', 'list');
+      repliesContainer.setAttribute('aria-label', `Replies to ${comment.author?.displayName ?? 'comment'}`);
+
+      // Collapse/expand toggle for threads with replies
+      if (comment.replies.length > 0) {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'comment-collapse-btn';
+        toggleBtn.textContent = comment.isCollapsed
+          ? `Show ${comment.replies.length} ${comment.replies.length === 1 ? 'reply' : 'replies'}`
+          : 'Hide replies';
+        toggleBtn.setAttribute('aria-expanded', String(!comment.isCollapsed));
+        toggleBtn.addEventListener('click', () => {
+          comment.isCollapsed = !comment.isCollapsed;
+          this.render();
+        });
+        item.appendChild(toggleBtn);
+      }
+
+      if (!comment.isCollapsed) {
+        for (const reply of comment.replies) {
+          repliesContainer.appendChild(this.renderComment(reply, depth + 1));
+        }
+        item.appendChild(repliesContainer);
+      }
+    }
+
+    return item;
+  }
+
+  private showModerationMenu(comment: CommentWithState, anchor: HTMLElement): void {
+    // Remove any existing menu
+    const existing = this.container.querySelector('.moderation-menu');
+    existing?.remove();
+
+    const menu = document.createElement('div');
+    menu.className = 'moderation-menu';
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-label', 'Moderation actions');
