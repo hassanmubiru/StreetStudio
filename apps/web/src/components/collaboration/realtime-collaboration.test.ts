@@ -276,3 +276,123 @@ describe('Presence Indicators', () => {
     });
   });
 });
+
+// ==========================================================================
+// Typing Indicators Tests
+// ==========================================================================
+
+describe('Typing Indicators', () => {
+  describe('formatTypingMessage', () => {
+    it('returns empty string for no users', () => {
+      expect(formatTypingMessage([])).toBe('');
+    });
+
+    it('formats single user as "is typing..."', () => {
+      expect(formatTypingMessage([makeTypingUser({ displayName: 'Alice' })])).toBe(
+        'Alice is typing...'
+      );
+    });
+
+    it('formats two users with "and"', () => {
+      const users = [
+        makeTypingUser({ displayName: 'Alice' }),
+        makeTypingUser({ displayName: 'Bob' }),
+      ];
+      expect(formatTypingMessage(users)).toBe('Alice and Bob are typing...');
+    });
+
+    it('formats three users with commas and "and"', () => {
+      const users = [
+        makeTypingUser({ displayName: 'Alice' }),
+        makeTypingUser({ displayName: 'Bob' }),
+        makeTypingUser({ displayName: 'Charlie' }),
+      ];
+      expect(formatTypingMessage(users, 3)).toBe(
+        'Alice, Bob, and Charlie are typing...'
+      );
+    });
+
+    it('shows "others" when exceeding maxNames', () => {
+      const users = [
+        makeTypingUser({ displayName: 'Alice' }),
+        makeTypingUser({ displayName: 'Bob' }),
+        makeTypingUser({ displayName: 'Charlie' }),
+        makeTypingUser({ displayName: 'Dave' }),
+      ];
+      const result = formatTypingMessage(users, 3);
+      expect(result).toContain('2 others are typing...');
+    });
+  });
+
+  describe('isTypingExpired', () => {
+    it('returns false when within expiry window', () => {
+      const now = new Date();
+      const startedAt = new Date(now.getTime() - 2000).toISOString();
+      expect(isTypingExpired(startedAt, 5000, now)).toBe(false);
+    });
+
+    it('returns true when past expiry window', () => {
+      const now = new Date();
+      const startedAt = new Date(now.getTime() - 6000).toISOString();
+      expect(isTypingExpired(startedAt, 5000, now)).toBe(true);
+    });
+
+    it('returns true when exactly at boundary', () => {
+      const now = new Date();
+      const startedAt = new Date(now.getTime() - 5001).toISOString();
+      expect(isTypingExpired(startedAt, 5000, now)).toBe(true);
+    });
+  });
+
+  describe('filterExpiredTyping', () => {
+    it('removes expired users', () => {
+      const now = new Date();
+      const users = [
+        makeTypingUser({ id: 'u1', startedAt: new Date(now.getTime() - 1000).toISOString() }),
+        makeTypingUser({ id: 'u2', startedAt: new Date(now.getTime() - 8000).toISOString() }),
+      ];
+      const result = filterExpiredTyping(users, 5000, now);
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe('u1');
+    });
+
+    it('keeps all users if none expired', () => {
+      const now = new Date();
+      const users = [
+        makeTypingUser({ id: 'u1', startedAt: new Date(now.getTime() - 1000).toISOString() }),
+        makeTypingUser({ id: 'u2', startedAt: new Date(now.getTime() - 2000).toISOString() }),
+      ];
+      const result = filterExpiredTyping(users, 5000, now);
+      expect(result.length).toBe(2);
+    });
+  });
+
+  describe('TypingIndicators component', () => {
+    let container: HTMLElement;
+
+    beforeEach(() => {
+      container = createContainer();
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('renders with proper ARIA attributes', () => {
+      new TypingIndicators(container);
+      expect(container.getAttribute('role')).toBe('status');
+      expect(container.getAttribute('aria-live')).toBe('polite');
+    });
+
+    it('is hidden when no users are typing', () => {
+      new TypingIndicators(container);
+      expect(container.style.display).toBe('none');
+    });
+
+    it('shows typing message when a user starts typing', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1', displayName: 'Alice' }));
+      expect(container.style.display).toBe('flex');
+      expect(container.textContent).toContain('Alice is typing...');
+    });

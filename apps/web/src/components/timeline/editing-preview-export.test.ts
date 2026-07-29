@@ -159,3 +159,145 @@ describe('estimateExportTime', () => {
     expect(estimateExportTime(0, 'high')).toBe(0);
   });
 });
+
+// ─── EditingPreviewSystem Tests ───────────────────────────────────────────────
+
+describe('EditingPreviewSystem', () => {
+  let preview: EditingPreviewSystem;
+  let callbacks: PreviewCallbacks;
+
+  beforeEach(() => {
+    callbacks = {
+      onPreviewReady: vi.fn(),
+      onPreviewUpdate: vi.fn(),
+      onPreviewError: vi.fn(),
+      onBufferingChange: vi.fn(),
+    };
+    preview = new EditingPreviewSystem('https://example.com/video.mp4', callbacks);
+  });
+
+  afterEach(() => {
+    preview.destroy();
+  });
+
+  describe('initialization', () => {
+    it('starts inactive', () => {
+      expect(preview.isActive()).toBe(false);
+    });
+
+    it('has correct original URL', () => {
+      expect(preview.getOriginalUrl()).toBe('https://example.com/video.mp4');
+    });
+
+    it('preview URL defaults to original', () => {
+      expect(preview.getPreviewUrl()).toBe('https://example.com/video.mp4');
+    });
+
+    it('starts with no operations', () => {
+      expect(preview.getOperationCount()).toBe(0);
+    });
+  });
+
+  describe('activation', () => {
+    it('activates with default mode', () => {
+      preview.activate();
+      expect(preview.isActive()).toBe(true);
+      expect(preview.getState().mode).toBe('realtime');
+    });
+
+    it('activates with specified mode', () => {
+      preview.activate('draft');
+      expect(preview.getState().mode).toBe('draft');
+    });
+
+    it('deactivates without clearing edits', () => {
+      preview.activate();
+      preview.addEditOperation({
+        type: 'trim',
+        timestamp: Date.now(),
+        data: { clipId: 'c1', mode: 'in', originalFrame: 0, newFrame: 10 },
+      });
+      preview.deactivate();
+      expect(preview.isActive()).toBe(false);
+      expect(preview.getOperationCount()).toBe(1);
+    });
+
+    it('calls onPreviewReady on activation', () => {
+      preview.activate();
+      expect(callbacks.onPreviewReady).toHaveBeenCalled();
+    });
+  });
+
+  describe('edit operations', () => {
+    it('adds an edit operation', () => {
+      const op: EditOperation = {
+        type: 'trim',
+        timestamp: Date.now(),
+        data: { clipId: 'c1', mode: 'in', originalFrame: 0, newFrame: 30 },
+      };
+      preview.addEditOperation(op);
+      expect(preview.getOperationCount()).toBe(1);
+    });
+
+    it('removes last operation', () => {
+      preview.addEditOperation({
+        type: 'trim',
+        timestamp: 1,
+        data: { clipId: 'c1', mode: 'in', originalFrame: 0, newFrame: 10 },
+      });
+      preview.addEditOperation({
+        type: 'split',
+        timestamp: 2,
+        data: { clipId: 'c1', splitFrame: 50, leftClipId: 'l', rightClipId: 'r' },
+      });
+      const removed = preview.removeLastOperation();
+      expect(removed?.type).toBe('split');
+      expect(preview.getOperationCount()).toBe(1);
+    });
+
+    it('returns undefined when removing from empty list', () => {
+      expect(preview.removeLastOperation()).toBeUndefined();
+    });
+
+    it('clears all operations', () => {
+      preview.addEditOperation({
+        type: 'trim',
+        timestamp: 1,
+        data: { clipId: 'c1', mode: 'in', originalFrame: 0, newFrame: 10 },
+      });
+      preview.clearOperations();
+      expect(preview.getOperationCount()).toBe(0);
+    });
+  });
+
+  describe('time management', () => {
+    it('sets current time', () => {
+      preview.setDuration(100);
+      preview.setCurrentTime(50);
+      expect(preview.getState().currentTime).toBe(50);
+      expect(callbacks.onPreviewUpdate).toHaveBeenCalledWith(50);
+    });
+
+    it('clamps current time to duration', () => {
+      preview.setDuration(100);
+      preview.setCurrentTime(200);
+      expect(preview.getState().currentTime).toBe(100);
+    });
+
+    it('clamps current time to zero', () => {
+      preview.setDuration(100);
+      preview.setCurrentTime(-10);
+      expect(preview.getState().currentTime).toBe(0);
+    });
+
+    it('sets duration', () => {
+      preview.setDuration(300);
+      expect(preview.getState().duration).toBe(300);
+    });
+
+    it('ignores negative duration', () => {
+      preview.setDuration(100);
+      preview.setDuration(-5);
+      expect(preview.getState().duration).toBe(100);
+    });
+  });
