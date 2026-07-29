@@ -398,3 +398,41 @@ describe('SecuritySettingsPage', () => {
 
       expect(el.querySelector('[data-session-id="session-2"]')).toBeFalsy();
     });
+
+    it('should show revoke all button when multiple sessions exist', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions });
+      const el = page.getElement();
+
+      expect(el.querySelector('#revoke-all-sessions-btn')).toBeTruthy();
+    });
+
+    it('should keep only current session after revoke all', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions });
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      (el.querySelector('#revoke-all-sessions-btn') as HTMLButtonElement).click();
+
+      const items = el.querySelectorAll('[data-session-id]');
+      expect(items.length).toBe(1);
+      expect(items[0].getAttribute('data-session-id')).toBe('session-1');
+    });
+
+    it('should display device information', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions });
+      const el = page.getElement();
+
+      const session1 = el.querySelector('[data-session-id="session-1"]');
+      expect(session1?.textContent).toContain('MacBook Pro');
+      expect(session1?.textContent).toContain('Chrome 120');
+      expect(session1?.textContent).toContain('macOS 14');
+      expect(session1?.textContent).toContain('San Francisco, CA');
+    });
+
+    it('should show empty message when no sessions', () => {
+      page = new SecuritySettingsPage({ sessions: [] });
+      const el = page.getElement();
+
+      expect(el.textContent).toContain('No active sessions');
+    });
+  });

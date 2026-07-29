@@ -911,3 +911,113 @@ export class OrganizationSettingsPage {
       });
     });
   }
+
+  // --- Action Handlers ---
+
+  private handleLogoUpload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const validation = validateLogoFile(file);
+    const errorEl = this.element.querySelector('#logo-error');
+    if (!validation.valid) {
+      if (errorEl) errorEl.textContent = validation.error || '';
+      input.value = '';
+      return;
+    }
+    if (errorEl) errorEl.textContent = '';
+
+    if (this.logoPreviewUrl) URL.revokeObjectURL(this.logoPreviewUrl);
+    this.logoPreviewUrl = URL.createObjectURL(file);
+    this.pendingLogoFile = file;
+    this.markDirty();
+
+    const preview = this.element.querySelector('#logo-preview');
+    if (preview) {
+      preview.innerHTML = `<img src="${this.logoPreviewUrl}" alt="Organization logo preview" class="w-32 h-32 object-contain border border-gray-200 dark:border-gray-700 rounded-lg p-2" />`;
+    }
+  }
+
+  private handleRemoveLogo(): void {
+    if (this.logoPreviewUrl) {
+      URL.revokeObjectURL(this.logoPreviewUrl);
+      this.logoPreviewUrl = null;
+    }
+    this.pendingLogoFile = null;
+    this.settings.branding.logoUrl = null;
+    this.markDirty();
+    this.render();
+  }
+
+  private handleAddIp(): void {
+    this.settings.security.ipAllowlist.push('');
+    this.markDirty();
+    this.render();
+    // Focus new input
+    setTimeout(() => {
+      const inputs = this.element.querySelectorAll('.ip-input');
+      const lastInput = inputs[inputs.length - 1] as HTMLInputElement;
+      lastInput?.focus();
+    }, 0);
+  }
+
+  private handleAddWebhook(): void {
+    if (this.settings.integrations.webhookEndpoints.length >= MAX_WEBHOOK_ENDPOINTS) return;
+    this.settings.integrations.webhookEndpoints.push({
+      id: crypto.randomUUID(),
+      url: '',
+      events: ['video.uploaded', 'video.processed'],
+      active: true,
+    });
+    this.markDirty();
+    this.render();
+  }
+
+  private async handleSave(): Promise<void> {
+    this.isSaving = true;
+    this.updateSaveBar();
+
+    logger.info('Saving organization settings', {
+      organizationId: this.config.organizationId,
+      tab: this.activeTab,
+    });
+
+    this.element.dispatchEvent(new CustomEvent('settings-save', {
+      bubbles: true,
+      detail: {
+        settings: this.getSettings(),
+        logoFile: this.pendingLogoFile,
+      },
+    }));
+
+    // Simulate save completion for UI (actual save handled externally)
+    setTimeout(() => {
+      this.isSaving = false;
+      this.isDirty = false;
+      this.pendingLogoFile = null;
+      if (this.logoPreviewUrl) {
+        this.settings.branding.logoUrl = this.logoPreviewUrl;
+        this.logoPreviewUrl = null;
+      }
+      this.updateSaveBar();
+    }, 500);
+  }
+
+  private handleDiscard(): void {
+    if (this.logoPreviewUrl) {
+      URL.revokeObjectURL(this.logoPreviewUrl);
+      this.logoPreviewUrl = null;
+    }
+    this.pendingLogoFile = null;
+    this.isDirty = false;
+
+    // Reset to initial settings
+    this.settings = {
+      branding: this.config.initialSettings?.branding || createDefaultBrandingSettings(),
+      security: this.config.initialSettings?.security || createDefaultSecuritySettings(),
+      storage: this.config.initialSettings?.storage || createDefaultStorageSettings(),
+      integrations: this.config.initialSettings?.integrations || createDefaultIntegrationSettings(),
+    };
+    this.render();
+  }
