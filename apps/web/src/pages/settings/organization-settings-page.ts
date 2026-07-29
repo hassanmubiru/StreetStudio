@@ -1021,3 +1021,65 @@ export class OrganizationSettingsPage {
     };
     this.render();
   }
+
+  // --- Utility Helpers ---
+
+  private markDirty(): void {
+    this.isDirty = true;
+    this.updateSaveBar();
+  }
+
+  private updateSaveBar(): void {
+    const statusEl = this.element.querySelector('#save-status');
+    const saveBtn = this.element.querySelector('#save-settings') as HTMLButtonElement;
+    const discardBtn = this.element.querySelector('#discard-settings') as HTMLButtonElement;
+
+    if (statusEl) {
+      if (this.isSaving) {
+        statusEl.textContent = 'Saving...';
+        statusEl.className = 'text-sm text-blue-600 dark:text-blue-400';
+      } else if (this.isDirty) {
+        statusEl.textContent = 'Unsaved changes';
+        statusEl.className = 'text-sm text-amber-600 dark:text-amber-400';
+      } else {
+        statusEl.textContent = 'All changes saved';
+        statusEl.className = 'text-sm text-green-600 dark:text-green-400';
+      }
+    }
+
+    if (saveBtn) {
+      saveBtn.disabled = !this.isDirty || this.isSaving;
+      saveBtn.textContent = this.isSaving ? 'Saving...' : 'Save Changes';
+    }
+
+    if (discardBtn) {
+      discardBtn.disabled = !this.isDirty;
+    }
+  }
+
+  private showError(elementId: string, message: string): void {
+    const el = this.element.querySelector(`#${elementId}`);
+    if (el) {
+      el.textContent = message;
+    }
+  }
+
+  private clearError(elementId: string): void {
+    const el = this.element.querySelector(`#${elementId}`);
+    if (el) {
+      el.textContent = '';
+    }
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  public destroy(): void {
+    if (this.logoPreviewUrl) {
+      URL.revokeObjectURL(this.logoPreviewUrl);
+    }
+  }
+}
