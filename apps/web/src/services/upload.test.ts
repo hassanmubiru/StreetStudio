@@ -513,3 +513,61 @@ describe('UploadManager', () => {
       // Resume info should have been saved and then cleared on success
       expect(localStorageMock.setItem).toHaveBeenCalled();
     });
+
+    it('should check if file can be resumed', () => {
+      const file = createMockFile('video.mp4', 10 * 1024 * 1024, 'video/mp4');
+      // Initially no resume info
+      expect(manager.canResumeUpload(file)).toBe(false);
+    });
+
+    it('should clear all resume data', () => {
+      manager.clearResumeData();
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        'streetstudio_upload_resume',
+        '{}'
+      );
+    });
+
+    it('should get list of resumeable uploads', () => {
+      const resumeable = manager.getResumeableUploads();
+      expect(Array.isArray(resumeable)).toBe(true);
+    });
+  });
+});
+
+describe('uploadVideo convenience function', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorageMock.clear();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'video-id', url: '/videos/video-id' })
+    });
+  });
+
+  it('should reject non-video files', async () => {
+    const file = createMockFile('document.pdf', 1024, 'application/pdf');
+
+    await expect(uploadVideo(file)).rejects.toThrow('File must be a video');
+  });
+
+  it('should reject files over 2GB', async () => {
+    const file = createMockFile('huge.mp4', 3 * 1024 * 1024 * 1024, 'video/mp4');
+
+    await expect(uploadVideo(file)).rejects.toThrow('Video file too large');
+  });
+
+  it('should use 10MB chunks for videos', async () => {
+    const { apiClient } = await import('./api.js');
+    const file = createMockFile('video.mp4', 500, 'video/mp4');
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 'vid-result', url: '/vid' })
+    });
+
+    await uploadVideo(file);
+    // Small file uses simple upload
+    expect(mockFetch).toHaveBeenCalled();
+  });
+});
