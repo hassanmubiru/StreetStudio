@@ -562,3 +562,33 @@ export class OrganizationSettingsPage {
     `;
     return section;
   }
+
+  // --- Integrations Section ---
+
+  private renderIntegrationsSection(): HTMLElement {
+    const section = document.createElement('div');
+    section.className = 'space-y-6';
+    const integ = this.settings.integrations;
+
+    const webhookRows = integ.webhookEndpoints.map((ep, i) => `
+      <tr class="border-t border-gray-200 dark:border-gray-700" data-webhook-index="${i}">
+        <td class="px-3 py-2 text-sm text-gray-900 dark:text-white truncate max-w-[200px]">${this.escapeHtml(ep.url)}</td>
+        <td class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">${ep.events.length} events</td>
+        <td class="px-3 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${ep.active ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'}">${ep.active ? 'Active' : 'Inactive'}</span></td>
+        <td class="px-3 py-2"><button type="button" class="remove-webhook text-red-500 hover:text-red-700 text-sm" aria-label="Remove webhook ${this.escapeHtml(ep.url)}">Remove</button></td>
+      </tr>
+    `).join('');
+
+    section.innerHTML = `
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="integrations-slack-heading">
+        <h2 id="integrations-slack-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Slack Integration</h2>
+        <label class="flex items-center gap-3 mb-4 cursor-pointer">
+          <input id="slack-enabled" type="checkbox" ${integ.slackEnabled ? 'checked' : ''} class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+          <span class="text-sm font-medium text-gray-900 dark:text-white">Enable Slack notifications</span>
+        </label>
+        <div>
+          <label for="slack-webhook-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Webhook URL</label>
+          <input id="slack-webhook-url" type="url" value="${this.escapeHtml(integ.slackWebhookUrl)}" placeholder="https://hooks.slack.com/services/..." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500" ${!integ.slackEnabled ? 'disabled' : ''} />
+          <div id="slack-url-error" class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert" aria-live="polite"></div>
+        </div>
+      </section>

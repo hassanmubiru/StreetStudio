@@ -821,3 +821,59 @@ export class SecuritySettingsPage {
       detail: { passwordData: this.getPasswordData() },
     }));
   }
+
+  private handleVerify2FA(): void {
+    const errorEl = this.element.querySelector('#verification-error');
+
+    if (!this.verificationCode || this.verificationCode.length !== 6) {
+      if (errorEl) errorEl.textContent = 'Please enter a valid 6-digit code';
+      return;
+    }
+
+    if (errorEl) errorEl.textContent = '';
+
+    // Dispatch event for parent handling
+    this.element.dispatchEvent(new CustomEvent('two-factor-enable', {
+      bubbles: true,
+      detail: {
+        secret: this.twoFactorData.secret,
+        verificationCode: this.verificationCode,
+      },
+    }));
+
+    // Simulate success for UI
+    this.twoFactorData.isEnabled = true;
+    this.showTwoFactorSetup = false;
+    this.verificationCode = '';
+    this.render();
+  }
+
+  private handleDisable2FA(): void {
+    this.element.dispatchEvent(new CustomEvent('two-factor-disable', {
+      bubbles: true,
+    }));
+
+    this.twoFactorData.isEnabled = false;
+    this.twoFactorData.secret = undefined;
+    this.twoFactorData.qrCodeUrl = undefined;
+    this.render();
+  }
+
+  private handleRevokeSession(sessionId: string): void {
+    this.element.dispatchEvent(new CustomEvent('session-revoke', {
+      bubbles: true,
+      detail: { sessionId },
+    }));
+
+    this.sessions = this.sessions.filter(s => s.id !== sessionId);
+    this.render();
+  }
+
+  private handleRevokeAllSessions(): void {
+    this.element.dispatchEvent(new CustomEvent('sessions-revoke-all', {
+      bubbles: true,
+    }));
+
+    this.sessions = this.sessions.filter(s => s.isCurrent);
+    this.render();
+  }

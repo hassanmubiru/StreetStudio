@@ -207,3 +207,71 @@ describe('Helper Functions', () => {
     });
   });
 });
+
+describe('BillingSettingsPage', () => {
+  let page: BillingSettingsPage;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    document.body.innerHTML = '<div id="app"></div>';
+    (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: mockBillingData,
+      status: 200,
+      success: true,
+    });
+  });
+
+  afterEach(() => {
+    page?.destroy();
+    document.body.innerHTML = '';
+  });
+
+  describe('Initialization and Loading', () => {
+    it('should create page element with correct attributes', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      expect(el).toBeInstanceOf(HTMLElement);
+      expect(el.getAttribute('data-main-content')).toBe('');
+      expect(el.getAttribute('data-page')).toBe('billing-settings');
+    });
+
+    it('should display page header', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const h1 = el.querySelector('h1');
+      expect(h1?.textContent?.trim()).toBe('Billing & Subscription');
+    });
+
+    it('should load billing data from API', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      await page.getElement();
+
+      expect(apiClient.get).toHaveBeenCalledWith('/organizations/org-123/billing');
+    });
+
+    it('should store billing data after successful load', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      await page.getElement();
+
+      expect(page.getBillingData()).toEqual(mockBillingData);
+    });
+
+    it('should show error state when API fails', async () => {
+      (apiClient.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      expect(el.querySelector('[role="alert"]')).toBeTruthy();
+      expect(el.querySelector('#retry-load')).toBeTruthy();
+    });
+
+    it('should default to overview view', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      await page.getElement();
+
+      expect(page.getCurrentView()).toBe('overview');
+    });
+  });

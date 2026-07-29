@@ -89,3 +89,90 @@ describe('AccessibilitySettingsPage', () => {
       expect(prefs.theme).toBe('system');
     });
   });
+
+  describe('Theme Selection', () => {
+    it('should render three theme options', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const cards = el.querySelectorAll('[data-theme-value]');
+      expect(cards.length).toBe(3);
+    });
+
+    it('should mark system theme as selected by default', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const systemCard = el.querySelector('[data-theme-value="system"]');
+      expect(systemCard?.getAttribute('aria-checked')).toBe('true');
+    });
+
+    it('should select light theme on click', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const lightCard = el.querySelector('[data-theme-value="light"]') as HTMLElement;
+      lightCard.click();
+
+      expect(page.getPreferences().theme).toBe('light');
+      expect(lightCard.getAttribute('aria-checked')).toBe('true');
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should select dark theme on click', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const darkCard = el.querySelector('[data-theme-value="dark"]') as HTMLElement;
+      darkCard.click();
+
+      expect(page.getPreferences().theme).toBe('dark');
+      expect(darkCard.getAttribute('aria-checked')).toBe('true');
+    });
+
+    it('should apply theme to document on selection', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const darkCard = el.querySelector('[data-theme-value="dark"]') as HTMLElement;
+      darkCard.click();
+
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
+      expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    });
+
+    it('should support keyboard activation with Enter', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const lightCard = el.querySelector('[data-theme-value="light"]') as HTMLElement;
+      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      lightCard.dispatchEvent(event);
+
+      expect(page.getPreferences().theme).toBe('light');
+    });
+
+    it('should support keyboard activation with Space', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const darkCard = el.querySelector('[data-theme-value="dark"]') as HTMLElement;
+      const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true });
+      darkCard.dispatchEvent(event);
+
+      expect(page.getPreferences().theme).toBe('dark');
+    });
+
+    it('should have radiogroup role on theme container', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const group = el.querySelector('#theme-group');
+      expect(group?.getAttribute('role')).toBe('radiogroup');
+    });
+  });
