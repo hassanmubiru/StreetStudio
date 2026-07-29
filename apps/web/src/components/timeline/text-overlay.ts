@@ -306,3 +306,73 @@ export class TextOverlayManager {
     };
     this.callbacks = callbacks;
   }
+
+  // ─── Text Overlay Operations ──────────────────────────────────────────────
+
+  /**
+   * Add a new text overlay to the timeline.
+   */
+  public addOverlay(
+    text: string,
+    startFrame: number,
+    endFrame: number,
+    position?: Partial<TextPosition>,
+    style?: Partial<TextOverlayStyle>
+  ): TextOverlay {
+    const id = generateOverlayId();
+    const overlay: TextOverlay = {
+      id,
+      text,
+      startFrame: Math.max(0, Math.round(startFrame)),
+      endFrame: Math.max(
+        Math.round(startFrame) + MIN_OVERLAY_DURATION_FRAMES,
+        Math.round(endFrame)
+      ),
+      position: {
+        x: position?.x ?? 50,
+        y: position?.y ?? 50,
+        anchorX: position?.anchorX ?? 'center',
+        anchorY: position?.anchorY ?? 'middle',
+      },
+      style: { ...createDefaultStyle(this.options), ...style },
+      isVisible: true,
+    };
+
+    this.overlays.set(id, overlay);
+    this.callbacks.onOverlayAdd?.(overlay);
+    return overlay;
+  }
+
+  /**
+   * Update an existing text overlay.
+   */
+  public updateOverlay(
+    id: string,
+    updates: Partial<Omit<TextOverlay, 'id'>>
+  ): TextOverlay | null {
+    const overlay = this.overlays.get(id);
+    if (!overlay) return null;
+
+    const updated: TextOverlay = {
+      ...overlay,
+      ...updates,
+      id, // ID cannot change
+      position: updates.position
+        ? { ...overlay.position, ...updates.position }
+        : overlay.position,
+      style: updates.style
+        ? { ...overlay.style, ...updates.style }
+        : overlay.style,
+    };
+
+    // Validate timing
+    updated.startFrame = Math.max(0, Math.round(updated.startFrame));
+    updated.endFrame = Math.max(
+      updated.startFrame + MIN_OVERLAY_DURATION_FRAMES,
+      Math.round(updated.endFrame)
+    );
+
+    this.overlays.set(id, updated);
+    this.callbacks.onOverlayUpdate?.(updated);
+    return updated;
+  }
