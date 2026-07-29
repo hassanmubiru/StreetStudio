@@ -652,3 +652,89 @@ export class TextOverlayManager {
       ratio,
     };
   }
+
+  /**
+   * Resolve an rgba or transparent background to a hex color for contrast checks.
+   * Returns null if not resolvable.
+   */
+  private resolveBackgroundColor(bg: string): string | null {
+    if (bg === 'transparent') return null;
+    const match = bg.match(
+      /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\)/
+    );
+    if (!match) return null;
+    const r = parseInt(match[1], 10);
+    const g = parseInt(match[2], 10);
+    const b = parseInt(match[3], 10);
+    const a = match[4] !== undefined ? parseFloat(match[4]) : 1;
+    // Blend with black background (worst case for contrast)
+    const blendedR = Math.round(r * a);
+    const blendedG = Math.round(g * a);
+    const blendedB = Math.round(b * a);
+    return `#${blendedR.toString(16).padStart(2, '0')}${blendedG.toString(16).padStart(2, '0')}${blendedB.toString(16).padStart(2, '0')}`;
+  }
+
+  // ─── Speech-to-Text Integration ────────────────────────────────────────
+
+  /**
+   * Check if speech-to-text is enabled.
+   */
+  public isSpeechToTextEnabled(): boolean {
+    return this.options.enableSpeechToText;
+  }
+
+  /**
+   * Check if speech-to-text is currently active.
+   */
+  public isSpeechToTextActive(): boolean {
+    return this.speechToTextActive;
+  }
+
+  /**
+   * Start speech-to-text transcription.
+   * In production, this would integrate with a backend STT service.
+   * This method manages the state and callbacks.
+   */
+  public startSpeechToText(): boolean {
+    if (!this.options.enableSpeechToText) return false;
+    if (this.speechToTextActive) return false;
+
+    this.speechToTextActive = true;
+    this.callbacks.onSpeechToTextStart?.();
+    return true;
+  }
+
+  /**
+   * Process speech-to-text results and create captions from them.
+   */
+  public processSpeechToTextResults(
+    results: SpeechToTextResult[]
+  ): CaptionCue[] {
+    const createdCaptions: CaptionCue[] = [];
+
+    for (const result of results) {
+      if (result.text.trim().length === 0) continue;
+
+      const startFrame = secondsToFrames(
+        result.startTime,
+        this.options.frameRate
+      );
+      const endFrame = secondsToFrames(
+        result.endTime,
+        this.options.frameRate
+      );
+
+      const caption = this.addCaption(
+        result.text.trim(),
+        startFrame,
+        endFrame,
+        undefined,
+        result.speaker
+      );
+      createdCaptions.push(caption);
+    }
+
+    this.speechToTextActive = false;
+    this.callbacks.onSpeechToTextComplete?.(results);
+    return createdCaptions;
+  }
