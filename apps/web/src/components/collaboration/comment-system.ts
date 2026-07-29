@@ -622,3 +622,46 @@ export class ThreadedCommentDisplay {
     return this.container;
   }
 }
+
+// --------------------------------------------------------------------------
+// TimelineCommentMarkers - Comment markers on timeline with click-to-seek
+// --------------------------------------------------------------------------
+
+/**
+ * TimelineCommentMarkers renders comment position markers on a timeline bar.
+ * Each marker is clickable and triggers seek-to-timestamp functionality.
+ */
+export class TimelineCommentMarkers {
+  private container: HTMLElement;
+  private markers: Array<{ commentId: Uuid; position: number; timestampSeconds: number }> = [];
+  private callbacks: CommentSystemCallbacks;
+  private videoDuration: number;
+  private activeMarkerId: Uuid | null = null;
+
+  constructor(
+    container: HTMLElement,
+    videoDuration: number,
+    callbacks: CommentSystemCallbacks
+  ) {
+    this.container = container;
+    this.videoDuration = videoDuration;
+    this.callbacks = callbacks;
+    this.container.className = 'timeline-comment-markers';
+    this.container.setAttribute('role', 'group');
+    this.container.setAttribute('aria-label', 'Comment markers on timeline');
+    this.container.style.position = 'relative';
+    this.container.style.width = '100%';
+    this.container.style.height = '12px';
+  }
+
+  /** Update markers from the given comments. */
+  public setComments(comments: Comment[]): void {
+    this.markers = getCommentMarkerPositions(comments, this.videoDuration);
+    this.render();
+  }
+
+  /** Highlight a specific marker as active. */
+  public setActiveMarker(commentId: Uuid | null): void {
+    this.activeMarkerId = commentId;
+    this.updateActiveState();
+  }

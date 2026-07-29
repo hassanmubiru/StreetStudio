@@ -847,3 +847,58 @@ export class TimelineEditor {
   public prevFrame(): void {
     this.seekRelativeFrames(-1);
   }
+
+  /** Toggle play/pause state */
+  public togglePlayPause(): void {
+    this.state.isPlaying = !this.state.isPlaying;
+    const btn = this.controlsElement.querySelector('.btn-play-pause');
+    if (btn) {
+      btn.textContent = this.state.isPlaying ? '⏸' : '▶';
+      btn.setAttribute('aria-label', this.state.isPlaying ? 'Pause' : 'Play');
+    }
+    this.notifyStateChange();
+  }
+
+  /** Set in point for selected clip at current playhead position */
+  public setInPoint(): void {
+    const clip = this.getSelectedClipOrClipAtPlayhead();
+    if (!clip) return;
+
+    const frame = this.state.playheadFrame;
+    if (frame >= clip.outPoint) return;
+
+    const operation: TrimOperation = {
+      clipId: clip.id,
+      mode: 'in',
+      originalFrame: clip.inPoint,
+      newFrame: frame,
+    };
+
+    clip.inPoint = frame;
+    clip.duration = clip.outPoint - clip.inPoint;
+    this.callbacks.onTrimEnd?.(operation);
+    this.renderClips();
+    this.notifyStateChange();
+  }
+
+  /** Set out point for selected clip at current playhead position */
+  public setOutPoint(): void {
+    const clip = this.getSelectedClipOrClipAtPlayhead();
+    if (!clip) return;
+
+    const frame = this.state.playheadFrame;
+    if (frame <= clip.inPoint) return;
+
+    const operation: TrimOperation = {
+      clipId: clip.id,
+      mode: 'out',
+      originalFrame: clip.outPoint,
+      newFrame: frame,
+    };
+
+    clip.outPoint = frame;
+    clip.duration = clip.outPoint - clip.inPoint;
+    this.callbacks.onTrimEnd?.(operation);
+    this.renderClips();
+    this.notifyStateChange();
+  }
