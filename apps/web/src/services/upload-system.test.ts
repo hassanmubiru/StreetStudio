@@ -267,3 +267,66 @@ describe('Upload System - Chunked Upload Logic', () => {
       expect(status.canAcceptMore).toBe(true);
     });
   });
+
+  describe('Upload Cancellation', () => {
+    it('should cancel an active upload', async () => {
+      const manager = new UploadManager();
+      const file = createMockFile('video.mp4', 20 * 1024 * 1024);
+
+      const { apiClient } = await import('../services/api.js');
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { uploadId: 'upload-cancel', uploadUrl: 'https://upload.test/cancel' }
+      });
+
+      // First chunk hangs
+      mockFetch.mockImplementationOnce(() => new Promise(() => {}));
+
+      const uploadPromise = manager.uploadFile(file, { chunkSize: 5 * 1024 * 1024 });
+      await new Promise(r => setTimeout(r, 10));
+
+      // Cancel all should work
+      manager.cancelAllUploads();
+
+      await expect(uploadPromise).rejects.toThrow();
+    });
+  });
+
+  describe('File Validation', () => {
+    it('should reject files that fail custom validation', async () => {
+      const manager = new UploadManager();
+      const file = createMockFile('document.pdf', 1024, 'application/pdf');
+
+      await expect(
+        manager.uploadFile(file, {
+          validateFile: async (f) => {
+            if (!f.type.startsWith('video/')) {
+              throw new Error('File must be a video');
+            }
+          }
+        })
+      ).rejects.toThrow(/File validation failed.*File must be a video/);
+    });
+
+    it('should accept files that pass validation', async () => {
+      const manager = new UploadManager();
+      const file = createMockFile('video.mp4', 1024, 'video/mp4');
+
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 'ok-123', url: 'https://cdn.test/v.mp4' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      );
+
+      const result = await manager.uploadFile(file, {
+        validateFile: async (f) => {
+          if (!f.type.startsWith('video/')) {
+            throw new Error('File must be a video');
+          }
+        }
+      });
+
+      expect(result.id).toBe('ok-123');
+    });
+  });
+});
