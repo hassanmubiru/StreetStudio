@@ -539,3 +539,67 @@ export class BillingSettingsPage {
     `;
     return card;
   }
+
+  private setupEventListeners(): void {
+    // Retry button
+    const retryBtn = this.element.querySelector('#retry-load');
+    retryBtn?.addEventListener('click', () => this.handleRetry());
+
+    // Change plan button
+    const changePlanBtn = this.element.querySelector('#change-plan-btn');
+    changePlanBtn?.addEventListener('click', () => this.showChangePlanView());
+
+    // Cancel subscription button
+    const cancelBtn = this.element.querySelector('#cancel-subscription-btn');
+    cancelBtn?.addEventListener('click', () => this.handleCancelSubscription());
+
+    // Add payment method button
+    const addMethodBtn = this.element.querySelector('#add-payment-method-btn');
+    addMethodBtn?.addEventListener('click', () => this.handleAddPaymentMethod());
+
+    // Set default payment method buttons
+    const setDefaultBtns = this.element.querySelectorAll('.set-default-btn');
+    setDefaultBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const methodId = (e.target as HTMLElement).dataset.methodId;
+        if (methodId) this.handleSetDefaultPaymentMethod(methodId);
+      });
+    });
+
+    // Remove payment method buttons
+    const removeBtns = this.element.querySelectorAll('.remove-method-btn');
+    removeBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const methodId = (e.target as HTMLElement).dataset.methodId;
+        if (methodId) this.handleRemovePaymentMethod(methodId);
+      });
+    });
+
+    // Back to overview button (change plan view)
+    const backBtn = this.element.querySelector('#back-to-overview-btn');
+    backBtn?.addEventListener('click', () => this.showOverviewView());
+
+    // Select plan buttons
+    const selectPlanBtns = this.element.querySelectorAll('.select-plan-btn:not([disabled])');
+    selectPlanBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const planId = (e.target as HTMLElement).dataset.planId;
+        if (planId) this.handleSelectPlan(planId);
+      });
+    });
+  }
+
+  private async handleRetry(): Promise<void> {
+    await this.loadBillingData();
+    this.render();
+  }
+
+  private showChangePlanView(): void {
+    this.currentView = 'change-plan';
+    this.render();
+  }
+
+  private showOverviewView(): void {
+    this.currentView = 'overview';
+    this.render();
+  }
