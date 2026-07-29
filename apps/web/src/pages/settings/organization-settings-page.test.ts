@@ -439,3 +439,66 @@ describe('OrganizationSettingsPage', () => {
       expect((el.querySelector('#compliance-mode') as HTMLSelectElement).value).toBe('hipaa');
     });
   });
+
+  describe('Storage Section', () => {
+    it('should display storage usage progress bar', () => {
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        storage: { ...createDefaultStorageSettings(), usedStorageGB: 75, storageQuotaGB: 100 },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('storage');
+
+      const progressBar = el.querySelector('[role="progressbar"]');
+      expect(progressBar).toBeTruthy();
+      expect(progressBar?.getAttribute('aria-valuenow')).toBe('75');
+      expect(progressBar?.getAttribute('aria-valuemax')).toBe('100');
+    });
+
+    it('should show correct usage percentage text', () => {
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        storage: { ...createDefaultStorageSettings(), usedStorageGB: 50, storageQuotaGB: 100 },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('storage');
+
+      expect(el.textContent).toContain('50.0 GB used');
+      expect(el.textContent).toContain('100 GB quota');
+      expect(el.textContent).toContain('50%');
+    });
+
+    it('should show amber progress bar when usage exceeds 70%', () => {
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        storage: { ...createDefaultStorageSettings(), usedStorageGB: 80, storageQuotaGB: 100 },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('storage');
+
+      const bar = el.querySelector('[role="progressbar"] div');
+      expect(bar?.className).toContain('bg-amber-500');
+    });
+
+    it('should show red progress bar when usage exceeds 90%', () => {
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        storage: { ...createDefaultStorageSettings(), usedStorageGB: 95, storageQuotaGB: 100 },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('storage');
+
+      const bar = el.querySelector('[role="progressbar"] div');
+      expect(bar?.className).toContain('bg-red-500');
+    });
+
+    it('should render retention policy select', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('storage');
+
+      const select = el.querySelector('#retention-policy') as HTMLSelectElement;
+      expect(select).toBeTruthy();
+      expect(select.value).toBe('indefinite');
+    });
