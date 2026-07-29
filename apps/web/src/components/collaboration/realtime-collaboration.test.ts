@@ -517,3 +517,70 @@ describe('Collaborative Viewing', () => {
       expect(formatSyncStatus('independent')).toContain('disabled');
     });
   });
+
+  describe('CollaborativeViewing component', () => {
+    let container: HTMLElement;
+
+    beforeEach(() => {
+      container = createContainer();
+    });
+
+    it('renders with proper ARIA attributes', () => {
+      new CollaborativeViewing(container, {
+        videoId: 'v1',
+        currentUserId: 'me',
+        videoDuration: 120,
+      });
+      expect(container.getAttribute('role')).toBe('region');
+      expect(container.getAttribute('aria-label')).toBe('Collaborative viewing controls');
+    });
+
+    it('starts in independent mode by default', () => {
+      const collab = new CollaborativeViewing(container, {
+        videoId: 'v1',
+        currentUserId: 'me',
+        videoDuration: 120,
+      });
+      expect(collab.getSyncMode()).toBe('independent');
+    });
+
+    it('renders sync toggle button', () => {
+      new CollaborativeViewing(container, {
+        videoId: 'v1',
+        currentUserId: 'me',
+        videoDuration: 120,
+      });
+      const syncBtn = container.querySelector('.collab-sync-btn');
+      expect(syncBtn).not.toBeNull();
+      expect(syncBtn!.textContent).toContain('Sync Off');
+    });
+
+    it('toggles sync mode when button is clicked', () => {
+      const onSyncModeChange = vi.fn();
+      const collab = new CollaborativeViewing(
+        container,
+        { videoId: 'v1', currentUserId: 'me', videoDuration: 120 },
+        { onSyncModeChange }
+      );
+
+      const syncBtn = container.querySelector('.collab-sync-btn') as HTMLButtonElement;
+      syncBtn.click();
+
+      expect(collab.getSyncMode()).toBe('follower');
+      expect(onSyncModeChange).toHaveBeenCalledWith('follower');
+    });
+
+    it('shows host button when sync is enabled', () => {
+      const collab = new CollaborativeViewing(container, {
+        videoId: 'v1',
+        currentUserId: 'me',
+        videoDuration: 120,
+      });
+
+      // Enable sync
+      const syncBtn = container.querySelector('.collab-sync-btn') as HTMLButtonElement;
+      syncBtn.click();
+
+      const hostBtn = container.querySelector('.collab-host-btn');
+      expect(hostBtn).not.toBeNull();
+    });
