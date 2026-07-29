@@ -776,3 +776,61 @@ export class OrganizationSettingsPage {
       this.markDirty();
     });
   }
+
+  private setupSecurityListeners(): void {
+    const bindCheckbox = (id: string, key: keyof SecurityPolicySettings) => {
+      const el = this.element.querySelector(`#${id}`) as HTMLInputElement;
+      el?.addEventListener('change', (e) => {
+        (this.settings.security as any)[key] = (e.target as HTMLInputElement).checked;
+        this.markDirty();
+      });
+    };
+
+    const bindNumber = (id: string, key: keyof SecurityPolicySettings) => {
+      const el = this.element.querySelector(`#${id}`) as HTMLInputElement;
+      el?.addEventListener('input', (e) => {
+        const value = parseInt((e.target as HTMLInputElement).value, 10);
+        if (!isNaN(value)) {
+          (this.settings.security as any)[key] = value;
+          this.markDirty();
+        }
+      });
+    };
+
+    bindCheckbox('enforce-sso', 'enforceSSO');
+    bindCheckbox('require-mfa', 'requireMFA');
+    bindCheckbox('require-uppercase', 'passwordRequireUppercase');
+    bindCheckbox('require-numbers', 'passwordRequireNumbers');
+    bindCheckbox('require-special', 'passwordRequireSpecialChars');
+    bindNumber('password-min-length', 'passwordMinLength');
+    bindNumber('max-login-attempts', 'maxLoginAttempts');
+    bindNumber('session-timeout', 'sessionTimeoutMinutes');
+    bindNumber('data-retention', 'dataRetentionDays');
+
+    // Compliance mode
+    const complianceSelect = this.element.querySelector('#compliance-mode') as HTMLSelectElement;
+    complianceSelect?.addEventListener('change', (e) => {
+      this.settings.security.complianceMode = (e.target as HTMLSelectElement).value as SecurityPolicySettings['complianceMode'];
+      this.markDirty();
+    });
+
+    // IP allowlist
+    this.element.querySelector('#add-ip')?.addEventListener('click', () => this.handleAddIp());
+    this.element.querySelectorAll('.remove-ip').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const row = (e.target as HTMLElement).closest('[data-ip-index]') as HTMLElement;
+        const index = parseInt(row.dataset.ipIndex || '0', 10);
+        this.settings.security.ipAllowlist.splice(index, 1);
+        this.markDirty();
+        this.render();
+      });
+    });
+    this.element.querySelectorAll('.ip-input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const row = (e.target as HTMLElement).closest('[data-ip-index]') as HTMLElement;
+        const index = parseInt(row.dataset.ipIndex || '0', 10);
+        this.settings.security.ipAllowlist[index] = (e.target as HTMLInputElement).value;
+        this.markDirty();
+      });
+    });
+  }

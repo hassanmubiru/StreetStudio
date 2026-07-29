@@ -563,3 +563,104 @@ describe('BillingSettingsPage', () => {
       expect(section?.textContent).toContain('No billing history available');
     });
   });
+
+  describe('Change Plan View', () => {
+    it('should switch to change plan view on button click', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const changePlanBtn = el.querySelector('#change-plan-btn') as HTMLButtonElement;
+      changePlanBtn.click();
+
+      expect(page.getCurrentView()).toBe('change-plan');
+    });
+
+    it('should display available plans in grid', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const changePlanBtn = el.querySelector('#change-plan-btn') as HTMLButtonElement;
+      changePlanBtn.click();
+
+      const planCards = el.querySelectorAll('.plan-card');
+      expect(planCards.length).toBe(3);
+    });
+
+    it('should mark current plan card with aria-checked', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const changePlanBtn = el.querySelector('#change-plan-btn') as HTMLButtonElement;
+      changePlanBtn.click();
+
+      const currentPlanCard = el.querySelector('[data-plan-id="pro"]');
+      expect(currentPlanCard?.getAttribute('aria-checked')).toBe('true');
+    });
+
+    it('should disable select button on current plan', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const changePlanBtn = el.querySelector('#change-plan-btn') as HTMLButtonElement;
+      changePlanBtn.click();
+
+      const currentBtn = el.querySelector('.select-plan-btn[data-plan-id="pro"]') as HTMLButtonElement;
+      expect(currentBtn.disabled).toBe(true);
+      expect(currentBtn.textContent?.trim()).toBe('Current Plan');
+    });
+
+    it('should show plan features', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const changePlanBtn = el.querySelector('#change-plan-btn') as HTMLButtonElement;
+      changePlanBtn.click();
+
+      const freePlan = el.querySelector('[data-plan-id="free"]');
+      expect(freePlan?.textContent).toContain('5 videos');
+      expect(freePlan?.textContent).toContain('1 GB storage');
+    });
+
+    it('should show popular badge on popular plan', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const changePlanBtn = el.querySelector('#change-plan-btn') as HTMLButtonElement;
+      changePlanBtn.click();
+
+      const proPlan = el.querySelector('[data-plan-id="pro"]');
+      expect(proPlan?.textContent).toContain('Most Popular');
+    });
+
+    it('should show back button to return to overview', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const changePlanBtn = el.querySelector('#change-plan-btn') as HTMLButtonElement;
+      changePlanBtn.click();
+
+      const backBtn = el.querySelector('#back-to-overview-btn');
+      expect(backBtn).toBeTruthy();
+    });
+
+    it('should navigate back to overview on back button click', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const changePlanBtn = el.querySelector('#change-plan-btn') as HTMLButtonElement;
+      changePlanBtn.click();
+      expect(page.getCurrentView()).toBe('change-plan');
+
+      const backBtn = el.querySelector('#back-to-overview-btn') as HTMLButtonElement;
+      backBtn.click();
+      expect(page.getCurrentView()).toBe('overview');
+    });
+  });
