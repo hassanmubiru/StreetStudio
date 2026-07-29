@@ -453,3 +453,70 @@ describe('ThreadedCommentDisplay', () => {
     expect(modBtn).toBeNull();
   });
 });
+
+// --------------------------------------------------------------------------
+// TimelineCommentMarkers
+// --------------------------------------------------------------------------
+
+describe('TimelineCommentMarkers', () => {
+  let container: HTMLElement;
+  let callbacks: CommentSystemCallbacks;
+
+  beforeEach(() => {
+    container = createContainer();
+    callbacks = defaultCallbacks();
+  });
+
+  it('renders markers for timestamped comments', () => {
+    const markers = new TimelineCommentMarkers(container, 120, callbacks);
+    markers.setComments([
+      makeComment({ id: 'c1', timestampSeconds: 30 }),
+      makeComment({ id: 'c2', timestampSeconds: 90 }),
+    ]);
+    const markerEls = container.querySelectorAll('.comment-marker');
+    expect(markerEls.length).toBe(2);
+  });
+
+  it('positions markers based on percentage of duration', () => {
+    const markers = new TimelineCommentMarkers(container, 100, callbacks);
+    markers.setComments([makeComment({ id: 'c1', timestampSeconds: 50 })]);
+    const el = container.querySelector('.comment-marker') as HTMLElement;
+    expect(el.style.left).toBe('50%');
+  });
+
+  it('calls onSeek when marker is clicked', () => {
+    const markers = new TimelineCommentMarkers(container, 120, callbacks);
+    markers.setComments([makeComment({ id: 'c1', timestampSeconds: 60 })]);
+    const el = container.querySelector('.comment-marker') as HTMLButtonElement;
+    el.click();
+    expect(callbacks.onSeek).toHaveBeenCalledWith(60);
+  });
+
+  it('has proper accessibility attributes on markers', () => {
+    const markers = new TimelineCommentMarkers(container, 120, callbacks);
+    markers.setComments([makeComment({ id: 'c1', timestampSeconds: 30 })]);
+    const el = container.querySelector('.comment-marker') as HTMLElement;
+    expect(el.getAttribute('aria-label')).toContain('Comment at 0:30');
+  });
+
+  it('highlights active marker', () => {
+    const markers = new TimelineCommentMarkers(container, 120, callbacks);
+    markers.setComments([
+      makeComment({ id: 'c1', timestampSeconds: 30 }),
+      makeComment({ id: 'c2', timestampSeconds: 60 }),
+    ]);
+    markers.setActiveMarker('c1');
+    const el = container.querySelector('[data-comment-id="c1"]') as HTMLElement;
+    expect(el.style.backgroundColor).toContain('3b82f6');
+  });
+
+  it('skips comments without timestamps', () => {
+    const markers = new TimelineCommentMarkers(container, 120, callbacks);
+    markers.setComments([
+      makeComment({ id: 'c1', timestampSeconds: 30 }),
+      makeComment({ id: 'c2' }), // no timestamp
+    ]);
+    const markerEls = container.querySelectorAll('.comment-marker');
+    expect(markerEls.length).toBe(1);
+  });
+});

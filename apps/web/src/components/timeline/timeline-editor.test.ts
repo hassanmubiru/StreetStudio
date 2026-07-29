@@ -415,3 +415,55 @@ describe('TimelineEditor', () => {
       expect(callbacks.onZoomChange).not.toHaveBeenCalled();
     });
   });
+
+  describe('trim operations', () => {
+    beforeEach(() => {
+      editor.addClip(createTestClip());
+    });
+
+    it('sets in point at current playhead', () => {
+      editor.seekToFrame(50);
+      editor.selectClip('clip-1');
+      editor.setInPoint();
+      const clip = editor.getClip('clip-1');
+      expect(clip?.inPoint).toBe(50);
+      expect(clip?.duration).toBe(250);
+      expect(callbacks.onTrimEnd).toHaveBeenCalled();
+    });
+
+    it('sets out point at current playhead', () => {
+      editor.seekToFrame(200);
+      editor.selectClip('clip-1');
+      editor.setOutPoint();
+      const clip = editor.getClip('clip-1');
+      expect(clip?.outPoint).toBe(200);
+      expect(clip?.duration).toBe(200);
+    });
+
+    it('does not set in point beyond out point', () => {
+      editor.seekToFrame(300);
+      editor.selectClip('clip-1');
+      editor.setInPoint();
+      // Should not change because frame >= outPoint
+      const clip = editor.getClip('clip-1');
+      expect(clip?.inPoint).toBe(0);
+    });
+
+    it('does not set out point before in point', () => {
+      editor.addClip(createTestClip({ id: 'clip-2', inPoint: 50, outPoint: 200, duration: 150 }));
+      editor.seekToFrame(30);
+      editor.selectClip('clip-2');
+      editor.setOutPoint();
+      // Should not change because frame <= inPoint
+      const clip = editor.getClip('clip-2');
+      expect(clip?.outPoint).toBe(200);
+    });
+
+    it('uses clip at playhead if no clip selected', () => {
+      editor.selectClip(null);
+      editor.seekToFrame(100);
+      editor.setInPoint();
+      const clip = editor.getClip('clip-1');
+      expect(clip?.inPoint).toBe(100);
+    });
+  });
