@@ -549,3 +549,99 @@ describe('Upload System - Progress Tracking and State Management', () => {
     });
   });
 });
+
+// ============================================================================
+// 3. METADATA FORM VALIDATION AND SUBMISSION
+// ============================================================================
+
+describe('Upload System - Metadata Form Validation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // Test the validation logic directly using FormValidator (same rules as VideoMetadataForm)
+  const videoMetadataValidator = new FormValidator({
+    title: [
+      ValidationRules.required('Title is required'),
+      ValidationRules.minLength(1, 'Title cannot be empty'),
+      ValidationRules.maxLength(255, 'Title must be 255 characters or less'),
+      ValidationRules.pattern(/^[^<>{}]+$/, 'Title cannot contain < > { } characters'),
+    ],
+    description: [
+      ValidationRules.maxLength(2000, 'Description must be 2000 characters or less'),
+      ValidationRules.pattern(/^[^<>{}]*$/, 'Description cannot contain < > { } characters'),
+    ],
+  });
+
+  describe('Title Validation', () => {
+    it('should require a title', () => {
+      const result = videoMetadataValidator.validate({ title: '', description: '' });
+      expect(result.isValid).toBe(false);
+      expect(result.errors.title).toContain('Title is required');
+    });
+
+    it('should accept a valid title', () => {
+      const result = videoMetadataValidator.validate({ title: 'My Video', description: '' });
+      expect(result.isValid).toBe(true);
+      expect(result.errors.title).toBeUndefined();
+    });
+
+    it('should reject title longer than 255 characters', () => {
+      const longTitle = 'a'.repeat(256);
+      const result = videoMetadataValidator.validate({ title: longTitle, description: '' });
+      expect(result.isValid).toBe(false);
+      expect(result.errors.title).toContain('Title must be 255 characters or less');
+    });
+
+    it('should accept title at exactly 255 characters', () => {
+      const maxTitle = 'a'.repeat(255);
+      const result = videoMetadataValidator.validate({ title: maxTitle, description: '' });
+      expect(result.isValid).toBe(true);
+    });
+
+    it('should reject title with HTML-like characters (<>{})', () => {
+      const result = videoMetadataValidator.validate({
+        title: 'Video <script>alert("xss")</script>',
+        description: ''
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.errors.title).toContain('Title cannot contain < > { } characters');
+    });
+
+    it('should accept title with safe special characters', () => {
+      const result = videoMetadataValidator.validate({
+        title: 'My Video - Episode #1 (Final)',
+        description: ''
+      });
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Description Validation', () => {
+    it('should accept empty description', () => {
+      const result = videoMetadataValidator.validate({ title: 'Valid', description: '' });
+      expect(result.isValid).toBe(true);
+    });
+
+    it('should reject description longer than 2000 characters', () => {
+      const longDesc = 'a'.repeat(2001);
+      const result = videoMetadataValidator.validate({ title: 'Valid', description: longDesc });
+      expect(result.isValid).toBe(false);
+      expect(result.errors.description).toContain('Description must be 2000 characters or less');
+    });
+
+    it('should accept description at exactly 2000 characters', () => {
+      const maxDesc = 'a'.repeat(2000);
+      const result = videoMetadataValidator.validate({ title: 'Valid', description: maxDesc });
+      expect(result.isValid).toBe(true);
+    });
+
+    it('should reject description with HTML-like characters', () => {
+      const result = videoMetadataValidator.validate({
+        title: 'Valid',
+        description: 'Some {malicious} content with <tags>'
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.errors.description).toContain('Description cannot contain < > { } characters');
+    });
+  });
