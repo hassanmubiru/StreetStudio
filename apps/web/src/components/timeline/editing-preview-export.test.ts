@@ -67,3 +67,53 @@ describe('estimateFileSize', () => {
     expect(estimateFileSize(100, -5)).toBe(0);
   });
 });
+
+describe('formatFileSize', () => {
+  it('formats bytes correctly', () => {
+    expect(formatFileSize(500)).toBe('500 B');
+  });
+
+  it('formats kilobytes correctly', () => {
+    expect(formatFileSize(1024)).toBe('1.0 KB');
+  });
+
+  it('formats megabytes correctly', () => {
+    expect(formatFileSize(1048576)).toBe('1.0 MB');
+  });
+
+  it('formats gigabytes correctly', () => {
+    expect(formatFileSize(1073741824)).toBe('1.0 GB');
+  });
+
+  it('returns "0 B" for zero or negative', () => {
+    expect(formatFileSize(0)).toBe('0 B');
+    expect(formatFileSize(-100)).toBe('0 B');
+  });
+
+  it('formats fractional values', () => {
+    expect(formatFileSize(1536)).toBe('1.5 KB');
+  });
+});
+
+describe('formatDuration', () => {
+  it('formats seconds', () => {
+    expect(formatDuration(5000)).toBe('5s');
+  });
+
+  it('formats minutes and seconds', () => {
+    expect(formatDuration(90000)).toBe('1m 30s');
+  });
+
+  it('formats exact minutes', () => {
+    expect(formatDuration(120000)).toBe('2m');
+  });
+
+  it('formats hours and minutes', () => {
+    expect(formatDuration(3900000)).toBe('1h 5m');
+  });
+
+  it('returns "0s" for zero or negative', () => {
+    expect(formatDuration(0)).toBe('0s');
+    expect(formatDuration(-100)).toBe('0s');
+  });
+});
