@@ -1066,3 +1066,117 @@ export class TimelineEditor {
       this.trackElement.appendChild(clipEl);
     }
   }
+
+  private renderWaveform(): void {
+    if (!this.waveformRenderer) return;
+    const startFrame = this.state.scrollOffset;
+    const endFrame = startFrame + this.getVisibleFrameCount();
+    this.waveformRenderer.render(startFrame, endFrame, this.state.frameRate, this.state.zoomLevel);
+  }
+
+  private updatePlayheadPosition(): void {
+    if (!this.playheadElement) return;
+    const pixel = frameToPixel(
+      this.state.playheadFrame - this.state.scrollOffset,
+      this.state.zoomLevel
+    );
+    this.playheadElement.style.left = `${pixel}px`;
+
+    // Update ARIA
+    this.trackElement?.setAttribute('aria-valuenow', String(this.state.playheadFrame));
+  }
+
+  private updateTimecodeDisplay(): void {
+    if (!this.timecodeDisplay) return;
+    this.timecodeDisplay.textContent = frameToTimecode(
+      this.state.playheadFrame,
+      this.state.frameRate
+    );
+  }
+
+  private updateZoomUI(): void {
+    if (!this.zoomSlider) return;
+    const percent = Math.round(this.state.zoomLevel * 100);
+    this.zoomSlider.value = String(percent);
+    this.zoomSlider.setAttribute('aria-valuetext', `${percent}%`);
+  }
+
+  private updateWaveformSize(): void {
+    if (!this.waveformCanvas || !this.waveformRenderer) return;
+    const width = this.timelineElement.clientWidth;
+    this.waveformRenderer.resize(width, WAVEFORM_HEIGHT);
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  private getVisibleFrameCount(): number {
+    const trackWidth = this.trackElement?.clientWidth ?? 800;
+    return pixelToFrame(trackWidth, this.state.zoomLevel);
+  }
+
+  private calculateRulerInterval(visibleFrames: number): number {
+    // Choose an interval that gives roughly 8-12 marks visible
+    const targetMarks = 10;
+    const rawInterval = visibleFrames / targetMarks;
+    const fps = this.state.frameRate;
+    // Snap to nice intervals: 1 frame, fps/2, fps, 5*fps, 10*fps, 30*fps, 60*fps
+    const intervals = [1, fps / 2, fps, fps * 5, fps * 10, fps * 30, fps * 60];
+    let best = intervals[0];
+    for (const interval of intervals) {
+      if (interval >= rawInterval) {
+        best = interval;
+        break;
+      }
+      best = interval;
+    }
+    return Math.max(1, Math.round(best));
+  }
+
+  private pixelToFrameInTrack(x: number): number {
+    const frame = pixelToFrame(x, this.state.zoomLevel) + this.state.scrollOffset;
+    return clamp(Math.round(frame), 0, this.state.duration);
+  }
+
+  private getClipAtFrame(frame: number): TimelineClip | undefined {
+    return this.state.clips.find(c => frame >= c.inPoint && frame <= c.outPoint);
+  }
+
+  private getSelectedClipOrClipAtPlayhead(): TimelineClip | undefined {
+    if (this.state.selectedClipId) {
+      return this.state.clips.find(c => c.id === this.state.selectedClipId);
+    }
+    return this.getClipAtFrame(this.state.playheadFrame);
+  }
+
+  private recalculateDuration(): void {
+    if (this.state.clips.length === 0) {
+      this.state.duration = 0;
+    } else {
+      this.state.duration = Math.max(...this.state.clips.map(c => c.outPoint));
+    }
+    this.trackElement?.setAttribute('aria-valuemax', String(this.state.duration));
+  }
+
+  private notifyStateChange(): void {
+    this.callbacks.onStateChange?.(this.getState());
+  }
+
+  // ─── Lifecycle ────────────────────────────────────────────────────────────
+
+  /** Clean up all resources and event listeners */
+  public destroy(): void {
+    this.isDestroyed = true;
+
+    if (this.keydownHandler) {
+      document.removeEventListener('keydown', this.keydownHandler);
+      this.keydownHandler = null;
+    }
+
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+
+    this.container.innerHTML = '';
+  }
+}

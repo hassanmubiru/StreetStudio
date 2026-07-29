@@ -859,3 +859,95 @@ export class CommentSystem {
     const threadContainer = document.createElement('div');
 
     this.container.appendChild(markersContainer);
+
+    // Moderation tools (admin only)
+    if (options.isAdmin) {
+      this.container.appendChild(moderationContainer);
+      this.moderationTools = new CommentModerationTools(
+        moderationContainer,
+        callbacks,
+        (status) => this.filterByStatus(status)
+      );
+    }
+
+    this.container.appendChild(inputContainer);
+    this.container.appendChild(threadContainer);
+
+    // Initialize sub-components
+    this.timelineMarkers = new TimelineCommentMarkers(
+      markersContainer,
+      options.videoDuration,
+      callbacks
+    );
+
+    this.commentInput = new CommentInput(inputContainer, options, callbacks);
+
+    this.threadedDisplay = new ThreadedCommentDisplay(
+      threadContainer,
+      options,
+      callbacks,
+      (commentId, authorName) => this.commentInput.setReplyTo(commentId, authorName)
+    );
+  }
+
+  /** Load comments and authors into the system. */
+  public setComments(comments: Comment[], authors: Map<Uuid, CommentAuthor>): void {
+    this.comments = comments;
+    this.authors = authors;
+
+    const tree = buildCommentTree(comments, authors);
+    this.threadedDisplay.setComments(tree);
+    this.timelineMarkers.setComments(comments);
+
+    if (this.moderationTools) {
+      this.moderationTools.updateStats(this.calculateStats(tree));
+    }
+  }
+
+  /** Update playback time for the comment input. */
+  public updateCurrentTime(time: number): void {
+    this.commentInput.updateCurrentTime(time);
+  }
+
+  /** Filter displayed comments by status. */
+  private filterByStatus(status: CommentStatus | 'all'): void {
+    const tree = buildCommentTree(this.comments, this.authors);
+    if (status === 'all') {
+      this.threadedDisplay.setComments(tree);
+    } else {
+      const filtered = this.filterTree(tree, status);
+      this.threadedDisplay.setComments(filtered);
+    }
+  }
+
+  private filterTree(comments: CommentWithState[], status: CommentStatus): CommentWithState[] {
+    return comments
+      .filter(c => c.status === status)
+      .map(c => ({
+        ...c,
+        replies: this.filterTree(c.replies, status),
+      }));
+  }
+
+  private calculateStats(tree: CommentWithState[]): ModerationStats {
+    const stats: ModerationStats = { total: 0, visible: 0, hidden: 0, pinned: 0, deleted: 0 };
+    const count = (nodes: CommentWithState[]) => {
+      for (const node of nodes) {
+        stats.total++;
+        stats[node.status]++;
+        count(node.replies);
+      }
+    };
+    count(tree);
+    return stats;
+  }
+
+  /** Get the timeline markers component for external integration. */
+  public getTimelineMarkers(): TimelineCommentMarkers {
+    return this.timelineMarkers;
+  }
+
+  public getElement(): HTMLElement {
+    return this.container;
+  }
+}
