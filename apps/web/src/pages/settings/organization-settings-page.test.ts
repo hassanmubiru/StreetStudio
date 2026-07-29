@@ -303,3 +303,65 @@ describe('OrganizationSettingsPage', () => {
       expect(el.querySelector('#remove-logo')).toBeTruthy();
     });
   });
+
+  describe('Security Section', () => {
+    it('should render authentication policy controls', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('security');
+
+      expect(el.querySelector('#enforce-sso')).toBeTruthy();
+      expect(el.querySelector('#require-mfa')).toBeTruthy();
+    });
+
+    it('should render password policy fields', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('security');
+
+      expect(el.querySelector('#password-min-length')).toBeTruthy();
+      expect(el.querySelector('#max-login-attempts')).toBeTruthy();
+      expect(el.querySelector('#require-uppercase')).toBeTruthy();
+      expect(el.querySelector('#require-numbers')).toBeTruthy();
+      expect(el.querySelector('#require-special')).toBeTruthy();
+    });
+
+    it('should render session and compliance controls', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('security');
+
+      expect(el.querySelector('#session-timeout')).toBeTruthy();
+      expect(el.querySelector('#data-retention')).toBeTruthy();
+      expect(el.querySelector('#compliance-mode')).toBeTruthy();
+    });
+
+    it('should update enforce SSO on toggle', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('security');
+
+      const checkbox = el.querySelector('#enforce-sso') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getSettings().security.enforceSSO).toBe(true);
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should update password min length', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('security');
+
+      const input = el.querySelector('#password-min-length') as HTMLInputElement;
+      input.value = '12';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(page.getSettings().security.passwordMinLength).toBe(12);
+    });
