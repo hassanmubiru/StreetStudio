@@ -317,3 +317,65 @@ export class ConflictDetector {
     this.activeEdits.set(clipId, { userId, operation, startedAt: now() });
     return null;
   }
+
+  /** Mark that a user has finished editing a clip. */
+  public completeEdit(userId: Uuid, clipId: string): void {
+    const existing = this.activeEdits.get(clipId);
+    if (existing && existing.userId === userId) {
+      this.activeEdits.delete(clipId);
+    }
+  }
+
+  /** Resolve a conflict with the chosen resolution strategy. */
+  public resolveConflict(conflictId: Uuid, resolution: ConflictResolution): EditConflict | null {
+    const conflict = this.conflicts.get(conflictId);
+    if (!conflict) return null;
+
+    conflict.resolution = resolution;
+    this.conflicts.set(conflictId, conflict);
+    this.onConflictResolved?.(conflict);
+
+    // If resolved, clear the active edit lock based on resolution
+    if (resolution === 'accept-initiator') {
+      // The conflicting user's edit is rejected - keep initiator's lock
+    } else if (resolution === 'accept-conflicting') {
+      // Replace the initiator's lock with the conflicting user's
+      this.activeEdits.set(conflict.clipId, {
+        userId: conflict.conflictingUserId,
+        operation: conflict.conflictingOperation,
+        startedAt: now(),
+      });
+    } else if (resolution === 'merge' || resolution === 'dismissed') {
+      // Clear the lock so both can proceed
+      this.activeEdits.delete(conflict.clipId);
+    }
+
+    return conflict;
+  }
+
+  /** Get all pending (unresolved) conflicts. */
+  public getPendingConflicts(): EditConflict[] {
+    return Array.from(this.conflicts.values()).filter((c) => c.resolution === 'pending');
+  }
+
+  /** Get all conflicts (resolved and pending). */
+  public getAllConflicts(): EditConflict[] {
+    return Array.from(this.conflicts.values());
+  }
+
+  /** Check if a clip currently has an active edit lock. */
+  public hasActiveLock(clipId: string): boolean {
+    return this.activeEdits.has(clipId);
+  }
+
+  /** Get the user who holds the edit lock on a clip. */
+  public getLockHolder(clipId: string): Uuid | undefined {
+    return this.activeEdits.get(clipId)?.userId;
+  }
+
+  /** Clear all active edits and conflicts. */
+  public clear(): void {
+    this.activeEdits.clear();
+    this.conflicts.clear();
+  }
+}

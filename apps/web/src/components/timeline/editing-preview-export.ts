@@ -514,3 +514,100 @@ export class ExportManager {
       (j) => j.status !== 'completed' && j.status !== 'failed' && j.status !== 'cancelled'
     );
   }
+
+  /** Get the full export history */
+  public getHistory(): ExportJob[] {
+    return [...this.history];
+  }
+
+  /** Get the number of currently active exports */
+  public getActiveCount(): number {
+    return this.activeExports;
+  }
+
+  /** Get jobs waiting in the queue */
+  public getQueuedCount(): number {
+    return this.queue.length;
+  }
+
+  /** Clear completed/failed exports from history */
+  public clearHistory(): void {
+    this.history = [];
+  }
+
+  /** Remove a specific export from history */
+  public removeFromHistory(exportId: string): boolean {
+    const index = this.history.findIndex((j) => j.id === exportId);
+    if (index === -1) return false;
+    this.history.splice(index, 1);
+    return true;
+  }
+
+  /** Check if an export can be retried */
+  public canRetry(exportId: string): boolean {
+    const job = this.jobs.get(exportId);
+    return job?.status === 'failed';
+  }
+
+  /** Retry a failed export */
+  public retryExport(exportId: string): ExportJob | null {
+    const job = this.jobs.get(exportId);
+    if (!job || job.status !== 'failed') return null;
+
+    // Reset job state
+    job.status = 'queued';
+    job.progress = 0;
+    job.error = undefined;
+    job.completedAt = undefined;
+
+    if (this.activeExports < MAX_CONCURRENT_EXPORTS) {
+      this.processJob(job);
+    }
+
+    return job;
+  }
+
+  /** Process a job (simulate starting background processing) */
+  private processJob(job: ExportJob): void {
+    if (this.isDestroyed) return;
+    job.status = 'processing';
+    this.activeExports++;
+  }
+
+  /** Process next item in the queue if capacity allows */
+  private processNextInQueue(): void {
+    if (this.isDestroyed) return;
+    if (this.queue.length === 0 || this.activeExports >= MAX_CONCURRENT_EXPORTS) {
+      return;
+    }
+    const next = this.queue.shift();
+    if (next) {
+      this.startExport(next);
+    }
+  }
+
+  /** Add job to history with max cap */
+  private addToHistory(job: ExportJob): void {
+    this.history.unshift({ ...job });
+    if (this.history.length > MAX_EXPORT_HISTORY) {
+      this.history = this.history.slice(0, MAX_EXPORT_HISTORY);
+    }
+  }
+
+  /** Check if a job matches given options (for queue deduplication) */
+  private isJobForOptions(job: ExportJob, opts: ExportOptions): boolean {
+    return job.videoId === opts.videoId && job.quality === opts.quality;
+  }
+
+  /** Destroy the manager and cancel active jobs */
+  public destroy(): void {
+    this.isDestroyed = true;
+    this.queue = [];
+    for (const job of this.jobs.values()) {
+      if (job.status === 'processing' || job.status === 'encoding') {
+        job.status = 'cancelled';
+      }
+    }
+    this.activeExports = 0;
+  }
+}
