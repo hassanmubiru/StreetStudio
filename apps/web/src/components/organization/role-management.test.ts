@@ -989,3 +989,68 @@ describe('countOverrides', () => {
     expect(countOverrides(resolved)).toBe(1);
   });
 });
+
+// --------------------------------------------------------------------------
+// Permission Inheritance - Component
+// --------------------------------------------------------------------------
+
+describe('PermissionInheritance', () => {
+  let container: HTMLElement;
+  const resources = [{ id: 'projects', name: 'Projects', description: '' }];
+  const actions = [
+    { id: 'view', name: 'View', description: '' },
+    { id: 'edit', name: 'Edit', description: '' },
+  ];
+
+  beforeEach(() => {
+    container = createContainer();
+  });
+
+  it('renders with proper aria attributes', () => {
+    new PermissionInheritance(container, {
+      memberId: 'user-1',
+      memberName: 'Alice',
+      sources: [],
+      permissionsBySource: new Map(),
+      overrides: [],
+      resources,
+      actions,
+      isAdmin: true,
+    }, {
+      onAddOverride: vi.fn().mockResolvedValue(true),
+      onRemoveOverride: vi.fn().mockResolvedValue(true),
+      onChangeSourcePriority: vi.fn().mockResolvedValue(true),
+    });
+
+    expect(container.getAttribute('role')).toBe('region');
+    expect(container.getAttribute('aria-label')).toContain('Alice');
+  });
+
+  it('displays source chain sorted by priority', () => {
+    new PermissionInheritance(container, {
+      memberId: 'user-1',
+      memberName: 'Alice',
+      sources: [
+        { type: 'role', id: 'r1', name: 'Editor', priority: 1 },
+        { type: 'team', id: 't1', name: 'Design', priority: 5 },
+      ],
+      permissionsBySource: new Map([
+        ['r1', ['projects:view']],
+        ['t1', ['projects:view', 'projects:edit']],
+      ]),
+      overrides: [],
+      resources,
+      actions,
+      isAdmin: true,
+    }, {
+      onAddOverride: vi.fn().mockResolvedValue(true),
+      onRemoveOverride: vi.fn().mockResolvedValue(true),
+      onChangeSourcePriority: vi.fn().mockResolvedValue(true),
+    });
+
+    const sourceItems = container.querySelectorAll('.permission-source-item');
+    expect(sourceItems.length).toBe(2);
+    // Higher priority first
+    expect(sourceItems[0].textContent).toContain('Design');
+    expect(sourceItems[1].textContent).toContain('Editor');
+  });

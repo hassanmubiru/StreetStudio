@@ -146,7 +146,9 @@ export class MemberManagement {
         ${this.renderPendingInvitations()}
 
         <!-- Members Table -->
-        ${this.renderMembersTable(filteredMembers)}
+        <div data-members-table-wrapper>
+          ${this.renderMembersTable(filteredMembers)}
+        </div>
       </div>
 
       <!-- Invitation Modal (hidden by default) -->
