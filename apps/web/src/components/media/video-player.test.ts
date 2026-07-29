@@ -52,3 +52,46 @@ describe('formatTime', () => {
   it('formats hours, minutes, and seconds', () => {
     expect(formatTime(3661)).toBe('1:01:01');
   });
+
+  it('handles negative numbers gracefully', () => {
+    expect(formatTime(-5)).toBe('0:00');
+  });
+
+  it('handles NaN gracefully', () => {
+    expect(formatTime(NaN)).toBe('0:00');
+  });
+
+  it('handles Infinity gracefully', () => {
+    expect(formatTime(Infinity)).toBe('0:00');
+  });
+});
+
+describe('AdaptiveVideoPlayer', () => {
+  let container: HTMLElement;
+  let player: AdaptiveVideoPlayer;
+  let callbacks: PlayerCallbacks;
+
+  beforeEach(() => {
+    container = createContainer();
+    callbacks = {
+      onPlay: vi.fn(),
+      onPause: vi.fn(),
+      onSeeked: vi.fn(),
+      onTimeUpdate: vi.fn(),
+      onVolumeChange: vi.fn(),
+      onRateChange: vi.fn(),
+      onFullscreenChange: vi.fn(),
+      onPictureInPictureChange: vi.fn(),
+      onBuffering: vi.fn(),
+      onError: vi.fn(),
+      onEnded: vi.fn(),
+      onDurationChange: vi.fn(),
+    };
+  });
+
+  afterEach(() => {
+    if (player) {
+      player.destroy();
+    }
+    container.remove();
+  });

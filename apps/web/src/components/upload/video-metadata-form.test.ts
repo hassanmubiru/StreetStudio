@@ -172,3 +172,45 @@ describe('VideoMetadataForm', () => {
       expect(result.isValid).toBe(true);
     });
   });
+
+  describe('Form Submission', () => {
+    it('should call onSubmit with valid form data', () => {
+      const onSubmit = vi.fn();
+      form = new VideoMetadataForm(container, {
+        initialData: { title: 'Test Video' },
+        onSubmit
+      });
+
+      const formEl = container.querySelector('form') as HTMLFormElement;
+      formEl.dispatchEvent(new Event('submit', { bubbles: true }));
+
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Test Video',
+        description: '',
+        projectId: null,
+        tags: [],
+        isPrivate: false,
+        developerMode: false
+      }));
+    });
+
+    it('should not call onSubmit with invalid data', () => {
+      const onSubmit = vi.fn();
+      form = new VideoMetadataForm(container, { onSubmit });
+
+      const formEl = container.querySelector('form') as HTMLFormElement;
+      formEl.dispatchEvent(new Event('submit', { bubbles: true }));
+
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('should display validation errors on failed submission', () => {
+      form = new VideoMetadataForm(container);
+
+      const formEl = container.querySelector('form') as HTMLFormElement;
+      formEl.dispatchEvent(new Event('submit', { bubbles: true }));
+
+      const titleError = container.querySelector('#title-error');
+      expect(titleError?.textContent).toBeTruthy();
+    });
+  });
