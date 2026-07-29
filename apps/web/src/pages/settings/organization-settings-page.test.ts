@@ -502,3 +502,56 @@ describe('OrganizationSettingsPage', () => {
       expect(select).toBeTruthy();
       expect(select.value).toBe('indefinite');
     });
+
+    it('should update retention policy on change', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('storage');
+
+      const select = el.querySelector('#retention-policy') as HTMLSelectElement;
+      select.value = '90days';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getSettings().storage.retentionPolicy).toBe('90days');
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should render preferred region select with all regions', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('storage');
+
+      const select = el.querySelector('#preferred-region') as HTMLSelectElement;
+      expect(select).toBeTruthy();
+      expect(select.options.length).toBe(STORAGE_REGIONS.length);
+    });
+
+    it('should update preferred region on change', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('storage');
+
+      const select = el.querySelector('#preferred-region') as HTMLSelectElement;
+      select.value = 'eu-west-1';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getSettings().storage.preferredRegion).toBe('eu-west-1');
+    });
+
+    it('should toggle auto-delete originals setting', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('storage');
+
+      const checkbox = el.querySelector('#auto-delete-originals') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getSettings().storage.autoDeleteProcessedOriginals).toBe(true);
+      expect(page.isDirtyState()).toBe(true);
+    });
+  });
