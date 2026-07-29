@@ -570,3 +570,55 @@ export class ThreadedCommentDisplay {
     menu.className = 'moderation-menu';
     menu.setAttribute('role', 'menu');
     menu.setAttribute('aria-label', 'Moderation actions');
+
+    const actions: Array<{ label: string; action: ModerationAction }> = [
+      { label: comment.status === 'pinned' ? 'Unpin' : 'Pin', action: comment.status === 'pinned' ? 'unpin' : 'pin' },
+      { label: comment.status === 'hidden' ? 'Show' : 'Hide', action: 'hide' },
+      { label: 'Delete', action: 'delete' },
+    ];
+
+    for (const { label, action } of actions) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'moderation-menu-item';
+      btn.setAttribute('role', 'menuitem');
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        this.callbacks.onModerate?.(comment.id, action);
+        menu.remove();
+      });
+      menu.appendChild(btn);
+    }
+
+    // Position menu near anchor
+    anchor.parentElement?.appendChild(menu);
+
+    // Close on outside click
+    const closeHandler = (e: MouseEvent) => {
+      if (!menu.contains(e.target as Node)) {
+        menu.remove();
+        document.removeEventListener('click', closeHandler);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', closeHandler), 0);
+  }
+
+  private formatRelativeDate(isoString: IsoTimestamp): string {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHrs = Math.floor(diffMins / 60);
+    if (diffHrs < 24) return `${diffHrs}h ago`;
+    const diffDays = Math.floor(diffHrs / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  }
+
+  public getElement(): HTMLElement {
+    return this.container;
+  }
+}

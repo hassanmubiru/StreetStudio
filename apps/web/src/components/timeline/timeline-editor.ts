@@ -790,3 +790,60 @@ export class TimelineEditor {
       }
     }, 1500);
   }
+
+  // ─── Public API ─────────────────────────────────────────────────────────────
+
+  /** Add a clip to the timeline */
+  public addClip(clip: TimelineClip): void {
+    this.state.clips.push(clip);
+    this.recalculateDuration();
+    this.renderClips();
+    this.notifyStateChange();
+  }
+
+  /** Remove a clip by ID */
+  public removeClip(clipId: string): boolean {
+    const index = this.state.clips.findIndex(c => c.id === clipId);
+    if (index === -1) return false;
+    this.state.clips.splice(index, 1);
+    if (this.state.selectedClipId === clipId) {
+      this.state.selectedClipId = null;
+    }
+    this.recalculateDuration();
+    this.renderClips();
+    this.notifyStateChange();
+    return true;
+  }
+
+  /** Load multiple clips into the timeline */
+  public loadClips(clips: TimelineClip[]): void {
+    this.state.clips = [...clips];
+    this.recalculateDuration();
+    this.renderClips();
+    this.notifyStateChange();
+  }
+
+  /** Seek to a specific frame */
+  public seekToFrame(frame: number): void {
+    const clampedFrame = clamp(Math.round(frame), 0, this.state.duration);
+    this.state.playheadFrame = clampedFrame;
+    this.updatePlayheadPosition();
+    this.updateTimecodeDisplay();
+    this.callbacks.onPlayheadChange?.(clampedFrame);
+    this.notifyStateChange();
+  }
+
+  /** Seek relative to current position */
+  public seekRelativeFrames(delta: number): void {
+    this.seekToFrame(this.state.playheadFrame + delta);
+  }
+
+  /** Move to the next frame */
+  public nextFrame(): void {
+    this.seekRelativeFrames(1);
+  }
+
+  /** Move to the previous frame */
+  public prevFrame(): void {
+    this.seekRelativeFrames(-1);
+  }
