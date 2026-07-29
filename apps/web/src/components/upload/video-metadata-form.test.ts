@@ -435,3 +435,71 @@ describe('VideoMetadataForm', () => {
       expect(suggestions?.textContent).toContain('custom-tag');
     });
   });
+
+  describe('Accessibility', () => {
+    beforeEach(() => {
+      form = new VideoMetadataForm(container);
+    });
+
+    it('should have aria-label on form', () => {
+      const formEl = container.querySelector('form');
+      expect(formEl?.getAttribute('aria-label')).toBe('Video metadata');
+    });
+
+    it('should mark title as required with aria-required', () => {
+      const titleInput = container.querySelector('#video-title');
+      expect(titleInput?.getAttribute('aria-required')).toBe('true');
+    });
+
+    it('should set aria-invalid on validation error', () => {
+      // Trigger validation
+      const formEl = container.querySelector('form') as HTMLFormElement;
+      formEl.dispatchEvent(new Event('submit', { bubbles: true }));
+
+      const titleInput = container.querySelector('#video-title');
+      expect(titleInput?.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('should have role=switch on toggle inputs', () => {
+      const privateInput = container.querySelector('#video-private');
+      expect(privateInput?.getAttribute('role')).toBe('switch');
+    });
+
+    it('should have combobox role on tag input', () => {
+      const tagInput = container.querySelector('#tag-input');
+      expect(tagInput?.getAttribute('role')).toBe('combobox');
+    });
+
+    it('should update aria-expanded on tag suggestions', () => {
+      const tagInput = container.querySelector('#tag-input') as HTMLInputElement;
+      expect(tagInput?.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should have aria-label on tag remove buttons', () => {
+      form.setFormData({ title: 'Video', tags: ['mytag'] });
+
+      const removeBtn = container.querySelector('.tag-remove');
+      expect(removeBtn?.getAttribute('aria-label')).toContain('Remove tag');
+    });
+  });
+
+  describe('Character Counter', () => {
+    beforeEach(() => {
+      form = new VideoMetadataForm(container);
+    });
+
+    it('should show character count for title', () => {
+      const countEl = container.querySelector('#title-char-count');
+      expect(countEl?.textContent).toBe('0/255');
+    });
+
+    it('should update character count on input', () => {
+      const titleInput = container.querySelector('#video-title') as HTMLInputElement;
+      titleInput.value = 'Hello';
+      titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const countEl = container.querySelector('#title-char-count');
+      expect(countEl?.textContent).toBe('5/255');
+    });
+  });
+});
