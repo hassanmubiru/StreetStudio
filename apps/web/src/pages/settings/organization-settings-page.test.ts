@@ -670,3 +670,48 @@ describe('OrganizationSettingsPage', () => {
       const rows = el.querySelectorAll('[data-webhook-index]');
       expect(rows.length).toBe(2);
     });
+
+    it('should add a new webhook endpoint', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      const addBtn = el.querySelector('#add-webhook') as HTMLButtonElement;
+      addBtn.click();
+
+      expect(page.getSettings().integrations.webhookEndpoints.length).toBe(1);
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should remove a webhook endpoint', () => {
+      const webhooks: WebhookEndpoint[] = [
+        { id: '1', url: 'https://example.com/hook', events: ['video.uploaded'], active: true },
+      ];
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        integrations: { ...createDefaultIntegrationSettings(), webhookEndpoints: webhooks },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      const removeBtn = el.querySelector('.remove-webhook') as HTMLButtonElement;
+      removeBtn.click();
+
+      expect(page.getSettings().integrations.webhookEndpoints.length).toBe(0);
+    });
+
+    it('should not show add button when max webhooks reached', () => {
+      const webhooks: WebhookEndpoint[] = Array.from({ length: MAX_WEBHOOK_ENDPOINTS }, (_, i) => ({
+        id: String(i), url: `https://hook${i}.com`, events: ['video.uploaded'], active: true,
+      }));
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        integrations: { ...createDefaultIntegrationSettings(), webhookEndpoints: webhooks },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      expect(el.querySelector('#add-webhook')).toBeFalsy();
+    });
+  });
