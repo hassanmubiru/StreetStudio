@@ -827,3 +827,79 @@ export class TextOverlayManager {
 
     return vtt;
   }
+
+  /**
+   * Import captions from WebVTT format.
+   */
+  public importCaptionsFromVTT(vttContent: string): CaptionCue[] {
+    const imported: CaptionCue[] = [];
+    const lines = vttContent.split('\n');
+    let i = 0;
+
+    // Skip header
+    while (i < lines.length && !lines[i].includes('-->')) {
+      i++;
+    }
+
+    while (i < lines.length) {
+      const line = lines[i].trim();
+
+      if (line.includes('-->')) {
+        const [startStr, endStr] = line.split('-->').map(s => s.trim());
+        const startSeconds = this.parseVTTTime(startStr);
+        const endSeconds = this.parseVTTTime(endStr);
+
+        // Collect text lines until empty line
+        i++;
+        let text = '';
+        let speaker: string | undefined;
+        while (i < lines.length && lines[i].trim() !== '') {
+          const textLine = lines[i].trim();
+          // Check for speaker tag <v Speaker>
+          const speakerMatch = textLine.match(/^<v\s+([^>]+)>(.*)/);
+          if (speakerMatch) {
+            speaker = speakerMatch[1];
+            text += (text ? '\n' : '') + speakerMatch[2];
+          } else {
+            text += (text ? '\n' : '') + textLine;
+          }
+          i++;
+        }
+
+        if (text.trim()) {
+          const caption = this.addCaption(
+            text.trim(),
+            secondsToFrames(startSeconds, this.options.frameRate),
+            secondsToFrames(endSeconds, this.options.frameRate),
+            undefined,
+            speaker
+          );
+          imported.push(caption);
+        }
+      } else {
+        i++;
+      }
+    }
+
+    return imported;
+  }
+
+  /**
+   * Format seconds to VTT time string (HH:MM:SS.mmm).
+   */
+  private formatVTTTime(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    const ms = Math.round((seconds % 1) * 1000);
+
+    return (
+      String(h).padStart(2, '0') +
+      ':' +
+      String(m).padStart(2, '0') +
+      ':' +
+      String(s).padStart(2, '0') +
+      '.' +
+      String(ms).padStart(3, '0')
+    );
+  }
