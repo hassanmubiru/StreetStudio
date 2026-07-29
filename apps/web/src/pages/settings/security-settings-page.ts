@@ -605,3 +605,51 @@ export class SecuritySettingsPage {
     // Default device icon
     return '<svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>';
   }
+
+  private renderLoginHistorySection(): HTMLElement {
+    const section = document.createElement('section');
+    section.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6';
+    section.setAttribute('aria-labelledby', 'login-history-heading');
+
+    const suspiciousCount = this.loginHistory.filter(e => e.suspicious).length;
+    const alertBanner = suspiciousCount > 0 ? `
+      <div class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mb-4" role="alert">
+        <svg class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+        </svg>
+        <span class="text-sm text-red-800 dark:text-red-200">
+          ${suspiciousCount} suspicious login attempt${suspiciousCount > 1 ? 's' : ''} detected. Review your recent activity below.
+        </span>
+      </div>
+    ` : '';
+
+    let historyHtml: string;
+    if (this.loginHistory.length === 0) {
+      historyHtml = `<p class="text-sm text-gray-500 dark:text-gray-400">No login history available.</p>`;
+    } else {
+      historyHtml = `
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[500px]" role="table" aria-label="Login history">
+            <thead>
+              <tr class="text-left border-b border-gray-200 dark:border-gray-700">
+                <th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                <th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date & Time</th>
+                <th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Location</th>
+                <th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Device</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+              ${this.loginHistory.map(entry => this.renderLoginHistoryRow(entry)).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    section.innerHTML = `
+      <h2 id="login-history-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Login History</h2>
+      ${alertBanner}
+      ${historyHtml}
+    `;
+    return section;
+  }

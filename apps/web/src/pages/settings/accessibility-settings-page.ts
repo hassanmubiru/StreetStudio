@@ -613,3 +613,61 @@ export class AccessibilitySettingsPage {
     const discardBtn = this.element.querySelector('#a11y-discard-changes');
     discardBtn?.addEventListener('click', () => this.handleDiscard());
   }
+
+  private setTheme(theme: ThemeMode): void {
+    this.preferences.theme = theme;
+    this.markDirty();
+    applyAccessibilityPreferences(this.preferences);
+
+    // Update radio group visuals
+    const cards = this.element.querySelectorAll('[data-theme-value]');
+    cards.forEach(card => {
+      const isSelected = card.getAttribute('data-theme-value') === theme;
+      card.setAttribute('aria-checked', String(isSelected));
+      card.setAttribute('tabindex', isSelected ? '0' : '-1');
+      if (isSelected) {
+        card.classList.add('border-blue-500', 'ring-2', 'ring-blue-200');
+        card.classList.remove('border-gray-200', 'dark:border-gray-600');
+      } else {
+        card.classList.remove('border-blue-500', 'ring-2', 'ring-blue-200');
+        card.classList.add('border-gray-200', 'dark:border-gray-600');
+      }
+    });
+
+    // Announce to screen readers
+    this.announceChange(`Theme changed to ${theme}`);
+  }
+
+  private markDirty(): void {
+    if (!this.isDirty) {
+      this.isDirty = true;
+      this.updateSaveBar();
+    }
+  }
+
+  private updateSaveBar(): void {
+    const statusEl = this.element.querySelector('#a11y-save-status');
+    const saveBtn = this.element.querySelector('#a11y-save-settings') as HTMLButtonElement;
+    const discardBtn = this.element.querySelector('#a11y-discard-changes') as HTMLButtonElement;
+
+    if (statusEl) {
+      if (this.isSaving) {
+        statusEl.textContent = 'Saving...';
+        statusEl.className = 'text-sm text-blue-600 dark:text-blue-400';
+      } else if (this.isDirty) {
+        statusEl.textContent = 'Unsaved changes';
+        statusEl.className = 'text-sm text-amber-600 dark:text-amber-400';
+      } else {
+        statusEl.textContent = 'All changes saved';
+        statusEl.className = 'text-sm text-green-600 dark:text-green-400';
+      }
+    }
+
+    if (saveBtn) {
+      saveBtn.disabled = !this.isDirty || this.isSaving;
+      saveBtn.textContent = this.isSaving ? 'Saving...' : 'Save Changes';
+    }
+    if (discardBtn) {
+      discardBtn.disabled = !this.isDirty;
+    }
+  }

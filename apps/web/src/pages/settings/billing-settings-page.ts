@@ -677,3 +677,76 @@ export class BillingSettingsPage {
       this.showToast('Failed to remove payment method. Please try again.');
     }
   }
+
+  private async handleSelectPlan(planId: string): Promise<void> {
+    const plan = this.billingData?.availablePlans.find(p => p.id === planId);
+    if (!plan) return;
+
+    const currentPlan = this.billingData?.availablePlans.find(p => p.isCurrentPlan);
+    const action = currentPlan && plan.price > currentPlan.price ? 'upgrade' : 'downgrade';
+
+    const confirmed = window.confirm(
+      `Are you sure you want to ${action} to the ${plan.name} plan? ` +
+      (action === 'upgrade'
+        ? 'You will be charged the prorated difference immediately.'
+        : 'The change will take effect at the end of your current billing period.')
+    );
+    if (!confirmed) return;
+
+    try {
+      await apiClient.post(
+        `/organizations/${this.config.organizationId}/billing/change-plan`,
+        { planId }
+      );
+      if (this.billingData) {
+        this.billingData.subscription.planId = plan.id;
+        this.billingData.subscription.planName = plan.name;
+        this.billingData.availablePlans.forEach(p => {
+          p.isCurrentPlan = p.id === planId;
+        });
+      }
+      this.currentView = 'overview';
+      this.render();
+      this.element.dispatchEvent(new CustomEvent('plan-changed', {
+        bubbles: true,
+        detail: { planId, planName: plan.name, action },
+      }));
+      logger.info('Plan changed', { planId, action });
+    } catch (err) {
+      logger.error('Failed to change plan', { error: err instanceof Error ? err.message : String(err) });
+      this.showToast('Failed to change plan. Please try again.');
+    }
+  }
+
+  private showToast(message: string): void {
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-4 right-4 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-3 rounded-lg shadow-lg text-sm z-50';
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+  }
+
+  private getCardIcon(brand?: string): string {
+    return `<svg class="w-8 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+    </svg>`;
+  }
+
+  private getBankIcon(): string {
+    return `<svg class="w-8 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+    </svg>`;
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  public destroy(): void {
+    this.element.innerHTML = '';
+  }
+}

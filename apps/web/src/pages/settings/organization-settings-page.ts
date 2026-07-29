@@ -428,3 +428,31 @@ export class OrganizationSettingsPage {
           </label>
         </div>
       </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="security-password-heading">
+        <h2 id="security-password-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Password Policy</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label for="password-min-length" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Minimum Password Length</label>
+            <input id="password-min-length" type="number" min="6" max="128" value="${sec.passwordMinLength}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label for="max-login-attempts" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Login Attempts</label>
+            <input id="max-login-attempts" type="number" min="3" max="20" value="${sec.maxLoginAttempts}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500" />
+          </div>
+        </div>
+        <div class="mt-4 space-y-3">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input id="require-uppercase" type="checkbox" ${sec.passwordRequireUppercase ? 'checked' : ''} class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+            <span class="text-sm text-gray-700 dark:text-gray-300">Require uppercase letter</span>
+          </label>
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input id="require-numbers" type="checkbox" ${sec.passwordRequireNumbers ? 'checked' : ''} class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+            <span class="text-sm text-gray-700 dark:text-gray-300">Require number</span>
+          </label>
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input id="require-special" type="checkbox" ${sec.passwordRequireSpecialChars ? 'checked' : ''} class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+            <span class="text-sm text-gray-700 dark:text-gray-300">Require special character</span>
+          </label>
+        </div>
+      </section>
