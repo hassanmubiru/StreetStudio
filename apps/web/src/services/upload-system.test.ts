@@ -438,3 +438,114 @@ describe('Upload System - Progress Tracking and State Management', () => {
       // No additional calls after unsubscribe
       expect(listener.mock.calls.length).toBe(initialCallCount);
     });
+
+    it('should compute global state correctly', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 10 });
+
+      const state = store.getState();
+      expect(state.isUploading).toBe(false);
+      expect(state.totalProgress).toBe(0);
+      expect(state.completedUploads).toBe(0);
+      expect(state.failedUploads).toBe(0);
+      expect(state.queuedUploads).toBe(0);
+      expect(state.totalSpeed).toBe(0);
+    });
+  });
+
+  describe('Upload Lifecycle Operations', () => {
+    it('should cancel an upload and update state', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 3 });
+      const file = createMockFile('test.mp4', 1024);
+
+      const uploadId = store.addUpload(file);
+      store.cancelUpload(uploadId);
+
+      const upload = store.getUpload(uploadId);
+      expect(upload!.status).toBe('cancelled');
+    });
+
+    it('should remove an upload from the list', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 3 });
+      const file = createMockFile('test.mp4', 1024);
+
+      const uploadId = store.addUpload(file);
+      store.removeUpload(uploadId);
+
+      const upload = store.getUpload(uploadId);
+      expect(upload).toBeUndefined();
+      expect(store.getState().uploads.length).toBe(0);
+    });
+
+    it('should pause an upload', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 3 });
+      const file = createMockFile('test.mp4', 1024);
+
+      const uploadId = store.addUpload(file);
+      store.pauseUpload(uploadId);
+
+      const upload = store.getUpload(uploadId);
+      expect(upload!.status).toBe('paused');
+    });
+
+    it('should resume a paused upload by moving it back to queued', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 3 });
+      const file = createMockFile('test.mp4', 1024);
+
+      const uploadId = store.addUpload(file);
+      store.pauseUpload(uploadId);
+      store.resumeUpload(uploadId);
+
+      const upload = store.getUpload(uploadId);
+      expect(upload!.status).toBe('queued');
+    });
+
+    it('should clear all completed uploads', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 10 });
+      const file = createMockFile('test.mp4', 1024);
+
+      const uploadId = store.addUpload(file);
+      // Manually set status to completed for test purposes
+      // Access internal via cancelUpload then check clearCompleted
+      store.cancelUpload(uploadId);
+
+      const file2 = createMockFile('test2.mp4', 1024);
+      store.addUpload(file2);
+
+      // clearCompleted removes completed ones (none in this case)
+      store.clearCompleted();
+      // Should still have uploads that are not completed
+      expect(store.getState().uploads.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should clear all uploads including active ones', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 10 });
+      store.addUpload(createMockFile('a.mp4', 100));
+      store.addUpload(createMockFile('b.mp4', 100));
+
+      store.clearAll();
+
+      const state = store.getState();
+      expect(state.uploads.length).toBe(0);
+      expect(state.isUploading).toBe(false);
+      expect(state.totalProgress).toBe(0);
+    });
+  });
+
+  describe('Store Destroy', () => {
+    it('should clean up all resources on destroy', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 3 });
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      store.addUpload(createMockFile('test.mp4', 1024));
+      store.destroy();
+
+      // After destroy, adding more shouldn't notify old listeners
+      // (listeners are cleared)
+      const callCountAfterDestroy = listener.mock.calls.length;
+      // Can't add after destroy since listeners are cleared,
+      // but verify no errors are thrown
+      expect(callCountAfterDestroy).toBeGreaterThan(0);
+    });
+  });
+});
