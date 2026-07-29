@@ -746,8 +746,11 @@ describe('BillingSettingsPage', () => {
       document.body.appendChild(el);
 
       const cancelBtn = el.querySelector('#cancel-subscription-btn') as HTMLButtonElement;
+      expect(cancelBtn).toBeTruthy();
       cancelBtn.click();
 
+      // Give async handler time to potentially call the API
+      await new Promise(resolve => setTimeout(resolve, 50));
       expect(apiClient.post).not.toHaveBeenCalled();
     });
 
