@@ -206,3 +206,38 @@ export class UploadProgressInterface {
       totalBytes
     };
   }
+
+  /**
+   * Parse upload errors into user-friendly error information
+   */
+  public parseUploadError(upload: UploadItem): UploadErrorInfo {
+    const errorMessage = upload.error || 'An unknown error occurred';
+    let errorType: UploadErrorInfo['errorType'] = 'unknown';
+    let suggestion = 'Please try again later.';
+    let retryable = true;
+
+    if (errorMessage.includes('network') || errorMessage.includes('Network') || errorMessage.includes('connection')) {
+      errorType = 'network';
+      suggestion = 'Check your internet connection and try again.';
+    } else if (errorMessage.includes('server') || errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
+      errorType = 'server';
+      suggestion = 'The server is temporarily unavailable. Please try again in a few moments.';
+    } else if (errorMessage.includes('too large') || errorMessage.includes('validation') || errorMessage.includes('type')) {
+      errorType = 'validation';
+      suggestion = 'Please check the file meets the upload requirements.';
+      retryable = false;
+    } else if (errorMessage.includes('quota') || errorMessage.includes('storage') || errorMessage.includes('limit')) {
+      errorType = 'quota';
+      suggestion = 'Storage quota exceeded. Please free up space or upgrade your plan.';
+      retryable = false;
+    }
+
+    return {
+      uploadId: upload.id,
+      fileName: upload.file.name,
+      errorType,
+      message: errorMessage,
+      retryable,
+      suggestion
+    };
+  }

@@ -361,3 +361,40 @@ export class AdaptiveVideoPlayer {
       }
     });
   }
+
+  private setupControlEventListeners(): void {
+    // Play/Pause button
+    const playBtn = this.controlsElement.querySelector('.play-btn');
+    playBtn?.addEventListener('click', () => this.togglePlayPause());
+
+    // Seek bar
+    const seekBar = this.controlsElement.querySelector('.seek-bar') as HTMLInputElement;
+    seekBar?.addEventListener('input', () => {
+      const time = (parseFloat(seekBar.value) / 100) * this.state.duration;
+      this.seek(time);
+    });
+
+    // Mute button
+    const muteBtn = this.controlsElement.querySelector('.mute-btn');
+    muteBtn?.addEventListener('click', () => this.toggleMute());
+
+    // Volume bar
+    const volumeBar = this.controlsElement.querySelector('.volume-bar') as HTMLInputElement;
+    volumeBar?.addEventListener('input', () => {
+      this.setVolume(parseFloat(volumeBar.value));
+    });
+
+    // Speed select
+    const speedSelect = this.controlsElement.querySelector('.speed-select') as HTMLSelectElement;
+    speedSelect?.addEventListener('change', () => {
+      this.setPlaybackRate(parseFloat(speedSelect.value));
+    });
+
+    // PiP button
+    const pipBtn = this.controlsElement.querySelector('.pip-btn');
+    pipBtn?.addEventListener('click', () => this.togglePictureInPicture());
+
+    // Fullscreen button
+    const fullscreenBtn = this.controlsElement.querySelector('.fullscreen-btn');
+    fullscreenBtn?.addEventListener('click', () => this.toggleFullscreen());
+  }

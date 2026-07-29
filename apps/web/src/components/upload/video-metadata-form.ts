@@ -212,3 +212,33 @@ export class VideoMetadataForm {
           <div class="field-hint">Private videos are only visible to you and people you share them with</div>
         </div>
       </fieldset>
+
+      ${this.config.showDeveloperMode ? `
+      <fieldset class="form-group form-fieldset">
+        <legend class="form-label">Developer Options</legend>
+        <div class="toggle-group">
+          <label class="toggle-label" for="video-developer-mode">
+            <input
+              type="checkbox"
+              id="video-developer-mode"
+              name="developerMode"
+              class="toggle-input"
+              ${this.formData.developerMode ? 'checked' : ''}
+              role="switch"
+              aria-checked="${this.formData.developerMode}"
+            />
+            <span class="toggle-switch"></span>
+            <span class="toggle-text">Developer mode</span>
+          </label>
+          <div class="field-hint">Enable code-related features like syntax highlighting in annotations</div>
+        </div>
+      </fieldset>
+      ` : ''}
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary form-submit" id="submit-metadata">
+          Save Metadata
+        </button>
+      </div>
+    `;
+  }
