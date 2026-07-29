@@ -380,3 +380,65 @@ describe('EditingPreviewSystem', () => {
     });
   });
 });
+
+// ─── ExportManager Tests ──────────────────────────────────────────────────────
+
+describe('ExportManager', () => {
+  let manager: ExportManager;
+  let callbacks: ExportCallbacks;
+
+  const createExportOptions = (
+    overrides: Partial<ExportOptions> = {}
+  ): ExportOptions => ({
+    videoId: 'video-1',
+    quality: 'high',
+    format: 'mp4',
+    clips: [],
+    editOperations: [],
+    includeOverlays: true,
+    includeCaptions: true,
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    callbacks = {
+      onExportStart: vi.fn(),
+      onExportProgress: vi.fn(),
+      onExportComplete: vi.fn(),
+      onExportError: vi.fn(),
+      onExportCancelled: vi.fn(),
+    };
+    manager = new ExportManager(callbacks);
+  });
+
+  afterEach(() => {
+    manager.destroy();
+  });
+
+  describe('starting exports', () => {
+    it('creates an export job with queued then processing status', () => {
+      const job = manager.startExport(createExportOptions());
+      expect(job.id).toMatch(/^export-/);
+      expect(job.status).toBe('processing');
+      expect(job.videoId).toBe('video-1');
+      expect(job.quality).toBe('high');
+    });
+
+    it('fires onExportStart callback', () => {
+      manager.startExport(createExportOptions());
+      expect(callbacks.onExportStart).toHaveBeenCalled();
+    });
+
+    it('uses correct resolution for quality', () => {
+      const job = manager.startExport(createExportOptions({ quality: 'low' }));
+      expect(job.resolution).toEqual({ width: 854, height: 480 });
+    });
+
+    it('limits concurrent exports', () => {
+      for (let i = 0; i < MAX_CONCURRENT_EXPORTS + 2; i++) {
+        manager.startExport(createExportOptions({ videoId: `v-${i}` }));
+      }
+      expect(manager.getActiveCount()).toBe(MAX_CONCURRENT_EXPORTS);
+      expect(manager.getQueuedCount()).toBeGreaterThan(0);
+    });
+  });

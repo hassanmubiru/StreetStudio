@@ -223,3 +223,80 @@ describe('ConflictDetector', () => {
     detector.completeEdit('user-2', 'clip-A'); // wrong user
     expect(detector.hasActiveLock('clip-A')).toBe(true);
   });
+
+  it('resolveConflict with accept-initiator keeps the initiator lock', () => {
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    const conflict = detector.registerEdit('user-2', 'clip-A', 'split')!;
+
+    const resolved = detector.resolveConflict(conflict.id, 'accept-initiator');
+    expect(resolved!.resolution).toBe('accept-initiator');
+    expect(detector.getLockHolder('clip-A')).toBe('user-1');
+  });
+
+  it('resolveConflict with accept-conflicting transfers the lock', () => {
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    const conflict = detector.registerEdit('user-2', 'clip-A', 'split')!;
+
+    detector.resolveConflict(conflict.id, 'accept-conflicting');
+    expect(detector.getLockHolder('clip-A')).toBe('user-2');
+  });
+
+  it('resolveConflict with merge clears the lock', () => {
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    const conflict = detector.registerEdit('user-2', 'clip-A', 'split')!;
+
+    detector.resolveConflict(conflict.id, 'merge');
+    expect(detector.hasActiveLock('clip-A')).toBe(false);
+  });
+
+  it('resolveConflict with dismissed clears the lock', () => {
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    const conflict = detector.registerEdit('user-2', 'clip-A', 'split')!;
+
+    detector.resolveConflict(conflict.id, 'dismissed');
+    expect(detector.hasActiveLock('clip-A')).toBe(false);
+  });
+
+  it('getPendingConflicts returns only unresolved conflicts', () => {
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    const c1 = detector.registerEdit('user-2', 'clip-A', 'split')!;
+
+    expect(detector.getPendingConflicts()).toHaveLength(1);
+
+    detector.resolveConflict(c1.id, 'merge');
+    expect(detector.getPendingConflicts()).toHaveLength(0);
+  });
+
+  it('calls onConflictDetected callback', () => {
+    const onDetected = vi.fn();
+    detector.setOnConflictDetected(onDetected);
+
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    detector.registerEdit('user-2', 'clip-A', 'split');
+
+    expect(onDetected).toHaveBeenCalledTimes(1);
+    expect(onDetected.mock.calls[0][0].clipId).toBe('clip-A');
+  });
+
+  it('calls onConflictResolved callback', () => {
+    const onResolved = vi.fn();
+    detector.setOnConflictResolved(onResolved);
+
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    const conflict = detector.registerEdit('user-2', 'clip-A', 'split')!;
+    detector.resolveConflict(conflict.id, 'merge');
+
+    expect(onResolved).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolveConflict returns null for unknown conflict ID', () => {
+    expect(detector.resolveConflict('nonexistent', 'merge')).toBeNull();
+  });
+
+  it('clear resets all state', () => {
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    detector.clear();
+    expect(detector.hasActiveLock('clip-A')).toBe(false);
+    expect(detector.getAllConflicts()).toHaveLength(0);
+  });
+});
