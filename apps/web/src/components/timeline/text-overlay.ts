@@ -376,3 +376,68 @@ export class TextOverlayManager {
     this.callbacks.onOverlayUpdate?.(updated);
     return updated;
   }
+
+  /**
+   * Remove a text overlay.
+   */
+  public removeOverlay(id: string): boolean {
+    const existed = this.overlays.delete(id);
+    if (existed) {
+      this.callbacks.onOverlayRemove?.(id);
+    }
+    return existed;
+  }
+
+  /**
+   * Get a specific overlay by ID.
+   */
+  public getOverlay(id: string): TextOverlay | undefined {
+    return this.overlays.get(id);
+  }
+
+  /**
+   * Get all overlays.
+   */
+  public getAllOverlays(): TextOverlay[] {
+    return Array.from(this.overlays.values());
+  }
+
+  /**
+   * Get overlays visible at a specific frame.
+   */
+  public getOverlaysAtFrame(frame: number): TextOverlay[] {
+    return Array.from(this.overlays.values()).filter(
+      o => o.isVisible && frame >= o.startFrame && frame <= o.endFrame
+    );
+  }
+
+  /**
+   * Update overlay position (percentage-based, 0-100).
+   */
+  public setOverlayPosition(
+    id: string,
+    x: number,
+    y: number
+  ): TextOverlay | null {
+    const overlay = this.overlays.get(id);
+    if (!overlay) return null;
+
+    return this.updateOverlay(id, {
+      position: {
+        ...overlay.position,
+        x: clamp(x, 0, 100),
+        y: clamp(y, 0, 100),
+      },
+    });
+  }
+
+  /**
+   * Update overlay timing (start and end frames).
+   */
+  public setOverlayTiming(
+    id: string,
+    startFrame: number,
+    endFrame: number
+  ): TextOverlay | null {
+    return this.updateOverlay(id, { startFrame, endFrame });
+  }
