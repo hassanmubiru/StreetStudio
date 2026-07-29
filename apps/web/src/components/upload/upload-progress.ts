@@ -357,3 +357,44 @@ export class UploadProgressInterface {
     this.updateUploadCount(state);
     this.updatePauseButton(state);
   }
+
+  private updateBatchProgress(state: UploadState): void {
+    if (!this.config.showBatchProgress) return;
+
+    const fill = this.container.querySelector('.batch-progress-fill') as HTMLElement;
+    const percentage = this.container.querySelector('.batch-percentage') as HTMLElement;
+
+    if (fill) {
+      fill.style.width = `${state.totalProgress}%`;
+      fill.setAttribute('aria-valuenow', Math.round(state.totalProgress).toString());
+    }
+    if (percentage) {
+      percentage.textContent = `${Math.round(state.totalProgress)}%`;
+    }
+  }
+
+  private updateUploadCount(state: UploadState): void {
+    const countEl = this.container.querySelector('.upload-count') as HTMLElement;
+    if (!countEl) return;
+
+    const active = state.uploads.filter(u => u.status === 'uploading').length;
+    const queued = state.queuedUploads;
+    const total = state.uploads.length;
+
+    if (active > 0) {
+      countEl.textContent = `${active} uploading${queued > 0 ? `, ${queued} queued` : ''}`;
+    } else if (queued > 0) {
+      countEl.textContent = `${queued} queued`;
+    } else {
+      countEl.textContent = `${total} file${total !== 1 ? 's' : ''}`;
+    }
+  }
+
+  private updatePauseButton(state: UploadState): void {
+    const btn = this.container.querySelector('.btn-pause-all') as HTMLButtonElement;
+    if (!btn) return;
+
+    const hasActive = state.uploads.some(u => u.status === 'uploading');
+    btn.textContent = hasActive ? 'Pause All' : 'Resume All';
+    btn.setAttribute('aria-label', hasActive ? 'Pause all uploads' : 'Resume all uploads');
+  }

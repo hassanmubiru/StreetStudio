@@ -398,3 +398,59 @@ export class VideoMetadataForm {
 
     this.tagSuggestionsContainer.style.display = 'block';
     this.tagInput!.setAttribute('aria-expanded', 'true');
+
+    // Attach click listeners on suggestions
+    const suggestionElements = this.tagSuggestionsContainer.querySelectorAll('.tag-suggestion');
+    suggestionElements.forEach((el) => {
+      el.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const tag = (el as HTMLElement).dataset.tag;
+        if (tag) {
+          this.addTag(tag);
+        }
+      });
+    });
+  }
+
+  private hideTagSuggestions(): void {
+    if (!this.tagSuggestionsContainer) return;
+    this.tagSuggestionsContainer.style.display = 'none';
+    this.tagSuggestionsContainer.innerHTML = '';
+    this.activeSuggestionIndex = -1;
+    this.tagInput?.setAttribute('aria-expanded', 'false');
+  }
+
+  private navigateSuggestions(direction: number): void {
+    if (!this.tagSuggestionsContainer) return;
+    const suggestions = this.tagSuggestionsContainer.querySelectorAll('.tag-suggestion');
+    if (suggestions.length === 0) return;
+
+    // Remove active state from current
+    if (this.activeSuggestionIndex >= 0 && suggestions[this.activeSuggestionIndex]) {
+      suggestions[this.activeSuggestionIndex].classList.remove('active');
+      suggestions[this.activeSuggestionIndex].setAttribute('aria-selected', 'false');
+    }
+
+    // Calculate new index
+    this.activeSuggestionIndex += direction;
+    if (this.activeSuggestionIndex < 0) {
+      this.activeSuggestionIndex = suggestions.length - 1;
+    } else if (this.activeSuggestionIndex >= suggestions.length) {
+      this.activeSuggestionIndex = 0;
+    }
+
+    // Apply active state
+    suggestions[this.activeSuggestionIndex].classList.add('active');
+    suggestions[this.activeSuggestionIndex].setAttribute('aria-selected', 'true');
+  }
+
+  private selectActiveSuggestion(): void {
+    if (!this.tagSuggestionsContainer) return;
+    const activeSuggestion = this.tagSuggestionsContainer.querySelector('.tag-suggestion.active') as HTMLElement;
+    if (activeSuggestion) {
+      const tag = activeSuggestion.dataset.tag;
+      if (tag) {
+        this.addTag(tag);
+      }
+    }
+  }
