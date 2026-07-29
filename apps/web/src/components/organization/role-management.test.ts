@@ -825,7 +825,7 @@ describe('TeamManagement', () => {
     expect(container.querySelector('.team-name-input')).not.toBeNull();
   });
 
-  it('validates team name in editor', () => {
+  it('validates team name in editor', async () => {
     const mgmt = new TeamManagement(container, {
       organizationId: 'org-1',
       teams: [],
@@ -839,8 +839,10 @@ describe('TeamManagement', () => {
     const saveBtn = container.querySelector('.team-save-btn') as HTMLButtonElement;
     saveBtn.click();
 
-    const error = container.querySelector('#team-name-error');
-    expect(error?.textContent).toBe('Team name is required');
+    await vi.waitFor(() => {
+      const error = container.querySelector('#team-name-error');
+      expect(error?.textContent).toBe('Team name is required');
+    });
   });
 
   it('calls onCreateTeam with correct data', async () => {
