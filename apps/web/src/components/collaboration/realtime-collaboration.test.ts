@@ -309,3 +309,117 @@ describe('Typing Indicators', () => {
       expect(isTypingExpired(startedAt, 5000, now)).toBe(true);
     });
   });
+
+  describe('filterExpiredTyping', () => {
+    it('removes expired users', () => {
+      const now = new Date();
+      const users = [
+        makeTypingUser({ id: 'u1', startedAt: new Date(now.getTime() - 1000).toISOString() }),
+        makeTypingUser({ id: 'u2', startedAt: new Date(now.getTime() - 8000).toISOString() }),
+      ];
+      const result = filterExpiredTyping(users, 5000, now);
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe('u1');
+    });
+
+    it('keeps all users if none expired', () => {
+      const now = new Date();
+      const users = [
+        makeTypingUser({ id: 'u1', startedAt: new Date(now.getTime() - 1000).toISOString() }),
+        makeTypingUser({ id: 'u2', startedAt: new Date(now.getTime() - 2000).toISOString() }),
+      ];
+      const result = filterExpiredTyping(users, 5000, now);
+      expect(result.length).toBe(2);
+    });
+  });
+
+  describe('TypingIndicators component', () => {
+    let container: HTMLElement;
+
+    beforeEach(() => {
+      container = createContainer();
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('renders with proper ARIA attributes', () => {
+      new TypingIndicators(container);
+      expect(container.getAttribute('role')).toBe('status');
+      expect(container.getAttribute('aria-live')).toBe('polite');
+    });
+
+    it('is hidden when no users are typing', () => {
+      new TypingIndicators(container);
+      expect(container.style.display).toBe('none');
+    });
+
+    it('shows typing message when a user starts typing', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1', displayName: 'Alice' }));
+      expect(container.style.display).toBe('flex');
+      expect(container.textContent).toContain('Alice is typing...');
+    });
+
+    it('hides when user stops typing', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1', displayName: 'Alice' }));
+      indicators.clearUserTyping('u1');
+      expect(container.style.display).toBe('none');
+    });
+
+    it('excludes current user from display', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'me', displayName: 'Me' }));
+      expect(container.style.display).toBe('none');
+    });
+
+    it('shows multiple typing users', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1', displayName: 'Alice' }));
+      indicators.setUserTyping(makeTypingUser({ id: 'u2', displayName: 'Bob' }));
+      expect(container.textContent).toContain('Alice and Bob are typing...');
+    });
+
+    it('renders animated dots', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1', displayName: 'Alice' }));
+      const dots = container.querySelectorAll('.dot');
+      expect(dots.length).toBe(3);
+    });
+
+    it('emits onTypingStart and onTypingStop for local typing', () => {
+      const onTypingStart = vi.fn();
+      const onTypingStop = vi.fn();
+      const indicators = new TypingIndicators(
+        container,
+        { currentUserId: 'me', expiryMs: 3000 },
+        { onTypingStart, onTypingStop }
+      );
+
+      indicators.handleLocalTyping();
+      expect(onTypingStart).toHaveBeenCalledOnce();
+
+      vi.advanceTimersByTime(3100);
+      expect(onTypingStop).toHaveBeenCalledOnce();
+    });
+
+    it('expires typing users after timeout', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me', expiryMs: 3000 });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1', displayName: 'Alice' }));
+      expect(indicators.hasTypingUsers()).toBe(true);
+
+      vi.advanceTimersByTime(4000);
+      expect(indicators.hasTypingUsers()).toBe(false);
+    });
+
+    it('cleans up on destroy', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1' }));
+      indicators.destroy();
+      expect(indicators.getTypingUsers()).toEqual([]);
+    });
+  });
+});
