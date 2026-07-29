@@ -592,3 +592,69 @@ export class OrganizationSettingsPage {
           <div id="slack-url-error" class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert" aria-live="polite"></div>
         </div>
       </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="integrations-teams-heading">
+        <h2 id="integrations-teams-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Microsoft Teams Integration</h2>
+        <label class="flex items-center gap-3 mb-4 cursor-pointer">
+          <input id="teams-enabled" type="checkbox" ${integ.teamsEnabled ? 'checked' : ''} class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+          <span class="text-sm font-medium text-gray-900 dark:text-white">Enable Teams notifications</span>
+        </label>
+        <div>
+          <label for="teams-webhook-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Webhook URL</label>
+          <input id="teams-webhook-url" type="url" value="${this.escapeHtml(integ.teamsWebhookUrl)}" placeholder="https://outlook.office.com/webhook/..." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500" ${!integ.teamsEnabled ? 'disabled' : ''} />
+          <div id="teams-url-error" class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="integrations-sso-heading">
+        <h2 id="integrations-sso-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">SSO Configuration</h2>
+        <div class="space-y-4">
+          <div>
+            <label for="sso-provider" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">SSO Provider</label>
+            <select id="sso-provider" class="w-full sm:w-64 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500">
+              <option value="" ${!integ.ssoProvider ? 'selected' : ''}>None</option>
+              <option value="okta" ${integ.ssoProvider === 'okta' ? 'selected' : ''}>Okta</option>
+              <option value="azure-ad" ${integ.ssoProvider === 'azure-ad' ? 'selected' : ''}>Azure AD</option>
+              <option value="google" ${integ.ssoProvider === 'google' ? 'selected' : ''}>Google Workspace</option>
+              <option value="onelogin" ${integ.ssoProvider === 'onelogin' ? 'selected' : ''}>OneLogin</option>
+              <option value="custom-saml" ${integ.ssoProvider === 'custom-saml' ? 'selected' : ''}>Custom SAML</option>
+            </select>
+          </div>
+          <div>
+            <label for="sso-entity-id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Entity ID</label>
+            <input id="sso-entity-id" type="text" value="${this.escapeHtml(integ.ssoEntityId)}" placeholder="https://your-idp.example.com/entity-id" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label for="sso-metadata-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Metadata URL</label>
+            <input id="sso-metadata-url" type="url" value="${this.escapeHtml(integ.ssoMetadataUrl)}" placeholder="https://your-idp.example.com/metadata.xml" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500" />
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="integrations-webhooks-heading">
+        <h2 id="integrations-webhooks-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Webhook Endpoints</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Configure webhook endpoints to receive event notifications. Max ${MAX_WEBHOOK_ENDPOINTS} endpoints.</p>
+        ${integ.webhookEndpoints.length > 0 ? `
+          <div class="overflow-x-auto mb-4">
+            <table class="w-full text-left" aria-label="Webhook endpoints">
+              <thead>
+                <tr>
+                  <th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">URL</th>
+                  <th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Events</th>
+                  <th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                  <th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody>${webhookRows}</tbody>
+            </table>
+          </div>
+        ` : '<p class="text-sm text-gray-400 dark:text-gray-500 mb-4 italic">No webhook endpoints configured.</p>'}
+        ${integ.webhookEndpoints.length < MAX_WEBHOOK_ENDPOINTS ? `
+          <button id="add-webhook" type="button" class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 bg-blue-50 dark:bg-blue-900/30 rounded-md transition-colors">
+            + Add Webhook Endpoint
+          </button>
+        ` : ''}
+      </section>
+    `;
+    return section;
+  }

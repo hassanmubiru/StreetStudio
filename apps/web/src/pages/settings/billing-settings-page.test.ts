@@ -275,3 +275,128 @@ describe('BillingSettingsPage', () => {
       expect(page.getCurrentView()).toBe('overview');
     });
   });
+
+  describe('Subscription Status Section', () => {
+    it('should display current plan name', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const planName = el.querySelector('#subscription-heading')?.closest('section');
+      expect(planName?.textContent).toContain('Pro Plan');
+    });
+
+    it('should display subscription status badge', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const badge = el.querySelector('[class*="rounded-full"]');
+      expect(badge?.textContent?.trim()).toBe('active');
+    });
+
+    it('should show renewal date when not canceling', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const section = el.querySelector('#subscription-heading')?.closest('section');
+      expect(section?.textContent).toContain('Renews on');
+    });
+
+    it('should show cancellation date when cancel at period end', async () => {
+      const canceledData = {
+        ...mockBillingData,
+        subscription: { ...mockBillingData.subscription, cancelAtPeriodEnd: true },
+      };
+      (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: canceledData, status: 200, success: true,
+      });
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const section = el.querySelector('#subscription-heading')?.closest('section');
+      expect(section?.textContent).toContain('Cancels on');
+    });
+
+    it('should show change plan button', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      expect(el.querySelector('#change-plan-btn')).toBeTruthy();
+    });
+
+    it('should show cancel button when subscription is active', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      expect(el.querySelector('#cancel-subscription-btn')).toBeTruthy();
+    });
+
+    it('should hide cancel button when already canceling', async () => {
+      const cancelingData = {
+        ...mockBillingData,
+        subscription: { ...mockBillingData.subscription, cancelAtPeriodEnd: true },
+      };
+      (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: cancelingData, status: 200, success: true,
+      });
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      expect(el.querySelector('#cancel-subscription-btn')).toBeFalsy();
+    });
+  });
+
+  describe('Usage Metrics Section', () => {
+    it('should display all usage metrics', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const metrics = el.querySelectorAll('.usage-metric');
+      expect(metrics.length).toBe(3);
+    });
+
+    it('should display metric names and values', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const storageMetric = el.querySelector('[data-metric="Storage"]');
+      expect(storageMetric?.textContent).toContain('45');
+      expect(storageMetric?.textContent).toContain('100');
+      expect(storageMetric?.textContent).toContain('GB');
+    });
+
+    it('should render progress bars with correct aria attributes', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const progressBars = el.querySelectorAll('[role="progressbar"]');
+      expect(progressBars.length).toBe(3);
+
+      const storageBar = el.querySelector('[aria-label="Storage usage"]');
+      expect(storageBar?.getAttribute('aria-valuenow')).toBe('45');
+      expect(storageBar?.getAttribute('aria-valuemin')).toBe('0');
+      expect(storageBar?.getAttribute('aria-valuemax')).toBe('100');
+    });
+
+    it('should show usage heading', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      expect(el.querySelector('#usage-heading')?.textContent).toBe('Usage');
+    });
+
+    it('should handle empty usage data', async () => {
+      const emptyData = { ...mockBillingData, usage: [] };
+      (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: emptyData, status: 200, success: true,
+      });
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const section = el.querySelector('#usage-heading')?.closest('section');
+      expect(section?.textContent).toContain('No usage data available');
+    });
+  });

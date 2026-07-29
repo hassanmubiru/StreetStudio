@@ -176,3 +176,121 @@ describe('AccessibilitySettingsPage', () => {
       expect(group?.getAttribute('role')).toBe('radiogroup');
     });
   });
+
+  describe('High Contrast', () => {
+    it('should render high contrast toggle', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const toggle = el.querySelector('#high-contrast-toggle') as HTMLInputElement;
+      expect(toggle).toBeTruthy();
+      expect(toggle.checked).toBe(false);
+    });
+
+    it('should toggle high contrast on change', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const toggle = el.querySelector('#high-contrast-toggle') as HTMLInputElement;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getPreferences().highContrast).toBe(true);
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should apply high contrast class to document', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const toggle = el.querySelector('#high-contrast-toggle') as HTMLInputElement;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(document.documentElement.classList.contains('high-contrast')).toBe(true);
+      expect(document.documentElement.getAttribute('data-high-contrast')).toBe('true');
+    });
+
+    it('should show checked when initialized with highContrast true', () => {
+      page = new AccessibilitySettingsPage({ ...mockPreferences, highContrast: true });
+      const el = page.getElement();
+
+      const toggle = el.querySelector('#high-contrast-toggle') as HTMLInputElement;
+      expect(toggle.checked).toBe(true);
+    });
+  });
+
+  describe('Reduced Motion', () => {
+    it('should render reduced motion toggle', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const toggle = el.querySelector('#reduced-motion-toggle') as HTMLInputElement;
+      expect(toggle).toBeTruthy();
+      expect(toggle.checked).toBe(false);
+    });
+
+    it('should toggle reduced motion on change', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const toggle = el.querySelector('#reduced-motion-toggle') as HTMLInputElement;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getPreferences().reducedMotion).toBe(true);
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should apply reduced-motion class to document', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const toggle = el.querySelector('#reduced-motion-toggle') as HTMLInputElement;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(document.documentElement.classList.contains('reduced-motion')).toBe(true);
+      expect(document.documentElement.getAttribute('data-reduced-motion')).toBe('true');
+    });
+  });
+
+  describe('Screen Reader Optimizations', () => {
+    it('should render screen reader toggle', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const toggle = el.querySelector('#screen-reader-toggle') as HTMLInputElement;
+      expect(toggle).toBeTruthy();
+      expect(toggle.checked).toBe(false);
+    });
+
+    it('should toggle screen reader optimizations on change', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const toggle = el.querySelector('#screen-reader-toggle') as HTMLInputElement;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getPreferences().screenReaderOptimizations).toBe(true);
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should set data attribute on document', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const toggle = el.querySelector('#screen-reader-toggle') as HTMLInputElement;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(document.documentElement.getAttribute('data-screen-reader-optimized')).toBe('true');
+    });
+  });

@@ -877,3 +877,36 @@ export class SecuritySettingsPage {
     this.sessions = this.sessions.filter(s => s.isCurrent);
     this.render();
   }
+
+  private clearPasswordErrors(): void {
+    const errors = this.element.querySelectorAll('#password-form [role="alert"]');
+    errors.forEach(el => { el.textContent = ''; });
+  }
+
+  private showPasswordErrors(result: ValidationResult): void {
+    for (const [field, errors] of Object.entries(result.errors)) {
+      const fieldMap: Record<string, string> = {
+        currentPassword: 'current-password-error',
+        newPassword: 'new-password-error',
+        confirmPassword: 'confirm-password-error',
+      };
+      const errorEl = this.element.querySelector(`#${fieldMap[field]}`);
+      if (errorEl && errors.length > 0) {
+        errorEl.textContent = errors[0];
+      }
+    }
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  /**
+   * Cleanup resources
+   */
+  public destroy(): void {
+    this.element.innerHTML = '';
+  }
+}
