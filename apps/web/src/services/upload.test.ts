@@ -354,3 +354,72 @@ describe('UploadManager', () => {
       const lastProgress = progressUpdates[progressUpdates.length - 1];
       expect(lastProgress.speed).toBeGreaterThanOrEqual(0);
     });
+
+    it('should track time remaining', async () => {
+      const { apiClient } = await import('./api.js');
+      const file = createMockFile('video.mp4', 10 * 1024 * 1024, 'video/mp4');
+
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { uploadId: 'upload-time', uploadUrl: '/uploads/upload-time/chunks' }
+      });
+
+      mockFetch.mockResolvedValue({ ok: true });
+
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { id: 'result-time', url: '/videos/result-time' }
+      });
+
+      const progressUpdates: UploadProgress[] = [];
+      await manager.uploadFile(file, {
+        chunkSize: 5 * 1024 * 1024,
+        onProgress: (progress) => progressUpdates.push({ ...progress })
+      });
+
+      // Time remaining should be non-negative
+      for (const progress of progressUpdates) {
+        expect(progress.timeRemaining).toBeGreaterThanOrEqual(0);
+      }
+    });
+  });
+
+  describe('Upload Cancellation', () => {
+    it('should cancel an active upload', async () => {
+      const { apiClient } = await import('./api.js');
+      const file = createMockFile('video.mp4', 20 * 1024 * 1024, 'video/mp4');
+
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { uploadId: 'upload-cancel', uploadUrl: '/uploads/upload-cancel/chunks' }
+      });
+
+      // First chunk succeeds, then we cancel
+      let chunkCount = 0;
+      mockFetch.mockImplementation(async () => {
+        chunkCount++;
+        if (chunkCount === 1) return { ok: true };
+        // Delay to simulate slow upload
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return { ok: true };
+      });
+
+      (apiClient.delete as any).mockResolvedValue({});
+
+      // Start upload (don't await)
+      const uploadPromise = manager.uploadFile(file, {
+        chunkSize: 5 * 1024 * 1024
+      });
+
+      // Cancel after a tick
+      await vi.advanceTimersByTimeAsync(50);
+
+      // Get active uploads and cancel
+      const activeUploads = manager.getActiveUploads();
+      if (activeUploads.length > 0) {
+        const cancelled = manager.cancelUpload(activeUploads[0].id);
+        expect(cancelled).toBe(true);
+      }
+
+      await vi.advanceTimersByTimeAsync(5000);
+
+      // Upload should reject
+      await expect(uploadPromise).rejects.toThrow();
+    });

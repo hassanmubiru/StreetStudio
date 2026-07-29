@@ -217,3 +217,18 @@ export class AdaptiveVideoPlayer {
     this.videoElement.volume = this.options.volume;
     this.videoElement.playbackRate = this.options.playbackRate;
     this.videoElement.loop = this.options.loop;
+
+    if (this.options.enablePictureInPicture) {
+      this.videoElement.setAttribute('disablepictureinpicture', 'false');
+    }
+
+    this.container.appendChild(this.videoElement);
+
+    // Create controls overlay
+    this.controlsElement = document.createElement('div');
+    this.controlsElement.className = 'video-player-controls';
+    this.controlsElement.setAttribute('role', 'toolbar');
+    this.controlsElement.setAttribute('aria-label', 'Video playback controls');
+    this.controlsElement.innerHTML = this.getControlsHTML();
+    this.container.appendChild(this.controlsElement);
+  }
