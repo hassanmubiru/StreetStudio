@@ -7,6 +7,8 @@
  * Requirements: 5.1, 5.2, 5.3
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   AdaptiveVideoPlayer,

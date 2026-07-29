@@ -86,3 +86,52 @@ describe('Upload System - Chunked Upload Logic', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
+
+  describe('Chunk Creation', () => {
+    it('should split a file into correct number of chunks based on chunk size', async () => {
+      const manager = new UploadManager();
+      manager.configure({ defaultChunkSize: 1024 * 1024 }); // 1MB chunks
+
+      const file = createMockFile('video.mp4', 3.5 * 1024 * 1024); // 3.5MB file
+
+      const { apiClient } = await import('../services/api.js');
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { uploadId: 'upload-123', uploadUrl: 'https://upload.test/upload-123' }
+      });
+
+      // Mock chunk uploads succeed
+      mockFetch.mockResolvedValue(new Response(null, { status: 200 }));
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { id: 'result-123', url: 'https://cdn.test/video.mp4' }
+      });
+
+      const onChunkComplete = vi.fn();
+      await manager.uploadFile(file, {
+        chunkSize: 1024 * 1024,
+        onChunkComplete
+      });
+
+      // 3.5MB / 1MB = 4 chunks
+      expect(onChunkComplete).toHaveBeenCalledTimes(4);
+    });
+
+    it('should use simple upload for files smaller than chunk size', async () => {
+      const manager = new UploadManager();
+      const file = createMockFile('small.mp4', 1024); // 1KB file
+
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 'simple-123', url: 'https://cdn.test/small.mp4' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      );
+
+      const result = await manager.uploadFile(file, { chunkSize: 5 * 1024 * 1024 });
+      expect(result.id).toBe('simple-123');
+
+      // Should use /api/uploads/simple endpoint
+      expect(mockFetch).toHaveBeenCalledWith('/api/uploads/simple', expect.objectContaining({
+        method: 'POST'
+      }));
+    });
+  });
