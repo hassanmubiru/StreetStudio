@@ -555,3 +555,118 @@ describe('OrganizationSettingsPage', () => {
       expect(page.isDirtyState()).toBe(true);
     });
   });
+
+  describe('Integrations Section', () => {
+    it('should render Slack integration controls', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      expect(el.querySelector('#slack-enabled')).toBeTruthy();
+      expect(el.querySelector('#slack-webhook-url')).toBeTruthy();
+    });
+
+    it('should render Teams integration controls', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      expect(el.querySelector('#teams-enabled')).toBeTruthy();
+      expect(el.querySelector('#teams-webhook-url')).toBeTruthy();
+    });
+
+    it('should disable webhook URL input when Slack is disabled', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      const urlInput = el.querySelector('#slack-webhook-url') as HTMLInputElement;
+      expect(urlInput.disabled).toBe(true);
+    });
+
+    it('should enable webhook URL input when Slack is enabled', () => {
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        integrations: { ...createDefaultIntegrationSettings(), slackEnabled: true },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      const urlInput = el.querySelector('#slack-webhook-url') as HTMLInputElement;
+      expect(urlInput.disabled).toBe(false);
+    });
+
+    it('should toggle Slack enabled and update URL input state', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      const checkbox = el.querySelector('#slack-enabled') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getSettings().integrations.slackEnabled).toBe(true);
+      const urlInput = el.querySelector('#slack-webhook-url') as HTMLInputElement;
+      expect(urlInput.disabled).toBe(false);
+    });
+
+    it('should update Slack webhook URL', () => {
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        integrations: { ...createDefaultIntegrationSettings(), slackEnabled: true },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      const urlInput = el.querySelector('#slack-webhook-url') as HTMLInputElement;
+      urlInput.value = 'https://hooks.slack.com/services/T01/B01/xxxx';
+      urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(page.getSettings().integrations.slackWebhookUrl).toBe('https://hooks.slack.com/services/T01/B01/xxxx');
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should render SSO configuration fields', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      expect(el.querySelector('#sso-provider')).toBeTruthy();
+      expect(el.querySelector('#sso-entity-id')).toBeTruthy();
+      expect(el.querySelector('#sso-metadata-url')).toBeTruthy();
+    });
+
+    it('should update SSO provider selection', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      const select = el.querySelector('#sso-provider') as HTMLSelectElement;
+      select.value = 'okta';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getSettings().integrations.ssoProvider).toBe('okta');
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should display existing webhook endpoints in table', () => {
+      const webhooks: WebhookEndpoint[] = [
+        { id: '1', url: 'https://example.com/hook', events: ['video.uploaded'], active: true },
+        { id: '2', url: 'https://other.com/hook', events: ['comment.created', 'member.joined'], active: false },
+      ];
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        integrations: { ...createDefaultIntegrationSettings(), webhookEndpoints: webhooks },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('integrations');
+
+      const rows = el.querySelectorAll('[data-webhook-index]');
+      expect(rows.length).toBe(2);
+    });
