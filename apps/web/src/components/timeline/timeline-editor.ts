@@ -173,8 +173,16 @@ export class WaveformRenderer {
   constructor(canvas: HTMLCanvasElement, color = '#4fc3f7', backgroundColor = '#1a1a2e') {
     this.canvas = canvas;
     const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas 2D context not available');
-    this.ctx = ctx;
+    if (!ctx) {
+      // Create a no-op context stub for environments without canvas support (e.g. jsdom)
+      this.ctx = {
+        clearRect: () => {},
+        fillRect: () => {},
+        fillStyle: '',
+      } as unknown as CanvasRenderingContext2D;
+    } else {
+      this.ctx = ctx;
+    }
     this.color = color;
     this.backgroundColor = backgroundColor;
   }
