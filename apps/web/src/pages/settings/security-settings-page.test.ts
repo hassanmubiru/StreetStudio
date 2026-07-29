@@ -612,3 +612,47 @@ describe('evaluatePasswordStrength', () => {
     expect(long.score).toBeGreaterThanOrEqual(short.score);
   });
 });
+
+describe('generateTotpSecret', () => {
+  it('should return a 32-character string', () => {
+    const secret = generateTotpSecret();
+    expect(secret.length).toBe(32);
+  });
+
+  it('should only contain base32 characters', () => {
+    const secret = generateTotpSecret();
+    expect(/^[A-Z2-7]+$/.test(secret)).toBe(true);
+  });
+
+  it('should generate unique secrets', () => {
+    const secret1 = generateTotpSecret();
+    const secret2 = generateTotpSecret();
+    expect(secret1).not.toBe(secret2);
+  });
+});
+
+describe('generateOtpAuthUrl', () => {
+  it('should generate valid otpauth URL', () => {
+    const url = generateOtpAuthUrl('JBSWY3DPEHPK3PXP', 'user@example.com');
+    expect(url).toContain('otpauth://totp/');
+    expect(url).toContain('secret=JBSWY3DPEHPK3PXP');
+    expect(url).toContain('user%40example.com');
+  });
+
+  it('should include issuer parameter', () => {
+    const url = generateOtpAuthUrl('SECRET', 'user@test.com', 'MyApp');
+    expect(url).toContain('issuer=MyApp');
+  });
+
+  it('should default issuer to StreetStudio', () => {
+    const url = generateOtpAuthUrl('SECRET', 'user@test.com');
+    expect(url).toContain('issuer=StreetStudio');
+  });
+
+  it('should include algorithm and period', () => {
+    const url = generateOtpAuthUrl('SECRET', 'user@test.com');
+    expect(url).toContain('algorithm=SHA1');
+    expect(url).toContain('digits=6');
+    expect(url).toContain('period=30');
+  });
+});

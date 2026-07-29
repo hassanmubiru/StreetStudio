@@ -545,8 +545,11 @@ describe('resolveTheme', () => {
 });
 
 describe('loadAccessibilityPreferences', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it('should return defaults when nothing stored', () => {
-    (localStorage.getItem as any).mockReturnValue(null);
     const prefs = loadAccessibilityPreferences();
     expect(prefs.theme).toBe('system');
     expect(prefs.highContrast).toBe(false);
@@ -558,29 +561,31 @@ describe('loadAccessibilityPreferences', () => {
       highContrast: true,
       theme: 'dark',
     };
-    (localStorage.getItem as any).mockReturnValue(JSON.stringify(stored));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
     const prefs = loadAccessibilityPreferences();
     expect(prefs.highContrast).toBe(true);
     expect(prefs.theme).toBe('dark');
   });
 
   it('should handle invalid JSON gracefully', () => {
-    (localStorage.getItem as any).mockReturnValue('invalid json{');
+    localStorage.setItem(STORAGE_KEY, 'invalid json{');
     const prefs = loadAccessibilityPreferences();
     expect(prefs.theme).toBe('system');
   });
 });
 
 describe('saveAccessibilityPreferences', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it('should save preferences to localStorage', () => {
     const prefs = createDefaultAccessibilityPreferences();
     prefs.highContrast = true;
     saveAccessibilityPreferences(prefs);
 
-    expect(localStorage.setItem).toHaveBeenCalledWith(
-      STORAGE_KEY,
-      JSON.stringify(prefs)
-    );
+    const stored = localStorage.getItem(STORAGE_KEY);
+    expect(stored).toBe(JSON.stringify(prefs));
   });
 });
 
