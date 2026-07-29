@@ -253,18 +253,18 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Create reaction aggregation and analytics display
     - _Requirements: 5.8_
 
-  - [ ] 8.4 Build real-time collaboration features
+  - [-] 8.4 Build real-time collaboration features
     - Implement presence indicators with user avatars and status
     - Create typing indicators for active comment composition
     - Add collaborative viewing mode with synchronized playback
     - Build activity feed with real-time updates and notifications
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.8, 7.9_
 
-  - [ ] 8.5 Write property tests for collaboration presence
+  - [-] 8.5 Write property tests for collaboration presence
     - **Property 7: Collaboration Presence Reliability**
     - **Validates: Requirements 7.1**
 
-  - [ ] 8.6 Write unit tests for comment system
+  - [-] 8.6 Write unit tests for comment system
     - Test comment creation, threading, and display
     - Test mention functionality and notification delivery
     - Test reaction system and real-time updates
@@ -289,14 +289,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Implement caption styling and accessibility compliance
     - _Requirements: 6.4, 6.5_
 
-  - [ ] 9.4 Create editing preview and export system
+  - [-] 9.4 Create editing preview and export system
     - Build real-time preview system without affecting original video
     - Implement multiple quality export options with progress tracking
     - Add background processing integration with status updates
     - Create export history and download management
     - _Requirements: 6.6, 6.7_
 
-  - [ ] 9.5 Add collaborative editing features
+  - [-] 9.5 Add collaborative editing features
     - Implement presence indicators in timeline editor
     - Create edit conflict detection and resolution
     - Add collaborative editing session management
