@@ -367,3 +367,71 @@ describe('VideoMetadataForm', () => {
       }));
     });
   });
+
+  describe('Public API', () => {
+    beforeEach(() => {
+      form = new VideoMetadataForm(container, {
+        initialData: { title: 'Original Title' }
+      });
+    });
+
+    it('should return current form data', () => {
+      const data = form.getFormData();
+      expect(data.title).toBe('Original Title');
+      expect(data.tags).toEqual([]);
+      expect(data.isPrivate).toBe(false);
+    });
+
+    it('should update form data programmatically', () => {
+      form.setFormData({
+        title: 'Updated Title',
+        isPrivate: true,
+        tags: ['new-tag']
+      });
+
+      const data = form.getFormData();
+      expect(data.title).toBe('Updated Title');
+      expect(data.isPrivate).toBe(true);
+      expect(data.tags).toContain('new-tag');
+    });
+
+    it('should check form validity', () => {
+      expect(form.isValid()).toBe(true);
+
+      form.setFormData({ title: '' });
+      expect(form.isValid()).toBe(false);
+    });
+
+    it('should reset form to initial state', () => {
+      form.setFormData({ title: 'Modified', tags: ['tag1'] });
+      form.reset();
+
+      const data = form.getFormData();
+      expect(data.title).toBe('');
+      expect(data.tags).toEqual([]);
+      expect(data.isPrivate).toBe(false);
+    });
+
+    it('should update available projects', () => {
+      form.setProjects([
+        { id: 'new-proj' as any, name: 'New Project' }
+      ]);
+
+      const select = container.querySelector('#video-project') as HTMLSelectElement;
+      expect(select.options.length).toBe(2); // "No project" + new project
+    });
+
+    it('should update available tags for autocomplete', () => {
+      form.setAvailableTags([
+        { name: 'custom-tag', count: 10 }
+      ]);
+
+      // Trigger tag search
+      const tagInput = container.querySelector('#tag-input') as HTMLInputElement;
+      tagInput.value = 'custom';
+      tagInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const suggestions = container.querySelector('#tag-suggestions');
+      expect(suggestions?.textContent).toContain('custom-tag');
+    });
+  });

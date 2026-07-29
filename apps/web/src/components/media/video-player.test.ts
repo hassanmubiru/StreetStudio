@@ -218,3 +218,80 @@ describe('AdaptiveVideoPlayer', () => {
       expect(player.getState().currentTime).toBe(25);
     });
   });
+
+  describe('volume controls', () => {
+    beforeEach(() => {
+      player = new AdaptiveVideoPlayer(container, { volume: 0.5 }, callbacks);
+    });
+
+    it('setVolume() clamps between 0 and 1', () => {
+      player.setVolume(1.5);
+      expect(player.getState().volume).toBe(1);
+      player.setVolume(-0.5);
+      expect(player.getState().volume).toBe(0);
+    });
+
+    it('setVolume() unmutes when setting volume > 0 while muted', () => {
+      player.toggleMute();
+      expect(player.getState().isMuted).toBe(true);
+      player.setVolume(0.7);
+      expect(player.getState().isMuted).toBe(false);
+    });
+
+    it('adjustVolume() increments the volume', () => {
+      player.setVolume(0.5);
+      player.adjustVolume(VOLUME_STEP);
+      expect(player.getState().volume).toBeCloseTo(0.6);
+    });
+
+    it('adjustVolume() decrements the volume', () => {
+      player.setVolume(0.5);
+      player.adjustVolume(-VOLUME_STEP);
+      expect(player.getState().volume).toBeCloseTo(0.4);
+    });
+
+    it('toggleMute() toggles muted state', () => {
+      expect(player.getState().isMuted).toBe(false);
+      player.toggleMute();
+      expect(player.getState().isMuted).toBe(true);
+      player.toggleMute();
+      expect(player.getState().isMuted).toBe(false);
+    });
+  });
+
+  describe('playback rate', () => {
+    beforeEach(() => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+    });
+
+    it('setPlaybackRate() clamps between 0.25 and 2', () => {
+      player.setPlaybackRate(5);
+      expect(player.getState().playbackRate).toBe(2);
+      player.setPlaybackRate(0.1);
+      expect(player.getState().playbackRate).toBe(0.25);
+    });
+
+    it('increaseSpeed() moves to next rate preset', () => {
+      player.setPlaybackRate(1);
+      player.increaseSpeed();
+      expect(player.getState().playbackRate).toBe(1.25);
+    });
+
+    it('increaseSpeed() does nothing at max rate', () => {
+      player.setPlaybackRate(2);
+      player.increaseSpeed();
+      expect(player.getState().playbackRate).toBe(2);
+    });
+
+    it('decreaseSpeed() moves to previous rate preset', () => {
+      player.setPlaybackRate(1);
+      player.decreaseSpeed();
+      expect(player.getState().playbackRate).toBe(0.75);
+    });
+
+    it('decreaseSpeed() does nothing at min rate', () => {
+      player.setPlaybackRate(0.25);
+      player.decreaseSpeed();
+      expect(player.getState().playbackRate).toBe(0.25);
+    });
+  });
