@@ -270,7 +270,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Test reaction system and real-time updates
     - _Requirements: 5.5, 5.6, 5.7, 5.8_
 
-- [ ] 9. Timeline Video Editor Implementation
+- [x] 9. Timeline Video Editor Implementation
   - [x] 9.1 Build timeline editor interface
     - Create frame-accurate timeline with zoom and navigation controls
     - Implement trim tools with draggable in/out point handles
@@ -303,7 +303,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Build edit history and version control display
     - _Requirements: 6.10_
 
-  - [-] 9.6 Write unit tests for timeline editor
+  - [x] 9.6 Write unit tests for timeline editor
     - Test timeline navigation and frame accuracy
     - Test trim, split, and editing operations
     - Test text overlay and caption functionality
