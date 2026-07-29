@@ -145,7 +145,8 @@ export class TypingIndicators {
     const now = new Date();
     let changed = false;
 
-    for (const [id, user] of this.typingUsers) {
+    const entries = Array.from(this.typingUsers.entries());
+    for (const [id, user] of entries) {
       if (isTypingExpired(user.startedAt, this.options.expiryMs, now)) {
         this.typingUsers.delete(id);
         changed = true;
