@@ -318,3 +318,46 @@ export class AdaptiveVideoPlayer {
       this.state.isBuffering = false;
       this.callbacks.onBuffering?.(false);
     });
+
+    video.addEventListener('error', () => {
+      const mediaError = video.error;
+      const playerError: PlayerError = {
+        code: mediaError?.code ?? 0,
+        message: this.getErrorMessage(mediaError?.code ?? 0),
+        details: mediaError?.message,
+      };
+      this.callbacks.onError?.(playerError);
+    });
+
+    video.addEventListener('seeked', () => {
+      this.callbacks.onSeeked?.(video.currentTime);
+    });
+
+    // Fullscreen change events
+    document.addEventListener('fullscreenchange', () => {
+      this.state.isFullscreen = !!document.fullscreenElement;
+      this.updateFullscreenButton();
+      this.callbacks.onFullscreenChange?.(this.state.isFullscreen);
+    });
+
+    // Picture-in-picture events
+    video.addEventListener('enterpictureinpicture', () => {
+      this.state.isPictureInPicture = true;
+      this.callbacks.onPictureInPictureChange?.(true);
+    });
+
+    video.addEventListener('leavepictureinpicture', () => {
+      this.state.isPictureInPicture = false;
+      this.callbacks.onPictureInPictureChange?.(false);
+    });
+
+    // Load metadata and auto-seek to start time
+    video.addEventListener('loadedmetadata', () => {
+      if (this.options.startTime > 0) {
+        video.currentTime = this.options.startTime;
+      }
+      if (this.options.autoplay) {
+        this.play();
+      }
+    });
+  }

@@ -155,3 +155,54 @@ export class UploadProgressInterface {
     this.previousCompletedCount = currentCompleted;
     this.previousFailedCount = currentFailed;
   }
+
+  /**
+   * Calculate current upload speed metrics across all active uploads
+   */
+  public calculateSpeedMetrics(state: UploadState): SpeedMetrics {
+    const activeUploads = state.uploads.filter(u => u.status === 'uploading');
+    const now = Date.now();
+
+    // Calculate total bytes uploaded and total size
+    let totalBytesUploaded = 0;
+    let totalBytes = 0;
+
+    for (const upload of state.uploads) {
+      const fileSize = upload.file.size;
+      totalBytes += fileSize;
+      totalBytesUploaded += (upload.progress / 100) * fileSize;
+    }
+
+    // Calculate current speed from active uploads
+    const currentSpeed = activeUploads.reduce((sum, u) => sum + u.speed, 0);
+
+    // Track speed history for smoothing (keep last 10 samples)
+    if (currentSpeed > 0) {
+      this.speedHistory.push(currentSpeed);
+      if (this.speedHistory.length > 10) {
+        this.speedHistory.shift();
+      }
+    }
+
+    // Calculate average speed (smoothed)
+    const averageSpeed = this.speedHistory.length > 0
+      ? this.speedHistory.reduce((sum, s) => sum + s, 0) / this.speedHistory.length
+      : 0;
+
+    // Calculate ETA based on average speed
+    const remainingBytes = totalBytes - totalBytesUploaded;
+    const estimatedTimeRemaining = averageSpeed > 0
+      ? remainingBytes / averageSpeed
+      : 0;
+
+    this.lastUpdateTime = now;
+    this.lastBytesUploaded = totalBytesUploaded;
+
+    return {
+      currentSpeed,
+      averageSpeed,
+      estimatedTimeRemaining,
+      totalBytesUploaded,
+      totalBytes
+    };
+  }

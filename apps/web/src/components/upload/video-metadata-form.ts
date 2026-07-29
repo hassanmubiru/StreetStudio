@@ -171,3 +171,44 @@ export class VideoMetadataForm {
         </select>
         <div class="field-hint">Assign this video to a project for better organization</div>
       </div>
+
+      <div class="form-group">
+        <label for="tag-input" class="form-label">Tags</label>
+        <div class="tag-input-container" id="tag-input-wrapper">
+          <div class="tags-display" id="tags-display">${tagsHTML}</div>
+          <input
+            type="text"
+            id="tag-input"
+            class="tag-text-input"
+            placeholder="${this.formData.tags.length > 0 ? '' : 'Add tags...'}"
+            autocomplete="off"
+            aria-label="Add tags"
+            aria-describedby="tag-hint"
+            aria-expanded="false"
+            aria-controls="tag-suggestions"
+            role="combobox"
+          />
+          <div class="tag-suggestions" id="tag-suggestions" role="listbox" aria-label="Tag suggestions"></div>
+        </div>
+        <div class="field-hint" id="tag-hint">Press Enter or comma to add a tag. Type to search existing tags.</div>
+      </div>
+
+      <fieldset class="form-group form-fieldset">
+        <legend class="form-label">Privacy</legend>
+        <div class="toggle-group">
+          <label class="toggle-label" for="video-private">
+            <input
+              type="checkbox"
+              id="video-private"
+              name="isPrivate"
+              class="toggle-input"
+              ${this.formData.isPrivate ? 'checked' : ''}
+              role="switch"
+              aria-checked="${this.formData.isPrivate}"
+            />
+            <span class="toggle-switch"></span>
+            <span class="toggle-text">Private video</span>
+          </label>
+          <div class="field-hint">Private videos are only visible to you and people you share them with</div>
+        </div>
+      </fieldset>
