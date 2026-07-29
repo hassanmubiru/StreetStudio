@@ -315,3 +315,57 @@ export class OrganizationSettingsPage {
     nav.appendChild(tabList);
     return nav;
   }
+
+  private renderActiveSection(): HTMLElement {
+    const panel = document.createElement('div');
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('aria-labelledby', `tab-${this.activeTab}`);
+    panel.id = `panel-${this.activeTab}`;
+
+    switch (this.activeTab) {
+      case 'branding':
+        panel.appendChild(this.renderBrandingSection());
+        break;
+      case 'security':
+        panel.appendChild(this.renderSecuritySection());
+        break;
+      case 'storage':
+        panel.appendChild(this.renderStorageSection());
+        break;
+      case 'integrations':
+        panel.appendChild(this.renderIntegrationsSection());
+        break;
+    }
+
+    return panel;
+  }
+
+  // --- Branding Section ---
+
+  private renderBrandingSection(): HTMLElement {
+    const section = document.createElement('div');
+    section.className = 'space-y-6';
+
+    const logoUrl = this.logoPreviewUrl || this.settings.branding.logoUrl;
+    const logoContent = logoUrl
+      ? `<img src="${logoUrl}" alt="Organization logo" class="w-32 h-32 object-contain border border-gray-200 dark:border-gray-700 rounded-lg p-2" />`
+      : `<div class="w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center">
+           <span class="text-sm text-gray-400">No logo</span>
+         </div>`;
+
+    section.innerHTML = `
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="branding-logo-heading">
+        <h2 id="branding-logo-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Logo</h2>
+        <div class="flex items-start gap-6">
+          <div id="logo-preview">${logoContent}</div>
+          <div>
+            <label for="logo-upload" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors">
+              Upload Logo
+              <input id="logo-upload" type="file" class="sr-only" accept="${LOGO_ALLOWED_TYPES.join(',')}" aria-describedby="logo-help" />
+            </label>
+            ${logoUrl ? '<button id="remove-logo" type="button" class="ml-3 text-sm text-red-600 dark:text-red-400 hover:text-red-500">Remove</button>' : ''}
+            <p id="logo-help" class="mt-2 text-xs text-gray-500 dark:text-gray-400">PNG, SVG, JPEG, or WebP. Max 2MB. Recommended 256×256.</p>
+            <div id="logo-error" class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert" aria-live="polite"></div>
+          </div>
+        </div>
+      </section>

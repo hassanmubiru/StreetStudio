@@ -457,3 +457,85 @@ export class BillingSettingsPage {
     `;
     return section;
   }
+
+  private renderChangePlanView(): HTMLElement {
+    const data = this.billingData!;
+    const container = document.createElement('div');
+    container.className = 'space-y-6';
+
+    const backButton = document.createElement('button');
+    backButton.id = 'back-to-overview-btn';
+    backButton.className = 'inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded';
+    backButton.innerHTML = `
+      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+      Back to Billing
+    `;
+    container.appendChild(backButton);
+
+    const heading = document.createElement('h2');
+    heading.className = 'text-xl font-bold text-gray-900 dark:text-white';
+    heading.textContent = 'Choose a Plan';
+    container.appendChild(heading);
+
+    const plansGrid = document.createElement('div');
+    plansGrid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+    plansGrid.setAttribute('role', 'radiogroup');
+    plansGrid.setAttribute('aria-label', 'Available subscription plans');
+
+    for (const plan of data.availablePlans) {
+      const planCard = this.renderPlanCard(plan);
+      plansGrid.appendChild(planCard);
+    }
+
+    container.appendChild(plansGrid);
+    return container;
+  }
+
+  private renderPlanCard(plan: SubscriptionPlan): HTMLElement {
+    const card = document.createElement('div');
+    const isActive = plan.isCurrentPlan;
+    const borderClass = isActive
+      ? 'border-blue-500 ring-2 ring-blue-500'
+      : plan.isPopular
+        ? 'border-blue-300 dark:border-blue-600'
+        : 'border-gray-200 dark:border-gray-700';
+
+    card.className = `plan-card relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border ${borderClass} p-6 flex flex-col`;
+    card.setAttribute('data-plan-id', plan.id);
+    card.setAttribute('role', 'radio');
+    card.setAttribute('aria-checked', String(isActive));
+    card.setAttribute('tabindex', '0');
+
+    const featuresHtml = plan.features.map(f =>
+      `<li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+        <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        ${this.escapeHtml(f)}
+      </li>`
+    ).join('');
+
+    card.innerHTML = `
+      ${plan.isPopular ? '<span class="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium bg-blue-600 text-white">Most Popular</span>' : ''}
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${this.escapeHtml(plan.name)}</h3>
+      <div class="mt-2">
+        <span class="text-3xl font-bold text-gray-900 dark:text-white">${formatCurrency(plan.price, plan.currency)}</span>
+        <span class="text-sm text-gray-500 dark:text-gray-400">/${plan.interval === 'monthly' ? 'mo' : 'yr'}</span>
+      </div>
+      <ul class="mt-4 space-y-2 flex-grow">${featuresHtml}</ul>
+      <button
+        class="select-plan-btn mt-6 w-full px-4 py-2 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+          isActive
+            ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-default'
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }"
+        data-plan-id="${plan.id}"
+        ${isActive ? 'disabled' : ''}
+      >
+        ${isActive ? 'Current Plan' : 'Select Plan'}
+      </button>
+    `;
+    return card;
+  }

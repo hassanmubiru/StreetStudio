@@ -445,3 +445,47 @@ export class AccessibilitySettingsPage {
     `;
     return section;
   }
+
+  private renderKeyboardNavSection(): HTMLElement {
+    const section = document.createElement('section');
+    section.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6';
+    section.setAttribute('aria-labelledby', 'keyboard-heading');
+
+    const kbPrefs = this.preferences.keyboardNavigation;
+
+    section.innerHTML = `
+      <h2 id="keyboard-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        Keyboard Navigation
+      </h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Configure keyboard navigation behavior and focus management.
+      </p>
+      <div class="space-y-4">
+        ${this.renderKeyboardToggle('kb-enabled', 'Enhanced keyboard navigation', 'Enable enhanced keyboard shortcuts and navigation patterns.', kbPrefs.enabled)}
+        ${this.renderKeyboardToggle('kb-focus-indicators', 'Visible focus indicators', 'Show prominent focus rings on interactive elements.', kbPrefs.showFocusIndicators)}
+        ${this.renderKeyboardToggle('kb-skip-link', 'Skip navigation links', 'Show skip links to jump past repetitive navigation.', kbPrefs.skipLinkEnabled)}
+        ${this.renderKeyboardToggle('kb-arrow-nav', 'Arrow key navigation', 'Navigate between items in lists and menus using arrow keys.', kbPrefs.arrowKeyNavigation)}
+      </div>
+    `;
+    return section;
+  }
+
+  private renderKeyboardToggle(id: string, label: string, description: string, checked: boolean): string {
+    return `
+      <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+        <div>
+          <span class="text-sm font-medium text-gray-900 dark:text-white">${label}</span>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${description}</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer" aria-label="Toggle ${label.toLowerCase()}">
+          <input
+            type="checkbox"
+            id="${id}"
+            class="sr-only peer keyboard-nav-toggle"
+            ${checked ? 'checked' : ''}
+          />
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+    `;
+  }

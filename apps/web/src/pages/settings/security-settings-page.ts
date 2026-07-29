@@ -511,3 +511,79 @@ export class SecuritySettingsPage {
       </div>
     `;
   }
+
+  private renderSessionsSection(): HTMLElement {
+    const section = document.createElement('section');
+    section.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6';
+    section.setAttribute('aria-labelledby', 'sessions-heading');
+
+    let sessionsHtml: string;
+    if (this.sessions.length === 0) {
+      sessionsHtml = `<p class="text-sm text-gray-500 dark:text-gray-400">No active sessions found.</p>`;
+    } else {
+      sessionsHtml = `
+        <ul class="divide-y divide-gray-200 dark:divide-gray-700" role="list" aria-label="Active sessions">
+          ${this.sessions.map(session => this.renderSessionItem(session)).join('')}
+        </ul>
+      `;
+    }
+
+    section.innerHTML = `
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="sessions-heading" class="text-lg font-medium text-gray-900 dark:text-white">Active Sessions</h2>
+        ${this.sessions.length > 1 ? `
+          <button
+            id="revoke-all-sessions-btn"
+            type="button"
+            class="text-sm text-red-600 dark:text-red-400 hover:text-red-500 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 rounded px-2 py-1"
+          >
+            Revoke All Other Sessions
+          </button>
+        ` : ''}
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        These are the devices currently logged into your account.
+      </p>
+      ${sessionsHtml}
+    `;
+    return section;
+  }
+
+  private renderSessionItem(session: ActiveSession): string {
+    const deviceIcon = this.getDeviceIcon(session.operatingSystem);
+    const currentBadge = session.isCurrent
+      ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Current</span>'
+      : '';
+
+    return `
+      <li class="py-4 flex items-center justify-between" data-session-id="${session.id}">
+        <div class="flex items-center gap-4">
+          <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+            ${deviceIcon}
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-gray-900 dark:text-white">${this.escapeHtml(session.deviceName)}</span>
+              ${currentBadge}
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+              ${this.escapeHtml(session.browser)} on ${this.escapeHtml(session.operatingSystem)}
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+              ${session.location ? `${this.escapeHtml(session.location)} · ` : ''}${session.ipAddress} · ${formatRelativeTime(session.lastActive)}
+            </p>
+          </div>
+        </div>
+        ${!session.isCurrent ? `
+          <button
+            type="button"
+            class="revoke-session-btn text-sm text-red-600 dark:text-red-400 hover:text-red-500 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 rounded px-2 py-1"
+            data-session-id="${session.id}"
+            aria-label="Revoke session on ${this.escapeHtml(session.deviceName)}"
+          >
+            Revoke
+          </button>
+        ` : ''}
+      </li>
+    `;
+  }
