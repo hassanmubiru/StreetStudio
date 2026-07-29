@@ -186,3 +186,123 @@ export function meetsWCAGContrast(
   const ratio = contrastRatio(textColor, bgColor);
   return level === 'AA' ? ratio >= 4.5 : ratio >= 7;
 }
+
+/**
+ * Convert hex color to RGB array.
+ */
+export function hexToRgb(hex: string): [number, number, number] | null {
+  const cleaned = hex.replace(/^#/, '');
+  if (cleaned.length === 3) {
+    const r = parseInt(cleaned[0] + cleaned[0], 16);
+    const g = parseInt(cleaned[1] + cleaned[1], 16);
+    const b = parseInt(cleaned[2] + cleaned[2], 16);
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+    return [r, g, b];
+  }
+  if (cleaned.length === 6) {
+    const r = parseInt(cleaned.slice(0, 2), 16);
+    const g = parseInt(cleaned.slice(2, 4), 16);
+    const b = parseInt(cleaned.slice(4, 6), 16);
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+    return [r, g, b];
+  }
+  return null;
+}
+
+/**
+ * Convert seconds to frames.
+ */
+export function secondsToFrames(seconds: number, frameRate: number): number {
+  if (frameRate <= 0) return 0;
+  return Math.round(seconds * frameRate);
+}
+
+/**
+ * Convert frames to seconds.
+ */
+export function framesToSeconds(frames: number, frameRate: number): number {
+  if (frameRate <= 0) return 0;
+  return frames / frameRate;
+}
+
+/**
+ * Clamp a value between min and max.
+ */
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+/**
+ * Create a default text overlay style.
+ */
+export function createDefaultStyle(
+  options?: Partial<TextOverlayManagerOptions>
+): TextOverlayStyle {
+  return {
+    fontFamily: options?.defaultFont ?? DEFAULT_FONT_FAMILY,
+    fontSize: options?.defaultFontSize ?? DEFAULT_FONT_SIZE,
+    fontWeight: 'normal',
+    fontStyle: 'normal',
+    color: options?.defaultColor ?? DEFAULT_COLOR,
+    backgroundColor: DEFAULT_BACKGROUND_COLOR,
+    opacity: 1,
+    textAlign: 'center',
+    textDecoration: 'none',
+    letterSpacing: 0,
+    lineHeight: 1.2,
+    textShadow: null,
+    outline: null,
+  };
+}
+
+/**
+ * Create a default caption style.
+ */
+export function createDefaultCaptionStyle(
+  options?: Partial<TextOverlayManagerOptions>
+): CaptionStyle {
+  return {
+    fontFamily: DEFAULT_FONT_FAMILY,
+    fontSize: options?.captionFontSize ?? DEFAULT_CAPTION_FONT_SIZE,
+    color: options?.captionColor ?? DEFAULT_CAPTION_COLOR,
+    backgroundColor: options?.captionBackgroundColor ?? DEFAULT_CAPTION_BG,
+    opacity: 1,
+    position: 'bottom',
+    textAlign: 'center',
+  };
+}
+
+// ─── TextOverlayManager Class ─────────────────────────────────────────────────
+
+/**
+ * Manages text overlays and captions on the timeline.
+ * Provides tools for adding, editing, positioning, and timing text elements
+ * as well as caption editing with speech-to-text integration.
+ */
+export class TextOverlayManager {
+  private overlays: Map<string, TextOverlay> = new Map();
+  private captions: Map<string, CaptionCue> = new Map();
+  private options: Required<TextOverlayManagerOptions>;
+  private callbacks: TextOverlayCallbacks;
+  private speechToTextActive = false;
+  private currentFrame = 0;
+
+  constructor(
+    options: TextOverlayManagerOptions,
+    callbacks: TextOverlayCallbacks = {}
+  ) {
+    this.options = {
+      frameRate: options.frameRate,
+      containerWidth: options.containerWidth,
+      containerHeight: options.containerHeight,
+      defaultFont: options.defaultFont ?? DEFAULT_FONT_FAMILY,
+      defaultFontSize: options.defaultFontSize ?? DEFAULT_FONT_SIZE,
+      defaultColor: options.defaultColor ?? DEFAULT_COLOR,
+      captionFontSize: options.captionFontSize ?? DEFAULT_CAPTION_FONT_SIZE,
+      captionBackgroundColor:
+        options.captionBackgroundColor ?? DEFAULT_CAPTION_BG,
+      captionColor: options.captionColor ?? DEFAULT_CAPTION_COLOR,
+      enableSpeechToText: options.enableSpeechToText ?? false,
+    };
+    this.callbacks = callbacks;
+  }
