@@ -504,3 +504,59 @@ describe('SecuritySettingsPage', () => {
       expect(el.textContent).toContain('No login history');
     });
   });
+
+  describe('Accessibility', () => {
+    it('should have proper heading hierarchy', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions, loginHistory: mockLoginHistory });
+      const el = page.getElement();
+
+      const h1 = el.querySelector('h1');
+      expect(h1).toBeTruthy();
+
+      const h2s = el.querySelectorAll('h2');
+      expect(h2s.length).toBe(4);
+    });
+
+    it('should have aria-labelledby on sections', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions, loginHistory: mockLoginHistory });
+      const el = page.getElement();
+
+      const sections = el.querySelectorAll('section[aria-labelledby]');
+      expect(sections.length).toBe(4);
+    });
+
+    it('should have role="alert" on error containers', () => {
+      page = new SecuritySettingsPage();
+      const el = page.getElement();
+
+      const alerts = el.querySelectorAll('#password-form [role="alert"]');
+      expect(alerts.length).toBe(3);
+    });
+
+    it('should have accessible session list', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions });
+      const el = page.getElement();
+
+      const list = el.querySelector('[role="list"]');
+      expect(list).toBeTruthy();
+      expect(list?.getAttribute('aria-label')).toBe('Active sessions');
+    });
+
+    it('should have accessible login history table', () => {
+      page = new SecuritySettingsPage({ loginHistory: mockLoginHistory });
+      const el = page.getElement();
+
+      const table = el.querySelector('table[role="table"]');
+      expect(table).toBeTruthy();
+      expect(table?.getAttribute('aria-label')).toBe('Login history');
+    });
+
+    it('should have accessible revoke buttons with labels', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions });
+      const el = page.getElement();
+
+      const revokeBtn = el.querySelector('.revoke-session-btn');
+      expect(revokeBtn?.getAttribute('aria-label')).toContain('Revoke session on');
+    });
+  });
+});

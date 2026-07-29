@@ -259,21 +259,27 @@ export class AccessibilitySettingsPage {
   }
 
   private setupSystemListeners(): void {
-    // Listen for system theme changes
-    const darkMq = window.matchMedia('(prefers-color-scheme: dark)');
-    this.systemThemeListener = () => {
-      if (this.preferences.theme === 'system') {
-        applyAccessibilityPreferences(this.preferences);
-      }
-    };
-    darkMq.addEventListener('change', this.systemThemeListener);
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
 
-    // Listen for system reduced motion changes
-    const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    this.systemMotionListener = () => {
-      // Optionally auto-sync with system
-    };
-    motionMq.addEventListener('change', this.systemMotionListener);
+    try {
+      // Listen for system theme changes
+      const darkMq = window.matchMedia('(prefers-color-scheme: dark)');
+      this.systemThemeListener = () => {
+        if (this.preferences.theme === 'system') {
+          applyAccessibilityPreferences(this.preferences);
+        }
+      };
+      darkMq.addEventListener('change', this.systemThemeListener);
+
+      // Listen for system reduced motion changes
+      const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+      this.systemMotionListener = () => {
+        // Optionally auto-sync with system
+      };
+      motionMq.addEventListener('change', this.systemMotionListener);
+    } catch {
+      // matchMedia not fully supported
+    }
   }
 
   private render(): void {
@@ -730,11 +736,15 @@ export class AccessibilitySettingsPage {
    * Cleanup resources and listeners
    */
   public destroy(): void {
-    if (this.systemThemeListener) {
-      window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', this.systemThemeListener);
+    if (this.systemThemeListener && typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      try {
+        window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', this.systemThemeListener);
+      } catch { /* ignore */ }
     }
-    if (this.systemMotionListener) {
-      window.matchMedia('(prefers-reduced-motion: reduce)').removeEventListener('change', this.systemMotionListener);
+    if (this.systemMotionListener && typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      try {
+        window.matchMedia('(prefers-reduced-motion: reduce)').removeEventListener('change', this.systemMotionListener);
+      } catch { /* ignore */ }
     }
     const announcements = document.getElementById('a11y-announcements');
     announcements?.remove();
