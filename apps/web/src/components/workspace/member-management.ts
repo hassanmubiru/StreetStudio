@@ -160,3 +160,42 @@ export class MemberManagement {
       </div>
     `;
   }
+
+  private renderPendingInvitations(): string {
+    if (this.pendingInvitations.length === 0) return '';
+
+    const invitationRows = this.pendingInvitations.map(inv => `
+      <div class="flex items-center justify-between py-2 px-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-md" data-invitation-id="${inv.id}">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-yellow-200 dark:bg-yellow-800 rounded-full flex items-center justify-center">
+            <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div>
+            <span class="text-sm font-medium text-gray-900 dark:text-white">${inv.email}</span>
+            <span class="ml-2 text-xs text-yellow-600 dark:text-yellow-400 font-medium">Pending</span>
+          </div>
+        </div>
+        <button
+          data-action="revoke-invitation"
+          data-invitation-id="${inv.id}"
+          class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
+          aria-label="Revoke invitation for ${inv.email}"
+        >
+          Revoke
+        </button>
+      </div>
+    `).join('');
+
+    return `
+      <div class="mb-6" data-pending-invitations>
+        <h2 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          Pending Invitations (${this.pendingInvitations.length})
+        </h2>
+        <div class="space-y-2">
+          ${invitationRows}
+        </div>
+      </div>
+    `;
+  }
