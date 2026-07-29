@@ -738,3 +738,92 @@ export class TextOverlayManager {
     this.callbacks.onSpeechToTextComplete?.(results);
     return createdCaptions;
   }
+
+  /**
+   * Handle speech-to-text error.
+   */
+  public handleSpeechToTextError(error: Error): void {
+    this.speechToTextActive = false;
+    this.callbacks.onSpeechToTextError?.(error);
+  }
+
+  // ─── Timeline Synchronization ──────────────────────────────────────────
+
+  /**
+   * Set the current frame for synchronization display.
+   */
+  public setCurrentFrame(frame: number): void {
+    this.currentFrame = Math.max(0, Math.round(frame));
+  }
+
+  /**
+   * Get current frame.
+   */
+  public getCurrentFrame(): number {
+    return this.currentFrame;
+  }
+
+  /**
+   * Get all items (overlays + captions) visible at the current frame.
+   */
+  public getVisibleItemsAtCurrentFrame(): {
+    overlays: TextOverlay[];
+    captions: CaptionCue[];
+  } {
+    return {
+      overlays: this.getOverlaysAtFrame(this.currentFrame),
+      captions: this.getCaptionsAtFrame(this.currentFrame),
+    };
+  }
+
+  /**
+   * Check if any overlaps exist between captions.
+   * Returns pairs of overlapping caption IDs.
+   */
+  public findCaptionOverlaps(): Array<[string, string]> {
+    const sorted = this.getCaptionsSorted();
+    const overlaps: Array<[string, string]> = [];
+
+    for (let i = 0; i < sorted.length; i++) {
+      for (let j = i + 1; j < sorted.length; j++) {
+        if (sorted[j].startFrame < sorted[i].endFrame) {
+          overlaps.push([sorted[i].id, sorted[j].id]);
+        } else {
+          break;
+        }
+      }
+    }
+
+    return overlaps;
+  }
+
+  // ─── Import/Export ─────────────────────────────────────────────────────
+
+  /**
+   * Export captions as WebVTT format.
+   */
+  public exportCaptionsAsVTT(): string {
+    const sorted = this.getCaptionsSorted();
+    let vtt = 'WEBVTT\n\n';
+
+    for (let i = 0; i < sorted.length; i++) {
+      const caption = sorted[i];
+      const startTime = this.formatVTTTime(
+        framesToSeconds(caption.startFrame, this.options.frameRate)
+      );
+      const endTime = this.formatVTTTime(
+        framesToSeconds(caption.endFrame, this.options.frameRate)
+      );
+
+      vtt += `${i + 1}\n`;
+      vtt += `${startTime} --> ${endTime}\n`;
+      if (caption.speaker) {
+        vtt += `<v ${caption.speaker}>${caption.text}\n`;
+      } else {
+        vtt += `${caption.text}\n`;
+      }
+      vtt += '\n';
+    }
+
+    return vtt;
+  }
