@@ -507,3 +507,72 @@ export class VideoMetadataForm {
     this.clearAllErrors();
     this.config.onSubmit(this.getFormData());
   }
+
+  /**
+   * Validate all form fields
+   */
+  public validate(): ValidationResult {
+    const result = this.validator.validate({
+      title: this.formData.title,
+      description: this.formData.description,
+    });
+    this.validationErrors = result.errors;
+    return result;
+  }
+
+  private validateField(fieldName: string, value: string): void {
+    const result = this.validator.validateField(fieldName, value);
+    if (!result.isValid) {
+      this.validationErrors[fieldName] = result.errors[fieldName] || [];
+      this.showFieldError(fieldName, result.firstError!);
+    } else {
+      delete this.validationErrors[fieldName];
+      this.clearFieldError(fieldName);
+    }
+  }
+
+  private showFieldError(fieldName: string, message: string): void {
+    const errorEl = this.container.querySelector(`#${fieldName}-error`) as HTMLElement;
+    if (errorEl) {
+      errorEl.textContent = message;
+    }
+
+    const input = this.container.querySelector(`[name="${fieldName}"]`) as HTMLElement;
+    if (input) {
+      input.classList.add('input-error');
+      input.setAttribute('aria-invalid', 'true');
+      input.setAttribute('aria-describedby', `${fieldName}-error`);
+    }
+  }
+
+  private clearFieldError(fieldName: string): void {
+    const errorEl = this.container.querySelector(`#${fieldName}-error`) as HTMLElement;
+    if (errorEl) {
+      errorEl.textContent = '';
+    }
+
+    const input = this.container.querySelector(`[name="${fieldName}"]`) as HTMLElement;
+    if (input) {
+      input.classList.remove('input-error');
+      input.setAttribute('aria-invalid', 'false');
+    }
+  }
+
+  private displayErrors(errors: Record<string, string[]>): void {
+    for (const [field, messages] of Object.entries(errors)) {
+      if (messages.length > 0) {
+        this.showFieldError(field, messages[0]);
+      }
+    }
+  }
+
+  private clearAllErrors(): void {
+    this.validationErrors = {};
+    const errorEls = this.container.querySelectorAll('.field-error');
+    errorEls.forEach(el => { el.textContent = ''; });
+    const inputs = this.container.querySelectorAll('.input-error');
+    inputs.forEach(el => {
+      el.classList.remove('input-error');
+      el.setAttribute('aria-invalid', 'false');
+    });
+  }

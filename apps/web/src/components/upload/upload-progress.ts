@@ -441,3 +441,39 @@ export class UploadProgressInterface {
       });
     });
   }
+
+  private renderUploadItem(upload: UploadItem): string {
+    const statusClass = upload.status;
+    const progress = upload.progress;
+    const speed = upload.speed;
+    const fileSize = upload.file.size;
+    const uploadedBytes = (progress / 100) * fileSize;
+    const eta = speed > 0 ? (fileSize - uploadedBytes) / speed : 0;
+
+    return `
+      <div class="upload-item upload-item--${statusClass}" role="listitem" data-upload-id="${upload.id}">
+        <div class="upload-item-info">
+          <span class="upload-item-name" title="${upload.file.name}">${this.truncateFileName(upload.file.name)}</span>
+          <span class="upload-item-size">${this.formatFileSize(uploadedBytes)} / ${this.formatFileSize(fileSize)}</span>
+        </div>
+        <div class="upload-item-progress">
+          <div class="upload-item-bar">
+            <div class="upload-item-fill upload-item-fill--${statusClass}" style="width: ${progress}%"
+                 role="progressbar" aria-valuenow="${Math.round(progress)}" aria-valuemin="0" aria-valuemax="100"
+                 aria-label="Upload progress for ${upload.file.name}"></div>
+          </div>
+          <div class="upload-item-meta">
+            <span class="upload-item-percent">${Math.round(progress)}%</span>
+            ${upload.status === 'uploading' && this.config.showSpeed ? `<span class="upload-item-speed">${this.formatSpeed(speed)}</span>` : ''}
+            ${upload.status === 'uploading' && this.config.showETA && eta > 0 ? `<span class="upload-item-eta">${this.formatTimeRemaining(eta)}</span>` : ''}
+            ${upload.status === 'completed' ? '<span class="upload-item-done">✓ Done</span>' : ''}
+            ${upload.status === 'failed' ? '<span class="upload-item-error">✗ Failed</span>' : ''}
+            ${upload.status === 'paused' ? '<span class="upload-item-paused">⏸ Paused</span>' : ''}
+          </div>
+        </div>
+        <div class="upload-item-actions">
+          ${this.renderItemActions(upload)}
+        </div>
+      </div>
+    `;
+  }
