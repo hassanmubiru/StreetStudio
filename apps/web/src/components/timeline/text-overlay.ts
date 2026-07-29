@@ -44,3 +44,55 @@ export interface TextPosition {
   anchorX: 'left' | 'center' | 'right';
   anchorY: 'top' | 'middle' | 'bottom';
 }
+
+export interface TextOverlay {
+  id: string;
+  text: string;
+  startFrame: number;
+  endFrame: number;
+  position: TextPosition;
+  style: TextOverlayStyle;
+  isVisible: boolean;
+}
+
+export interface CaptionCue {
+  id: string;
+  text: string;
+  startFrame: number;
+  endFrame: number;
+  style: CaptionStyle;
+  speaker?: string;
+}
+
+export interface CaptionStyle {
+  fontFamily: string;
+  fontSize: number;
+  color: string;
+  backgroundColor: string;
+  opacity: number;
+  position: CaptionPosition;
+  textAlign: 'left' | 'center' | 'right';
+}
+
+export type CaptionPosition = 'top' | 'middle' | 'bottom';
+
+export interface SpeechToTextResult {
+  text: string;
+  startTime: number; // seconds
+  endTime: number; // seconds
+  confidence: number;
+  speaker?: string;
+}
+
+export interface TextOverlayManagerOptions {
+  frameRate: number;
+  containerWidth: number;
+  containerHeight: number;
+  defaultFont?: string;
+  defaultFontSize?: number;
+  defaultColor?: string;
+  captionFontSize?: number;
+  captionBackgroundColor?: string;
+  captionColor?: string;
+  enableSpeechToText?: boolean;
+}
