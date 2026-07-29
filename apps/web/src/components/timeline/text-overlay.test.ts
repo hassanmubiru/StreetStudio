@@ -495,3 +495,146 @@ describe('TextOverlayManager', () => {
       expect(manager.getCaptionCount()).toBe(1);
     });
   });
+
+  describe('caption updates', () => {
+    it('updates caption text', () => {
+      const caption = manager.addCaption('Old', 0, 30);
+      const updated = manager.updateCaption(caption.id, { text: 'New' });
+      expect(updated?.text).toBe('New');
+      expect(callbacks.onCaptionUpdate).toHaveBeenCalled();
+    });
+
+    it('returns null when updating non-existent caption', () => {
+      expect(manager.updateCaption('ghost', { text: 'x' })).toBeNull();
+    });
+
+    it('updates caption timing', () => {
+      const caption = manager.addCaption('Time', 0, 60);
+      const updated = manager.setCaptionTiming(caption.id, 15, 90);
+      expect(updated?.startFrame).toBe(15);
+      expect(updated?.endFrame).toBe(90);
+    });
+
+    it('enforces minimum duration', () => {
+      const caption = manager.addCaption('Min', 0, 60);
+      const updated = manager.setCaptionTiming(caption.id, 30, 30);
+      expect(updated?.endFrame).toBeGreaterThanOrEqual(
+        30 + MIN_OVERLAY_DURATION_FRAMES
+      );
+    });
+
+    it('updates caption style', () => {
+      const caption = manager.addCaption('Style', 0, 30);
+      const updated = manager.setCaptionStyle(caption.id, {
+        fontSize: 24,
+        position: 'top',
+        color: '#ffff00',
+      });
+      expect(updated?.style.fontSize).toBe(24);
+      expect(updated?.style.position).toBe('top');
+      expect(updated?.style.color).toBe('#ffff00');
+    });
+
+    it('clamps caption font size', () => {
+      const caption = manager.addCaption('Clamp', 0, 30);
+      let updated = manager.setCaptionStyle(caption.id, { fontSize: 2 });
+      expect(updated?.style.fontSize).toBe(MIN_FONT_SIZE);
+      updated = manager.setCaptionStyle(caption.id, { fontSize: 500 });
+      expect(updated?.style.fontSize).toBe(MAX_FONT_SIZE);
+    });
+
+    it('returns null when styling non-existent caption', () => {
+      expect(manager.setCaptionStyle('ghost', { fontSize: 20 })).toBeNull();
+    });
+  });
+
+  describe('caption frame queries', () => {
+    it('gets captions at a specific frame', () => {
+      manager.addCaption('A', 0, 30);
+      manager.addCaption('B', 20, 60);
+      manager.addCaption('C', 60, 90);
+
+      const at25 = manager.getCaptionsAtFrame(25);
+      expect(at25).toHaveLength(2);
+      const at65 = manager.getCaptionsAtFrame(65);
+      expect(at65).toHaveLength(1);
+    });
+
+    it('returns sorted captions by start frame', () => {
+      manager.addCaption('B', 30, 60);
+      manager.addCaption('A', 0, 30);
+      manager.addCaption('C', 60, 90);
+
+      const sorted = manager.getCaptionsSorted();
+      expect(sorted[0].text).toBe('A');
+      expect(sorted[1].text).toBe('B');
+      expect(sorted[2].text).toBe('C');
+    });
+  });
+
+  describe('caption accessibility', () => {
+    it('checks WCAG contrast for white on black background', () => {
+      const caption = manager.addCaption('Accessible', 0, 30, {
+        color: '#ffffff',
+        backgroundColor: '#000000',
+      });
+      const result = manager.checkCaptionAccessibility(caption.id);
+      expect(result).not.toBeNull();
+      expect(result!.meetsAA).toBe(true);
+      expect(result!.meetsAAA).toBe(true);
+      expect(result!.ratio).toBeCloseTo(21, 0);
+    });
+
+    it('detects low contrast captions', () => {
+      const caption = manager.addCaption('Low contrast', 0, 30, {
+        color: '#cccccc',
+        backgroundColor: '#ffffff',
+      });
+      const result = manager.checkCaptionAccessibility(caption.id);
+      expect(result).not.toBeNull();
+      expect(result!.meetsAA).toBe(false);
+    });
+
+    it('handles semi-transparent backgrounds', () => {
+      const caption = manager.addCaption('Semi-transparent', 0, 30, {
+        color: '#ffffff',
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      });
+      const result = manager.checkCaptionAccessibility(caption.id);
+      expect(result).not.toBeNull();
+      // White text on dark (blended) background should have good contrast
+      expect(result!.meetsAA).toBe(true);
+    });
+
+    it('returns null for non-existent caption', () => {
+      expect(manager.checkCaptionAccessibility('ghost')).toBeNull();
+    });
+  });
+
+  describe('caption overlaps', () => {
+    it('finds overlapping captions', () => {
+      manager.addCaption('A', 0, 60);
+      manager.addCaption('B', 30, 90);
+      manager.addCaption('C', 100, 130);
+
+      const overlaps = manager.findCaptionOverlaps();
+      expect(overlaps).toHaveLength(1);
+    });
+
+    it('returns empty array with no overlaps', () => {
+      manager.addCaption('A', 0, 30);
+      manager.addCaption('B', 60, 90);
+
+      const overlaps = manager.findCaptionOverlaps();
+      expect(overlaps).toHaveLength(0);
+    });
+
+    it('finds multiple overlaps', () => {
+      manager.addCaption('A', 0, 100);
+      manager.addCaption('B', 50, 150);
+      manager.addCaption('C', 80, 200);
+
+      const overlaps = manager.findCaptionOverlaps();
+      expect(overlaps.length).toBeGreaterThanOrEqual(2);
+    });
+  });
