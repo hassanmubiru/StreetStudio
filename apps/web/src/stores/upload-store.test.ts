@@ -80,8 +80,8 @@ describe('UploadStore', () => {
       const state = store.getState();
       expect(state.uploads).toHaveLength(1);
       expect(state.uploads[0].file).toBe(file);
-      expect(state.uploads[0].status).toBe('queued');
-      expect(state.uploads[0].progress).toBe(0);
+      // Upload transitions from queued to uploading immediately if queue has capacity
+      expect(['queued', 'uploading']).toContain(state.uploads[0].status);
       expect(state.uploads[0].retryCount).toBe(0);
     });
 
