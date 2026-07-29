@@ -719,13 +719,6 @@ describe('WaveformRenderer', () => {
     canvas = document.createElement('canvas');
     canvas.width = 800;
     canvas.height = 48;
-    // Mock getContext for jsdom which doesn't support canvas natively
-    const mockCtx = {
-      clearRect: vi.fn(),
-      fillRect: vi.fn(),
-      fillStyle: '',
-    };
-    vi.spyOn(canvas, 'getContext').mockReturnValue(mockCtx as any);
     renderer = new WaveformRenderer(canvas);
   });
 
