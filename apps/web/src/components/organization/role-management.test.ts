@@ -1055,8 +1055,8 @@ describe('PermissionInheritance', () => {
     const sourceItems = container.querySelectorAll('.permission-source-item');
     expect(sourceItems.length).toBe(2);
     // Higher priority first
-    expect(sourceItems[0].textContent).toContain('Design');
-    expect(sourceItems[1].textContent).toContain('Editor');
+    expect(sourceItems[0]!.textContent).toContain('Design');
+    expect(sourceItems[1]!.textContent).toContain('Editor');
   });
 
   it('shows override summary when overrides exist', () => {
