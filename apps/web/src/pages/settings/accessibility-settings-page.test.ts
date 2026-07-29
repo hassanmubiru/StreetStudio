@@ -54,3 +54,38 @@ describe('AccessibilitySettingsPage', () => {
     document.body.innerHTML = '';
     document.documentElement.className = '';
   });
+
+  describe('Initialization', () => {
+    it('should create page element with correct structure', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      expect(el).toBeInstanceOf(HTMLElement);
+      expect(el.getAttribute('data-main-content')).toBe('');
+      expect(el.getAttribute('data-testid')).toBe('accessibility-settings');
+      expect(el.querySelector('h1')?.textContent?.trim()).toBe('Accessibility & Preferences');
+    });
+
+    it('should render all settings sections', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      expect(el.querySelector('#theme-heading')).toBeTruthy();
+      expect(el.querySelector('#contrast-heading')).toBeTruthy();
+      expect(el.querySelector('#motion-heading')).toBeTruthy();
+      expect(el.querySelector('#screenreader-heading')).toBeTruthy();
+      expect(el.querySelector('#keyboard-heading')).toBeTruthy();
+    });
+
+    it('should not be dirty on initial render', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      expect(page.isDirtyState()).toBe(false);
+    });
+
+    it('should return current preferences', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const prefs = page.getPreferences();
+      expect(prefs.highContrast).toBe(false);
+      expect(prefs.theme).toBe('system');
+    });
+  });

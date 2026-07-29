@@ -762,3 +762,62 @@ export class SecuritySettingsPage {
       this.handleRevokeAllSessions();
     });
   }
+
+  private updateStrengthIndicator(): void {
+    const container = this.element.querySelector('#password-strength-indicator');
+    const desc = this.element.querySelector('#password-strength-desc');
+    if (container) {
+      container.innerHTML = this.renderStrengthBar();
+    }
+    if (desc) {
+      desc.textContent = this.passwordStrengthResult.feedback.join('. ');
+    }
+  }
+
+  private validatePasswordMatch(): void {
+    const errorEl = this.element.querySelector('#confirm-password-error');
+    if (!errorEl) return;
+
+    if (this.passwordData.confirmPassword && this.passwordData.newPassword !== this.passwordData.confirmPassword) {
+      errorEl.textContent = 'Passwords do not match';
+    } else {
+      errorEl.textContent = '';
+    }
+  }
+
+  private handlePasswordSubmit(): void {
+    // Clear errors
+    this.clearPasswordErrors();
+
+    // Validate
+    const result = this.validator.validate({
+      currentPassword: this.passwordData.currentPassword,
+      newPassword: this.passwordData.newPassword,
+      confirmPassword: this.passwordData.confirmPassword,
+    });
+
+    if (!result.isValid) {
+      this.showPasswordErrors(result);
+      return;
+    }
+
+    // Check password match
+    if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
+      const errorEl = this.element.querySelector('#confirm-password-error');
+      if (errorEl) errorEl.textContent = 'Passwords do not match';
+      return;
+    }
+
+    // Check strength (require at least 'fair')
+    if (this.passwordStrengthResult.score < 1) {
+      const errorEl = this.element.querySelector('#new-password-error');
+      if (errorEl) errorEl.textContent = 'Password is too weak. Please choose a stronger password.';
+      return;
+    }
+
+    // Dispatch event for parent handling
+    this.element.dispatchEvent(new CustomEvent('password-change', {
+      bubbles: true,
+      detail: { passwordData: this.getPasswordData() },
+    }));
+  }
