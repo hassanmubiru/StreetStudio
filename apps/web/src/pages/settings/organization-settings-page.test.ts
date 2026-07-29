@@ -715,3 +715,94 @@ describe('OrganizationSettingsPage', () => {
       expect(el.querySelector('#add-webhook')).toBeFalsy();
     });
   });
+
+  describe('Save and Discard', () => {
+    it('should disable save button when not dirty', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const saveBtn = el.querySelector('#save-settings') as HTMLButtonElement;
+      expect(saveBtn.disabled).toBe(true);
+    });
+
+    it('should enable save button when dirty', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      // Make dirty by updating color
+      const primaryColor = el.querySelector('#primary-color') as HTMLInputElement;
+      primaryColor.value = '#000000';
+      primaryColor.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const saveBtn = el.querySelector('#save-settings') as HTMLButtonElement;
+      expect(saveBtn.disabled).toBe(false);
+    });
+
+    it('should dispatch settings-save event on save click', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const saveSpy = vi.fn();
+      el.addEventListener('settings-save', saveSpy);
+
+      // Make dirty
+      const primaryColor = el.querySelector('#primary-color') as HTMLInputElement;
+      primaryColor.value = '#111111';
+      primaryColor.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const saveBtn = el.querySelector('#save-settings') as HTMLButtonElement;
+      saveBtn.click();
+
+      expect(saveSpy).toHaveBeenCalled();
+      const detail = saveSpy.mock.calls[0][0].detail;
+      expect(detail.settings.branding.primaryColor).toBe('#111111');
+    });
+
+    it('should reset dirty state on discard', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      // Make dirty
+      const primaryColor = el.querySelector('#primary-color') as HTMLInputElement;
+      primaryColor.value = '#999999';
+      primaryColor.dispatchEvent(new Event('input', { bubbles: true }));
+      expect(page.isDirtyState()).toBe(true);
+
+      // Discard
+      const discardBtn = el.querySelector('#discard-settings') as HTMLButtonElement;
+      discardBtn.click();
+
+      expect(page.isDirtyState()).toBe(false);
+    });
+
+    it('should reset settings to initial values on discard', () => {
+      const initialBranding = { ...createDefaultBrandingSettings(), primaryColor: '#aabbcc' };
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({ branding: initialBranding }));
+      const el = page.getElement();
+      container.appendChild(el);
+
+      // Change color
+      const primaryColor = el.querySelector('#primary-color') as HTMLInputElement;
+      primaryColor.value = '#000000';
+      primaryColor.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Discard
+      const discardBtn = el.querySelector('#discard-settings') as HTMLButtonElement;
+      discardBtn.click();
+
+      expect(page.getSettings().branding.primaryColor).toBe('#aabbcc');
+    });
+
+    it('should show save status text', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const status = el.querySelector('#save-status');
+      expect(status?.textContent).toBe('All changes saved');
+    });
+  });
