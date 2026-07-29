@@ -160,3 +160,30 @@ describe('filterCandidates', () => {
   });
 });
 
+// --------------------------------------------------------------------------
+// extractMentionsFromText
+// --------------------------------------------------------------------------
+
+describe('extractMentionsFromText', () => {
+  it('extracts single mention', () => {
+    const mentions = extractMentionsFromText('hey @Alice check this');
+    expect(mentions).toContain('Alice');
+  });
+
+  it('extracts multiple mentions', () => {
+    const mentions = extractMentionsFromText('@Alice and @Bob please review');
+    expect(mentions).toContain('Alice');
+    expect(mentions).toContain('Bob');
+  });
+
+  it('returns empty for text with no mentions', () => {
+    const mentions = extractMentionsFromText('hello world');
+    expect(mentions.length).toBe(0);
+  });
+
+  it('deduplicates mentions', () => {
+    const mentions = extractMentionsFromText('@Alice said @Alice is right');
+    expect(mentions.length).toBe(1);
+  });
+});
+
