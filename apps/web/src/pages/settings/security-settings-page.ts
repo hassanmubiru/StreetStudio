@@ -680,3 +680,49 @@ export class SecuritySettingsPage {
       </tr>
     `;
   }
+
+  private setupEventListeners(): void {
+    // Password form
+    const passwordForm = this.element.querySelector('#password-form') as HTMLFormElement;
+    passwordForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handlePasswordSubmit();
+    });
+
+    // New password input (strength indicator)
+    const newPasswordInput = this.element.querySelector('#new-password') as HTMLInputElement;
+    newPasswordInput?.addEventListener('input', (e) => {
+      const value = (e.target as HTMLInputElement).value;
+      this.passwordData.newPassword = value;
+      this.passwordStrengthResult = evaluatePasswordStrength(value);
+      this.updateStrengthIndicator();
+    });
+
+    // Current password
+    const currentPasswordInput = this.element.querySelector('#current-password') as HTMLInputElement;
+    currentPasswordInput?.addEventListener('input', (e) => {
+      this.passwordData.currentPassword = (e.target as HTMLInputElement).value;
+    });
+
+    // Confirm password
+    const confirmPasswordInput = this.element.querySelector('#confirm-password') as HTMLInputElement;
+    confirmPasswordInput?.addEventListener('input', (e) => {
+      this.passwordData.confirmPassword = (e.target as HTMLInputElement).value;
+      this.validatePasswordMatch();
+    });
+
+    // 2FA Enable button
+    const enable2faBtn = this.element.querySelector('#enable-2fa-btn');
+    enable2faBtn?.addEventListener('click', () => {
+      this.showTwoFactorSetup = true;
+      this.render();
+    });
+
+    // 2FA Cancel button
+    const cancel2faBtn = this.element.querySelector('#cancel-2fa-btn');
+    cancel2faBtn?.addEventListener('click', () => {
+      this.showTwoFactorSetup = false;
+      this.twoFactorData.secret = undefined;
+      this.twoFactorData.qrCodeUrl = undefined;
+      this.render();
+    });

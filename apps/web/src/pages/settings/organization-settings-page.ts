@@ -499,3 +499,33 @@ export class OrganizationSettingsPage {
     `;
     return section;
   }
+
+  // --- Storage Section ---
+
+  private renderStorageSection(): HTMLElement {
+    const section = document.createElement('div');
+    section.className = 'space-y-6';
+    const stor = this.settings.storage;
+    const usagePercent = stor.storageQuotaGB > 0
+      ? Math.min(100, Math.round((stor.usedStorageGB / stor.storageQuotaGB) * 100))
+      : 0;
+    const usageColor = usagePercent > 90 ? 'bg-red-500' : usagePercent > 70 ? 'bg-amber-500' : 'bg-blue-500';
+
+    const regionOptions = STORAGE_REGIONS.map(r =>
+      `<option value="${r.value}" ${r.value === stor.preferredRegion ? 'selected' : ''}>${r.label}</option>`
+    ).join('');
+
+    section.innerHTML = `
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="storage-quota-heading">
+        <h2 id="storage-quota-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Storage Usage</h2>
+        <div class="mb-4">
+          <div class="flex justify-between text-sm mb-1">
+            <span class="text-gray-700 dark:text-gray-300">${stor.usedStorageGB.toFixed(1)} GB used</span>
+            <span class="text-gray-500 dark:text-gray-400">${stor.storageQuotaGB} GB quota</span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3" role="progressbar" aria-valuenow="${usagePercent}" aria-valuemin="0" aria-valuemax="100" aria-label="Storage usage">
+            <div class="${usageColor} rounded-full h-3 transition-all" style="width: ${usagePercent}%"></div>
+          </div>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">${usagePercent}% of storage quota used</p>
+        </div>
+      </section>
