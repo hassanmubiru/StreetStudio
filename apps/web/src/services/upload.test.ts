@@ -571,3 +571,33 @@ describe('uploadVideo convenience function', () => {
     expect(mockFetch).toHaveBeenCalled();
   });
 });
+
+describe('uploadImage convenience function', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorageMock.clear();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'img-id', url: '/images/img-id' })
+    });
+  });
+
+  it('should reject non-image files', async () => {
+    const file = createMockFile('video.mp4', 1024, 'video/mp4');
+
+    await expect(uploadImage(file)).rejects.toThrow('File must be an image');
+  });
+
+  it('should reject images over 50MB', async () => {
+    const file = createMockFile('huge.png', 60 * 1024 * 1024, 'image/png');
+
+    await expect(uploadImage(file)).rejects.toThrow('Image file too large');
+  });
+
+  it('should accept valid image files', async () => {
+    const file = createMockFile('photo.jpg', 1024, 'image/jpeg');
+
+    const result = await uploadImage(file);
+    expect(result.id).toBe('img-id');
+  });
+});
