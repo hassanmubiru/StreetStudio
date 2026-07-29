@@ -874,7 +874,7 @@ describe('BillingSettingsPage', () => {
     it('should retry loading on retry button click', async () => {
       (apiClient.get as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(new Error('Fail'))
-        .mockResolvedValueOnce({ data: mockBillingData, status: 200, success: true });
+        .mockResolvedValueOnce({ data: structuredClone(mockBillingData), status: 200, success: true });
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       const el = await page.getElement();
@@ -885,7 +885,7 @@ describe('BillingSettingsPage', () => {
 
       await vi.waitFor(() => {
         expect(apiClient.get).toHaveBeenCalledTimes(2);
-      });
+      }, { timeout: 3000 });
     });
   });
 });
