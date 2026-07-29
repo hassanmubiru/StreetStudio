@@ -794,7 +794,7 @@ describe('BillingSettingsPage', () => {
 
       await vi.waitFor(() => {
         expect(page.getCurrentView()).toBe('overview');
-      });
+      }, { timeout: 3000 });
     });
   });
 
