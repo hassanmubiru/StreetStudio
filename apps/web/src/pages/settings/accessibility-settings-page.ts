@@ -267,3 +267,29 @@ export class AccessibilitySettingsPage {
     };
     motionMq.addEventListener('change', this.systemMotionListener);
   }
+
+  private render(): void {
+    this.element.innerHTML = '';
+    this.element.appendChild(this.renderHeader());
+    this.element.appendChild(this.renderThemeSection());
+    this.element.appendChild(this.renderHighContrastSection());
+    this.element.appendChild(this.renderReducedMotionSection());
+    this.element.appendChild(this.renderScreenReaderSection());
+    this.element.appendChild(this.renderKeyboardNavSection());
+    this.element.appendChild(this.renderSaveBar());
+    this.setupEventListeners();
+  }
+
+  private renderHeader(): HTMLElement {
+    const header = document.createElement('div');
+    header.className = 'mb-8';
+    header.innerHTML = `
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        Accessibility & Preferences
+      </h1>
+      <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        Customize your experience with accessibility options and visual preferences.
+      </p>
+    `;
+    return header;
+  }
