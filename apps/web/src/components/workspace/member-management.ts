@@ -371,3 +371,67 @@ export class MemberManagement {
       </div>
     `;
   }
+
+  private renderRemovalModal(): string {
+    const memberOptions = this.members
+      .filter(m => m.id !== this.config.currentUserId)
+      .map(m => `<option value="${m.id}">${m.displayName}</option>`)
+      .join('');
+
+    return `
+      <div class="fixed inset-0 bg-black/50" data-modal-backdrop></div>
+      <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6" role="dialog" aria-labelledby="removal-modal-title" aria-modal="true">
+        <h2 id="removal-modal-title" class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Remove Member</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4" data-removal-description>
+          Are you sure you want to remove this member from the organization?
+        </p>
+        <form data-removal-form class="space-y-4">
+          <input type="hidden" name="memberId" data-removal-member-id />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Content Handling
+            </label>
+            <div class="space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="contentHandling" value="retain" checked class="text-blue-600 focus:ring-blue-500" />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Keep their content in the organization</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="contentHandling" value="transfer" class="text-blue-600 focus:ring-blue-500" />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Transfer content to another member</span>
+              </label>
+            </div>
+          </div>
+          <div class="hidden" data-transfer-target-section>
+            <label for="transfer-target" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Transfer to
+            </label>
+            <select
+              id="transfer-target"
+              name="transferTo"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Select a member...</option>
+              ${memberOptions}
+            </select>
+          </div>
+          <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700 mt-4">
+            <button
+              type="button"
+              data-action="cancel-removal"
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+              data-confirm-removal
+            >
+              Remove Member
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+  }

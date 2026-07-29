@@ -357,3 +357,56 @@ export class ProfileSettingsPage {
     `;
     return section;
   }
+
+  private renderNotificationPreferences(): HTMLElement {
+    const section = document.createElement('section');
+    section.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6';
+    section.setAttribute('aria-labelledby', 'notifications-heading');
+
+    const categories: { key: keyof NotificationCategorySettings; label: string; description: string }[] = [
+      { key: 'comments', label: 'Comments', description: 'When someone comments on your videos' },
+      { key: 'mentions', label: 'Mentions', description: 'When someone mentions you in a comment' },
+      { key: 'reactions', label: 'Reactions', description: 'When someone reacts to your content' },
+      { key: 'projectUpdates', label: 'Project Updates', description: 'Changes to projects you belong to' },
+      { key: 'teamInvitations', label: 'Team Invitations', description: 'Invitations to teams or projects' },
+      { key: 'videoProcessing', label: 'Video Processing', description: 'When your videos finish processing' },
+      { key: 'weeklyDigest', label: 'Weekly Digest', description: 'Weekly summary of activity' },
+      { key: 'securityAlerts', label: 'Security Alerts', description: 'Important security notifications' },
+    ];
+
+    const channels: { key: keyof NotificationPreferences; label: string }[] = [
+      { key: 'email', label: 'Email' },
+      { key: 'push', label: 'Push' },
+      { key: 'inApp', label: 'In-App' },
+    ];
+
+    let tableRows = '';
+    for (const category of categories) {
+      let cells = '';
+      for (const channel of channels) {
+        const checked = this.profileData.notificationPreferences[channel.key][category.key] ? 'checked' : '';
+        const id = `notif-${channel.key}-${category.key}`;
+        cells += `
+          <td class="px-3 py-3 text-center">
+            <input
+              type="checkbox"
+              id="${id}"
+              data-channel="${channel.key}"
+              data-category="${category.key}"
+              ${checked}
+              class="notification-toggle w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 cursor-pointer"
+              aria-label="${category.label} via ${channel.label}"
+            />
+          </td>
+        `;
+      }
+      tableRows += `
+        <tr class="border-t border-gray-200 dark:border-gray-700">
+          <td class="px-3 py-3">
+            <div class="text-sm font-medium text-gray-900 dark:text-white">${category.label}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">${category.description}</div>
+          </td>
+          ${cells}
+        </tr>
+      `;
+    }
