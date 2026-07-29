@@ -793,3 +793,95 @@ describe('BillingSettingsPage', () => {
       });
     });
   });
+
+  describe('Accessibility', () => {
+    it('should have proper heading hierarchy', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const h1 = el.querySelector('h1');
+      expect(h1).toBeTruthy();
+
+      const h2s = el.querySelectorAll('h2');
+      expect(h2s.length).toBeGreaterThanOrEqual(4);
+    });
+
+    it('should have aria-labelledby on sections', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const sections = el.querySelectorAll('section[aria-labelledby]');
+      expect(sections.length).toBe(4);
+    });
+
+    it('should have role="list" on payment methods container', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const list = el.querySelector('[role="list"][aria-label="Payment methods"]');
+      expect(list).toBeTruthy();
+    });
+
+    it('should have accessible progress bars for usage metrics', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const progressBars = el.querySelectorAll('[role="progressbar"]');
+      progressBars.forEach(bar => {
+        expect(bar.getAttribute('aria-valuenow')).toBeTruthy();
+        expect(bar.getAttribute('aria-valuemin')).toBe('0');
+        expect(bar.getAttribute('aria-valuemax')).toBe('100');
+        expect(bar.getAttribute('aria-label')).toBeTruthy();
+      });
+    });
+
+    it('should have accessible table in billing history', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const table = el.querySelector('table');
+      expect(table?.getAttribute('aria-label')).toBe('Billing history');
+    });
+
+    it('should have radiogroup on plan cards', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const changePlanBtn = el.querySelector('#change-plan-btn') as HTMLButtonElement;
+      changePlanBtn.click();
+
+      const radiogroup = el.querySelector('[role="radiogroup"]');
+      expect(radiogroup).toBeTruthy();
+      expect(radiogroup?.getAttribute('aria-label')).toBe('Available subscription plans');
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should show retry button on error', async () => {
+      (apiClient.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Fail'));
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      expect(el.querySelector('#retry-load')).toBeTruthy();
+    });
+
+    it('should retry loading on retry button click', async () => {
+      (apiClient.get as ReturnType<typeof vi.fn>)
+        .mockRejectedValueOnce(new Error('Fail'))
+        .mockResolvedValueOnce({ data: mockBillingData, status: 200, success: true });
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const retryBtn = el.querySelector('#retry-load') as HTMLButtonElement;
+      retryBtn.click();
+
+      await vi.waitFor(() => {
+        expect(apiClient.get).toHaveBeenCalledTimes(2);
+      });
+    });
+  });
+});

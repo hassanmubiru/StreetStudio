@@ -583,3 +583,102 @@ describe('saveAccessibilityPreferences', () => {
     );
   });
 });
+
+describe('applyAccessibilityPreferences', () => {
+  it('should add high-contrast class when enabled', () => {
+    const prefs = createDefaultAccessibilityPreferences();
+    prefs.highContrast = true;
+    applyAccessibilityPreferences(prefs);
+
+    expect(document.documentElement.classList.contains('high-contrast')).toBe(true);
+    expect(document.documentElement.getAttribute('data-high-contrast')).toBe('true');
+  });
+
+  it('should remove high-contrast class when disabled', () => {
+    document.documentElement.classList.add('high-contrast');
+    const prefs = createDefaultAccessibilityPreferences();
+    prefs.highContrast = false;
+    applyAccessibilityPreferences(prefs);
+
+    expect(document.documentElement.classList.contains('high-contrast')).toBe(false);
+    expect(document.documentElement.getAttribute('data-high-contrast')).toBe('false');
+  });
+
+  it('should add reduced-motion class when enabled', () => {
+    const prefs = createDefaultAccessibilityPreferences();
+    prefs.reducedMotion = true;
+    applyAccessibilityPreferences(prefs);
+
+    expect(document.documentElement.classList.contains('reduced-motion')).toBe(true);
+    expect(document.documentElement.getAttribute('data-reduced-motion')).toBe('true');
+  });
+
+  it('should set dark class for dark theme', () => {
+    const prefs = createDefaultAccessibilityPreferences();
+    prefs.theme = 'dark';
+    applyAccessibilityPreferences(prefs);
+
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+  });
+
+  it('should set light class for light theme', () => {
+    const prefs = createDefaultAccessibilityPreferences();
+    prefs.theme = 'light';
+    applyAccessibilityPreferences(prefs);
+
+    expect(document.documentElement.classList.contains('light')).toBe(true);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+  });
+
+  it('should set keyboard-nav class when enabled', () => {
+    const prefs = createDefaultAccessibilityPreferences();
+    prefs.keyboardNavigation.enabled = true;
+    applyAccessibilityPreferences(prefs);
+
+    expect(document.documentElement.classList.contains('keyboard-nav')).toBe(true);
+  });
+
+  it('should set show-focus class when focus indicators enabled', () => {
+    const prefs = createDefaultAccessibilityPreferences();
+    prefs.keyboardNavigation.showFocusIndicators = true;
+    applyAccessibilityPreferences(prefs);
+
+    expect(document.documentElement.classList.contains('show-focus')).toBe(true);
+  });
+
+  it('should store theme preference as data attribute', () => {
+    const prefs = createDefaultAccessibilityPreferences();
+    prefs.theme = 'system';
+    applyAccessibilityPreferences(prefs);
+
+    expect(document.documentElement.getAttribute('data-theme-preference')).toBe('system');
+  });
+});
+
+describe('getAccessibilityCSS', () => {
+  it('should return non-empty CSS string', () => {
+    const css = getAccessibilityCSS();
+    expect(css.length).toBeGreaterThan(0);
+  });
+
+  it('should include high-contrast rules', () => {
+    const css = getAccessibilityCSS();
+    expect(css).toContain('.high-contrast');
+  });
+
+  it('should include reduced-motion rules', () => {
+    const css = getAccessibilityCSS();
+    expect(css).toContain('.reduced-motion');
+  });
+
+  it('should include focus indicator rules', () => {
+    const css = getAccessibilityCSS();
+    expect(css).toContain('.show-focus');
+  });
+
+  it('should include theme preview card styles', () => {
+    const css = getAccessibilityCSS();
+    expect(css).toContain('.theme-preview-card');
+  });
+});

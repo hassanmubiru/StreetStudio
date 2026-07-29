@@ -881,3 +881,33 @@ export class OrganizationSettingsPage {
       this.settings.integrations.teamsWebhookUrl = (e.target as HTMLInputElement).value;
       this.markDirty();
     });
+
+    // SSO
+    const ssoProvider = this.element.querySelector('#sso-provider') as HTMLSelectElement;
+    ssoProvider?.addEventListener('change', (e) => {
+      this.settings.integrations.ssoProvider = (e.target as HTMLSelectElement).value;
+      this.markDirty();
+    });
+    const ssoEntityId = this.element.querySelector('#sso-entity-id') as HTMLInputElement;
+    ssoEntityId?.addEventListener('input', (e) => {
+      this.settings.integrations.ssoEntityId = (e.target as HTMLInputElement).value;
+      this.markDirty();
+    });
+    const ssoMetadataUrl = this.element.querySelector('#sso-metadata-url') as HTMLInputElement;
+    ssoMetadataUrl?.addEventListener('input', (e) => {
+      this.settings.integrations.ssoMetadataUrl = (e.target as HTMLInputElement).value;
+      this.markDirty();
+    });
+
+    // Webhooks
+    this.element.querySelector('#add-webhook')?.addEventListener('click', () => this.handleAddWebhook());
+    this.element.querySelectorAll('.remove-webhook').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const row = (e.target as HTMLElement).closest('[data-webhook-index]') as HTMLElement;
+        const index = parseInt(row.dataset.webhookIndex || '0', 10);
+        this.settings.integrations.webhookEndpoints.splice(index, 1);
+        this.markDirty();
+        this.render();
+      });
+    });
+  }

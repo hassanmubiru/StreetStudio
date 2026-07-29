@@ -339,3 +339,62 @@ describe('SecuritySettingsPage', () => {
       expect(handler).toHaveBeenCalled();
     });
   });
+
+  describe('Active Sessions Section', () => {
+    it('should display all sessions', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions });
+      const el = page.getElement();
+
+      const items = el.querySelectorAll('[data-session-id]');
+      expect(items.length).toBe(2);
+    });
+
+    it('should mark current session', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions });
+      const el = page.getElement();
+
+      const currentItem = el.querySelector('[data-session-id="session-1"]');
+      expect(currentItem?.textContent).toContain('Current');
+    });
+
+    it('should not show revoke button for current session', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions });
+      const el = page.getElement();
+
+      const currentItem = el.querySelector('[data-session-id="session-1"]');
+      expect(currentItem?.querySelector('.revoke-session-btn')).toBeFalsy();
+    });
+
+    it('should show revoke button for other sessions', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions });
+      const el = page.getElement();
+
+      const otherItem = el.querySelector('[data-session-id="session-2"]');
+      expect(otherItem?.querySelector('.revoke-session-btn')).toBeTruthy();
+    });
+
+    it('should dispatch session-revoke event when revoking', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions });
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const handler = vi.fn();
+      el.addEventListener('session-revoke', handler);
+
+      const revokeBtn = el.querySelector('[data-session-id="session-2"] .revoke-session-btn') as HTMLButtonElement;
+      revokeBtn.click();
+
+      expect(handler).toHaveBeenCalled();
+      expect(handler.mock.calls[0][0].detail.sessionId).toBe('session-2');
+    });
+
+    it('should remove session from list after revoke', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions });
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const revokeBtn = el.querySelector('[data-session-id="session-2"] .revoke-session-btn') as HTMLButtonElement;
+      revokeBtn.click();
+
+      expect(el.querySelector('[data-session-id="session-2"]')).toBeFalsy();
+    });
