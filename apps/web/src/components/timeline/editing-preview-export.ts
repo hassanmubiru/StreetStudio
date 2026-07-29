@@ -302,3 +302,53 @@ export class EditingPreviewSystem {
       this.state.duration = duration;
     }
   }
+
+  /** Set buffering state */
+  public setBuffering(isBuffering: boolean): void {
+    if (this.state.isBuffering !== isBuffering) {
+      this.state.isBuffering = isBuffering;
+      this.callbacks.onBufferingChange?.(isBuffering);
+    }
+  }
+
+  /** Check whether the preview is currently active */
+  public isActive(): boolean {
+    return this.state.isActive;
+  }
+
+  /** Get current preview state */
+  public getState(): PreviewState {
+    return { ...this.state, editOperations: [...this.state.editOperations] };
+  }
+
+  /** Get the computed preview URL (original remains unchanged) */
+  public getPreviewUrl(): string {
+    return this.state.previewVideoUrl ?? this.state.originalVideoUrl;
+  }
+
+  /** Get the original video URL (never modified) */
+  public getOriginalUrl(): string {
+    return this.state.originalVideoUrl;
+  }
+
+  /** Get the number of pending edits */
+  public getOperationCount(): number {
+    return this.state.editOperations.length;
+  }
+
+  /**
+   * Compute effective duration after all edit operations.
+   * Trims reduce duration, splits don't change total.
+   */
+  public getEffectiveDuration(): number {
+    let duration = this.state.duration;
+    for (const op of this.state.editOperations) {
+      if (op.type === 'trim') {
+        const trim = op.data as TrimOperation;
+        const frameDiff = Math.abs(trim.newFrame - trim.originalFrame);
+        // Rough approximation: trim reduces duration by removed frames
+        duration = Math.max(0, duration - frameDiff);
+      }
+    }
+    return duration;
+  }

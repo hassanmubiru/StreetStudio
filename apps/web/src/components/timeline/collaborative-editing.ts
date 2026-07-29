@@ -104,3 +104,43 @@ export interface CollaborativeEditingOptions {
   /** Max edit history entries to retain (default: 100). */
   maxHistorySize?: number;
 }
+
+/** Callbacks for collaborative editing events. */
+export interface CollaborativeEditingCallbacks {
+  onPresenceUpdate?: (participants: EditorPresence[]) => void;
+  onConflictDetected?: (conflict: EditConflict) => void;
+  onConflictResolved?: (conflict: EditConflict) => void;
+  onEditReceived?: (operation: EditOperation) => void;
+  onSessionStart?: (session: EditSession) => void;
+  onSessionEnd?: (sessionId: Uuid) => void;
+  onVersionChange?: (version: number) => void;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+export const DEFAULT_PRESENCE_TIMEOUT_MS = 30_000;
+export const DEFAULT_MAX_HISTORY_SIZE = 100;
+export const PRESENCE_UPDATE_INTERVAL_MS = 5_000;
+
+/** Pre-defined colors for user cursors/indicators. */
+export const USER_COLORS = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
+  '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
+  '#BB8FCE', '#85C1E9', '#F0B27A', '#7DCEA0',
+];
+
+// ─── Utility Functions ────────────────────────────────────────────────────────
+
+/** Generate a simple unique ID. */
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+/** Get a deterministic color for a user based on their ID. */
+export function getUserColor(userId: string): string {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
+  }
+  return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
+}
