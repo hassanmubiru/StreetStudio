@@ -406,3 +406,92 @@ describe('TextOverlayManager', () => {
       expect(manager.setOverlayStyle('ghost', { fontSize: 32 })).toBeNull();
     });
   });
+
+  describe('overlay visibility and frame queries', () => {
+    it('gets overlays visible at a frame', () => {
+      manager.addOverlay('A', 0, 30);
+      manager.addOverlay('B', 20, 60);
+      manager.addOverlay('C', 60, 90);
+
+      const at25 = manager.getOverlaysAtFrame(25);
+      expect(at25).toHaveLength(2);
+    });
+
+    it('excludes hidden overlays', () => {
+      const overlay = manager.addOverlay('Hidden', 0, 60);
+      manager.toggleOverlayVisibility(overlay.id);
+      expect(manager.getOverlaysAtFrame(30)).toHaveLength(0);
+    });
+
+    it('toggles visibility', () => {
+      const overlay = manager.addOverlay('Toggle', 0, 30);
+      expect(overlay.isVisible).toBe(true);
+      manager.toggleOverlayVisibility(overlay.id);
+      expect(manager.getOverlay(overlay.id)?.isVisible).toBe(false);
+      manager.toggleOverlayVisibility(overlay.id);
+      expect(manager.getOverlay(overlay.id)?.isVisible).toBe(true);
+    });
+  });
+
+  // ─── Caption Tests ──────────────────────────────────────────────────────
+
+  describe('caption management', () => {
+    it('adds a caption cue', () => {
+      const caption = manager.addCaption('Hello world', 0, 90);
+      expect(caption.id).toMatch(/^overlay-/);
+      expect(caption.text).toBe('Hello world');
+      expect(caption.startFrame).toBe(0);
+      expect(caption.endFrame).toBe(90);
+      expect(callbacks.onCaptionAdd).toHaveBeenCalledWith(caption);
+    });
+
+    it('applies default caption style', () => {
+      const caption = manager.addCaption('Style', 0, 30);
+      expect(caption.style.fontSize).toBe(DEFAULT_CAPTION_FONT_SIZE);
+      expect(caption.style.color).toBe(DEFAULT_CAPTION_COLOR);
+      expect(caption.style.backgroundColor).toBe(DEFAULT_CAPTION_BG);
+      expect(caption.style.position).toBe('bottom');
+    });
+
+    it('applies custom style', () => {
+      const caption = manager.addCaption('Custom', 0, 30, {
+        fontSize: 24,
+        position: 'top',
+      });
+      expect(caption.style.fontSize).toBe(24);
+      expect(caption.style.position).toBe('top');
+    });
+
+    it('stores speaker information', () => {
+      const caption = manager.addCaption('Hi', 0, 30, undefined, 'Alice');
+      expect(caption.speaker).toBe('Alice');
+    });
+
+    it('retrieves a caption by ID', () => {
+      const caption = manager.addCaption('Find', 0, 60);
+      expect(manager.getCaption(caption.id)).toEqual(caption);
+    });
+
+    it('gets all captions', () => {
+      manager.addCaption('One', 0, 30);
+      manager.addCaption('Two', 30, 60);
+      expect(manager.getAllCaptions()).toHaveLength(2);
+    });
+
+    it('removes a caption', () => {
+      const caption = manager.addCaption('Remove', 0, 30);
+      expect(manager.removeCaption(caption.id)).toBe(true);
+      expect(manager.getCaption(caption.id)).toBeUndefined();
+      expect(callbacks.onCaptionRemove).toHaveBeenCalledWith(caption.id);
+    });
+
+    it('returns false removing non-existent caption', () => {
+      expect(manager.removeCaption('ghost')).toBe(false);
+    });
+
+    it('tracks caption count', () => {
+      expect(manager.getCaptionCount()).toBe(0);
+      manager.addCaption('A', 0, 30);
+      expect(manager.getCaptionCount()).toBe(1);
+    });
+  });
