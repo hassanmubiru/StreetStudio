@@ -756,3 +756,103 @@ describe('Activity Feed', () => {
       expect(filterActivities(events, ['video_uploaded'])).toEqual([]);
     });
   });
+
+  describe('ActivityFeed component', () => {
+    let container: HTMLElement;
+
+    beforeEach(() => {
+      container = createContainer();
+    });
+
+    it('renders with proper ARIA attributes', () => {
+      new ActivityFeed(container);
+      expect(container.getAttribute('role')).toBe('feed');
+      expect(container.getAttribute('aria-label')).toBe('Activity feed');
+    });
+
+    it('shows empty message when no events', () => {
+      new ActivityFeed(container);
+      expect(container.textContent).toContain('No activity yet');
+    });
+
+    it('renders activity events', () => {
+      const feed = new ActivityFeed(container, { groupByUser: false });
+      feed.setEvents([
+        makeActivityEvent({ id: 'e1', actorId: 'u1', actorName: 'Alice', description: 'added a comment' }),
+        makeActivityEvent({ id: 'e2', actorId: 'u2', actorName: 'Bob', description: 'uploaded a video' }),
+      ]);
+      expect(container.textContent).toContain('Alice');
+      expect(container.textContent).toContain('Bob');
+    });
+
+    it('adds new events at the top', () => {
+      const feed = new ActivityFeed(container, { groupByUser: false });
+      feed.setEvents([
+        makeActivityEvent({ id: 'e1', actorName: 'Alice' }),
+      ]);
+      feed.addEvent(makeActivityEvent({ id: 'e2', actorName: 'Bob', description: 'new action' }));
+      const events = feed.getEvents();
+      expect(events[0].id).toBe('e2');
+    });
+
+    it('removes events by ID', () => {
+      const feed = new ActivityFeed(container);
+      feed.setEvents([
+        makeActivityEvent({ id: 'e1', actorId: 'u1' }),
+        makeActivityEvent({ id: 'e2', actorId: 'u2' }),
+      ]);
+      feed.removeEvent('e1');
+      expect(feed.getEventCount()).toBe(1);
+    });
+
+    it('respects maxItems limit', () => {
+      const feed = new ActivityFeed(container, { maxItems: 3 });
+      const events = Array.from({ length: 5 }, (_, i) =>
+        makeActivityEvent({ id: `e${i}`, actorId: `u${i}` })
+      );
+      feed.setEvents(events);
+      expect(feed.getEvents().length).toBe(3);
+    });
+
+    it('filters events by type', () => {
+      const feed = new ActivityFeed(container, { visibleTypes: ['comment_added'] });
+      feed.setEvents([
+        makeActivityEvent({ id: 'e1', type: 'comment_added' }),
+        makeActivityEvent({ id: 'e2', type: 'video_uploaded' }),
+      ]);
+      expect(feed.getEventCount()).toBe(1);
+    });
+
+    it('updates filter dynamically', () => {
+      const feed = new ActivityFeed(container);
+      feed.setEvents([
+        makeActivityEvent({ id: 'e1', type: 'comment_added' }),
+        makeActivityEvent({ id: 'e2', type: 'video_uploaded' }),
+      ]);
+      feed.setFilter(['video_uploaded']);
+      expect(feed.getEventCount()).toBe(1);
+    });
+
+    it('calls onActivityClick when event is clicked', () => {
+      const onActivityClick = vi.fn();
+      const feed = new ActivityFeed(container, { groupByUser: false }, { onActivityClick });
+      const event = makeActivityEvent({ id: 'e1', resourceId: 'res-1' });
+      feed.setEvents([event]);
+
+      const item = container.querySelector('[data-activity-id="e1"]') as HTMLElement;
+      item.click();
+      expect(onActivityClick).toHaveBeenCalledWith(event);
+    });
+
+    it('shows load more button when at max capacity', () => {
+      const onLoadMore = vi.fn().mockResolvedValue([]);
+      const feed = new ActivityFeed(container, { maxItems: 2 }, { onLoadMore });
+      feed.setEvents([
+        makeActivityEvent({ id: 'e1', actorId: 'u1' }),
+        makeActivityEvent({ id: 'e2', actorId: 'u2' }),
+      ]);
+      const loadMoreBtn = container.querySelector('.activity-feed-load-more');
+      expect(loadMoreBtn).not.toBeNull();
+    });
+  });
+});
