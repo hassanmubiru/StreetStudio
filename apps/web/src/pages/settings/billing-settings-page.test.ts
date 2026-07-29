@@ -400,3 +400,90 @@ describe('BillingSettingsPage', () => {
       expect(section?.textContent).toContain('No usage data available');
     });
   });
+
+  describe('Payment Methods Section', () => {
+    it('should display all payment methods', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const methods = el.querySelectorAll('.payment-method');
+      expect(methods.length).toBe(2);
+    });
+
+    it('should show card details with last4 digits', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const method = el.querySelector('[data-method-id="pm_1"]');
+      expect(method?.textContent).toContain('4242');
+      expect(method?.textContent).toContain('Visa');
+    });
+
+    it('should show expiry date for cards', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const method = el.querySelector('[data-method-id="pm_1"]');
+      expect(method?.textContent).toContain('12/2025');
+    });
+
+    it('should show default badge on default method', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const defaultMethod = el.querySelector('[data-method-id="pm_1"]');
+      expect(defaultMethod?.textContent).toContain('Default');
+    });
+
+    it('should show set default button for non-default methods', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const setDefaultBtn = el.querySelector('.set-default-btn[data-method-id="pm_2"]');
+      expect(setDefaultBtn).toBeTruthy();
+    });
+
+    it('should not show set default button for the default method', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const setDefaultBtn = el.querySelector('.set-default-btn[data-method-id="pm_1"]');
+      expect(setDefaultBtn).toBeFalsy();
+    });
+
+    it('should show add payment method button', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      expect(el.querySelector('#add-payment-method-btn')).toBeTruthy();
+    });
+
+    it('should show remove buttons for all methods', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const removeBtns = el.querySelectorAll('.remove-method-btn');
+      expect(removeBtns.length).toBe(2);
+    });
+
+    it('should have accessible remove button labels', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const removeBtn = el.querySelector('.remove-method-btn[data-method-id="pm_1"]');
+      expect(removeBtn?.getAttribute('aria-label')).toContain('4242');
+    });
+
+    it('should handle empty payment methods', async () => {
+      const emptyData = { ...mockBillingData, paymentMethods: [] };
+      (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: emptyData, status: 200, success: true,
+      });
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+
+      const section = el.querySelector('#payment-heading')?.closest('section');
+      expect(section?.textContent).toContain('No payment methods on file');
+    });
+  });

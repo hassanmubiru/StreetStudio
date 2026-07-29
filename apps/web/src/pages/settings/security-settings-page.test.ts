@@ -51,3 +51,57 @@ describe('SecuritySettingsPage', () => {
       isCurrent: false,
     },
   ];
+
+  const mockLoginHistory: LoginHistoryEntry[] = [
+    {
+      id: 'login-1',
+      timestamp: new Date().toISOString(),
+      ipAddress: '192.168.1.1',
+      location: 'San Francisco, CA',
+      browser: 'Chrome 120',
+      operatingSystem: 'macOS 14',
+      success: true,
+      suspicious: false,
+    },
+    {
+      id: 'login-2',
+      timestamp: new Date(Date.now() - 86400000).toISOString(),
+      ipAddress: '45.33.21.100',
+      location: 'Moscow, Russia',
+      browser: 'Firefox 110',
+      operatingSystem: 'Windows 11',
+      success: false,
+      suspicious: true,
+      reason: 'Unusual location',
+    },
+  ];
+
+  beforeEach(() => {
+    document.body.innerHTML = '<div id="app"></div>';
+  });
+
+  afterEach(() => {
+    page?.destroy();
+    document.body.innerHTML = '';
+  });
+
+  describe('Initialization', () => {
+    it('should create page element with correct structure', () => {
+      page = new SecuritySettingsPage();
+      const el = page.getElement();
+
+      expect(el).toBeInstanceOf(HTMLElement);
+      expect(el.getAttribute('data-main-content')).toBe('');
+      expect(el.querySelector('h1')?.textContent).toBe('Security Settings');
+    });
+
+    it('should render all main sections', () => {
+      page = new SecuritySettingsPage({ sessions: mockSessions, loginHistory: mockLoginHistory });
+      const el = page.getElement();
+
+      expect(el.querySelector('#password-heading')).toBeTruthy();
+      expect(el.querySelector('#two-factor-heading')).toBeTruthy();
+      expect(el.querySelector('#sessions-heading')).toBeTruthy();
+      expect(el.querySelector('#login-history-heading')).toBeTruthy();
+    });
+  });

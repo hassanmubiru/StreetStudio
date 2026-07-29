@@ -294,3 +294,93 @@ describe('AccessibilitySettingsPage', () => {
       expect(document.documentElement.getAttribute('data-screen-reader-optimized')).toBe('true');
     });
   });
+
+  describe('Keyboard Navigation Preferences', () => {
+    it('should render all keyboard navigation toggles', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      expect(el.querySelector('#kb-enabled')).toBeTruthy();
+      expect(el.querySelector('#kb-focus-indicators')).toBeTruthy();
+      expect(el.querySelector('#kb-skip-link')).toBeTruthy();
+      expect(el.querySelector('#kb-arrow-nav')).toBeTruthy();
+    });
+
+    it('should reflect initial keyboard preferences', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const enabled = el.querySelector('#kb-enabled') as HTMLInputElement;
+      const focus = el.querySelector('#kb-focus-indicators') as HTMLInputElement;
+      const skip = el.querySelector('#kb-skip-link') as HTMLInputElement;
+      const arrow = el.querySelector('#kb-arrow-nav') as HTMLInputElement;
+
+      expect(enabled.checked).toBe(true);
+      expect(focus.checked).toBe(true);
+      expect(skip.checked).toBe(true);
+      expect(arrow.checked).toBe(true);
+    });
+
+    it('should update keyboard enabled preference on toggle', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const enabled = el.querySelector('#kb-enabled') as HTMLInputElement;
+      enabled.checked = false;
+      enabled.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getPreferences().keyboardNavigation.enabled).toBe(false);
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should update focus indicators preference on toggle', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const focus = el.querySelector('#kb-focus-indicators') as HTMLInputElement;
+      focus.checked = false;
+      focus.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getPreferences().keyboardNavigation.showFocusIndicators).toBe(false);
+    });
+
+    it('should update skip link preference on toggle', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const skip = el.querySelector('#kb-skip-link') as HTMLInputElement;
+      skip.checked = false;
+      skip.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getPreferences().keyboardNavigation.skipLinkEnabled).toBe(false);
+    });
+
+    it('should update arrow navigation preference on toggle', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const arrow = el.querySelector('#kb-arrow-nav') as HTMLInputElement;
+      arrow.checked = false;
+      arrow.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getPreferences().keyboardNavigation.arrowKeyNavigation).toBe(false);
+    });
+
+    it('should apply keyboard-nav class to document', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      expect(document.documentElement.classList.contains('keyboard-nav')).toBe(true);
+
+      const enabled = el.querySelector('#kb-enabled') as HTMLInputElement;
+      enabled.checked = false;
+      enabled.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(document.documentElement.classList.contains('keyboard-nav')).toBe(false);
+    });
+  });
