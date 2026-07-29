@@ -520,3 +520,52 @@ describe('TimelineCommentMarkers', () => {
     expect(markerEls.length).toBe(1);
   });
 });
+
+// --------------------------------------------------------------------------
+// CommentModerationTools
+// --------------------------------------------------------------------------
+
+describe('CommentModerationTools', () => {
+  let container: HTMLElement;
+  let callbacks: CommentSystemCallbacks;
+
+  beforeEach(() => {
+    container = createContainer();
+    callbacks = defaultCallbacks();
+  });
+
+  it('renders moderation toolbar with stats', () => {
+    const tools = new CommentModerationTools(container, callbacks);
+    tools.updateStats({ total: 10, visible: 7, hidden: 2, pinned: 1, deleted: 0 });
+    expect(container.textContent).toContain('All: 10');
+    expect(container.textContent).toContain('Visible: 7');
+    expect(container.textContent).toContain('Hidden: 2');
+    expect(container.textContent).toContain('Pinned: 1');
+  });
+
+  it('has proper accessibility attributes', () => {
+    new CommentModerationTools(container, callbacks);
+    expect(container.getAttribute('role')).toBe('toolbar');
+    expect(container.getAttribute('aria-label')).toBe('Comment moderation tools');
+  });
+
+  it('renders filter buttons', () => {
+    new CommentModerationTools(container, callbacks);
+    const buttons = container.querySelectorAll('.filter-btn');
+    expect(buttons.length).toBe(4); // All, Visible, Hidden, Pinned
+  });
+
+  it('calls onFilterChange when filter is clicked', () => {
+    const onFilterChange = vi.fn();
+    new CommentModerationTools(container, callbacks, onFilterChange);
+    const hiddenBtn = container.querySelectorAll('.filter-btn')[2] as HTMLButtonElement;
+    hiddenBtn.click();
+    expect(onFilterChange).toHaveBeenCalledWith('hidden');
+  });
+
+  it('marks active filter button', () => {
+    new CommentModerationTools(container, callbacks);
+    const allBtn = container.querySelector('.filter-btn.active');
+    expect(allBtn?.textContent).toBe('All');
+  });
+});

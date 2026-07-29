@@ -467,3 +467,66 @@ describe('TimelineEditor', () => {
       expect(clip?.inPoint).toBe(100);
     });
   });
+
+  describe('split operations', () => {
+    beforeEach(() => {
+      editor.addClip(createTestClip());
+    });
+
+    it('splits clip at playhead position', () => {
+      editor.seekToFrame(150);
+      const result = editor.splitAtPlayhead();
+      expect(result).not.toBeNull();
+      expect(result!.splitFrame).toBe(150);
+      expect(editor.getState().clips).toHaveLength(2);
+    });
+
+    it('creates two clips with correct in/out points', () => {
+      editor.seekToFrame(100);
+      editor.splitAtPlayhead();
+      const clips = editor.getState().clips;
+      expect(clips[0].inPoint).toBe(0);
+      expect(clips[0].outPoint).toBe(100);
+      expect(clips[0].duration).toBe(100);
+      expect(clips[1].inPoint).toBe(100);
+      expect(clips[1].outPoint).toBe(300);
+      expect(clips[1].duration).toBe(200);
+    });
+
+    it('fires onSplit callback', () => {
+      editor.seekToFrame(150);
+      editor.splitAtPlayhead();
+      expect(callbacks.onSplit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          clipId: 'clip-1',
+          splitFrame: 150,
+        })
+      );
+    });
+
+    it('returns null when playhead is at clip start', () => {
+      editor.seekToFrame(0);
+      const result = editor.splitAtPlayhead();
+      expect(result).toBeNull();
+    });
+
+    it('returns null when playhead is at clip end', () => {
+      editor.seekToFrame(300);
+      const result = editor.splitAtPlayhead();
+      expect(result).toBeNull();
+    });
+
+    it('returns null when no clip at playhead', () => {
+      editor.seekToFrame(0);
+      editor.removeClip('clip-1');
+      const result = editor.splitAtPlayhead();
+      expect(result).toBeNull();
+    });
+
+    it('shows split preview element', () => {
+      editor.seekToFrame(150);
+      editor.splitAtPlayhead();
+      const preview = container.querySelector('.timeline-split-preview') as HTMLElement;
+      expect(preview?.style.display).toBe('block');
+    });
+  });
