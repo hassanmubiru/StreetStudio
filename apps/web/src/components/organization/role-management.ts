@@ -437,9 +437,11 @@ export class RoleManagement {
     saveBtn.className = 'role-save-btn';
     saveBtn.textContent = existingRole ? 'Update Role' : 'Create Role';
     saveBtn.addEventListener('click', async () => {
-      const nameInput = editor.querySelector('.role-name-input') as HTMLInputElement;
-      const descInput = editor.querySelector('.role-desc-input') as HTMLInputElement;
-      const errorEl = editor.querySelector('#role-name-error') as HTMLElement;
+      const nameInput = editor.querySelector('.role-name-input') as HTMLInputElement | null;
+      const descInput = editor.querySelector('.role-desc-input') as HTMLInputElement | null;
+      const errorEl = editor.querySelector('.form-error') as HTMLElement | null;
+
+      if (!nameInput || !descInput || !errorEl) return;
 
       const validation = validateRoleName(nameInput.value);
       if (!validation.valid) {

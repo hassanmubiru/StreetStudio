@@ -400,9 +400,11 @@ export class TeamManagement {
     saveBtn.className = 'team-save-btn';
     saveBtn.textContent = 'Create Team';
     saveBtn.addEventListener('click', async () => {
-      const nameInput = editor.querySelector('.team-name-input') as HTMLInputElement;
-      const descInput = editor.querySelector('.team-desc-input') as HTMLInputElement;
-      const errorEl = editor.querySelector('#team-name-error') as HTMLElement;
+      const nameInput = editor.querySelector('.team-name-input') as HTMLInputElement | null;
+      const descInput = editor.querySelector('.team-desc-input') as HTMLInputElement | null;
+      const errorEl = editor.querySelector('.form-error') as HTMLElement | null;
+
+      if (!nameInput || !descInput || !errorEl) return;
 
       const validation = validateTeamName(nameInput.value);
       if (!validation.valid) {
