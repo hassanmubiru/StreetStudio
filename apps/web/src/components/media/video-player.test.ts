@@ -18,7 +18,7 @@ import {
   SEEK_STEP_SECONDS,
   VOLUME_STEP,
 } from './video-player';
-import type { PlayerOptions, PlayerCallbacks, VideoSource } from './video-player';
+import type { PlayerOptions, PlayerCallbacks, VideoSource, QualityLevel } from './video-player';
 
 // Helper to create a container element
 function createContainer(): HTMLElement {
