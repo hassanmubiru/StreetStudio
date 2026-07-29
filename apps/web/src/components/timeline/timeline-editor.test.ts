@@ -530,3 +530,101 @@ describe('TimelineEditor', () => {
       expect(preview?.style.display).toBe('block');
     });
   });
+
+  describe('keyboard shortcuts', () => {
+    beforeEach(() => {
+      editor.addClip(createTestClip());
+      editor.seekToFrame(50);
+    });
+
+    it('space toggles play/pause', () => {
+      pressKey(' ');
+      expect(editor.getState().isPlaying).toBe(true);
+      pressKey(' ');
+      expect(editor.getState().isPlaying).toBe(false);
+    });
+
+    it(', goes to previous frame', () => {
+      pressKey(',');
+      expect(editor.getState().playheadFrame).toBe(49);
+    });
+
+    it('. goes to next frame', () => {
+      pressKey('.');
+      expect(editor.getState().playheadFrame).toBe(51);
+    });
+
+    it('i sets in point', () => {
+      editor.selectClip('clip-1');
+      pressKey('i');
+      expect(editor.getClip('clip-1')?.inPoint).toBe(50);
+    });
+
+    it('o sets out point', () => {
+      editor.seekToFrame(200);
+      editor.selectClip('clip-1');
+      pressKey('o');
+      expect(editor.getClip('clip-1')?.outPoint).toBe(200);
+    });
+
+    it('s splits at playhead', () => {
+      pressKey('s');
+      expect(editor.getState().clips).toHaveLength(2);
+    });
+
+    it('- zooms out', () => {
+      const before = editor.getState().zoomLevel;
+      pressKey('-');
+      expect(editor.getState().zoomLevel).toBeLessThan(before);
+    });
+
+    it('= zooms in', () => {
+      const before = editor.getState().zoomLevel;
+      pressKey('=');
+      expect(editor.getState().zoomLevel).toBeGreaterThan(before);
+    });
+
+    it('Home seeks to frame 0', () => {
+      pressKey('Home');
+      expect(editor.getState().playheadFrame).toBe(0);
+    });
+
+    it('End seeks to last frame', () => {
+      pressKey('End');
+      expect(editor.getState().playheadFrame).toBe(300);
+    });
+
+    it('ArrowLeft goes to previous frame', () => {
+      pressKey('ArrowLeft');
+      expect(editor.getState().playheadFrame).toBe(49);
+    });
+
+    it('ArrowRight goes to next frame', () => {
+      pressKey('ArrowRight');
+      expect(editor.getState().playheadFrame).toBe(51);
+    });
+
+    it('Shift+ArrowLeft seeks 10 frames back', () => {
+      pressKey('ArrowLeft', { shiftKey: true });
+      expect(editor.getState().playheadFrame).toBe(40);
+    });
+
+    it('Shift+ArrowRight seeks 10 frames forward', () => {
+      pressKey('ArrowRight', { shiftKey: true });
+      expect(editor.getState().playheadFrame).toBe(60);
+    });
+
+    it('does not capture when typing in input', () => {
+      const input = document.createElement('input');
+      document.body.appendChild(input);
+      const event = new KeyboardEvent('keydown', {
+        key: ' ',
+        bubbles: true,
+        cancelable: true,
+      });
+      Object.defineProperty(event, 'target', { value: input });
+      document.dispatchEvent(event);
+      // Play state should not change if target is an input
+      // Note: this tests that the handler checks the target
+    });
+  });

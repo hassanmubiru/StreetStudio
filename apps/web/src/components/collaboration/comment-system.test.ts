@@ -569,3 +569,70 @@ describe('CommentModerationTools', () => {
     expect(allBtn?.textContent).toBe('All');
   });
 });
+
+// --------------------------------------------------------------------------
+// CommentSystem (integration)
+// --------------------------------------------------------------------------
+
+describe('CommentSystem', () => {
+  let container: HTMLElement;
+  let callbacks: CommentSystemCallbacks;
+
+  beforeEach(() => {
+    container = createContainer();
+    callbacks = defaultCallbacks();
+  });
+
+  it('renders all sub-components', () => {
+    new CommentSystem(container, defaultOptions, callbacks);
+    expect(container.querySelector('.comment-input-container')).not.toBeNull();
+    expect(container.querySelector('.threaded-comments')).not.toBeNull();
+    expect(container.querySelector('.timeline-comment-markers')).not.toBeNull();
+  });
+
+  it('renders moderation tools for admins', () => {
+    new CommentSystem(container, adminOptions, callbacks);
+    expect(container.querySelector('.comment-moderation-tools')).not.toBeNull();
+  });
+
+  it('does not render moderation tools for non-admins', () => {
+    new CommentSystem(container, defaultOptions, callbacks);
+    expect(container.querySelector('.comment-moderation-tools')).toBeNull();
+  });
+
+  it('sets comments and renders threaded display', () => {
+    const system = new CommentSystem(container, defaultOptions, callbacks);
+    const comments = [
+      makeComment({ id: 'c1', body: 'Hello world', timestampSeconds: 10 }),
+      makeComment({ id: 'c2', parentCommentId: 'c1', body: 'Reply!' }),
+    ];
+    const authors = makeAuthorMap({ id: 'user-1', displayName: 'Alice' });
+    system.setComments(comments, authors);
+    expect(container.textContent).toContain('Hello world');
+    expect(container.textContent).toContain('Reply!');
+  });
+
+  it('renders timeline markers for timestamped comments', () => {
+    const system = new CommentSystem(container, defaultOptions, callbacks);
+    const comments = [
+      makeComment({ id: 'c1', timestampSeconds: 30 }),
+      makeComment({ id: 'c2', timestampSeconds: 90 }),
+    ];
+    system.setComments(comments, new Map());
+    const markers = container.querySelectorAll('.comment-marker');
+    expect(markers.length).toBe(2);
+  });
+
+  it('updates current time on the comment input', () => {
+    const system = new CommentSystem(container, defaultOptions, callbacks);
+    system.updateCurrentTime(55);
+    const display = container.querySelector('.timestamp-display');
+    expect(display?.textContent).toBe('0:55');
+  });
+
+  it('has proper aria region role', () => {
+    new CommentSystem(container, defaultOptions, callbacks);
+    expect(container.getAttribute('role')).toBe('region');
+    expect(container.getAttribute('aria-label')).toBe('Comments and discussion');
+  });
+});
