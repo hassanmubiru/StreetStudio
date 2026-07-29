@@ -171,3 +171,71 @@ describe('OrganizationSettingsPage', () => {
       expect(panel).toBeTruthy();
     });
   });
+
+  describe('Branding Section', () => {
+    it('should render logo upload area', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('#logo-upload')).toBeTruthy();
+      expect(el.querySelector('#logo-preview')).toBeTruthy();
+    });
+
+    it('should show "No logo" placeholder when no logo URL', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const preview = el.querySelector('#logo-preview');
+      expect(preview?.textContent).toContain('No logo');
+    });
+
+    it('should show logo image when logoUrl is set', () => {
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        branding: { ...createDefaultBrandingSettings(), logoUrl: 'https://example.com/logo.png' },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const img = el.querySelector('#logo-preview img') as HTMLImageElement;
+      expect(img).toBeTruthy();
+      expect(img.src).toBe('https://example.com/logo.png');
+    });
+
+    it('should render color pickers with default values', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const primaryColor = el.querySelector('#primary-color') as HTMLInputElement;
+      const accentColor = el.querySelector('#accent-color') as HTMLInputElement;
+      expect(primaryColor.value).toBe('#2563eb');
+      expect(accentColor.value).toBe('#7c3aed');
+    });
+
+    it('should update primary color on color picker change', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const primaryColor = el.querySelector('#primary-color') as HTMLInputElement;
+      primaryColor.value = '#ff0000';
+      primaryColor.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(page.getSettings().branding.primaryColor).toBe('#ff0000');
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should sync hex input with color picker', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const primaryColor = el.querySelector('#primary-color') as HTMLInputElement;
+      primaryColor.value = '#00ff00';
+      primaryColor.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const hexInput = el.querySelector('#primary-color-hex') as HTMLInputElement;
+      expect(hexInput.value).toBe('#00ff00');
+    });
