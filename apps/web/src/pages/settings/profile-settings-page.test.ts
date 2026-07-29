@@ -360,3 +360,123 @@ describe('ProfileSettingsPage', () => {
       expect(toggle.getAttribute('aria-label')).toBe('Comments via Email');
     });
   });
+
+  describe('Save and Discard', () => {
+    it('should disable save button when not dirty', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const saveBtn = el.querySelector('#save-profile') as HTMLButtonElement;
+      expect(saveBtn.disabled).toBe(true);
+    });
+
+    it('should enable save button when dirty', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const input = el.querySelector('#display-name') as HTMLInputElement;
+      input.value = 'Changed';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const saveBtn = el.querySelector('#save-profile') as HTMLButtonElement;
+      expect(saveBtn.disabled).toBe(false);
+    });
+
+    it('should dispatch profile-save event on save', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const saveSpy = vi.fn();
+      el.addEventListener('profile-save', saveSpy);
+
+      // Make dirty first
+      const input = el.querySelector('#display-name') as HTMLInputElement;
+      input.value = 'Updated Name';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const saveBtn = el.querySelector('#save-profile') as HTMLButtonElement;
+      saveBtn.click();
+
+      expect(saveSpy).toHaveBeenCalled();
+      const detail = saveSpy.mock.calls[0][0].detail;
+      expect(detail.profileData.displayName).toBe('Updated Name');
+    });
+
+    it('should reset dirty state on discard', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      // Make dirty
+      const input = el.querySelector('#display-name') as HTMLInputElement;
+      input.value = 'Changed';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      expect(page.isDirtyState()).toBe(true);
+
+      // Discard
+      const discardBtn = el.querySelector('#discard-changes') as HTMLButtonElement;
+      discardBtn.click();
+
+      expect(page.isDirtyState()).toBe(false);
+    });
+
+    it('should show status messages', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const status = el.querySelector('#save-status');
+      expect(status?.textContent).toBe('All changes saved');
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should have proper heading hierarchy', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const h1 = el.querySelector('h1');
+      expect(h1).toBeTruthy();
+
+      const h2s = el.querySelectorAll('h2');
+      expect(h2s.length).toBeGreaterThanOrEqual(4); // Avatar, Profile Info, Timezone, Notifications
+    });
+
+    it('should have aria-labelledby on sections', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const sections = el.querySelectorAll('section[aria-labelledby]');
+      expect(sections.length).toBe(4);
+    });
+
+    it('should have aria-describedby on form fields', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const nameInput = el.querySelector('#display-name') as HTMLInputElement;
+      expect(nameInput.getAttribute('aria-describedby')).toBe('display-name-help');
+
+      const bioArea = el.querySelector('#bio') as HTMLTextAreaElement;
+      expect(bioArea.getAttribute('aria-describedby')).toContain('bio-help');
+    });
+
+    it('should have role=alert on error containers', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const errors = el.querySelectorAll('[role="alert"]');
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('should have accessible notification table', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const table = el.querySelector('table');
+      expect(table?.getAttribute('role')).toBe('grid');
+      expect(table?.getAttribute('aria-label')).toBe('Notification preferences');
+    });
+  });
+});

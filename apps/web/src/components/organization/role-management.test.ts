@@ -230,3 +230,146 @@ describe('PermissionMatrix', () => {
     container = createContainer();
     callbacks = { onPermissionToggle: vi.fn() };
   });
+
+  it('renders grid with role="grid" and aria-label', () => {
+    const permissions: PermissionEntry[] = [
+      { resourceId: 'projects', actionId: 'view', granted: true },
+    ];
+    new PermissionMatrix(container, {
+      resources: [{ id: 'projects', name: 'Projects', description: 'Project mgmt' }],
+      actions: [{ id: 'view', name: 'View', description: 'View access' }],
+      permissions,
+    }, callbacks);
+
+    expect(container.getAttribute('role')).toBe('grid');
+    expect(container.getAttribute('aria-label')).toBe('Permission matrix');
+  });
+
+  it('renders column headers for each action', () => {
+    new PermissionMatrix(container, {
+      resources: [{ id: 'projects', name: 'Projects', description: '' }],
+      actions: [
+        { id: 'view', name: 'View', description: '' },
+        { id: 'edit', name: 'Edit', description: '' },
+      ],
+      permissions: [],
+    }, callbacks);
+
+    const headers = container.querySelectorAll('.permission-matrix-col-header');
+    expect(headers.length).toBe(2);
+    expect(headers[0].textContent).toBe('View');
+    expect(headers[1].textContent).toBe('Edit');
+  });
+
+  it('renders row headers for each resource', () => {
+    new PermissionMatrix(container, {
+      resources: [
+        { id: 'projects', name: 'Projects', description: '' },
+        { id: 'videos', name: 'Videos', description: '' },
+      ],
+      actions: [{ id: 'view', name: 'View', description: '' }],
+      permissions: [],
+    }, callbacks);
+
+    const rowHeaders = container.querySelectorAll('.permission-matrix-row-header');
+    expect(rowHeaders.length).toBe(2);
+    expect(rowHeaders[0].textContent).toBe('Projects');
+    expect(rowHeaders[1].textContent).toBe('Videos');
+  });
+
+  it('renders checkboxes with correct checked state', () => {
+    new PermissionMatrix(container, {
+      resources: [{ id: 'projects', name: 'Projects', description: '' }],
+      actions: [
+        { id: 'view', name: 'View', description: '' },
+        { id: 'edit', name: 'Edit', description: '' },
+      ],
+      permissions: [
+        { resourceId: 'projects', actionId: 'view', granted: true },
+        { resourceId: 'projects', actionId: 'edit', granted: false },
+      ],
+    }, callbacks);
+
+    const checkboxes = container.querySelectorAll('.permission-checkbox') as NodeListOf<HTMLInputElement>;
+    expect(checkboxes.length).toBe(2);
+    expect(checkboxes[0].checked).toBe(true);
+    expect(checkboxes[1].checked).toBe(false);
+  });
+
+  it('calls onPermissionToggle when checkbox is changed', () => {
+    new PermissionMatrix(container, {
+      resources: [{ id: 'projects', name: 'Projects', description: '' }],
+      actions: [{ id: 'view', name: 'View', description: '' }],
+      permissions: [{ resourceId: 'projects', actionId: 'view', granted: false }],
+    }, callbacks);
+
+    const checkbox = container.querySelector('.permission-checkbox') as HTMLInputElement;
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event('change'));
+    expect(callbacks.onPermissionToggle).toHaveBeenCalledWith('projects', 'view', true);
+  });
+
+  it('disables checkboxes when readOnly is true', () => {
+    new PermissionMatrix(container, {
+      resources: [{ id: 'projects', name: 'Projects', description: '' }],
+      actions: [{ id: 'view', name: 'View', description: '' }],
+      permissions: [{ resourceId: 'projects', actionId: 'view', granted: true }],
+      readOnly: true,
+    }, callbacks);
+
+    const checkbox = container.querySelector('.permission-checkbox') as HTMLInputElement;
+    expect(checkbox.disabled).toBe(true);
+  });
+
+  it('shows inherited class when permission is inherited', () => {
+    new PermissionMatrix(container, {
+      resources: [{ id: 'projects', name: 'Projects', description: '' }],
+      actions: [{ id: 'view', name: 'View', description: '' }],
+      permissions: [{ resourceId: 'projects', actionId: 'view', granted: true, inherited: true }],
+      showInheritance: true,
+    }, callbacks);
+
+    const checkbox = container.querySelector('.permission-checkbox') as HTMLInputElement;
+    expect(checkbox.classList.contains('inherited')).toBe(true);
+  });
+
+  it('displays correct summary text', () => {
+    new PermissionMatrix(container, {
+      resources: [{ id: 'projects', name: 'Projects', description: '' }],
+      actions: [
+        { id: 'view', name: 'View', description: '' },
+        { id: 'edit', name: 'Edit', description: '' },
+      ],
+      permissions: [
+        { resourceId: 'projects', actionId: 'view', granted: true },
+        { resourceId: 'projects', actionId: 'edit', granted: false },
+      ],
+    }, callbacks);
+
+    const summary = container.querySelector('.permission-matrix-summary');
+    expect(summary?.textContent).toBe('1 of 2 permissions granted');
+  });
+
+  it('has aria-label on checkboxes', () => {
+    new PermissionMatrix(container, {
+      resources: [{ id: 'projects', name: 'Projects', description: '' }],
+      actions: [{ id: 'view', name: 'View', description: '' }],
+      permissions: [{ resourceId: 'projects', actionId: 'view', granted: true }],
+    }, callbacks);
+
+    const checkbox = container.querySelector('.permission-checkbox') as HTMLInputElement;
+    expect(checkbox.getAttribute('aria-label')).toBe('View Projects');
+  });
+
+  it('updates permissions correctly', () => {
+    const matrix = new PermissionMatrix(container, {
+      resources: [{ id: 'projects', name: 'Projects', description: '' }],
+      actions: [{ id: 'view', name: 'View', description: '' }],
+      permissions: [{ resourceId: 'projects', actionId: 'view', granted: false }],
+    }, callbacks);
+
+    matrix.updatePermissions([{ resourceId: 'projects', actionId: 'view', granted: true }]);
+    const checkbox = container.querySelector('.permission-checkbox') as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+  });
+});
