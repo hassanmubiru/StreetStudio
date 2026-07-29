@@ -656,3 +656,65 @@ describe('generateOtpAuthUrl', () => {
     expect(url).toContain('period=30');
   });
 });
+
+describe('formatRelativeTime', () => {
+  it('should return "Just now" for very recent timestamps', () => {
+    const now = new Date().toISOString();
+    expect(formatRelativeTime(now)).toBe('Just now');
+  });
+
+  it('should return minutes ago for recent timestamps', () => {
+    const fiveMinAgo = new Date(Date.now() - 5 * 60000).toISOString();
+    expect(formatRelativeTime(fiveMinAgo)).toBe('5 minutes ago');
+  });
+
+  it('should return hours ago for older timestamps', () => {
+    const twoHrsAgo = new Date(Date.now() - 2 * 3600000).toISOString();
+    expect(formatRelativeTime(twoHrsAgo)).toBe('2 hours ago');
+  });
+
+  it('should return days ago for multi-day timestamps', () => {
+    const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString();
+    expect(formatRelativeTime(threeDaysAgo)).toBe('3 days ago');
+  });
+
+  it('should return formatted date for old timestamps', () => {
+    const oldDate = new Date(Date.now() - 30 * 86400000).toISOString();
+    const result = formatRelativeTime(oldDate);
+    // Should be a date string, not a relative time
+    expect(result).not.toContain('ago');
+  });
+
+  it('should handle singular forms', () => {
+    const oneMinAgo = new Date(Date.now() - 60000).toISOString();
+    expect(formatRelativeTime(oneMinAgo)).toBe('1 minute ago');
+  });
+});
+
+describe('createPasswordChangeValidator', () => {
+  it('should fail when current password is empty', () => {
+    const validator = createPasswordChangeValidator();
+    const result = validator.validate({ currentPassword: '', newPassword: 'Test1!ab', confirmPassword: 'Test1!ab' });
+    expect(result.isValid).toBe(false);
+    expect(result.errors.currentPassword).toBeTruthy();
+  });
+
+  it('should fail when new password is too short', () => {
+    const validator = createPasswordChangeValidator();
+    const result = validator.validate({ currentPassword: 'old', newPassword: 'Ab1!', confirmPassword: 'Ab1!' });
+    expect(result.isValid).toBe(false);
+    expect(result.errors.newPassword).toBeTruthy();
+  });
+
+  it('should fail when new password lacks required characters', () => {
+    const validator = createPasswordChangeValidator();
+    const result = validator.validate({ currentPassword: 'old', newPassword: 'alllowercase', confirmPassword: 'alllowercase' });
+    expect(result.isValid).toBe(false);
+  });
+
+  it('should pass for valid password change data', () => {
+    const validator = createPasswordChangeValidator();
+    const result = validator.validate({ currentPassword: 'OldPass1', newPassword: 'NewPass1!', confirmPassword: 'NewPass1!' });
+    expect(result.isValid).toBe(true);
+  });
+});

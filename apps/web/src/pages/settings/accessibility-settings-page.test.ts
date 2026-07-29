@@ -419,10 +419,9 @@ describe('AccessibilitySettingsPage', () => {
       const saveBtn = el.querySelector('#a11y-save-settings') as HTMLButtonElement;
       saveBtn.click();
 
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        STORAGE_KEY,
-        expect.stringContaining('"highContrast":true')
-      );
+      const stored = localStorage.getItem(STORAGE_KEY);
+      expect(stored).toBeTruthy();
+      expect(stored).toContain('"highContrast":true');
     });
 
     it('should dispatch accessibility-settings-save event on save', () => {
