@@ -242,3 +242,70 @@ describe('Presence Indicators', () => {
     });
   });
 });
+
+// ==========================================================================
+// Typing Indicators Tests
+// ==========================================================================
+
+describe('Typing Indicators', () => {
+  describe('formatTypingMessage', () => {
+    it('returns empty string for no users', () => {
+      expect(formatTypingMessage([])).toBe('');
+    });
+
+    it('formats single user as "is typing..."', () => {
+      expect(formatTypingMessage([makeTypingUser({ displayName: 'Alice' })])).toBe(
+        'Alice is typing...'
+      );
+    });
+
+    it('formats two users with "and"', () => {
+      const users = [
+        makeTypingUser({ displayName: 'Alice' }),
+        makeTypingUser({ displayName: 'Bob' }),
+      ];
+      expect(formatTypingMessage(users)).toBe('Alice and Bob are typing...');
+    });
+
+    it('formats three users with commas and "and"', () => {
+      const users = [
+        makeTypingUser({ displayName: 'Alice' }),
+        makeTypingUser({ displayName: 'Bob' }),
+        makeTypingUser({ displayName: 'Charlie' }),
+      ];
+      expect(formatTypingMessage(users, 3)).toBe(
+        'Alice, Bob, and Charlie are typing...'
+      );
+    });
+
+    it('shows "others" when exceeding maxNames', () => {
+      const users = [
+        makeTypingUser({ displayName: 'Alice' }),
+        makeTypingUser({ displayName: 'Bob' }),
+        makeTypingUser({ displayName: 'Charlie' }),
+        makeTypingUser({ displayName: 'Dave' }),
+      ];
+      const result = formatTypingMessage(users, 3);
+      expect(result).toContain('2 others are typing...');
+    });
+  });
+
+  describe('isTypingExpired', () => {
+    it('returns false when within expiry window', () => {
+      const now = new Date();
+      const startedAt = new Date(now.getTime() - 2000).toISOString();
+      expect(isTypingExpired(startedAt, 5000, now)).toBe(false);
+    });
+
+    it('returns true when past expiry window', () => {
+      const now = new Date();
+      const startedAt = new Date(now.getTime() - 6000).toISOString();
+      expect(isTypingExpired(startedAt, 5000, now)).toBe(true);
+    });
+
+    it('returns true when exactly past boundary', () => {
+      const now = new Date();
+      const startedAt = new Date(now.getTime() - 5001).toISOString();
+      expect(isTypingExpired(startedAt, 5000, now)).toBe(true);
+    });
+  });
