@@ -281,3 +281,43 @@ export class UploadProgressInterface {
     this.container.appendChild(panel);
     this.setupEventListeners();
   }
+
+  private buildPanelHTML(): string {
+    return `
+      <div class="upload-progress-header">
+        <div class="header-left">
+          <span class="upload-icon" aria-hidden="true">⬆️</span>
+          <span class="header-title">Uploads</span>
+          <span class="upload-count" aria-live="polite"></span>
+        </div>
+        <div class="header-right">
+          <button type="button" class="btn-minimize" aria-label="Minimize upload panel" title="Minimize">─</button>
+          <button type="button" class="btn-close" aria-label="Close upload panel" title="Close">✕</button>
+        </div>
+      </div>
+
+      <div class="upload-progress-body">
+        ${this.config.showBatchProgress ? `
+        <div class="batch-progress-section">
+          <div class="batch-progress-bar">
+            <div class="batch-progress-fill" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+          </div>
+          <div class="batch-stats">
+            <span class="batch-percentage">0%</span>
+            ${this.config.showSpeed ? '<span class="batch-speed">--</span>' : ''}
+            ${this.config.showETA ? '<span class="batch-eta">--</span>' : ''}
+          </div>
+        </div>
+        ` : ''}
+
+        <div class="upload-items-list" role="list" aria-label="Individual upload progress"></div>
+
+        <div class="upload-errors-section" style="display: none;" role="alert" aria-live="assertive"></div>
+      </div>
+
+      <div class="upload-progress-footer">
+        <button type="button" class="btn-footer btn-pause-all">Pause All</button>
+        <button type="button" class="btn-footer btn-clear-done">Clear Completed</button>
+      </div>
+    `;
+  }

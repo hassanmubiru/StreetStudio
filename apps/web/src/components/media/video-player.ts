@@ -445,3 +445,57 @@ export class AdaptiveVideoPlayer {
         case KEYBOARD_SHORTCUTS.VOLUME_DOWN:
           this.adjustVolume(-VOLUME_STEP);
           break;
+
+        case KEYBOARD_SHORTCUTS.MUTE_TOGGLE:
+          if (!isInputFocused) {
+            this.toggleMute();
+          } else {
+            handled = false;
+          }
+          break;
+
+        case KEYBOARD_SHORTCUTS.FULLSCREEN_TOGGLE:
+          if (!isInputFocused) {
+            this.toggleFullscreen();
+          } else {
+            handled = false;
+          }
+          break;
+
+        case KEYBOARD_SHORTCUTS.PIP_TOGGLE:
+          if (!isInputFocused) {
+            this.togglePictureInPicture();
+          } else {
+            handled = false;
+          }
+          break;
+
+        case KEYBOARD_SHORTCUTS.SPEED_INCREASE:
+          this.increaseSpeed();
+          break;
+
+        case KEYBOARD_SHORTCUTS.SPEED_DECREASE:
+          this.decreaseSpeed();
+          break;
+
+        default:
+          // Number keys 1-8 for speed presets
+          if (event.key >= '1' && event.key <= '8' && !isInputFocused) {
+            const index = parseInt(event.key, 10) - 1;
+            if (index < PLAYBACK_RATES.length) {
+              this.setPlaybackRate(PLAYBACK_RATES[index]);
+            }
+          } else {
+            handled = false;
+          }
+          break;
+      }
+
+      if (handled) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    document.addEventListener('keydown', this.keydownHandler);
+  }
