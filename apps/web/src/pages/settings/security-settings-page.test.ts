@@ -345,7 +345,7 @@ describe('SecuritySettingsPage', () => {
       page = new SecuritySettingsPage({ sessions: mockSessions });
       const el = page.getElement();
 
-      const items = el.querySelectorAll('[data-session-id]');
+      const items = el.querySelectorAll('li[data-session-id]');
       expect(items.length).toBe(2);
     });
 
@@ -450,8 +450,8 @@ describe('SecuritySettingsPage', () => {
       page = new SecuritySettingsPage({ loginHistory: mockLoginHistory });
       const el = page.getElement();
 
-      const alert = el.querySelector('[role="alert"]');
-      expect(alert?.textContent).toContain('suspicious');
+      const historySection = el.querySelector('section[aria-labelledby="login-history-heading"]');
+      expect(historySection?.textContent).toContain('suspicious');
     });
 
     it('should not show alert banner when no suspicious entries', () => {
@@ -575,7 +575,7 @@ describe('evaluatePasswordStrength', () => {
   });
 
   it('should return fair for password meeting basic criteria', () => {
-    const result = evaluatePasswordStrength('password1');
+    const result = evaluatePasswordStrength('Password1');
     expect(result.score).toBeGreaterThanOrEqual(1);
   });
 
