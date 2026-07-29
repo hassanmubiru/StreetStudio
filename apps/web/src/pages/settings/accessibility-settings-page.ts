@@ -192,3 +192,78 @@ export function getAccessibilityCSS(): string {
     }
   `;
 }
+
+export class AccessibilitySettingsPage {
+  private element: HTMLElement;
+  private preferences: AccessibilityPreferences;
+  private isDirty = false;
+  private isSaving = false;
+  private systemThemeListener: ((e: MediaQueryListEvent) => void) | null = null;
+  private systemMotionListener: ((e: MediaQueryListEvent) => void) | null = null;
+
+  constructor(initialPreferences?: Partial<AccessibilityPreferences>) {
+    const defaults = createDefaultAccessibilityPreferences();
+    this.preferences = initialPreferences
+      ? { ...defaults, ...initialPreferences }
+      : loadAccessibilityPreferences();
+
+    this.element = document.createElement('div');
+    this.element.className = 'p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto';
+    this.element.setAttribute('data-main-content', '');
+    this.element.setAttribute('data-testid', 'accessibility-settings');
+
+    this.injectStyles();
+    this.render();
+    this.setupSystemListeners();
+    // Apply on load
+    applyAccessibilityPreferences(this.preferences);
+  }
+
+  public getElement(): HTMLElement {
+    return this.element;
+  }
+
+  public getPreferences(): AccessibilityPreferences {
+    return { ...this.preferences };
+  }
+
+  public isDirtyState(): boolean {
+    return this.isDirty;
+  }
+
+  /**
+   * Update preferences externally (e.g., after successful save)
+   */
+  public updatePreferences(prefs: Partial<AccessibilityPreferences>): void {
+    this.preferences = { ...this.preferences, ...prefs };
+    this.isDirty = false;
+    applyAccessibilityPreferences(this.preferences);
+    this.render();
+  }
+
+  private injectStyles(): void {
+    if (!document.getElementById('accessibility-settings-styles')) {
+      const style = document.createElement('style');
+      style.id = 'accessibility-settings-styles';
+      style.textContent = getAccessibilityCSS();
+      document.head.appendChild(style);
+    }
+  }
+
+  private setupSystemListeners(): void {
+    // Listen for system theme changes
+    const darkMq = window.matchMedia('(prefers-color-scheme: dark)');
+    this.systemThemeListener = () => {
+      if (this.preferences.theme === 'system') {
+        applyAccessibilityPreferences(this.preferences);
+      }
+    };
+    darkMq.addEventListener('change', this.systemThemeListener);
+
+    // Listen for system reduced motion changes
+    const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    this.systemMotionListener = () => {
+      // Optionally auto-sync with system
+    };
+    motionMq.addEventListener('change', this.systemMotionListener);
+  }

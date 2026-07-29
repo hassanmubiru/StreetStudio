@@ -248,3 +248,119 @@ export class SecuritySettingsPage {
   public getTwoFactorData(): TwoFactorSetupData {
     return { ...this.twoFactorData };
   }
+
+  public getSessions(): ActiveSession[] {
+    return [...this.sessions];
+  }
+
+  public getLoginHistory(): LoginHistoryEntry[] {
+    return [...this.loginHistory];
+  }
+
+  public updateSessions(sessions: ActiveSession[]): void {
+    this.sessions = sessions;
+    this.render();
+  }
+
+  public updateLoginHistory(history: LoginHistoryEntry[]): void {
+    this.loginHistory = history;
+    this.render();
+  }
+
+  private render(): void {
+    this.element.innerHTML = '';
+    this.element.appendChild(this.renderHeader());
+    this.element.appendChild(this.renderPasswordSection());
+    this.element.appendChild(this.renderTwoFactorSection());
+    this.element.appendChild(this.renderSessionsSection());
+    this.element.appendChild(this.renderLoginHistorySection());
+    this.setupEventListeners();
+  }
+
+  private renderHeader(): HTMLElement {
+    const header = document.createElement('div');
+    header.className = 'mb-8';
+    header.innerHTML = `
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Security Settings</h1>
+      <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        Manage your password, two-factor authentication, and monitor account activity.
+      </p>
+    `;
+    return header;
+  }
+
+  private renderPasswordSection(): HTMLElement {
+    const section = document.createElement('section');
+    section.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6';
+    section.setAttribute('aria-labelledby', 'password-heading');
+
+    const strengthBar = this.renderStrengthBar();
+
+    section.innerHTML = `
+      <h2 id="password-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Change Password</h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+        Choose a strong password to protect your account. You'll need your current password to make changes.
+      </p>
+      <form id="password-form" novalidate class="space-y-4">
+        <div>
+          <label for="current-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Current Password <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="current-password"
+            type="password"
+            name="currentPassword"
+            autocomplete="current-password"
+            required
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            aria-describedby="current-password-help"
+          />
+          <div id="current-password-error" class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert" aria-live="polite"></div>
+        </div>
+        <div>
+          <label for="new-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            New Password <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="new-password"
+            type="password"
+            name="newPassword"
+            autocomplete="new-password"
+            required
+            minlength="${PASSWORD_MIN_LENGTH}"
+            maxlength="${PASSWORD_MAX_LENGTH}"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            aria-describedby="password-strength-desc new-password-error"
+          />
+          <div id="password-strength-indicator" class="mt-2">${strengthBar}</div>
+          <div id="password-strength-desc" class="mt-1 text-xs text-gray-500 dark:text-gray-400" aria-live="polite"></div>
+          <div id="new-password-error" class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert" aria-live="polite"></div>
+        </div>
+        <div>
+          <label for="confirm-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Confirm New Password <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="confirm-password"
+            type="password"
+            name="confirmPassword"
+            autocomplete="new-password"
+            required
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            aria-describedby="confirm-password-error"
+          />
+          <div id="confirm-password-error" class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert" aria-live="polite"></div>
+        </div>
+        <div class="pt-2">
+          <button
+            id="change-password-btn"
+            type="submit"
+            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Update Password
+          </button>
+        </div>
+      </form>
+    `;
+    return section;
+  }
