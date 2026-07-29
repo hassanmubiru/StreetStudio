@@ -108,3 +108,256 @@ describe('formatTimestamp', () => {
     expect(formatTimestamp(NaN)).toBe('0:00');
   });
 });
+
+// --------------------------------------------------------------------------
+// buildCommentTree
+// --------------------------------------------------------------------------
+
+describe('buildCommentTree', () => {
+  it('returns empty array for no comments', () => {
+    const tree = buildCommentTree([], new Map());
+    expect(tree).toEqual([]);
+  });
+
+  it('builds flat list for top-level comments', () => {
+    const comments = [
+      makeComment({ id: 'c1', createdAt: '2024-01-01T00:00:00Z' }),
+      makeComment({ id: 'c2', createdAt: '2024-01-02T00:00:00Z' }),
+    ];
+    const tree = buildCommentTree(comments, new Map());
+    expect(tree.length).toBe(2);
+    // Sorted newest first
+    expect(tree[0].id).toBe('c2');
+    expect(tree[1].id).toBe('c1');
+  });
+
+  it('nests replies under parent comments', () => {
+    const comments = [
+      makeComment({ id: 'c1', createdAt: '2024-01-01T00:00:00Z' }),
+      makeComment({ id: 'c2', parentCommentId: 'c1', createdAt: '2024-01-01T01:00:00Z' }),
+      makeComment({ id: 'c3', parentCommentId: 'c1', createdAt: '2024-01-01T02:00:00Z' }),
+    ];
+    const tree = buildCommentTree(comments, new Map());
+    expect(tree.length).toBe(1);
+    expect(tree[0].id).toBe('c1');
+    expect(tree[0].replies.length).toBe(2);
+  });
+
+  it('attaches author information from the map', () => {
+    const comments = [makeComment({ id: 'c1', authorId: 'user-1' })];
+    const authors = makeAuthorMap({ id: 'user-1', displayName: 'Alice' });
+    const tree = buildCommentTree(comments, authors);
+    expect(tree[0].author?.displayName).toBe('Alice');
+  });
+
+  it('handles orphan replies as top-level', () => {
+    const comments = [
+      makeComment({ id: 'c1', parentCommentId: 'nonexistent' }),
+    ];
+    const tree = buildCommentTree(comments, new Map());
+    expect(tree.length).toBe(1);
+    expect(tree[0].id).toBe('c1');
+  });
+});
+
+// --------------------------------------------------------------------------
+// getCommentMarkerPositions
+// --------------------------------------------------------------------------
+
+describe('getCommentMarkerPositions', () => {
+  it('returns empty for no comments', () => {
+    expect(getCommentMarkerPositions([], 120)).toEqual([]);
+  });
+
+  it('returns empty for zero duration', () => {
+    const comments = [makeComment({ timestampSeconds: 30 })];
+    expect(getCommentMarkerPositions(comments, 0)).toEqual([]);
+  });
+
+  it('calculates percentage positions correctly', () => {
+    const comments = [
+      makeComment({ id: 'c1', timestampSeconds: 60 }),
+      makeComment({ id: 'c2', timestampSeconds: 30 }),
+    ];
+    const markers = getCommentMarkerPositions(comments, 120);
+    expect(markers.length).toBe(2);
+    expect(markers[0].position).toBe(50); // 60/120 * 100
+    expect(markers[1].position).toBe(25); // 30/120 * 100
+  });
+
+  it('skips comments without timestamps', () => {
+    const comments = [
+      makeComment({ id: 'c1', timestampSeconds: 30 }),
+      makeComment({ id: 'c2', timestampSeconds: undefined }),
+    ];
+    const markers = getCommentMarkerPositions(comments, 120);
+    expect(markers.length).toBe(1);
+    expect(markers[0].commentId).toBe('c1');
+  });
+
+  it('caps position at 100%', () => {
+    const comments = [makeComment({ id: 'c1', timestampSeconds: 200 })];
+    const markers = getCommentMarkerPositions(comments, 120);
+    expect(markers[0].position).toBe(100);
+  });
+});
+
+// --------------------------------------------------------------------------
+// CommentInput
+// --------------------------------------------------------------------------
+
+describe('CommentInput', () => {
+  let container: HTMLElement;
+  let callbacks: CommentSystemCallbacks;
+
+  beforeEach(() => {
+    container = createContainer();
+    callbacks = defaultCallbacks();
+  });
+
+  it('renders comment input form with textarea and controls', () => {
+    new CommentInput(container, defaultOptions, callbacks);
+    expect(container.querySelector('.comment-textarea')).not.toBeNull();
+    expect(container.querySelector('.comment-submit-btn')).not.toBeNull();
+    expect(container.querySelector('.timestamp-toggle')).not.toBeNull();
+  });
+
+  it('has proper accessibility attributes', () => {
+    new CommentInput(container, defaultOptions, callbacks);
+    expect(container.getAttribute('role')).toBe('form');
+    expect(container.getAttribute('aria-label')).toBe('Add comment');
+    expect(container.querySelector('.comment-textarea')?.getAttribute('aria-label')).toBe('Comment text');
+  });
+
+  it('submit button is disabled when textarea is empty', () => {
+    new CommentInput(container, defaultOptions, callbacks);
+    const btn = container.querySelector('.comment-submit-btn') as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+  });
+
+  it('submit button enables when text is entered', () => {
+    new CommentInput(container, defaultOptions, callbacks);
+    const textarea = container.querySelector('.comment-textarea') as HTMLTextAreaElement;
+    const btn = container.querySelector('.comment-submit-btn') as HTMLButtonElement;
+    textarea.value = 'Hello';
+    textarea.dispatchEvent(new Event('input'));
+    expect(btn.disabled).toBe(false);
+  });
+
+  it('displays current timestamp', () => {
+    new CommentInput(container, { ...defaultOptions, currentTime: 90 }, callbacks);
+    const display = container.querySelector('.timestamp-display');
+    expect(display?.textContent).toBe('1:30');
+  });
+
+  it('toggles timestamp inclusion', () => {
+    new CommentInput(container, defaultOptions, callbacks);
+    const toggle = container.querySelector('.timestamp-toggle') as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    toggle.click();
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    toggle.click();
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('calls onSubmit with correct input including timestamp', async () => {
+    new CommentInput(container, { ...defaultOptions, currentTime: 45 }, callbacks);
+    const textarea = container.querySelector('.comment-textarea') as HTMLTextAreaElement;
+    const btn = container.querySelector('.comment-submit-btn') as HTMLButtonElement;
+
+    textarea.value = 'Great video!';
+    textarea.dispatchEvent(new Event('input'));
+    btn.click();
+
+    await vi.waitFor(() => {
+      expect(callbacks.onSubmit).toHaveBeenCalledWith({
+        body: 'Great video!',
+        parentCommentId: undefined,
+        timestampSeconds: 45,
+      });
+    });
+  });
+
+  it('clears textarea after successful submit', async () => {
+    new CommentInput(container, defaultOptions, callbacks);
+    const textarea = container.querySelector('.comment-textarea') as HTMLTextAreaElement;
+    const btn = container.querySelector('.comment-submit-btn') as HTMLButtonElement;
+
+    textarea.value = 'Hello world';
+    textarea.dispatchEvent(new Event('input'));
+    btn.click();
+
+    await vi.waitFor(() => {
+      expect(textarea.value).toBe('');
+    });
+  });
+
+  it('sets reply-to state and shows indicator', () => {
+    const input = new CommentInput(container, defaultOptions, callbacks);
+    input.setReplyTo('comment-2', 'Bob');
+    const indicator = container.querySelector('.comment-reply-indicator') as HTMLElement;
+    expect(indicator.style.display).toBe('flex');
+    expect(indicator.textContent).toContain('Bob');
+  });
+
+  it('updates current time via updateCurrentTime', () => {
+    const input = new CommentInput(container, defaultOptions, callbacks);
+    input.updateCurrentTime(75);
+    const display = container.querySelector('.timestamp-display');
+    expect(display?.textContent).toBe('1:15');
+  });
+});
+
+// --------------------------------------------------------------------------
+// ThreadedCommentDisplay
+// --------------------------------------------------------------------------
+
+describe('ThreadedCommentDisplay', () => {
+  let container: HTMLElement;
+  let callbacks: CommentSystemCallbacks;
+
+  beforeEach(() => {
+    container = createContainer();
+    callbacks = defaultCallbacks();
+  });
+
+  it('shows empty message when no comments', () => {
+    const display = new ThreadedCommentDisplay(container, defaultOptions, callbacks);
+    display.setComments([]);
+    expect(container.textContent).toContain('No comments yet');
+  });
+
+  it('renders comments with author names', () => {
+    const display = new ThreadedCommentDisplay(container, defaultOptions, callbacks);
+    const comments: CommentWithState[] = [
+      {
+        ...makeComment({ id: 'c1' }),
+        status: 'visible',
+        author: { id: 'user-1', displayName: 'Alice' },
+        replies: [],
+        isCollapsed: false,
+      },
+    ];
+    display.setComments(comments);
+    expect(container.textContent).toContain('Alice');
+    expect(container.textContent).toContain('Test comment');
+  });
+
+  it('renders timestamp badges that call onSeek', () => {
+    const display = new ThreadedCommentDisplay(container, defaultOptions, callbacks);
+    const comments: CommentWithState[] = [
+      {
+        ...makeComment({ id: 'c1', timestampSeconds: 60 }),
+        status: 'visible',
+        author: { id: 'user-1', displayName: 'Alice' },
+        replies: [],
+        isCollapsed: false,
+      },
+    ];
+    display.setComments(comments);
+    const badge = container.querySelector('.comment-timestamp-badge') as HTMLButtonElement;
+    expect(badge).not.toBeNull();
+    expect(badge.textContent).toBe('1:00');
+    badge.click();
+    expect(callbacks.onSeek).toHaveBeenCalledWith(60);
+  });
