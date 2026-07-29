@@ -522,3 +522,48 @@ export class AccessibilitySettingsPage {
     `;
     return bar;
   }
+
+  private setupEventListeners(): void {
+    // Theme selection
+    const themeCards = this.element.querySelectorAll('[data-theme-value]');
+    themeCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const value = card.getAttribute('data-theme-value') as ThemeMode;
+        this.setTheme(value);
+      });
+      card.addEventListener('keydown', (e) => {
+        const event = e as KeyboardEvent;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          const value = card.getAttribute('data-theme-value') as ThemeMode;
+          this.setTheme(value);
+        }
+        // Arrow key navigation between theme cards
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          const next = card.nextElementSibling as HTMLElement;
+          next?.focus();
+        }
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          const prev = card.previousElementSibling as HTMLElement;
+          prev?.focus();
+        }
+      });
+    });
+
+    // High contrast toggle
+    const hcToggle = this.element.querySelector('#high-contrast-toggle') as HTMLInputElement;
+    hcToggle?.addEventListener('change', () => {
+      this.preferences.highContrast = hcToggle.checked;
+      this.markDirty();
+      applyAccessibilityPreferences(this.preferences);
+    });
+
+    // Reduced motion toggle
+    const rmToggle = this.element.querySelector('#reduced-motion-toggle') as HTMLInputElement;
+    rmToggle?.addEventListener('change', () => {
+      this.preferences.reducedMotion = rmToggle.checked;
+      this.markDirty();
+      applyAccessibilityPreferences(this.preferences);
+    });

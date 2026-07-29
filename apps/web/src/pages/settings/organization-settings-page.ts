@@ -369,3 +369,34 @@ export class OrganizationSettingsPage {
           </div>
         </div>
       </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="branding-colors-heading">
+        <h2 id="branding-colors-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Brand Colors</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label for="primary-color" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Primary Color</label>
+            <div class="flex items-center gap-3">
+              <input id="primary-color" type="color" value="${this.settings.branding.primaryColor}" class="w-10 h-10 rounded border border-gray-300 dark:border-gray-600 cursor-pointer" />
+              <input id="primary-color-hex" type="text" value="${this.settings.branding.primaryColor}" maxlength="7" class="w-28 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700" aria-label="Primary color hex value" />
+            </div>
+            <div id="primary-color-error" class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert" aria-live="polite"></div>
+          </div>
+          <div>
+            <label for="accent-color" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Accent Color</label>
+            <div class="flex items-center gap-3">
+              <input id="accent-color" type="color" value="${this.settings.branding.accentColor}" class="w-10 h-10 rounded border border-gray-300 dark:border-gray-600 cursor-pointer" />
+              <input id="accent-color-hex" type="text" value="${this.settings.branding.accentColor}" maxlength="7" class="w-28 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700" aria-label="Accent color hex value" />
+            </div>
+            <div id="accent-color-error" class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert" aria-live="polite"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="branding-css-heading">
+        <h2 id="branding-css-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Custom CSS</h2>
+        <textarea id="custom-css" rows="6" maxlength="${CUSTOM_CSS_MAX_LENGTH}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 resize-y" aria-describedby="css-help" placeholder="/* Custom styles for your organization */">${this.escapeHtml(this.settings.branding.customCss)}</textarea>
+        <p id="css-help" class="mt-1 text-xs text-gray-500 dark:text-gray-400">Custom CSS for white-label branding. Max ${CUSTOM_CSS_MAX_LENGTH} characters.</p>
+      </section>
+    `;
+    return section;
+  }
