@@ -257,8 +257,8 @@ describe('PermissionMatrix', () => {
 
     const headers = container.querySelectorAll('.permission-matrix-col-header');
     expect(headers.length).toBe(2);
-    expect(headers[0].textContent).toBe('View');
-    expect(headers[1].textContent).toBe('Edit');
+    expect(headers[0]!.textContent).toBe('View');
+    expect(headers[1]!.textContent).toBe('Edit');
   });
 
   it('renders row headers for each resource', () => {
