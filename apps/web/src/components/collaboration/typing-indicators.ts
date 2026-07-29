@@ -185,13 +185,9 @@ export class TypingIndicators {
   }
 
   private getFilteredUsers(): TypingUser[] {
-    const users: TypingUser[] = [];
-    for (const user of this.typingUsers.values()) {
-      if (user.id !== this.options.currentUserId) {
-        users.push(user);
-      }
-    }
-    return users;
+    return Array.from(this.typingUsers.values()).filter(
+      user => user.id !== this.options.currentUserId
+    );
   }
 
   /**

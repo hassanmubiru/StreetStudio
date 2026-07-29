@@ -219,7 +219,8 @@ export class CollaborativeViewing {
       participantList.setAttribute('role', 'list');
       participantList.setAttribute('aria-label', 'Sync participants');
 
-      for (const participant of this.participants.values()) {
+      const participantArray = Array.from(this.participants.values());
+      for (const participant of participantArray) {
         if (participant.id === this.options.currentUserId) continue;
 
         const item = document.createElement('div');
