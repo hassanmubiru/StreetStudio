@@ -594,3 +594,149 @@ export class AdaptiveVideoPlayer {
       this.play();
     }
   }
+
+  public seek(time: number): void {
+    const clampedTime = Math.max(0, Math.min(time, this.state.duration || 0));
+    this.videoElement.currentTime = clampedTime;
+    this.state.currentTime = clampedTime;
+    this.updateTimeDisplay();
+    this.updateSeekBar();
+  }
+
+  public seekRelative(seconds: number): void {
+    this.seek(this.videoElement.currentTime + seconds);
+  }
+
+  public setVolume(volume: number): void {
+    const clampedVolume = Math.max(0, Math.min(1, volume));
+    this.videoElement.volume = clampedVolume;
+    this.state.volume = clampedVolume;
+    if (clampedVolume > 0 && this.state.isMuted) {
+      this.videoElement.muted = false;
+      this.state.isMuted = false;
+    }
+    this.updateVolumeUI();
+  }
+
+  public adjustVolume(delta: number): void {
+    this.setVolume(this.state.volume + delta);
+  }
+
+  public toggleMute(): void {
+    this.videoElement.muted = !this.videoElement.muted;
+    this.state.isMuted = this.videoElement.muted;
+    this.updateVolumeUI();
+  }
+
+  public setPlaybackRate(rate: number): void {
+    const clampedRate = Math.max(0.25, Math.min(2, rate));
+    this.videoElement.playbackRate = clampedRate;
+    this.state.playbackRate = clampedRate;
+    this.updateSpeedSelect();
+  }
+
+  public increaseSpeed(): void {
+    const currentIndex = PLAYBACK_RATES.indexOf(this.state.playbackRate as any);
+    if (currentIndex >= 0 && currentIndex < PLAYBACK_RATES.length - 1) {
+      this.setPlaybackRate(PLAYBACK_RATES[currentIndex + 1]);
+    } else if (currentIndex === -1) {
+      const nextRate = PLAYBACK_RATES.find(r => r > this.state.playbackRate);
+      if (nextRate) this.setPlaybackRate(nextRate);
+    }
+  }
+
+  public decreaseSpeed(): void {
+    const currentIndex = PLAYBACK_RATES.indexOf(this.state.playbackRate as any);
+    if (currentIndex > 0) {
+      this.setPlaybackRate(PLAYBACK_RATES[currentIndex - 1]);
+    } else if (currentIndex === -1) {
+      const rates = [...PLAYBACK_RATES].reverse();
+      const prevRate = rates.find(r => r < this.state.playbackRate);
+      if (prevRate) this.setPlaybackRate(prevRate);
+    }
+  }
+
+  public async toggleFullscreen(): Promise<void> {
+    if (!this.options.enableFullscreen) return;
+    try {
+      if (this.state.isFullscreen) {
+        await document.exitFullscreen();
+      } else {
+        await this.container.requestFullscreen();
+      }
+    } catch (error) {
+      console.warn('Fullscreen not available:', error);
+    }
+  }
+
+  public async togglePictureInPicture(): Promise<void> {
+    if (!this.options.enablePictureInPicture) return;
+    try {
+      if (this.state.isPictureInPicture) {
+        await document.exitPictureInPicture();
+      } else {
+        await this.videoElement.requestPictureInPicture();
+      }
+    } catch (error) {
+      console.warn('Picture-in-Picture not available:', error);
+    }
+  }
+
+  public setQuality(levelIndex: number): void {
+    if (this.hlsInstance) {
+      this.hlsInstance.currentLevel = levelIndex;
+    } else if (this.dashInstance) {
+      this.dashInstance.setQualityFor('video', levelIndex);
+    }
+  }
+
+  // --- State Accessors ---
+
+  public getState(): PlaybackState {
+    return { ...this.state };
+  }
+
+  public getVideoElement(): HTMLVideoElement {
+    return this.videoElement;
+  }
+
+  public getSources(): VideoSource[] {
+    return [...this.sources];
+  }
+
+  // --- UI Update Methods ---
+
+  private updatePlayButton(): void {
+    const playBtn = this.controlsElement.querySelector('.play-btn');
+    if (!playBtn) return;
+
+    if (this.state.isPlaying) {
+      playBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+      playBtn.setAttribute('aria-label', 'Pause');
+      playBtn.setAttribute('title', 'Pause (Space)');
+    } else {
+      playBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>`;
+      playBtn.setAttribute('aria-label', 'Play');
+      playBtn.setAttribute('title', 'Play (Space)');
+    }
+  }
+
+  private updateTimeDisplay(): void {
+    const currentTimeEl = this.controlsElement.querySelector('.current-time');
+    const durationEl = this.controlsElement.querySelector('.duration-display');
+
+    if (currentTimeEl) {
+      currentTimeEl.textContent = formatTime(this.state.currentTime);
+    }
+    if (durationEl && this.state.duration > 0) {
+      durationEl.textContent = formatTime(this.state.duration);
+    }
+  }
+
+  private updateSeekBar(): void {
+    const seekBar = this.controlsElement.querySelector('.seek-bar') as HTMLInputElement;
+    if (seekBar && this.state.duration > 0) {
+      const percentage = (this.state.currentTime / this.state.duration) * 100;
+      seekBar.value = String(percentage);
+    }
+  }

@@ -108,3 +108,220 @@ describe('UploadStore', () => {
       expect(state.uploads).toHaveLength(2);
     });
   });
+
+  describe('State Subscriptions', () => {
+    it('should notify subscribers on state changes', () => {
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      // Listener called immediately with current state
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      const file = createMockFile('video.mp4', 1024, 'video/mp4');
+      store.addUpload(file);
+
+      // Called again with updated state
+      expect(listener).toHaveBeenCalledTimes(2);
+      const lastCall = listener.mock.calls[1][0] as UploadState;
+      expect(lastCall.uploads).toHaveLength(1);
+    });
+
+    it('should return unsubscribe function', () => {
+      const listener = vi.fn();
+      const unsubscribe = store.subscribe(listener);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+
+      const file = createMockFile('video.mp4', 1024, 'video/mp4');
+      store.addUpload(file);
+
+      // Should not be called again after unsubscribe
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle listener errors gracefully', () => {
+      const errorListener = vi.fn(() => { throw new Error('Listener error'); });
+      const goodListener = vi.fn();
+
+      store.subscribe(errorListener);
+      store.subscribe(goodListener);
+
+      const file = createMockFile('video.mp4', 1024, 'video/mp4');
+      store.addUpload(file);
+
+      // Good listener should still be called despite error listener
+      expect(goodListener).toHaveBeenCalled();
+    });
+  });
+
+  describe('Upload Lifecycle', () => {
+    it('should pause an active upload', () => {
+      const file = createMockFile('video.mp4', 1024, 'video/mp4');
+      const uploadId = store.addUpload(file);
+
+      store.pauseUpload(uploadId);
+      const upload = store.getUpload(uploadId);
+      expect(upload?.status).toBe('paused');
+    });
+
+    it('should resume a paused upload', () => {
+      const file = createMockFile('video.mp4', 1024, 'video/mp4');
+      const uploadId = store.addUpload(file);
+
+      store.pauseUpload(uploadId);
+      store.resumeUpload(uploadId);
+
+      const upload = store.getUpload(uploadId);
+      expect(upload?.status).toBe('queued');
+    });
+
+    it('should cancel an upload', () => {
+      const file = createMockFile('video.mp4', 1024, 'video/mp4');
+      const uploadId = store.addUpload(file);
+
+      store.cancelUpload(uploadId);
+      const upload = store.getUpload(uploadId);
+      expect(upload?.status).toBe('cancelled');
+    });
+
+    it('should remove an upload from the list', () => {
+      const file = createMockFile('video.mp4', 1024, 'video/mp4');
+      const uploadId = store.addUpload(file);
+
+      store.removeUpload(uploadId);
+      expect(store.getUpload(uploadId)).toBeUndefined();
+      expect(store.getState().uploads).toHaveLength(0);
+    });
+
+    it('should retry a failed upload', () => {
+      const file = createMockFile('video.mp4', 1024, 'video/mp4');
+      const uploadId = store.addUpload(file);
+
+      // Manually set as failed (simulating internal state)
+      (store as any).updateUploadItem(uploadId, { status: 'failed', error: 'Network error' });
+
+      store.retryUpload(uploadId);
+      const upload = store.getUpload(uploadId);
+      expect(upload?.status).toBe('queued');
+      expect(upload?.progress).toBe(0);
+      expect(upload?.error).toBeUndefined();
+    });
+  });
+
+  describe('Batch Operations', () => {
+    it('should pause all active uploads', () => {
+      const file1 = createMockFile('video1.mp4', 1024, 'video/mp4');
+      const file2 = createMockFile('video2.mp4', 1024, 'video/mp4');
+
+      store.addUpload(file1);
+      store.addUpload(file2);
+
+      store.pauseAllActiveUploads();
+
+      const state = store.getState();
+      const uploading = state.uploads.filter(u => u.status === 'uploading');
+      expect(uploading).toHaveLength(0);
+    });
+
+    it('should clear completed uploads', () => {
+      const file1 = createMockFile('video1.mp4', 1024, 'video/mp4');
+      const file2 = createMockFile('video2.mp4', 1024, 'video/mp4');
+
+      const id1 = store.addUpload(file1);
+      const id2 = store.addUpload(file2);
+
+      // Mark one as completed
+      (store as any).updateUploadItem(id1, { status: 'completed', progress: 100 });
+
+      store.clearCompleted();
+
+      const state = store.getState();
+      expect(state.uploads).toHaveLength(1);
+      expect(state.uploads[0].id).toBe(id2);
+    });
+
+    it('should clear all uploads', () => {
+      const file1 = createMockFile('video1.mp4', 1024, 'video/mp4');
+      const file2 = createMockFile('video2.mp4', 1024, 'video/mp4');
+
+      store.addUpload(file1);
+      store.addUpload(file2);
+
+      store.clearAll();
+
+      const state = store.getState();
+      expect(state.uploads).toHaveLength(0);
+      expect(state.isUploading).toBe(false);
+      expect(state.totalProgress).toBe(0);
+    });
+  });
+
+  describe('Query Methods', () => {
+    it('should get upload by ID', () => {
+      const file = createMockFile('video.mp4', 1024, 'video/mp4');
+      const uploadId = store.addUpload(file);
+
+      const upload = store.getUpload(uploadId);
+      expect(upload).toBeDefined();
+      expect(upload?.id).toBe(uploadId);
+    });
+
+    it('should return undefined for non-existent upload', () => {
+      const upload = store.getUpload('non-existent');
+      expect(upload).toBeUndefined();
+    });
+
+    it('should get uploads by status', () => {
+      const file1 = createMockFile('video1.mp4', 1024, 'video/mp4');
+      const file2 = createMockFile('video2.mp4', 1024, 'video/mp4');
+
+      const id1 = store.addUpload(file1);
+      store.addUpload(file2);
+
+      // Mark first as failed
+      (store as any).updateUploadItem(id1, { status: 'failed' });
+
+      const failed = store.getUploadsByStatus('failed');
+      expect(failed).toHaveLength(1);
+      expect(failed[0].id).toBe(id1);
+
+      const queued = store.getUploadsByStatus('queued');
+      expect(queued.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('Global State Computation', () => {
+    it('should compute totalProgress as average of all uploads', () => {
+      const file1 = createMockFile('video1.mp4', 1024, 'video/mp4');
+      const file2 = createMockFile('video2.mp4', 1024, 'video/mp4');
+
+      const id1 = store.addUpload(file1);
+      const id2 = store.addUpload(file2);
+
+      (store as any).updateUploadItem(id1, { progress: 50 });
+      (store as any).updateUploadItem(id2, { progress: 100 });
+      (store as any).updateGlobalState();
+
+      const state = store.getState();
+      expect(state.totalProgress).toBe(75); // (50 + 100) / 2
+    });
+
+    it('should track completed and failed counts', () => {
+      const file1 = createMockFile('video1.mp4', 1024, 'video/mp4');
+      const file2 = createMockFile('video2.mp4', 1024, 'video/mp4');
+      const file3 = createMockFile('video3.mp4', 1024, 'video/mp4');
+
+      const id1 = store.addUpload(file1);
+      const id2 = store.addUpload(file2);
+      store.addUpload(file3);
+
+      (store as any).updateUploadItem(id1, { status: 'completed' });
+      (store as any).updateUploadItem(id2, { status: 'failed' });
+      (store as any).updateGlobalState();
+
+      const state = store.getState();
+      expect(state.completedUploads).toBe(1);
+      expect(state.failedUploads).toBe(1);
+    });
