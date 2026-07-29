@@ -257,3 +257,73 @@ export class MemberProfile {
       }
     });
   }
+
+  private getActivityColor(type: string): string {
+    const colors: Record<string, string> = {
+      comment: 'bg-purple-100 dark:bg-purple-900/30',
+      upload: 'bg-green-100 dark:bg-green-900/30',
+      edit: 'bg-blue-100 dark:bg-blue-900/30',
+      view: 'bg-gray-100 dark:bg-gray-700',
+      project_created: 'bg-yellow-100 dark:bg-yellow-900/30'
+    };
+    return colors[type] || colors.view;
+  }
+
+  private getActivityIcon(type: string): string {
+    const icons: Record<string, string> = {
+      comment: '<svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>',
+      upload: '<svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>',
+      edit: '<svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>',
+      view: '<svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>',
+      project_created: '<svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>'
+    };
+    return icons[type] || icons.view;
+  }
+
+  private getStatusBadge(status: string): string {
+    const styles: Record<string, string> = {
+      active: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+      inactive: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400',
+      suspended: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+    };
+    const style = styles[status] || styles.inactive;
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${style}">${status}</span>`;
+  }
+
+  private getInitials(name: string): string {
+    return name.split(' ').map(p => p.charAt(0)).slice(0, 2).join('').toUpperCase();
+  }
+
+  private formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+
+  private formatRelativeTime(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMinutes < 1) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  }
+
+  /** Get loaded profile (for testing) */
+  public getProfile(): MemberProfileData | null {
+    return this.profile;
+  }
+
+  public destroy(): void {
+    this.element.innerHTML = '';
+    this.profile = null;
+  }
+}
