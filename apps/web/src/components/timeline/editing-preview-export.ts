@@ -442,10 +442,11 @@ export class ExportManager {
       return false;
     }
 
+    const wasActive = job.status !== 'queued';
     job.status = 'cancelled';
     job.progress = 0;
 
-    if (job.status !== 'queued') {
+    if (wasActive) {
       this.activeExports = Math.max(0, this.activeExports - 1);
     }
 

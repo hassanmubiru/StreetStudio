@@ -240,7 +240,7 @@ export class PresenceManager {
     let changed = false;
     for (const [userId, presence] of this.participants.entries()) {
       const lastActive = new Date(presence.lastActiveAt).getTime();
-      if (lastActive < cutoff) {
+      if (lastActive <= cutoff) {
         this.participants.set(userId, { ...presence, isConnected: false });
         changed = true;
       }
