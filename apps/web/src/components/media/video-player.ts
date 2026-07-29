@@ -405,3 +405,81 @@ export class AdaptiveVideoPlayer {
     const fullscreenBtn = this.controlsElement.querySelector('.fullscreen-btn');
     fullscreenBtn?.addEventListener('click', () => this.toggleFullscreen());
   }
+
+  private setupKeyboardShortcuts(): void {
+    this.keydownHandler = (event: KeyboardEvent) => {
+      if (this.isDestroyed) return;
+
+      const activeEl = document.activeElement;
+      const isInputFocused = activeEl instanceof HTMLInputElement
+        || activeEl instanceof HTMLTextAreaElement
+        || activeEl instanceof HTMLSelectElement;
+
+      // Only handle shortcuts when not in an external input
+      if (isInputFocused && !this.container.contains(activeEl)) {
+        return;
+      }
+
+      // Skip if modifier keys are pressed (except Shift for < and >)
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      let handled = true;
+
+      switch (event.key) {
+        case KEYBOARD_SHORTCUTS.PLAY_PAUSE:
+          if (!isInputFocused) {
+            this.togglePlayPause();
+          } else {
+            handled = false;
+          }
+          break;
+        case KEYBOARD_SHORTCUTS.SEEK_FORWARD:
+          this.seekRelative(SEEK_STEP_SECONDS);
+          break;
+        case KEYBOARD_SHORTCUTS.SEEK_BACKWARD:
+          this.seekRelative(-SEEK_STEP_SECONDS);
+          break;
+        case KEYBOARD_SHORTCUTS.VOLUME_UP:
+          this.adjustVolume(VOLUME_STEP);
+          break;
+        case KEYBOARD_SHORTCUTS.VOLUME_DOWN:
+          this.adjustVolume(-VOLUME_STEP);
+          break;
+        case KEYBOARD_SHORTCUTS.MUTE_TOGGLE:
+          if (!isInputFocused) { this.toggleMute(); } else { handled = false; }
+          break;
+        case KEYBOARD_SHORTCUTS.FULLSCREEN_TOGGLE:
+          if (!isInputFocused) { this.toggleFullscreen(); } else { handled = false; }
+          break;
+        case KEYBOARD_SHORTCUTS.PIP_TOGGLE:
+          if (!isInputFocused) { this.togglePictureInPicture(); } else { handled = false; }
+          break;
+        case KEYBOARD_SHORTCUTS.SPEED_INCREASE:
+          this.increaseSpeed();
+          break;
+        case KEYBOARD_SHORTCUTS.SPEED_DECREASE:
+          this.decreaseSpeed();
+          break;
+        default:
+          // Number keys 1-8 for speed presets
+          if (event.key >= '1' && event.key <= '8' && !isInputFocused) {
+            const index = parseInt(event.key, 10) - 1;
+            if (index < PLAYBACK_RATES.length) {
+              this.setPlaybackRate(PLAYBACK_RATES[index]);
+            }
+          } else {
+            handled = false;
+          }
+          break;
+      }
+
+      if (handled) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    document.addEventListener('keydown', this.keydownHandler);
+  }
