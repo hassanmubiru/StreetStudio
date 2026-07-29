@@ -365,3 +365,77 @@ describe('OrganizationSettingsPage', () => {
 
       expect(page.getSettings().security.passwordMinLength).toBe(12);
     });
+
+    it('should update compliance mode', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('security');
+
+      const select = el.querySelector('#compliance-mode') as HTMLSelectElement;
+      select.value = 'gdpr';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getSettings().security.complianceMode).toBe('gdpr');
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should add IP address to allowlist', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('security');
+
+      const addBtn = el.querySelector('#add-ip') as HTMLButtonElement;
+      addBtn.click();
+
+      expect(page.getSettings().security.ipAllowlist.length).toBe(1);
+    });
+
+    it('should render existing IP allowlist entries', () => {
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        security: { ...createDefaultSecuritySettings(), ipAllowlist: ['192.168.1.0/24', '10.0.0.1'] },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('security');
+
+      const inputs = el.querySelectorAll('.ip-input');
+      expect(inputs.length).toBe(2);
+    });
+
+    it('should remove IP from allowlist', () => {
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({
+        security: { ...createDefaultSecuritySettings(), ipAllowlist: ['192.168.1.0/24'] },
+      }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('security');
+
+      const removeBtn = el.querySelector('.remove-ip') as HTMLButtonElement;
+      removeBtn.click();
+
+      expect(page.getSettings().security.ipAllowlist.length).toBe(0);
+    });
+
+    it('should reflect initial security settings', () => {
+      const customSecurity: SecurityPolicySettings = {
+        ...createDefaultSecuritySettings(),
+        enforceSSO: true,
+        requireMFA: true,
+        passwordMinLength: 14,
+        sessionTimeoutMinutes: 120,
+        complianceMode: 'hipaa',
+      };
+      page = new OrganizationSettingsPage(createTestConfigWithSettings({ security: customSecurity }));
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('security');
+
+      expect((el.querySelector('#enforce-sso') as HTMLInputElement).checked).toBe(true);
+      expect((el.querySelector('#require-mfa') as HTMLInputElement).checked).toBe(true);
+      expect((el.querySelector('#password-min-length') as HTMLInputElement).value).toBe('14');
+      expect((el.querySelector('#session-timeout') as HTMLInputElement).value).toBe('120');
+      expect((el.querySelector('#compliance-mode') as HTMLSelectElement).value).toBe('hipaa');
+    });
+  });
