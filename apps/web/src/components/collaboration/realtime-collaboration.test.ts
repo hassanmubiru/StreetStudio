@@ -162,3 +162,83 @@ describe('Presence Indicators', () => {
       expect(tracker.getViewers()[0].status).toBe('idle');
     });
   });
+
+  describe('PresenceIndicators component', () => {
+    let container: HTMLElement;
+    const defaultOptions: PresenceIndicatorsOptions = {
+      videoId: 'video-1',
+      currentUserId: 'me',
+      maxVisibleAvatars: 5,
+      showTypingIndicators: true,
+      showViewersList: true,
+    };
+
+    beforeEach(() => {
+      container = createContainer();
+    });
+
+    it('renders with proper ARIA attributes', () => {
+      new PresenceIndicators(container, defaultOptions);
+      expect(container.getAttribute('role')).toBe('region');
+      expect(container.getAttribute('aria-label')).toBe('Active viewers');
+    });
+
+    it('renders user avatars when viewers are present', () => {
+      const indicators = new PresenceIndicators(container, defaultOptions);
+      indicators.setViewers([
+        makePresenceUser({ id: 'u1', displayName: 'Alice' }),
+        makePresenceUser({ id: 'u2', displayName: 'Bob' }),
+      ]);
+      const avatars = container.querySelectorAll('.presence-avatar:not(.presence-overflow)');
+      expect(avatars.length).toBe(2);
+    });
+
+    it('shows overflow indicator when users exceed max', () => {
+      const indicators = new PresenceIndicators(container, { ...defaultOptions, maxVisibleAvatars: 2 });
+      indicators.setViewers([
+        makePresenceUser({ id: 'u1' }),
+        makePresenceUser({ id: 'u2' }),
+        makePresenceUser({ id: 'u3' }),
+        makePresenceUser({ id: 'u4' }),
+      ]);
+      const overflow = container.querySelector('.presence-overflow');
+      expect(overflow).not.toBeNull();
+      expect(overflow!.textContent).toBe('+2');
+    });
+
+    it('excludes current user from display', () => {
+      const indicators = new PresenceIndicators(container, defaultOptions);
+      indicators.setViewers([
+        makePresenceUser({ id: 'me', displayName: 'Me' }),
+        makePresenceUser({ id: 'u1', displayName: 'Alice' }),
+      ]);
+      expect(indicators.getViewerCount()).toBe(1);
+    });
+
+    it('shows typing indicator when users are typing', () => {
+      const indicators = new PresenceIndicators(container, defaultOptions);
+      indicators.setViewers([makePresenceUser({ id: 'u1', displayName: 'Alice', isTyping: true })]);
+      const typing = container.querySelector('.presence-typing-indicator');
+      expect(typing).not.toBeNull();
+      expect(typing!.textContent).toContain('Alice is typing...');
+    });
+
+    it('shows viewer count in toggle button', () => {
+      const indicators = new PresenceIndicators(container, defaultOptions);
+      indicators.setViewers([
+        makePresenceUser({ id: 'u1' }),
+        makePresenceUser({ id: 'u2' }),
+      ]);
+      const toggle = container.querySelector('.presence-viewers-toggle');
+      expect(toggle).not.toBeNull();
+      expect(toggle!.textContent).toBe('2 viewing');
+    });
+
+    it('shows initials when no avatar URL', () => {
+      const indicators = new PresenceIndicators(container, defaultOptions);
+      indicators.setViewers([makePresenceUser({ id: 'u1', displayName: 'Alice Smith' })]);
+      const initials = container.querySelector('.presence-avatar-initials');
+      expect(initials?.textContent).toBe('AS');
+    });
+  });
+});
