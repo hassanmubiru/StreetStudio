@@ -106,3 +106,59 @@ describe('Presence Indicators', () => {
       expect(getInitials('')).toBe('?');
     });
   });
+
+  describe('getAvatarColor', () => {
+    it('returns a hex color string', () => {
+      expect(getAvatarColor('user-1')).toMatch(/^#[0-9a-f]{6}$/);
+    });
+
+    it('is deterministic for same ID', () => {
+      expect(getAvatarColor('abc')).toBe(getAvatarColor('abc'));
+    });
+  });
+
+  describe('isValidPresenceUser', () => {
+    it('returns true for valid user', () => {
+      expect(isValidPresenceUser(makePresenceUser())).toBe(true);
+    });
+
+    it('returns false for null', () => {
+      expect(isValidPresenceUser(null)).toBe(false);
+    });
+
+    it('returns false for missing fields', () => {
+      expect(isValidPresenceUser({ id: 'x' })).toBe(false);
+    });
+  });
+
+  describe('PresenceTracker', () => {
+    it('tracks viewers excluding current user', () => {
+      const tracker = new PresenceTracker('me');
+      tracker.upsertUser(makePresenceUser({ id: 'u1' }));
+      tracker.upsertUser(makePresenceUser({ id: 'me' }));
+      expect(tracker.getViewerCount()).toBe(1);
+      expect(tracker.getViewers()[0].id).toBe('u1');
+    });
+
+    it('removes users correctly', () => {
+      const tracker = new PresenceTracker('me');
+      tracker.upsertUser(makePresenceUser({ id: 'u1' }));
+      tracker.upsertUser(makePresenceUser({ id: 'u2' }));
+      tracker.removeUser('u1');
+      expect(tracker.getViewerCount()).toBe(1);
+    });
+
+    it('updates typing status', () => {
+      const tracker = new PresenceTracker('me');
+      tracker.upsertUser(makePresenceUser({ id: 'u1' }));
+      tracker.setTypingStatus('u1', true);
+      expect(tracker.getTypingUsers().length).toBe(1);
+    });
+
+    it('updates user status', () => {
+      const tracker = new PresenceTracker('me');
+      tracker.upsertUser(makePresenceUser({ id: 'u1', status: 'active' }));
+      tracker.setUserStatus('u1', 'idle');
+      expect(tracker.getViewers()[0].status).toBe('idle');
+    });
+  });
