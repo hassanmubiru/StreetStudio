@@ -659,3 +659,45 @@ describe('getAvailableMembers', () => {
     expect(result.length).toBe(1);
   });
 });
+
+// --------------------------------------------------------------------------
+// Team Management - Component
+// --------------------------------------------------------------------------
+
+describe('TeamManagement', () => {
+  let container: HTMLElement;
+  let callbacks: TeamManagementCallbacks;
+  const members: TeamMember[] = [
+    makeTeamMember({ id: 'user-1', displayName: 'Alice', email: 'alice@test.com' }),
+    makeTeamMember({ id: 'user-2', displayName: 'Bob', email: 'bob@test.com' }),
+    makeTeamMember({ id: 'user-3', displayName: 'Charlie', email: 'charlie@test.com' }),
+  ];
+
+  beforeEach(() => {
+    container = createContainer();
+    callbacks = defaultTeamCallbacks();
+  });
+
+  it('renders with role="region" and aria-label', () => {
+    new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [makeTeam()],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    expect(container.getAttribute('role')).toBe('region');
+    expect(container.getAttribute('aria-label')).toBe('Team management');
+  });
+
+  it('renders team list', () => {
+    new TeamManagement(container, {
+      organizationId: 'org-1',
+      teams: [makeTeam(), makeTeam({ id: 'team-2', name: 'Design' })],
+      availableMembers: members,
+      isAdmin: true,
+    }, callbacks);
+
+    const items = container.querySelectorAll('.team-list-item');
+    expect(items.length).toBe(2);
+  });
