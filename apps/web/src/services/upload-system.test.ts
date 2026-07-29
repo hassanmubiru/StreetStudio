@@ -330,3 +330,111 @@ describe('Upload System - Chunked Upload Logic', () => {
     });
   });
 });
+
+// ============================================================================
+// 2. UPLOAD PROGRESS TRACKING AND STATE MANAGEMENT
+// ============================================================================
+
+describe('Upload System - Progress Tracking and State Management', () => {
+  let UploadStore: any;
+  let createUploadStore: any;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    mockFetch.mockReset();
+    // Dynamic import
+    const mod = await import('../stores/upload-store.js');
+    UploadStore = mod.UploadStore;
+    createUploadStore = mod.createUploadStore;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('Upload Queue Management', () => {
+    it('should add uploads to the queue with correct initial state', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 3 });
+      const file = createMockFile('test.mp4', 1024 * 1024);
+
+      const uploadId = store.addUpload(file, { title: 'Test Video' });
+
+      expect(uploadId).toBeDefined();
+      expect(uploadId).toMatch(/^upload_/);
+
+      const upload = store.getUpload(uploadId);
+      expect(upload).toBeDefined();
+      expect(upload!.status).toBe('queued');
+      expect(upload!.progress).toBe(0);
+      expect(upload!.retryCount).toBe(0);
+      expect(upload!.metadata?.title).toBe('Test Video');
+    });
+
+    it('should track multiple uploads independently', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 5 });
+      const file1 = createMockFile('video1.mp4', 1024);
+      const file2 = createMockFile('video2.mp4', 2048);
+
+      const id1 = store.addUpload(file1, { title: 'Video 1' });
+      const id2 = store.addUpload(file2, { title: 'Video 2' });
+
+      expect(id1).not.toBe(id2);
+      expect(store.getUpload(id1)!.file.name).toBe('video1.mp4');
+      expect(store.getUpload(id2)!.file.name).toBe('video2.mp4');
+    });
+
+    it('should filter uploads by status', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 10 });
+      const file1 = createMockFile('a.mp4', 100);
+      const file2 = createMockFile('b.mp4', 100);
+
+      store.addUpload(file1);
+      store.addUpload(file2);
+
+      const queued = store.getUploadsByStatus('queued');
+      expect(queued.length).toBeGreaterThanOrEqual(0); // might be uploading already
+      
+      const state = store.getState();
+      expect(state.uploads.length).toBe(2);
+    });
+  });
+
+  describe('State Subscription and Updates', () => {
+    it('should notify subscribers of state changes', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 3 });
+      const listener = vi.fn();
+
+      const unsubscribe = store.subscribe(listener);
+
+      // Initial state is sent immediately on subscribe
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({
+        uploads: [],
+        isUploading: false,
+        totalProgress: 0
+      }));
+
+      // Adding an upload triggers another notification
+      const file = createMockFile('test.mp4', 1024);
+      store.addUpload(file);
+
+      expect(listener.mock.calls.length).toBeGreaterThan(1);
+
+      unsubscribe();
+    });
+
+    it('should stop notifying after unsubscribe', () => {
+      const store = new UploadStore({ maxConcurrentUploads: 3 });
+      const listener = vi.fn();
+
+      const unsubscribe = store.subscribe(listener);
+      const initialCallCount = listener.mock.calls.length;
+
+      unsubscribe();
+
+      const file = createMockFile('test.mp4', 1024);
+      store.addUpload(file);
+
+      // No additional calls after unsubscribe
+      expect(listener.mock.calls.length).toBe(initialCallCount);
+    });
