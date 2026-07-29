@@ -52,3 +52,57 @@ function createContainer(): HTMLElement {
   document.body.appendChild(container);
   return container;
 }
+
+function makePresenceUser(overrides: Partial<PresenceUser> = {}): PresenceUser {
+  return {
+    id: 'user-1',
+    displayName: 'Alice Smith',
+    status: 'active',
+    joinedAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+function makeTypingUser(overrides: Partial<TypingUser> = {}): TypingUser {
+  return {
+    id: 'user-1',
+    displayName: 'Alice',
+    startedAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+function makeActivityEvent(overrides: Partial<ActivityEvent> = {}): ActivityEvent {
+  return {
+    id: 'event-1',
+    type: 'comment_added',
+    actorId: 'user-1',
+    actorName: 'Alice',
+    description: 'added a comment',
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+// ==========================================================================
+// Presence Indicators Tests (existing API)
+// ==========================================================================
+
+describe('Presence Indicators', () => {
+  describe('getInitials', () => {
+    it('returns single initial for single name', () => {
+      expect(getInitials('Alice')).toBe('A');
+    });
+
+    it('returns two initials for full name', () => {
+      expect(getInitials('Alice Smith')).toBe('AS');
+    });
+
+    it('uses first and last word for multi-word names', () => {
+      expect(getInitials('Alice B Smith')).toBe('AS');
+    });
+
+    it('returns ? for empty string', () => {
+      expect(getInitials('')).toBe('?');
+    });
+  });
