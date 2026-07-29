@@ -483,3 +483,59 @@ export class AdaptiveVideoPlayer {
 
     document.addEventListener('keydown', this.keydownHandler);
   }
+
+  // --- Public Playback API ---
+
+  public async loadSource(sources: VideoSource[]): Promise<void> {
+    this.sources = sources;
+
+    const hlsSource = sources.find(s => s.type === 'hls');
+    const dashSource = sources.find(s => s.type === 'dash');
+    const directSource = sources.find(s => s.type === 'mp4' || s.type === 'webm');
+
+    if (hlsSource && this.options.adaptiveBitrate) {
+      await this.loadHLS(hlsSource);
+    } else if (dashSource && this.options.adaptiveBitrate) {
+      await this.loadDASH(dashSource);
+    } else if (directSource) {
+      this.loadDirect(directSource);
+    } else if (sources.length > 0) {
+      this.loadDirect(sources[0]);
+    }
+  }
+
+  private async loadHLS(source: VideoSource): Promise<void> {
+    // Check native HLS support (Safari)
+    if (this.videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+      this.videoElement.src = source.url;
+      return;
+    }
+
+    try {
+      const Hls = (window as any).Hls;
+      if (Hls && Hls.isSupported()) {
+        this.hlsInstance = new Hls({
+          enableWorker: true,
+          startLevel: this.getStartLevel(),
+        });
+        this.hlsInstance.loadSource(source.url);
+        this.hlsInstance.attachMedia(this.videoElement);
+
+        this.hlsInstance.on(Hls.Events.MANIFEST_PARSED, (_: any, data: any) => {
+          this.updateAvailableQualities(data.levels);
+        });
+        this.hlsInstance.on(Hls.Events.LEVEL_SWITCHED, (_: any, data: any) => {
+          this.handleQualitySwitch(data.level);
+        });
+        this.hlsInstance.on(Hls.Events.ERROR, (_: any, data: any) => {
+          if (data.fatal) {
+            this.handleStreamingError(data);
+          }
+        });
+      } else {
+        this.videoElement.src = source.url;
+      }
+    } catch {
+      this.videoElement.src = source.url;
+    }
+  }
