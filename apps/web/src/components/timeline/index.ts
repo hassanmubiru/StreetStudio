@@ -57,3 +57,43 @@ export type {
   TimelineEditorOptions,
   TimelineEditorCallbacks,
 } from './timeline-editor.js';
+
+// Text Overlay and Caption Editing (Requirements: 6.4, 6.5)
+export {
+  TextOverlayManager,
+  generateOverlayId,
+  relativeLuminance,
+  contrastRatio,
+  meetsWCAGContrast,
+  hexToRgb,
+  secondsToFrames,
+  framesToSeconds,
+  createDefaultStyle,
+  createDefaultCaptionStyle,
+  DEFAULT_FONT_FAMILY,
+  DEFAULT_FONT_SIZE,
+  DEFAULT_COLOR,
+  DEFAULT_BACKGROUND_COLOR,
+  DEFAULT_CAPTION_FONT_SIZE,
+  DEFAULT_CAPTION_BG,
+  DEFAULT_CAPTION_COLOR,
+  MIN_FONT_SIZE,
+  MAX_FONT_SIZE,
+  MIN_OVERLAY_DURATION_FRAMES,
+  CAPTION_MIN_CONTRAST_RATIO,
+  AVAILABLE_FONTS,
+} from './text-overlay.js';
+
+export type {
+  TextOverlayStyle,
+  TextShadowConfig,
+  TextOutlineConfig,
+  TextPosition,
+  TextOverlay,
+  CaptionCue,
+  CaptionStyle,
+  CaptionPosition,
+  SpeechToTextResult,
+  TextOverlayManagerOptions,
+  TextOverlayCallbacks,
+} from './text-overlay.js';
