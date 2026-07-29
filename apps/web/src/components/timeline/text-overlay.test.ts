@@ -834,3 +834,42 @@ Goodbye
       expect(captions).toHaveLength(0);
     });
   });
+
+  // ─── Frame Rate & Cleanup Tests ─────────────────────────────────────────
+
+  describe('frame rate management', () => {
+    it('returns configured frame rate', () => {
+      expect(manager.getFrameRate()).toBe(30);
+    });
+
+    it('allows setting frame rate', () => {
+      manager.setFrameRate(24);
+      expect(manager.getFrameRate()).toBe(24);
+    });
+
+    it('ignores invalid frame rates', () => {
+      manager.setFrameRate(0);
+      expect(manager.getFrameRate()).toBe(30);
+      manager.setFrameRate(-10);
+      expect(manager.getFrameRate()).toBe(30);
+    });
+  });
+
+  describe('cleanup', () => {
+    it('clears all overlays and captions', () => {
+      manager.addOverlay('A', 0, 30);
+      manager.addCaption('B', 0, 30);
+      manager.clear();
+      expect(manager.getOverlayCount()).toBe(0);
+      expect(manager.getCaptionCount()).toBe(0);
+    });
+
+    it('destroys manager and releases resources', () => {
+      manager.addOverlay('A', 0, 30);
+      manager.addCaption('B', 0, 30);
+      manager.destroy();
+      expect(manager.getOverlayCount()).toBe(0);
+      expect(manager.getCaptionCount()).toBe(0);
+    });
+  });
+});
