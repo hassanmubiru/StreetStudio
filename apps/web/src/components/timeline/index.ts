@@ -1,11 +1,30 @@
 /**
- * Timeline Editor Components
+ * Timeline Components
  * 
- * Frame-accurate timeline editor with zoom, navigation, trim tools,
- * split functionality, and audio waveform visualization.
- * 
- * Requirements: 6.1, 6.2, 6.3, 6.9
+ * Includes:
+ * - TimelineController/TimelineComponent for playback timeline with markers (Requirements: 5.3, 5.10, 6.1)
+ * - TimelineEditor with trim, split, waveform for video editing (Requirements: 6.1, 6.2, 6.3, 6.9)
  */
+
+// Timeline Controller (playback/review)
+export {
+  TimelineController,
+  snapToFrame,
+  frameToTime,
+  timeToFrame,
+  formatTimecode,
+} from './timeline-controller.js';
+
+export type {
+  TimelineMarker,
+  TimelineState as TimelineControllerState,
+  TimelineOptions,
+  TimelineCallbacks,
+} from './timeline-controller.js';
+
+export { TimelineComponent } from './timeline-component.js';
+
+// Timeline Editor (video editing)
 export {
   TimelineEditor,
   WaveformRenderer,
@@ -30,7 +49,7 @@ export {
 
 export type {
   TimelineClip,
-  TimelineState,
+  TimelineState as TimelineEditorState,
   TrimMode,
   TrimOperation,
   SplitOperation,
