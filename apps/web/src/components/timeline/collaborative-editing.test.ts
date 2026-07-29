@@ -152,12 +152,12 @@ describe('PresenceManager', () => {
     const shortTimeout = 100;
     const mgr = new PresenceManager('me', shortTimeout);
 
-    mgr.updatePresence(createPresence({
-      userId: 'user-2',
-      lastActiveAt: new Date(Date.now() - 200).toISOString(),
-    }));
+    // Add a presence at the current time
+    mgr.updatePresence(createPresence({ userId: 'user-2' }));
 
     mgr.startCleanup();
+
+    // Advance time past the timeout so the presence becomes stale
     vi.advanceTimersByTime(shortTimeout + 10);
 
     const participant = mgr.getParticipant('user-2');
