@@ -308,3 +308,44 @@ export class BillingSettingsPage {
     `;
     return section;
   }
+
+  private renderUsageMetrics(): HTMLElement {
+    const data = this.billingData!;
+    const section = document.createElement('section');
+    section.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6';
+    section.setAttribute('aria-labelledby', 'usage-heading');
+
+    const metricsHtml = data.usage.map(metric => {
+      const color = getUsageColor(metric.percentage);
+      const barColorClass = color === 'red'
+        ? 'bg-red-500'
+        : color === 'amber'
+          ? 'bg-amber-500'
+          : 'bg-blue-500';
+      const textColorClass = color === 'red'
+        ? 'text-red-600 dark:text-red-400'
+        : color === 'amber'
+          ? 'text-amber-600 dark:text-amber-400'
+          : 'text-blue-600 dark:text-blue-400';
+
+      return `
+        <div class="usage-metric" data-metric="${this.escapeHtml(metric.name)}">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">${this.escapeHtml(metric.name)}</span>
+            <span class="text-sm ${textColorClass}">${metric.current} / ${metric.limit} ${this.escapeHtml(metric.unit)}</span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5" role="progressbar" aria-valuenow="${metric.percentage}" aria-valuemin="0" aria-valuemax="100" aria-label="${this.escapeHtml(metric.name)} usage">
+            <div class="${barColorClass} h-2.5 rounded-full transition-all" style="width: ${Math.min(metric.percentage, 100)}%"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    section.innerHTML = `
+      <h2 id="usage-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Usage</h2>
+      <div class="space-y-4">
+        ${metricsHtml || '<p class="text-sm text-gray-500 dark:text-gray-400">No usage data available.</p>'}
+      </div>
+    `;
+    return section;
+  }

@@ -202,3 +202,52 @@ export function createSecurityValidator(): FormValidator {
     ],
   });
 }
+
+// --- Page Component ---
+
+export class OrganizationSettingsPage {
+  private config: OrganizationSettingsPageConfig;
+  private element: HTMLElement;
+  private activeTab: SettingsTab = 'branding';
+  private settings: OrganizationSettingsData;
+  private isDirty = false;
+  private isSaving = false;
+  private pendingLogoFile: File | null = null;
+  private logoPreviewUrl: string | null = null;
+
+  constructor(config: OrganizationSettingsPageConfig) {
+    this.config = config;
+    this.settings = {
+      branding: config.initialSettings?.branding || createDefaultBrandingSettings(),
+      security: config.initialSettings?.security || createDefaultSecuritySettings(),
+      storage: config.initialSettings?.storage || createDefaultStorageSettings(),
+      integrations: config.initialSettings?.integrations || createDefaultIntegrationSettings(),
+    };
+
+    this.element = document.createElement('div');
+    this.element.className = 'p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto';
+    this.element.setAttribute('data-main-content', '');
+    this.element.setAttribute('data-page', 'organization-settings');
+    this.render();
+  }
+
+  public getElement(): HTMLElement {
+    return this.element;
+  }
+
+  public getSettings(): OrganizationSettingsData {
+    return JSON.parse(JSON.stringify(this.settings));
+  }
+
+  public getActiveTab(): SettingsTab {
+    return this.activeTab;
+  }
+
+  public isDirtyState(): boolean {
+    return this.isDirty;
+  }
+
+  public switchTab(tab: SettingsTab): void {
+    this.activeTab = tab;
+    this.render();
+  }
