@@ -170,3 +170,62 @@ describe('SecuritySettingsPage', () => {
       const error = el.querySelector('#confirm-password-error');
       expect(error?.textContent).toBe('Passwords do not match');
     });
+
+    it('should clear mismatch error when passwords match', () => {
+      page = new SecuritySettingsPage();
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const newPw = el.querySelector('#new-password') as HTMLInputElement;
+      newPw.value = 'MyPassword1!';
+      newPw.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const confirmPw = el.querySelector('#confirm-password') as HTMLInputElement;
+      confirmPw.value = 'MyPassword1!';
+      confirmPw.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const error = el.querySelector('#confirm-password-error');
+      expect(error?.textContent).toBe('');
+    });
+
+    it('should dispatch password-change event on valid submit', () => {
+      page = new SecuritySettingsPage();
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const handler = vi.fn();
+      el.addEventListener('password-change', handler);
+
+      // Fill fields
+      const currentPw = el.querySelector('#current-password') as HTMLInputElement;
+      currentPw.value = 'OldPassword1';
+      currentPw.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const newPw = el.querySelector('#new-password') as HTMLInputElement;
+      newPw.value = 'NewStrong1!';
+      newPw.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const confirmPw = el.querySelector('#confirm-password') as HTMLInputElement;
+      confirmPw.value = 'NewStrong1!';
+      confirmPw.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Submit
+      const form = el.querySelector('#password-form') as HTMLFormElement;
+      form.dispatchEvent(new Event('submit', { bubbles: true }));
+
+      expect(handler).toHaveBeenCalled();
+      expect(handler.mock.calls[0][0].detail.passwordData.newPassword).toBe('NewStrong1!');
+    });
+
+    it('should show validation error when current password is empty', () => {
+      page = new SecuritySettingsPage();
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const form = el.querySelector('#password-form') as HTMLFormElement;
+      form.dispatchEvent(new Event('submit', { bubbles: true }));
+
+      const error = el.querySelector('#current-password-error');
+      expect(error?.textContent).toContain('required');
+    });
+  });

@@ -468,3 +468,50 @@ describe('AccessibilitySettingsPage', () => {
       expect(status?.textContent).toBe('All changes saved');
     });
   });
+
+  describe('Accessibility', () => {
+    it('should have proper heading hierarchy', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const h1 = el.querySelector('h1');
+      expect(h1).toBeTruthy();
+
+      const h2s = el.querySelectorAll('h2');
+      expect(h2s.length).toBe(5); // Theme, High Contrast, Reduced Motion, Screen Reader, Keyboard
+    });
+
+    it('should have aria-labelledby on sections', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const sections = el.querySelectorAll('section[aria-labelledby]');
+      expect(sections.length).toBe(5);
+    });
+
+    it('should have radio role on theme cards', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const cards = el.querySelectorAll('[role="radio"]');
+      expect(cards.length).toBe(3);
+    });
+
+    it('should have toolbar role on save bar', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const toolbar = el.querySelector('[role="toolbar"]');
+      expect(toolbar).toBeTruthy();
+      expect(toolbar?.getAttribute('aria-label')).toBe('Save actions');
+    });
+
+    it('should have live region for status updates', () => {
+      page = new AccessibilitySettingsPage(mockPreferences);
+      const el = page.getElement();
+
+      const status = el.querySelector('#a11y-save-status');
+      expect(status?.getAttribute('aria-live')).toBe('polite');
+    });
+  });
+});

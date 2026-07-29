@@ -719,3 +719,60 @@ export class OrganizationSettingsPage {
         break;
     }
   }
+
+  private setupBrandingListeners(): void {
+    // Logo upload
+    const logoInput = this.element.querySelector('#logo-upload') as HTMLInputElement;
+    logoInput?.addEventListener('change', (e) => this.handleLogoUpload(e));
+
+    const removeLogoBtn = this.element.querySelector('#remove-logo');
+    removeLogoBtn?.addEventListener('click', () => this.handleRemoveLogo());
+
+    // Color pickers
+    const primaryColor = this.element.querySelector('#primary-color') as HTMLInputElement;
+    const primaryHex = this.element.querySelector('#primary-color-hex') as HTMLInputElement;
+    primaryColor?.addEventListener('input', (e) => {
+      const value = (e.target as HTMLInputElement).value;
+      this.settings.branding.primaryColor = value;
+      if (primaryHex) primaryHex.value = value;
+      this.markDirty();
+    });
+    primaryHex?.addEventListener('input', (e) => {
+      const value = (e.target as HTMLInputElement).value;
+      if (validateColor(value)) {
+        this.settings.branding.primaryColor = value;
+        if (primaryColor) primaryColor.value = value;
+        this.clearError('primary-color-error');
+      } else if (value.length === 7) {
+        this.showError('primary-color-error', 'Invalid hex color (e.g., #2563eb)');
+      }
+      this.markDirty();
+    });
+
+    const accentColor = this.element.querySelector('#accent-color') as HTMLInputElement;
+    const accentHex = this.element.querySelector('#accent-color-hex') as HTMLInputElement;
+    accentColor?.addEventListener('input', (e) => {
+      const value = (e.target as HTMLInputElement).value;
+      this.settings.branding.accentColor = value;
+      if (accentHex) accentHex.value = value;
+      this.markDirty();
+    });
+    accentHex?.addEventListener('input', (e) => {
+      const value = (e.target as HTMLInputElement).value;
+      if (validateColor(value)) {
+        this.settings.branding.accentColor = value;
+        if (accentColor) accentColor.value = value;
+        this.clearError('accent-color-error');
+      } else if (value.length === 7) {
+        this.showError('accent-color-error', 'Invalid hex color (e.g., #7c3aed)');
+      }
+      this.markDirty();
+    });
+
+    // Custom CSS
+    const cssInput = this.element.querySelector('#custom-css') as HTMLTextAreaElement;
+    cssInput?.addEventListener('input', (e) => {
+      this.settings.branding.customCss = (e.target as HTMLTextAreaElement).value;
+      this.markDirty();
+    });
+  }
