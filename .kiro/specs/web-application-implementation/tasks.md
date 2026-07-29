@@ -352,7 +352,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Build notification preference controls with granular categories
     - _Requirements: 9.1, 9.3_
 
-  - [x] 11.2 Implement security settings
+  - [ ] 11.2 Implement security settings
     - Create password change interface with strength validation
     - Build two-factor authentication setup with QR code generation
     - Add active session management with device information display
