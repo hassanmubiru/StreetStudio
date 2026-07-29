@@ -690,3 +690,74 @@ describe('TimelineEditor', () => {
     });
   });
 });
+
+// ─── WaveformRenderer Tests ───────────────────────────────────────────────────
+
+describe('WaveformRenderer', () => {
+  let canvas: HTMLCanvasElement;
+  let renderer: WaveformRenderer;
+
+  beforeEach(() => {
+    canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 48;
+    renderer = new WaveformRenderer(canvas);
+  });
+
+  it('accepts waveform data', () => {
+    const data: WaveformData = {
+      peaks: new Float32Array([0.1, 0.5, 0.3, 0.8, 0.2]),
+      sampleRate: 44100,
+      duration: 10,
+      channelCount: 1,
+    };
+    renderer.setWaveformData(data);
+    expect(renderer.getWaveformData()).toBe(data);
+  });
+
+  it('renders without error when data is loaded', () => {
+    const data: WaveformData = {
+      peaks: new Float32Array(1000).fill(0.5),
+      sampleRate: 44100,
+      duration: 10,
+      channelCount: 1,
+    };
+    renderer.setWaveformData(data);
+    expect(() => renderer.render(0, 300, 30, 1)).not.toThrow();
+  });
+
+  it('handles empty peaks gracefully', () => {
+    const data: WaveformData = {
+      peaks: new Float32Array(0),
+      sampleRate: 44100,
+      duration: 0,
+      channelCount: 1,
+    };
+    renderer.setWaveformData(data);
+    expect(() => renderer.render(0, 100, 30, 1)).not.toThrow();
+  });
+
+  it('handles no data loaded gracefully', () => {
+    expect(() => renderer.render(0, 100, 30, 1)).not.toThrow();
+  });
+
+  it('resizes canvas', () => {
+    renderer.resize(1200, 60);
+    expect(canvas.width).toBe(1200);
+    expect(canvas.height).toBe(60);
+  });
+
+  it('updates color settings', () => {
+    renderer.setColor('#ff0000');
+    renderer.setBackgroundColor('#000000');
+    // No error thrown
+    const data: WaveformData = {
+      peaks: new Float32Array(100).fill(0.3),
+      sampleRate: 44100,
+      duration: 5,
+      channelCount: 1,
+    };
+    renderer.setWaveformData(data);
+    expect(() => renderer.render(0, 150, 30, 1)).not.toThrow();
+  });
+});
