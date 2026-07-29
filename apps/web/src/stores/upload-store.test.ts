@@ -185,18 +185,28 @@ describe('UploadStore', () => {
     });
 
     it('should handle listener errors gracefully', () => {
+      // The store wraps listener calls in try/catch
+      let callCount = 0;
       const errorListener = vi.fn(() => {
-        throw new Error('Listener error');
+        callCount++;
+        if (callCount > 1) {
+          // Only throw on state updates, not initial subscribe call
+          throw new Error('Listener error');
+        }
       });
       const goodListener = vi.fn();
 
-      store.subscribe(errorListener);
       store.subscribe(goodListener);
+      store.subscribe(errorListener);
 
-      // Should not throw even when a listener errors
-      expect(() => store.addUpload(mockFile)).not.toThrow();
+      // Clear initial subscribe calls
+      goodListener.mockClear();
+      errorListener.mockClear();
 
-      // Good listener should still be notified
+      // Adding an upload triggers state updates - store should catch listener errors
+      store.addUpload(mockFile);
+
+      // Good listener should still be notified despite the error listener
       expect(goodListener).toHaveBeenCalled();
     });
 

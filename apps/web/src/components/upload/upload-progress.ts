@@ -477,3 +477,21 @@ export class UploadProgressInterface {
       </div>
     `;
   }
+
+  private renderItemActions(upload: UploadItem): string {
+    switch (upload.status) {
+      case 'uploading':
+        return `<button type="button" class="btn-item-action" data-action="pause" data-upload-id="${upload.id}" aria-label="Pause upload of ${upload.file.name}" title="Pause">⏸</button>
+                <button type="button" class="btn-item-action btn-item-action--danger" data-action="cancel" data-upload-id="${upload.id}" aria-label="Cancel upload of ${upload.file.name}" title="Cancel">✕</button>`;
+      case 'paused':
+        return `<button type="button" class="btn-item-action" data-action="resume" data-upload-id="${upload.id}" aria-label="Resume upload of ${upload.file.name}" title="Resume">▶</button>
+                <button type="button" class="btn-item-action btn-item-action--danger" data-action="cancel" data-upload-id="${upload.id}" aria-label="Cancel upload of ${upload.file.name}" title="Cancel">✕</button>`;
+      case 'failed':
+        return `<button type="button" class="btn-item-action" data-action="retry" data-upload-id="${upload.id}" aria-label="Retry upload of ${upload.file.name}" title="Retry">↺</button>
+                <button type="button" class="btn-item-action" data-action="remove" data-upload-id="${upload.id}" aria-label="Remove ${upload.file.name}" title="Remove">✕</button>`;
+      case 'completed':
+        return `<button type="button" class="btn-item-action" data-action="remove" data-upload-id="${upload.id}" aria-label="Remove ${upload.file.name}" title="Remove">✕</button>`;
+      default:
+        return '';
+    }
+  }
