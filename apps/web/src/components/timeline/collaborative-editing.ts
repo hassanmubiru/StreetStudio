@@ -517,3 +517,200 @@ export class CollaborativeEditingManager {
       this.callbacks.onVersionChange?.(version);
     });
   }
+
+  /** Start a collaborative editing session. */
+  public startSession(): EditSession {
+    const session: EditSession = {
+      id: generateId(),
+      videoId: this.options.videoId,
+      participants: [],
+      startedAt: now(),
+      isActive: true,
+      version: 0,
+    };
+
+    this.session = session;
+    this.isActive = true;
+
+    // Add the current user as a participant
+    const selfPresence: EditorPresence = {
+      userId: this.options.currentUserId,
+      displayName: this.options.currentUserName,
+      avatarUrl: this.options.currentUserAvatar,
+      color: getUserColor(this.options.currentUserId),
+      playheadFrame: 0,
+      lastActiveAt: now(),
+      isConnected: true,
+    };
+    this.presenceManager.updatePresence(selfPresence);
+    this.presenceManager.startCleanup();
+
+    // Start periodic presence broadcasts
+    this.presenceInterval = setInterval(() => {
+      this.broadcastPresence();
+    }, PRESENCE_UPDATE_INTERVAL_MS);
+
+    this.callbacks.onSessionStart?.(session);
+    return session;
+  }
+
+  /** End the current collaborative editing session. */
+  public endSession(): void {
+    if (!this.session) return;
+
+    const sessionId = this.session.id;
+    this.session.isActive = false;
+    this.isActive = false;
+
+    if (this.presenceInterval) {
+      clearInterval(this.presenceInterval);
+      this.presenceInterval = null;
+    }
+
+    this.presenceManager.stopCleanup();
+    this.callbacks.onSessionEnd?.(sessionId);
+    this.session = null;
+  }
+
+  /** Update the current user's playhead position. */
+  public updatePlayheadPosition(frame: number): void {
+    if (!this.isActive) return;
+    const existing = this.presenceManager.getParticipant(this.options.currentUserId);
+    if (existing) {
+      this.presenceManager.updatePresence({
+        ...existing,
+        playheadFrame: frame,
+      });
+    }
+  }
+
+  /**
+   * Begin an edit operation on a clip.
+   * Returns null if no conflict, or the conflict if another user is editing.
+   */
+  public beginEdit(clipId: string, operation: EditOperationType): EditConflict | null {
+    if (!this.isActive) return null;
+
+    // Update presence to show active editing
+    const existing = this.presenceManager.getParticipant(this.options.currentUserId);
+    if (existing) {
+      this.presenceManager.updatePresence({
+        ...existing,
+        activeClipId: clipId,
+        activeOperation: operation,
+      });
+    }
+
+    return this.conflictDetector.registerEdit(this.options.currentUserId, clipId, operation);
+  }
+
+  /**
+   * Complete an edit operation on a clip and record it in history.
+   */
+  public completeEdit(
+    clipId: string,
+    operation: EditOperationType,
+    description: string,
+    previousState: string,
+    newState: string
+  ): EditOperation {
+    // Clear the active editing state
+    const existing = this.presenceManager.getParticipant(this.options.currentUserId);
+    if (existing) {
+      this.presenceManager.updatePresence({
+        ...existing,
+        activeClipId: undefined,
+        activeOperation: undefined,
+      });
+    }
+
+    this.conflictDetector.completeEdit(this.options.currentUserId, clipId);
+
+    // Record in history
+    return this.historyManager.recordEdit({
+      userId: this.options.currentUserId,
+      type: operation,
+      clipId,
+      description,
+      previousState,
+      newState,
+    });
+  }
+
+  /** Handle a remote user joining the session. */
+  public handleUserJoined(presence: EditorPresence): void {
+    this.presenceManager.updatePresence(presence);
+  }
+
+  /** Handle a remote user leaving the session. */
+  public handleUserLeft(userId: Uuid): void {
+    this.presenceManager.removePresence(userId);
+    // Clean up any edit locks held by this user
+    for (const conflict of this.conflictDetector.getAllConflicts()) {
+      if (conflict.initiatorUserId === userId && conflict.resolution === 'pending') {
+        this.conflictDetector.resolveConflict(conflict.id, 'dismissed');
+      }
+    }
+  }
+
+  /** Handle a remote edit operation. */
+  public handleRemoteEdit(operation: EditOperation): void {
+    this.historyManager.recordEdit(operation);
+    this.callbacks.onEditReceived?.(operation);
+  }
+
+  /** Resolve an existing conflict. */
+  public resolveConflict(conflictId: Uuid, resolution: ConflictResolution): EditConflict | null {
+    return this.conflictDetector.resolveConflict(conflictId, resolution);
+  }
+
+  /** Get the current session, if active. */
+  public getSession(): EditSession | null {
+    if (!this.session) return null;
+    return {
+      ...this.session,
+      participants: this.presenceManager.getAllParticipants(),
+    };
+  }
+
+  /** Check whether the session is currently active. */
+  public isSessionActive(): boolean {
+    return this.isActive;
+  }
+
+  /** Get the presence manager for direct access. */
+  public getPresenceManager(): PresenceManager {
+    return this.presenceManager;
+  }
+
+  /** Get the conflict detector for direct access. */
+  public getConflictDetector(): ConflictDetector {
+    return this.conflictDetector;
+  }
+
+  /** Get the history manager for direct access. */
+  public getHistoryManager(): EditHistoryManager {
+    return this.historyManager;
+  }
+
+  /** Broadcast presence to other participants. */
+  private broadcastPresence(): void {
+    if (!this.isActive) return;
+    const self = this.presenceManager.getParticipant(this.options.currentUserId);
+    if (self) {
+      // Re-update to refresh lastActiveAt timestamp
+      this.presenceManager.updatePresence({
+        ...self,
+        lastActiveAt: now(),
+      });
+    }
+  }
+
+  /** Destroy the manager and release all resources. */
+  public destroy(): void {
+    this.endSession();
+    this.presenceManager.destroy();
+    this.conflictDetector.clear();
+    this.historyManager.clear();
+  }
+}

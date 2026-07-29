@@ -710,3 +710,73 @@ export class BackgroundProcessingManager {
     this.trackedJobs.clear();
   }
 }
+
+// ─── ExportHistoryManager ─────────────────────────────────────────────────────
+
+/**
+ * Manages export history and download management. Provides access to
+ * completed exports with download links and file metadata.
+ */
+export class ExportHistoryManager {
+  private history: ExportJob[] = [];
+  private maxItems: number;
+
+  constructor(maxItems: number = MAX_EXPORT_HISTORY) {
+    this.maxItems = maxItems;
+  }
+
+  /** Add a completed export to history */
+  public addEntry(job: ExportJob): void {
+    this.history.unshift({ ...job });
+    if (this.history.length > this.maxItems) {
+      this.history = this.history.slice(0, this.maxItems);
+    }
+  }
+
+  /** Get all history entries */
+  public getEntries(): ExportJob[] {
+    return [...this.history];
+  }
+
+  /** Get history entries filtered by status */
+  public getByStatus(status: ExportStatus): ExportJob[] {
+    return this.history.filter((j) => j.status === status);
+  }
+
+  /** Get completed exports with download URLs */
+  public getDownloadable(): ExportJob[] {
+    return this.history.filter(
+      (j) => j.status === 'completed' && j.downloadUrl
+    );
+  }
+
+  /** Get a specific history entry */
+  public getEntry(exportId: string): ExportJob | undefined {
+    return this.history.find((j) => j.id === exportId);
+  }
+
+  /** Remove a specific history entry */
+  public removeEntry(exportId: string): boolean {
+    const index = this.history.findIndex((j) => j.id === exportId);
+    if (index === -1) return false;
+    this.history.splice(index, 1);
+    return true;
+  }
+
+  /** Clear all history */
+  public clear(): void {
+    this.history = [];
+  }
+
+  /** Get total number of entries */
+  public getCount(): number {
+    return this.history.length;
+  }
+
+  /** Get total download size for all completed exports */
+  public getTotalDownloadSize(): number {
+    return this.history
+      .filter((j) => j.status === 'completed' && j.fileSizeBytes)
+      .reduce((sum, j) => sum + (j.fileSizeBytes ?? 0), 0);
+  }
+}

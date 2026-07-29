@@ -97,3 +97,38 @@ export type {
   TextOverlayManagerOptions,
   TextOverlayCallbacks,
 } from './text-overlay.js';
+
+// Editing Preview and Export System (Requirements: 6.6, 6.7)
+export {
+  EditingPreviewSystem,
+  ExportManager,
+  BackgroundProcessingManager,
+  ExportHistoryManager,
+  generateExportId,
+  estimateFileSize,
+  formatFileSize,
+  formatDuration,
+  getQualityOption,
+  estimateExportTime,
+  QUALITY_OPTIONS,
+  MAX_CONCURRENT_EXPORTS,
+  EXPORT_POLL_INTERVAL_MS,
+  PREVIEW_DEBOUNCE_MS,
+  MAX_EXPORT_HISTORY,
+} from './editing-preview-export.js';
+
+export type {
+  ExportQuality,
+  ExportFormat,
+  ExportStatus,
+  PreviewMode,
+  ExportQualityOption,
+  ExportProgress,
+  ExportJob,
+  EditOperation,
+  PreviewState,
+  ExportOptions,
+  PreviewCallbacks,
+  ExportCallbacks,
+  BackgroundProcessCallbacks,
+} from './editing-preview-export.js';
