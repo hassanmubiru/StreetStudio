@@ -67,3 +67,39 @@ export class UploadProgressInterface {
   private animationFrameId?: number;
   private previousCompletedCount = 0;
   private previousFailedCount = 0;
+
+  private readonly DEFAULT_CONFIG: Required<UploadProgressConfig> = {
+    showIndividualProgress: true,
+    showBatchProgress: true,
+    showSpeed: true,
+    showETA: true,
+    enableBackgroundUpload: true,
+    autoMinimizeOnComplete: true,
+    maxVisibleItems: 5,
+    position: 'bottom-right'
+  };
+
+  constructor(container: HTMLElement, config: Partial<UploadProgressConfig> = {}) {
+    this.container = container;
+    this.config = { ...this.DEFAULT_CONFIG, ...config };
+    this.notificationService = new UploadNotificationService();
+
+    this.initialize();
+  }
+
+  private initialize(): void {
+    this.render();
+    this.setupStoreSubscription();
+    this.startSpeedTracking();
+
+    logger.info('Upload progress interface initialized', {
+      position: this.config.position,
+      backgroundUpload: this.config.enableBackgroundUpload
+    });
+  }
+
+  private setupStoreSubscription(): void {
+    this.unsubscribe = this.uploadStore.subscribe((state) => {
+      this.handleStateUpdate(state);
+    });
+  }

@@ -79,3 +79,39 @@ export class VideoMetadataForm {
       isPrivate: this.config.initialData.isPrivate ?? false,
       developerMode: this.config.initialData.developerMode ?? false,
     };
+
+    this.validator = new FormValidator({
+      title: [
+        ValidationRules.required('Title is required'),
+        ValidationRules.minLength(1, 'Title cannot be empty'),
+        ValidationRules.maxLength(255, 'Title must be 255 characters or less'),
+        ValidationRules.pattern(/^[^<>{}]+$/, 'Title cannot contain < > { } characters'),
+      ],
+      description: [
+        ValidationRules.maxLength(2000, 'Description must be 2000 characters or less'),
+        ValidationRules.pattern(/^[^<>{}]*$/, 'Description cannot contain < > { } characters'),
+      ],
+    });
+
+    this.initialize();
+  }
+
+  private initialize(): void {
+    this.render();
+    this.setupEventListeners();
+    this.loadProjectsIfNeeded();
+    this.loadTagsIfNeeded();
+  }
+
+  private render(): void {
+    this.container.innerHTML = '';
+    const form = document.createElement('form');
+    form.className = 'video-metadata-form';
+    form.setAttribute('novalidate', '');
+    form.setAttribute('aria-label', 'Video metadata');
+    form.innerHTML = this.getFormHTML();
+    this.container.appendChild(form);
+
+    this.tagInput = this.container.querySelector('#tag-input');
+    this.tagSuggestionsContainer = this.container.querySelector('#tag-suggestions');
+  }
