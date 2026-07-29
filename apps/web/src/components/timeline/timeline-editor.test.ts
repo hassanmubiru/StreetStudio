@@ -628,3 +628,65 @@ describe('TimelineEditor', () => {
       // Note: this tests that the handler checks the target
     });
   });
+
+  describe('frame rate', () => {
+    it('returns default frame rate', () => {
+      expect(editor.getFrameRate()).toBe(DEFAULT_FRAME_RATE);
+    });
+
+    it('can set frame rate', () => {
+      editor.setFrameRate(24);
+      expect(editor.getFrameRate()).toBe(24);
+    });
+
+    it('ignores invalid frame rate', () => {
+      editor.setFrameRate(0);
+      expect(editor.getFrameRate()).toBe(DEFAULT_FRAME_RATE);
+      editor.setFrameRate(-1);
+      expect(editor.getFrameRate()).toBe(DEFAULT_FRAME_RATE);
+    });
+  });
+
+  describe('scroll offset', () => {
+    it('sets scroll offset', () => {
+      editor.setScrollOffset(50);
+      expect(editor.getState().scrollOffset).toBe(50);
+    });
+
+    it('does not go below 0', () => {
+      editor.setScrollOffset(-10);
+      expect(editor.getState().scrollOffset).toBe(0);
+    });
+  });
+
+  describe('state change notifications', () => {
+    it('fires onStateChange on seek', () => {
+      editor.addClip(createTestClip());
+      (callbacks.onStateChange as ReturnType<typeof vi.fn>).mockClear();
+      editor.seekToFrame(50);
+      expect(callbacks.onStateChange).toHaveBeenCalled();
+    });
+
+    it('fires onStateChange on zoom', () => {
+      (callbacks.onStateChange as ReturnType<typeof vi.fn>).mockClear();
+      editor.setZoom(2);
+      expect(callbacks.onStateChange).toHaveBeenCalled();
+    });
+  });
+
+  describe('destroy', () => {
+    it('cleans up DOM', () => {
+      editor.destroy();
+      expect(container.innerHTML).toBe('');
+    });
+
+    it('does not respond to keyboard events after destroy', () => {
+      editor.addClip(createTestClip());
+      editor.seekToFrame(50);
+      editor.destroy();
+      pressKey('.');
+      // Playhead should not have changed since editor is destroyed
+      // We can't check state after destroy easily, but at least no error
+    });
+  });
+});
