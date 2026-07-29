@@ -234,27 +234,34 @@ describe('Upload System - Chunked Upload Logic', () => {
       manager.configure({ maxConcurrentUploads: 1 });
 
       const { apiClient } = await import('../services/api.js');
-      // First upload will hang
+      
+      // First upload: make the init call hang forever so the upload stays active
+      let resolveInit: any;
       (apiClient.post as any).mockImplementationOnce(
-        () => new Promise(() => {}) // never resolves
+        () => new Promise((resolve) => { resolveInit = resolve; })
       );
 
-      const file1 = createMockFile('first.mp4', 100);
-      const file2 = createMockFile('second.mp4', 100);
+      const file1 = createMockFile('first.mp4', 10 * 1024 * 1024); // Large enough for chunked
+      const file2 = createMockFile('second.mp4', 10 * 1024 * 1024);
 
-      // Start first upload (will hang)
+      // Start first upload (will hang on init)
       const upload1Promise = manager.uploadFile(file1, { chunkSize: 5 * 1024 * 1024 });
 
-      // Wait a tick for the first upload to register
-      await new Promise(resolve => setTimeout(resolve, 10));
+      // Give it time to register as active
+      await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Second upload should fail with quota error
+      // Second upload should fail with quota error since first is still active
       await expect(
         manager.uploadFile(file2, { chunkSize: 5 * 1024 * 1024 })
       ).rejects.toThrow(/Too many active uploads/);
 
       // Clean up
       manager.cancelAllUploads();
+      // Resolve the hanging promise to prevent unhandled rejection
+      if (resolveInit) {
+        resolveInit({ data: { uploadId: 'x', uploadUrl: 'http://test/x' } });
+      }
+      await upload1Promise.catch(() => {}); // Ignore the error from cancellation
     });
 
     it('should report queue status correctly', () => {
