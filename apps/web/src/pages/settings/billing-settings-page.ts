@@ -603,3 +603,77 @@ export class BillingSettingsPage {
     this.currentView = 'overview';
     this.render();
   }
+
+  private async handleCancelSubscription(): Promise<void> {
+    const confirmed = window.confirm(
+      'Are you sure you want to cancel your subscription? You will retain access until the end of the current billing period.'
+    );
+    if (!confirmed) return;
+
+    try {
+      await apiClient.post(
+        `/organizations/${this.config.organizationId}/billing/cancel`,
+        {}
+      );
+      if (this.billingData) {
+        this.billingData.subscription.cancelAtPeriodEnd = true;
+      }
+      this.render();
+      this.element.dispatchEvent(new CustomEvent('subscription-canceled', { bubbles: true }));
+      logger.info('Subscription canceled', { organizationId: this.config.organizationId });
+    } catch (err) {
+      logger.error('Failed to cancel subscription', { error: err instanceof Error ? err.message : String(err) });
+      this.showToast('Failed to cancel subscription. Please try again.');
+    }
+  }
+
+  private async handleAddPaymentMethod(): Promise<void> {
+    this.element.dispatchEvent(new CustomEvent('add-payment-method', {
+      bubbles: true,
+      detail: { organizationId: this.config.organizationId },
+    }));
+  }
+
+  private async handleSetDefaultPaymentMethod(methodId: string): Promise<void> {
+    try {
+      await apiClient.put(
+        `/organizations/${this.config.organizationId}/billing/payment-methods/${methodId}/default`,
+        {}
+      );
+      if (this.billingData) {
+        this.billingData.paymentMethods.forEach(m => {
+          m.isDefault = m.id === methodId;
+        });
+      }
+      this.render();
+      logger.info('Default payment method updated', { methodId });
+    } catch (err) {
+      logger.error('Failed to set default payment method', { error: err instanceof Error ? err.message : String(err) });
+      this.showToast('Failed to update payment method. Please try again.');
+    }
+  }
+
+  private async handleRemovePaymentMethod(methodId: string): Promise<void> {
+    const method = this.billingData?.paymentMethods.find(m => m.id === methodId);
+    if (method?.isDefault) {
+      this.showToast('Cannot remove the default payment method. Set another method as default first.');
+      return;
+    }
+
+    const confirmed = window.confirm('Are you sure you want to remove this payment method?');
+    if (!confirmed) return;
+
+    try {
+      await apiClient.delete(
+        `/organizations/${this.config.organizationId}/billing/payment-methods/${methodId}`
+      );
+      if (this.billingData) {
+        this.billingData.paymentMethods = this.billingData.paymentMethods.filter(m => m.id !== methodId);
+      }
+      this.render();
+      logger.info('Payment method removed', { methodId });
+    } catch (err) {
+      logger.error('Failed to remove payment method', { error: err instanceof Error ? err.message : String(err) });
+      this.showToast('Failed to remove payment method. Please try again.');
+    }
+  }

@@ -567,3 +567,49 @@ export class AccessibilitySettingsPage {
       this.markDirty();
       applyAccessibilityPreferences(this.preferences);
     });
+
+    // Screen reader toggle
+    const srToggle = this.element.querySelector('#screen-reader-toggle') as HTMLInputElement;
+    srToggle?.addEventListener('change', () => {
+      this.preferences.screenReaderOptimizations = srToggle.checked;
+      this.markDirty();
+      applyAccessibilityPreferences(this.preferences);
+    });
+
+    // Keyboard navigation toggles
+    const kbEnabled = this.element.querySelector('#kb-enabled') as HTMLInputElement;
+    kbEnabled?.addEventListener('change', () => {
+      this.preferences.keyboardNavigation.enabled = kbEnabled.checked;
+      this.markDirty();
+      applyAccessibilityPreferences(this.preferences);
+    });
+
+    const kbFocus = this.element.querySelector('#kb-focus-indicators') as HTMLInputElement;
+    kbFocus?.addEventListener('change', () => {
+      this.preferences.keyboardNavigation.showFocusIndicators = kbFocus.checked;
+      this.markDirty();
+      applyAccessibilityPreferences(this.preferences);
+    });
+
+    const kbSkip = this.element.querySelector('#kb-skip-link') as HTMLInputElement;
+    kbSkip?.addEventListener('change', () => {
+      this.preferences.keyboardNavigation.skipLinkEnabled = kbSkip.checked;
+      this.markDirty();
+      applyAccessibilityPreferences(this.preferences);
+    });
+
+    const kbArrow = this.element.querySelector('#kb-arrow-nav') as HTMLInputElement;
+    kbArrow?.addEventListener('change', () => {
+      this.preferences.keyboardNavigation.arrowKeyNavigation = kbArrow.checked;
+      this.markDirty();
+      applyAccessibilityPreferences(this.preferences);
+    });
+
+    // Save button
+    const saveBtn = this.element.querySelector('#a11y-save-settings');
+    saveBtn?.addEventListener('click', () => this.handleSave());
+
+    // Discard button
+    const discardBtn = this.element.querySelector('#a11y-discard-changes');
+    discardBtn?.addEventListener('click', () => this.handleDiscard());
+  }

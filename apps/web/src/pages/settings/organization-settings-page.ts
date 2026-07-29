@@ -400,3 +400,31 @@ export class OrganizationSettingsPage {
     `;
     return section;
   }
+
+  // --- Security Section ---
+
+  private renderSecuritySection(): HTMLElement {
+    const section = document.createElement('div');
+    section.className = 'space-y-6';
+    const sec = this.settings.security;
+
+    section.innerHTML = `
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="security-auth-heading">
+        <h2 id="security-auth-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Authentication Policies</h2>
+        <div class="space-y-4">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input id="enforce-sso" type="checkbox" ${sec.enforceSSO ? 'checked' : ''} class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+            <div>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">Enforce SSO</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Require all members to authenticate via Single Sign-On.</p>
+            </div>
+          </label>
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input id="require-mfa" type="checkbox" ${sec.requireMFA ? 'checked' : ''} class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+            <div>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">Require Multi-Factor Authentication</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400">All members must enable MFA for their accounts.</p>
+            </div>
+          </label>
+        </div>
+      </section>
