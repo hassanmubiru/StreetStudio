@@ -75,18 +75,7 @@ export class UploadManager {
   private defaultChunkSize = 5 * 1024 * 1024; // 5MB chunks
   private resumeStorage = new Map<string, ResumeInfo>(); // In-memory resume storage
   
-  /**
-   * Resume information for interrupted uploads
-   */
-  private interface ResumeInfo {
-    uploadId: string;
-    fileName: string;
-    fileSize: number;
-    fileLastModified: number;
-    chunks: ChunkInfo[];
-    completedChunks: number[];
-    metadata?: Record<string, any>;
-  }
+
 
   constructor() {
     this.loadResumeInfoFromStorage();

@@ -704,3 +704,158 @@ describe('Upload System - Metadata Form Validation', () => {
       form.destroy();
       document.body.removeChild(container);
     });
+
+    it('should validate form and report errors', async () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      const { VideoMetadataForm } = await import('../components/upload/video-metadata-form.js');
+      const form = new VideoMetadataForm(container, {
+        initialData: { title: '' } // Invalid: empty title
+      });
+
+      const result = form.validate();
+      expect(result.isValid).toBe(false);
+      expect(result.errors.title).toBeDefined();
+      expect(result.errors.title.length).toBeGreaterThan(0);
+
+      form.destroy();
+      document.body.removeChild(container);
+    });
+
+    it('should report isValid correctly', async () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      const { VideoMetadataForm } = await import('../components/upload/video-metadata-form.js');
+
+      const validForm = new VideoMetadataForm(container, {
+        initialData: { title: 'Good Title' }
+      });
+      expect(validForm.isValid()).toBe(true);
+      validForm.destroy();
+
+      const invalidForm = new VideoMetadataForm(container, {
+        initialData: { title: '' }
+      });
+      expect(invalidForm.isValid()).toBe(false);
+      invalidForm.destroy();
+
+      document.body.removeChild(container);
+    });
+
+    it('should reset form to default state', async () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      const { VideoMetadataForm } = await import('../components/upload/video-metadata-form.js');
+      const form = new VideoMetadataForm(container, {
+        initialData: { title: 'A Title', tags: ['tag1'] }
+      });
+
+      form.reset();
+
+      const data = form.getFormData();
+      expect(data.title).toBe('');
+      expect(data.description).toBe('');
+      expect(data.tags).toEqual([]);
+      expect(data.isPrivate).toBe(false);
+      expect(data.projectId).toBeNull();
+
+      form.destroy();
+      document.body.removeChild(container);
+    });
+
+    it('should call onSubmit with valid form data', async () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const onSubmit = vi.fn();
+
+      const { VideoMetadataForm } = await import('../components/upload/video-metadata-form.js');
+      const form = new VideoMetadataForm(container, {
+        initialData: { title: 'My Video' },
+        onSubmit
+      });
+
+      // Trigger form submission
+      const formEl = container.querySelector('form') as HTMLFormElement;
+      formEl.dispatchEvent(new Event('submit', { cancelable: true }));
+
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'My Video'
+      }));
+
+      form.destroy();
+      document.body.removeChild(container);
+    });
+
+    it('should not call onSubmit when form is invalid', async () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const onSubmit = vi.fn();
+
+      const { VideoMetadataForm } = await import('../components/upload/video-metadata-form.js');
+      const form = new VideoMetadataForm(container, {
+        initialData: { title: '' }, // Invalid
+        onSubmit
+      });
+
+      // Trigger form submission
+      const formEl = container.querySelector('form') as HTMLFormElement;
+      formEl.dispatchEvent(new Event('submit', { cancelable: true }));
+
+      expect(onSubmit).not.toHaveBeenCalled();
+
+      form.destroy();
+      document.body.removeChild(container);
+    });
+
+    it('should call onChange when form data updates', async () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const onChange = vi.fn();
+
+      const { VideoMetadataForm } = await import('../components/upload/video-metadata-form.js');
+      const form = new VideoMetadataForm(container, {
+        initialData: { title: 'Original' },
+        onChange
+      });
+
+      // Simulate title input
+      const titleInput = container.querySelector('#video-title') as HTMLInputElement;
+      titleInput.value = 'Updated Title';
+      titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Updated Title'
+      }));
+
+      form.destroy();
+      document.body.removeChild(container);
+    });
+
+    it('should update form data programmatically via setFormData', async () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      const { VideoMetadataForm } = await import('../components/upload/video-metadata-form.js');
+      const form = new VideoMetadataForm(container);
+
+      form.setFormData({
+        title: 'New Title',
+        description: 'New description',
+        isPrivate: true,
+        tags: ['react', 'tutorial']
+      });
+
+      const data = form.getFormData();
+      expect(data.title).toBe('New Title');
+      expect(data.description).toBe('New description');
+      expect(data.isPrivate).toBe(true);
+      expect(data.tags).toEqual(['react', 'tutorial']);
+
+      form.destroy();
+      document.body.removeChild(container);
+    });
+  });
+});
