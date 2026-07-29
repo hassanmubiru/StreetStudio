@@ -292,8 +292,8 @@ describe('PermissionMatrix', () => {
 
     const checkboxes = container.querySelectorAll('.permission-checkbox') as NodeListOf<HTMLInputElement>;
     expect(checkboxes.length).toBe(2);
-    expect(checkboxes[0].checked).toBe(true);
-    expect(checkboxes[1].checked).toBe(false);
+    expect(checkboxes[0]!.checked).toBe(true);
+    expect(checkboxes[1]!.checked).toBe(false);
   });
 
   it('calls onPermissionToggle when checkbox is changed', () => {
