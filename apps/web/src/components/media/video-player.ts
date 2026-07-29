@@ -539,3 +539,58 @@ export class AdaptiveVideoPlayer {
       this.videoElement.src = source.url;
     }
   }
+
+  private async loadDASH(source: VideoSource): Promise<void> {
+    try {
+      const dashjs = (window as any).dashjs;
+      if (dashjs) {
+        this.dashInstance = dashjs.MediaPlayer().create();
+        this.dashInstance.initialize(this.videoElement, source.url, this.options.autoplay);
+
+        this.dashInstance.on('streamInitialized', () => {
+          const bitrateList = this.dashInstance.getBitrateInfoListFor('video');
+          this.updateAvailableQualitiesFromDash(bitrateList);
+        });
+        this.dashInstance.on('qualityChangeRendered', (e: any) => {
+          if (e.mediaType === 'video') {
+            this.handleQualitySwitch(e.newQuality);
+          }
+        });
+      } else {
+        this.videoElement.src = source.url;
+      }
+    } catch {
+      this.videoElement.src = source.url;
+    }
+  }
+
+  private loadDirect(source: VideoSource): void {
+    this.videoElement.src = source.url;
+    const mimeType = source.type === 'mp4' ? 'video/mp4' : 'video/webm';
+    this.videoElement.setAttribute('type', mimeType);
+  }
+
+  public async play(): Promise<void> {
+    try {
+      await this.videoElement.play();
+    } catch (error) {
+      if ((error as Error).name === 'NotAllowedError') {
+        this.videoElement.muted = true;
+        this.state.isMuted = true;
+        this.updateVolumeUI();
+        await this.videoElement.play();
+      }
+    }
+  }
+
+  public pause(): void {
+    this.videoElement.pause();
+  }
+
+  public togglePlayPause(): void {
+    if (this.state.isPlaying) {
+      this.pause();
+    } else {
+      this.play();
+    }
+  }
