@@ -182,3 +182,97 @@ export class AdvancedSearchPage {
     this.savedSearches = this.advancedSearchService.getSavedSearches();
     this.render();
   }
+
+  private render(): void {
+    const activeFilterCount = this.advancedSearchService.getActiveFilterCount(this.filters);
+
+    this.element.innerHTML = `
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Advanced Search</h1>
+
+        <!-- Search Form -->
+        <form class="mb-6" data-search-form>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              name="query"
+              value="${this.escapeHtml(this.query)}"
+              placeholder="Search videos, projects, comments..."
+              class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              aria-label="Search query"
+            />
+            <button
+              type="submit"
+              class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              aria-label="Search"
+            >
+              Search
+            </button>
+          </div>
+        </form>
+
+        <!-- Filter Bar -->
+        <div class="flex flex-wrap items-center gap-3 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" role="toolbar" aria-label="Search filters">
+          ${this.renderDateRangeFilter()}
+          ${this.renderContentTypeFilter()}
+          ${this.renderCreatorFilter()}
+          ${this.renderScopeFilter()}
+          ${this.renderSortFilter()}
+          ${activeFilterCount > 0 ? `
+            <button
+              class="ml-auto text-sm text-red-600 dark:text-red-400 hover:underline"
+              data-action="clear-filters"
+              aria-label="Clear all filters"
+            >
+              Clear filters (${activeFilterCount})
+            </button>
+          ` : ''}
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            ${this.query || activeFilterCount > 0 ? `
+              <button
+                class="text-sm px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                data-action="save-search"
+                aria-label="Save current search"
+              >
+                ⭐ Save search
+              </button>
+            ` : ''}
+            ${this.savedSearches.length > 0 ? `
+              <span class="text-sm text-gray-500">
+                ${this.savedSearches.length} saved search${this.savedSearches.length !== 1 ? 'es' : ''}
+              </span>
+            ` : ''}
+          </div>
+          ${!this.isLoading && this.totalCount > 0 ? `
+            <span class="text-sm text-gray-600 dark:text-gray-400">
+              ${this.totalCount} result${this.totalCount !== 1 ? 's' : ''}
+            </span>
+          ` : ''}
+        </div>
+
+        ${this.showSaveDialog ? this.renderSaveDialog() : ''}
+        ${this.renderSavedSearches()}
+
+        <!-- Faceted Search Sidebar + Results -->
+        <div class="flex gap-6">
+          ${this.facets.contentTypes.length > 0 || this.facets.creators.length > 0 ? `
+            <aside class="w-64 shrink-0" aria-label="Faceted filters">
+              ${this.renderFacets()}
+            </aside>
+          ` : ''}
+          <div class="flex-1">
+            ${this.isLoading ? this.renderLoadingState() : ''}
+            ${!this.isLoading && this.results.length > 0 ? this.renderResults() : ''}
+            ${!this.isLoading && (this.query || activeFilterCount > 0) && this.results.length === 0 ? this.renderNoResults() : ''}
+            ${!this.query && activeFilterCount === 0 ? this.renderDefaultState() : ''}
+          </div>
+        </div>
+      </div>
+    `;
+
+    this.attachEventListeners();
+  }
