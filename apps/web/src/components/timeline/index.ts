@@ -98,6 +98,32 @@ export type {
   TextOverlayCallbacks,
 } from './text-overlay.js';
 
+// Collaborative Editing (Requirements: 6.10)
+export {
+  PresenceManager,
+  ConflictDetector,
+  EditHistoryManager,
+  CollaborativeEditingManager,
+  getUserColor,
+  USER_COLORS,
+  DEFAULT_PRESENCE_TIMEOUT_MS,
+  DEFAULT_MAX_HISTORY_SIZE,
+  PRESENCE_UPDATE_INTERVAL_MS,
+} from './collaborative-editing.js';
+
+export type {
+  Uuid as CollabUuid,
+  IsoTimestamp as CollabIsoTimestamp,
+  EditorPresence,
+  EditOperationType,
+  EditOperation as CollabEditOperation,
+  EditConflict,
+  ConflictResolution,
+  EditSession,
+  CollaborativeEditingOptions,
+  CollaborativeEditingCallbacks,
+} from './collaborative-editing.js';
+
 // Editing Preview and Export System (Requirements: 6.6, 6.7)
 export {
   EditingPreviewSystem,
