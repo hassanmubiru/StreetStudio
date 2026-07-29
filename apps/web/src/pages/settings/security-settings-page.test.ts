@@ -560,3 +560,55 @@ describe('SecuritySettingsPage', () => {
     });
   });
 });
+
+describe('evaluatePasswordStrength', () => {
+  it('should return weak for empty password', () => {
+    const result = evaluatePasswordStrength('');
+    expect(result.strength).toBe('weak');
+    expect(result.score).toBe(0);
+  });
+
+  it('should return weak for short password', () => {
+    const result = evaluatePasswordStrength('abc');
+    expect(result.strength).toBe('weak');
+    expect(result.feedback).toContain(`Use at least ${PASSWORD_MIN_LENGTH} characters`);
+  });
+
+  it('should return fair for password meeting basic criteria', () => {
+    const result = evaluatePasswordStrength('password1');
+    expect(result.score).toBeGreaterThanOrEqual(1);
+  });
+
+  it('should return strong for password with mixed case, numbers, and symbols', () => {
+    const result = evaluatePasswordStrength('MyStr0ng!Pass');
+    expect(result.score).toBeGreaterThanOrEqual(3);
+    expect(['strong', 'very-strong']).toContain(result.strength);
+  });
+
+  it('should penalize common patterns', () => {
+    const withPattern = evaluatePasswordStrength('123abcABC!');
+    const withoutPattern = evaluatePasswordStrength('xY7abcABC!');
+    expect(withPattern.score).toBeLessThanOrEqual(withoutPattern.score);
+  });
+
+  it('should give feedback for missing uppercase', () => {
+    const result = evaluatePasswordStrength('lowercase1!');
+    expect(result.feedback.some(f => f.toLowerCase().includes('uppercase'))).toBe(true);
+  });
+
+  it('should give feedback for missing numbers', () => {
+    const result = evaluatePasswordStrength('NoNumbers!');
+    expect(result.feedback.some(f => f.toLowerCase().includes('number'))).toBe(true);
+  });
+
+  it('should give feedback for missing special characters', () => {
+    const result = evaluatePasswordStrength('NoSpecial1A');
+    expect(result.feedback.some(f => f.toLowerCase().includes('special'))).toBe(true);
+  });
+
+  it('should reward longer passwords', () => {
+    const short = evaluatePasswordStrength('Abc1!def');
+    const long = evaluatePasswordStrength('Abc1!defghijklmn');
+    expect(long.score).toBeGreaterThanOrEqual(short.score);
+  });
+});
