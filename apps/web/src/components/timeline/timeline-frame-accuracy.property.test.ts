@@ -1,342 +1,556 @@
 /**
  * Property-Based Tests for Timeline Frame Accuracy
  *
+ * **Validates: Requirements 6.1**
+ *
  * Property 6: Timeline Frame Accuracy - For any video content, the timeline editor
  * SHALL provide frame-accurate positioning and the playback position indicator
  * SHALL correspond exactly to the displayed frame.
  *
- * **Validates: Requirements 6.1**
- *
- * Uses fast-check with minimum 100 iterations to verify frame-accuracy
- * across random durations, frame rates, and time positions.
+ * Tests verify:
+ * - Seeking to any frame results in exact frame positioning
+ * - Trim operations maintain frame-aligned boundaries
+ * - Split operations produce clips with correct frame boundaries
  */
 
-import { describe, it, expect } from 'vitest';
-import fc from 'fast-check';
+// @vitest-environment jsdom
+
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import * as fc from 'fast-check';
 import {
-  snapToFrame,
-  frameToTime,
-  timeToFrame,
-  formatTimecode,
-  TimelineController,
-} from './timeline-controller.js';
+  TimelineEditor,
+  frameToTimecode,
+  timecodeToFrame,
+  frameToSeconds,
+  secondsToFrame,
+  frameToPixel,
+  pixelToFrame,
+  DEFAULT_FRAME_RATE,
+  PIXELS_PER_FRAME_BASE,
+  MIN_CLIP_FRAMES,
+} from './timeline-editor.js';
+import type {
+  TimelineClip,
+  TimelineEditorCallbacks,
+} from './timeline-editor.js';
 
-/**
- * Arbitrary for standard video frame rates used in production.
- */
-const arbitraryFrameRate = fc.oneof(
-  fc.constant(23.976),
+// ─── Test Environment Mocks ───────────────────────────────────────────────────
+
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  })) as any;
+}
+
+HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
+  clearRect: vi.fn(),
+  fillRect: vi.fn(),
+  fillStyle: '',
+}) as any;
+
+// ─── Arbitraries ──────────────────────────────────────────────────────────────
+
+/** Common frame rates used in video production */
+const arbFrameRate = fc.oneof(
   fc.constant(24),
   fc.constant(25),
-  fc.constant(29.97),
   fc.constant(30),
-  fc.constant(50),
-  fc.constant(59.94),
+  fc.constant(48),
   fc.constant(60),
-  fc.double({ min: 1, max: 120, noNaN: true })
+  fc.integer({ min: 1, max: 120 })
 );
 
-/**
- * Arbitrary for video durations (in seconds) from very short to long-form content.
- */
-const arbitraryDuration = fc.double({ min: 0.1, max: 7200, noNaN: true });
+/** A non-negative integer frame number within reasonable bounds */
+const arbFrame = fc.integer({ min: 0, max: 1_000_000 });
 
-/**
- * Arbitrary for time positions within a video (non-negative seconds).
- */
-const arbitraryTime = fc.double({ min: 0, max: 7200, noNaN: true });
+/** A positive zoom level within supported range */
+const arbZoom = fc.double({ min: 0.1, max: 10, noNaN: true, noDefaultInfinity: true });
 
-/**
- * Arbitrary for non-negative frame numbers.
- */
-const arbitraryFrame = fc.integer({ min: 0, max: 216000 }); // up to 1 hour at 60fps
+/** Generate a valid clip with frame-aligned boundaries */
+const arbClip = fc.record({
+  startFrame: fc.integer({ min: 0, max: 10000 }),
+  clipLength: fc.integer({ min: 10, max: 5000 }),
+}).map(({ startFrame, clipLength }) => {
+  const endFrame = startFrame + clipLength;
+  return {
+    id: `clip-${startFrame}-${endFrame}`,
+    startFrame,
+    endFrame,
+    inPoint: startFrame,
+    outPoint: endFrame,
+    duration: clipLength,
+    sourceUrl: 'test.mp4',
+    type: 'video' as const,
+  } satisfies TimelineClip;
+});
 
-describe('Property 6: Timeline Frame Accuracy', () => {
-  describe('snapToFrame round-trip consistency', () => {
-    it('snapping a time to a frame boundary is idempotent', () => {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function createContainer(): HTMLElement {
+  const container = document.createElement('div');
+  Object.defineProperty(container, 'clientWidth', { value: 800, configurable: true });
+  document.body.appendChild(container);
+  return container;
+}
+
+function createEditorWithClip(clip: TimelineClip): {
+  editor: TimelineEditor;
+  container: HTMLElement;
+  callbacks: TimelineEditorCallbacks;
+} {
+  const container = createContainer();
+  const callbacks: TimelineEditorCallbacks = {
+    onPlayheadChange: vi.fn(),
+    onTrimEnd: vi.fn(),
+    onSplit: vi.fn(),
+    onStateChange: vi.fn(),
+  };
+  const editor = new TimelineEditor(container, {}, callbacks);
+  editor.addClip(clip);
+  return { editor, container, callbacks };
+}
+
+// ─── Property Tests ───────────────────────────────────────────────────────────
+
+describe('Timeline Frame Accuracy Properties', () => {
+  describe('Frame-accurate seeking', () => {
+    let container: HTMLElement;
+    let editor: TimelineEditor;
+    let callbacks: TimelineEditorCallbacks;
+
+    beforeEach(() => {
+      container = createContainer();
+      callbacks = {
+        onPlayheadChange: vi.fn(),
+        onStateChange: vi.fn(),
+      };
+      editor = new TimelineEditor(container, {}, callbacks);
+    });
+
+    afterEach(() => {
+      editor.destroy();
+      document.body.innerHTML = '';
+    });
+
+    /**
+     * **Validates: Requirements 6.1**
+     *
+     * Property 6: For any frame within the clip duration, seeking to that frame
+     * SHALL result in the playhead being positioned exactly at that integer frame.
+     */
+    it('Property 6: Seeking to any valid frame results in exact frame positioning', () => {
       fc.assert(
-        fc.property(arbitraryTime, arbitraryFrameRate, (time, frameRate) => {
-          const snapped = snapToFrame(time, frameRate);
-          const doubleSnapped = snapToFrame(snapped, frameRate);
+        fc.property(
+          fc.integer({ min: 0, max: 5000 }),
+          fc.integer({ min: 1, max: 5000 }),
+          (clipDuration, targetFrame) => {
+            // Set up a clip with the given duration
+            const clip: TimelineClip = {
+              id: 'test-clip',
+              startFrame: 0,
+              endFrame: clipDuration,
+              inPoint: 0,
+              outPoint: clipDuration,
+              duration: clipDuration,
+              sourceUrl: 'test.mp4',
+              type: 'video',
+            };
 
-          // Snapping an already-snapped value should not change it
-          expect(doubleSnapped).toBeCloseTo(snapped, 10);
-        }),
-        { numRuns: 200 }
+            editor.loadClips([clip]);
+
+            // Seek to target frame (will be clamped to valid range)
+            editor.seekToFrame(targetFrame);
+
+            const state = editor.getState();
+            const expectedFrame = Math.max(0, Math.min(Math.round(targetFrame), clipDuration));
+
+            // Playhead MUST be at an exact integer frame
+            expect(state.playheadFrame).toBe(expectedFrame);
+            expect(Number.isInteger(state.playheadFrame)).toBe(true);
+          }
+        ),
+        { numRuns: 100, seed: 100 }
       );
     });
 
-    it('snapped time always lies on a frame boundary', () => {
+    /**
+     * **Validates: Requirements 6.1**
+     *
+     * Property 6: For any fractional frame position, seeking SHALL snap to the
+     * nearest integer frame (frame-accurate positioning).
+     */
+    it('Property 6: Fractional frame positions snap to nearest integer frame', () => {
       fc.assert(
-        fc.property(arbitraryTime, arbitraryFrameRate, (time, frameRate) => {
-          const snapped = snapToFrame(time, frameRate);
-          const frameDuration = 1 / frameRate;
+        fc.property(
+          fc.double({ min: 0, max: 1000, noNaN: true, noDefaultInfinity: true }),
+          (fractionalFrame) => {
+            const clip: TimelineClip = {
+              id: 'test-clip',
+              startFrame: 0,
+              endFrame: 1000,
+              inPoint: 0,
+              outPoint: 1000,
+              duration: 1000,
+              sourceUrl: 'test.mp4',
+              type: 'video',
+            };
 
-          // The snapped time divided by frame duration should be very close to an integer
-          const frameIndex = snapped / frameDuration;
-          expect(Math.abs(frameIndex - Math.round(frameIndex))).toBeLessThan(1e-9);
-        }),
-        { numRuns: 200 }
-      );
-    });
+            editor.loadClips([clip]);
+            editor.seekToFrame(fractionalFrame);
 
-    it('snapped time is within half a frame of the original time', () => {
-      fc.assert(
-        fc.property(arbitraryTime, arbitraryFrameRate, (time, frameRate) => {
-          const snapped = snapToFrame(time, frameRate);
-          const frameDuration = 1 / frameRate;
+            const state = editor.getState();
 
-          // Rounding to nearest frame means the displacement should be at most half a frame
-          expect(Math.abs(snapped - time)).toBeLessThanOrEqual(frameDuration / 2 + 1e-10);
-        }),
-        { numRuns: 200 }
+            // Frame must be an integer (frame-accurate)
+            expect(Number.isInteger(state.playheadFrame)).toBe(true);
+            // Must be the rounded value
+            expect(state.playheadFrame).toBe(
+              Math.max(0, Math.min(Math.round(fractionalFrame), 1000))
+            );
+          }
+        ),
+        { numRuns: 100, seed: 101 }
       );
     });
   });
 
-  describe('frameToTime and timeToFrame inverse relationship', () => {
-    it('timeToFrame(frameToTime(frame)) returns the original frame', () => {
-      fc.assert(
-        fc.property(arbitraryFrame, arbitraryFrameRate, (frame, frameRate) => {
-          const time = frameToTime(frame, frameRate);
-          const recoveredFrame = timeToFrame(time, frameRate);
-
-          expect(recoveredFrame).toBe(frame);
-        }),
-        { numRuns: 200 }
-      );
-    });
-
-    it('frameToTime(timeToFrame(t)) produces a time on a frame boundary', () => {
-      fc.assert(
-        fc.property(arbitraryTime, arbitraryFrameRate, (time, frameRate) => {
-          const frame = timeToFrame(time, frameRate);
-          const roundTrippedTime = frameToTime(frame, frameRate);
-
-          // The result should be exactly representable as frame / frameRate
-          expect(roundTrippedTime).toBeCloseTo(frame / frameRate, 10);
-        }),
-        { numRuns: 200 }
-      );
-    });
-
-    it('frameToTime is monotonically increasing', () => {
+  describe('Frame conversion round-trip accuracy', () => {
+    /**
+     * **Validates: Requirements 6.1**
+     *
+     * Property 6: For any valid frame and frame rate, converting frame → timecode → frame
+     * SHALL yield the original frame number (lossless round-trip).
+     */
+    it('Property 6: frameToTimecode → timecodeToFrame round-trips exactly', () => {
       fc.assert(
         fc.property(
-          arbitraryFrame,
-          fc.integer({ min: 1, max: 1000 }),
-          arbitraryFrameRate,
-          (frame, offset, frameRate) => {
-            const t1 = frameToTime(frame, frameRate);
-            const t2 = frameToTime(frame + offset, frameRate);
-
-            expect(t2).toBeGreaterThan(t1);
+          arbFrame,
+          arbFrameRate,
+          (frame, frameRate) => {
+            const timecode = frameToTimecode(frame, frameRate);
+            const recovered = timecodeToFrame(timecode, frameRate);
+            expect(recovered).toBe(frame);
           }
         ),
-        { numRuns: 200 }
+        { numRuns: 200, seed: 102 }
       );
     });
 
-    it('timeToFrame is monotonically non-decreasing', () => {
+    /**
+     * **Validates: Requirements 6.1**
+     *
+     * Property 6: For any valid frame and frame rate, converting frame → seconds → frame
+     * SHALL yield the original frame number (lossless round-trip).
+     */
+    it('Property 6: frameToSeconds → secondsToFrame round-trips exactly', () => {
       fc.assert(
         fc.property(
-          arbitraryTime,
-          fc.double({ min: 0.001, max: 100, noNaN: true }),
-          arbitraryFrameRate,
-          (time, increment, frameRate) => {
-            const f1 = timeToFrame(time, frameRate);
-            const f2 = timeToFrame(time + increment, frameRate);
-
-            expect(f2).toBeGreaterThanOrEqual(f1);
+          fc.integer({ min: 0, max: 100000 }),
+          arbFrameRate,
+          (frame, frameRate) => {
+            const seconds = frameToSeconds(frame, frameRate);
+            const recovered = secondsToFrame(seconds, frameRate);
+            expect(recovered).toBe(frame);
           }
         ),
-        { numRuns: 200 }
+        { numRuns: 200, seed: 103 }
+      );
+    });
+
+    /**
+     * **Validates: Requirements 6.1**
+     *
+     * Property 6: For any valid frame and zoom level, converting frame → pixel → frame
+     * SHALL yield the original frame number (lossless round-trip).
+     */
+    it('Property 6: frameToPixel → pixelToFrame round-trips exactly', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 0, max: 10000 }),
+          arbZoom,
+          (frame, zoom) => {
+            const pixel = frameToPixel(frame, zoom);
+            const recovered = pixelToFrame(pixel, zoom);
+            expect(recovered).toBe(frame);
+          }
+        ),
+        { numRuns: 200, seed: 104 }
       );
     });
   });
 
-  describe('formatTimecode correctness', () => {
-    it('timecode components are within valid ranges', () => {
-      fc.assert(
-        fc.property(arbitraryTime, arbitraryFrameRate, (time, frameRate) => {
-          const timecode = formatTimecode(time, frameRate);
-          const parts = timecode.split(':');
-
-          expect(parts).toHaveLength(4);
-
-          const [hours, minutes, seconds, frames] = parts.map(Number);
-          const fps = Math.round(frameRate);
-
-          expect(hours).toBeGreaterThanOrEqual(0);
-          expect(minutes).toBeGreaterThanOrEqual(0);
-          expect(minutes).toBeLessThan(60);
-          expect(seconds).toBeGreaterThanOrEqual(0);
-          expect(seconds).toBeLessThan(60);
-          expect(frames).toBeGreaterThanOrEqual(0);
-          expect(frames).toBeLessThan(fps);
-        }),
-        { numRuns: 200 }
-      );
-    });
-
-    it('timecode reconstructs to the correct total frame count', () => {
-      fc.assert(
-        fc.property(arbitraryTime, arbitraryFrameRate, (time, frameRate) => {
-          const timecode = formatTimecode(time, frameRate);
-          const [hours, minutes, seconds, frames] = timecode.split(':').map(Number);
-          const fps = Math.round(frameRate);
-
-          const reconstructedFrames =
-            hours * 3600 * fps + minutes * 60 * fps + seconds * fps + frames;
-          const expectedFrames = Math.round(time * frameRate);
-
-          expect(reconstructedFrames).toBe(expectedFrames);
-        }),
-        { numRuns: 200 }
-      );
-    });
-
-    it('formatTimecode returns 00:00:00:00 for negative and non-finite inputs', () => {
+  describe('Trim operations maintain frame-aligned boundaries', () => {
+    /**
+     * **Validates: Requirements 6.1**
+     *
+     * Property 6: For any valid trim in-point, the resulting clip boundaries SHALL
+     * remain at exact integer frames and the duration SHALL be correctly updated.
+     */
+    it('Property 6: Setting in-point maintains frame-aligned boundaries', () => {
       fc.assert(
         fc.property(
-          fc.oneof(
-            fc.double({ min: -10000, max: -0.001, noNaN: true }),
-            fc.constant(NaN),
-            fc.constant(Infinity),
-            fc.constant(-Infinity)
-          ),
-          arbitraryFrameRate,
-          (time, frameRate) => {
-            const timecode = formatTimecode(time, frameRate);
-            expect(timecode).toBe('00:00:00:00');
-          }
-        ),
-        { numRuns: 100 }
-      );
-    });
-  });
+          fc.integer({ min: 10, max: 5000 }),
+          fc.nat(),
+          (clipDuration, seed) => {
+            const container = createContainer();
+            const callbacks: TimelineEditorCallbacks = { onTrimEnd: vi.fn(), onStateChange: vi.fn() };
+            const editor = new TimelineEditor(container, {}, callbacks);
 
-  describe('TimelineController frame-accurate seeking', () => {
-    it('seek always lands on a frame boundary', () => {
-      fc.assert(
-        fc.property(arbitraryDuration, arbitraryTime, arbitraryFrameRate, (duration, seekTime, frameRate) => {
-          const controller = new TimelineController({ frameRate });
-          controller.setDuration(duration);
-          controller.seek(seekTime);
+            const clip: TimelineClip = {
+              id: 'trim-clip',
+              startFrame: 0,
+              endFrame: clipDuration,
+              inPoint: 0,
+              outPoint: clipDuration,
+              duration: clipDuration,
+              sourceUrl: 'test.mp4',
+              type: 'video',
+            };
+            editor.addClip(clip);
+            editor.selectClip('trim-clip');
 
-          const state = controller.getState();
-          const frameDuration = 1 / frameRate;
-          const frameIndex = state.currentTime / frameDuration;
+            // Generate a valid in-point (must be less than outPoint)
+            const inPoint = seed % (clipDuration - MIN_CLIP_FRAMES);
+            editor.seekToFrame(inPoint);
+            editor.setInPoint();
 
-          // The current time must be on a frame boundary
-          expect(Math.abs(frameIndex - Math.round(frameIndex))).toBeLessThan(1e-9);
-
-          controller.destroy();
-        }),
-        { numRuns: 200 }
-      );
-    });
-
-    it('seek is clamped within [0, duration]', () => {
-      fc.assert(
-        fc.property(arbitraryDuration, arbitraryFrameRate, (duration, frameRate) => {
-          const controller = new TimelineController({ frameRate });
-          controller.setDuration(duration);
-
-          // Try seeking beyond duration
-          controller.seek(duration + 100);
-          let state = controller.getState();
-          expect(state.currentTime).toBeLessThanOrEqual(duration + 1e-10);
-
-          // Try seeking before zero
-          controller.seek(-100);
-          state = controller.getState();
-          expect(state.currentTime).toBeGreaterThanOrEqual(0);
-
-          controller.destroy();
-        }),
-        { numRuns: 200 }
-      );
-    });
-
-    it('getCurrentFrame and getTimecode are consistent with currentTime', () => {
-      fc.assert(
-        fc.property(arbitraryDuration, arbitraryTime, arbitraryFrameRate, (duration, seekTime, frameRate) => {
-          const controller = new TimelineController({ frameRate });
-          controller.setDuration(duration);
-          controller.seek(seekTime);
-
-          const state = controller.getState();
-          const currentFrame = controller.getCurrentFrame();
-          const timecode = controller.getTimecode();
-
-          // getCurrentFrame should match timeToFrame of current time
-          expect(currentFrame).toBe(timeToFrame(state.currentTime, frameRate));
-
-          // getTimecode should match formatTimecode of current time
-          expect(timecode).toBe(formatTimecode(state.currentTime, frameRate));
-
-          controller.destroy();
-        }),
-        { numRuns: 200 }
-      );
-    });
-
-    it('seekToFrame positions exactly at the frame boundary', () => {
-      fc.assert(
-        fc.property(
-          arbitraryDuration,
-          arbitraryFrameRate,
-          (duration, frameRate) => {
-            const controller = new TimelineController({ frameRate });
-            controller.setDuration(duration);
-
-            const totalFrames = controller.getTotalFrames();
-            if (totalFrames === 0) {
-              controller.destroy();
-              return;
+            const trimmedClip = editor.getClip('trim-clip');
+            if (trimmedClip) {
+              // In-point must be integer (frame-aligned)
+              expect(Number.isInteger(trimmedClip.inPoint)).toBe(true);
+              // Out-point must remain unchanged and integer
+              expect(Number.isInteger(trimmedClip.outPoint)).toBe(true);
+              expect(trimmedClip.outPoint).toBe(clipDuration);
+              // Duration must be exactly outPoint - inPoint
+              expect(trimmedClip.duration).toBe(trimmedClip.outPoint - trimmedClip.inPoint);
+              // In-point must be less than out-point
+              expect(trimmedClip.inPoint).toBeLessThan(trimmedClip.outPoint);
             }
 
-            // Pick a random frame within the valid range
-            const targetFrame = Math.floor(Math.random() * totalFrames);
-            controller.seekToFrame(targetFrame);
-
-            const currentFrame = controller.getCurrentFrame();
-            expect(currentFrame).toBe(targetFrame);
-
-            controller.destroy();
+            editor.destroy();
+            container.remove();
           }
         ),
-        { numRuns: 200 }
+        { numRuns: 100, seed: 105 }
       );
     });
 
-    it('seekRelativeFrames advances by exactly the specified number of frames', () => {
+    /**
+     * **Validates: Requirements 6.1**
+     *
+     * Property 6: For any valid trim out-point, the resulting clip boundaries SHALL
+     * remain at exact integer frames and the duration SHALL be correctly updated.
+     */
+    it('Property 6: Setting out-point maintains frame-aligned boundaries', () => {
       fc.assert(
         fc.property(
-          arbitraryDuration,
-          arbitraryFrameRate,
-          fc.integer({ min: -10, max: 10 }),
-          (duration, frameRate, frameOffset) => {
-            const controller = new TimelineController({ frameRate });
-            controller.setDuration(duration);
+          fc.integer({ min: 10, max: 5000 }),
+          fc.nat(),
+          (clipDuration, seed) => {
+            const container = createContainer();
+            const callbacks: TimelineEditorCallbacks = { onTrimEnd: vi.fn(), onStateChange: vi.fn() };
+            const editor = new TimelineEditor(container, {}, callbacks);
 
-            // Start from the midpoint
-            const midTime = duration / 2;
-            controller.seek(midTime);
-            const startFrame = controller.getCurrentFrame();
+            const clip: TimelineClip = {
+              id: 'trim-clip',
+              startFrame: 0,
+              endFrame: clipDuration,
+              inPoint: 0,
+              outPoint: clipDuration,
+              duration: clipDuration,
+              sourceUrl: 'test.mp4',
+              type: 'video',
+            };
+            editor.addClip(clip);
+            editor.selectClip('trim-clip');
 
-            controller.seekRelativeFrames(frameOffset);
-            const endFrame = controller.getCurrentFrame();
+            // Generate a valid out-point (must be greater than inPoint = 0)
+            const outPoint = (seed % (clipDuration - MIN_CLIP_FRAMES)) + MIN_CLIP_FRAMES;
+            editor.seekToFrame(outPoint);
+            editor.setOutPoint();
 
-            // End frame should be start + offset (clamped to valid range)
-            const expectedFrame = Math.max(0, Math.min(controller.getTotalFrames(), startFrame + frameOffset));
-            expect(endFrame).toBe(expectedFrame);
+            const trimmedClip = editor.getClip('trim-clip');
+            if (trimmedClip) {
+              // Out-point must be integer (frame-aligned)
+              expect(Number.isInteger(trimmedClip.outPoint)).toBe(true);
+              // In-point must remain unchanged and integer
+              expect(Number.isInteger(trimmedClip.inPoint)).toBe(true);
+              expect(trimmedClip.inPoint).toBe(0);
+              // Duration must be exactly outPoint - inPoint
+              expect(trimmedClip.duration).toBe(trimmedClip.outPoint - trimmedClip.inPoint);
+              // Out-point must be greater than in-point
+              expect(trimmedClip.outPoint).toBeGreaterThan(trimmedClip.inPoint);
+            }
 
-            controller.destroy();
+            editor.destroy();
+            container.remove();
           }
         ),
-        { numRuns: 200 }
+        { numRuns: 100, seed: 106 }
+      );
+    });
+  });
+
+  describe('Split operations produce clips with correct frame boundaries', () => {
+    /**
+     * **Validates: Requirements 6.1**
+     *
+     * Property 6: For any split point within a clip, the resulting two clips SHALL
+     * have exact frame-aligned boundaries that together cover the original clip range.
+     */
+    it('Property 6: Split produces two clips with correct frame boundaries', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 3, max: 5000 }),
+          fc.nat(),
+          (clipDuration, seed) => {
+            const container = createContainer();
+            const callbacks: TimelineEditorCallbacks = { onSplit: vi.fn(), onStateChange: vi.fn() };
+            const editor = new TimelineEditor(container, {}, callbacks);
+
+            const clip: TimelineClip = {
+              id: 'split-clip',
+              startFrame: 0,
+              endFrame: clipDuration,
+              inPoint: 0,
+              outPoint: clipDuration,
+              duration: clipDuration,
+              sourceUrl: 'test.mp4',
+              type: 'video',
+            };
+            editor.addClip(clip);
+
+            // Generate a valid split point (must be > inPoint and < outPoint)
+            const splitFrame = (seed % (clipDuration - 2)) + 1;
+            editor.seekToFrame(splitFrame);
+
+            const result = editor.splitAtPlayhead();
+
+            if (result) {
+              const state = editor.getState();
+              expect(state.clips).toHaveLength(2);
+
+              const leftClip = state.clips[0];
+              const rightClip = state.clips[1];
+
+              // Both clips must have integer frame boundaries
+              expect(Number.isInteger(leftClip.inPoint)).toBe(true);
+              expect(Number.isInteger(leftClip.outPoint)).toBe(true);
+              expect(Number.isInteger(rightClip.inPoint)).toBe(true);
+              expect(Number.isInteger(rightClip.outPoint)).toBe(true);
+
+              // Left clip: starts at original in-point, ends at split frame
+              expect(leftClip.inPoint).toBe(0);
+              expect(leftClip.outPoint).toBe(splitFrame);
+              expect(leftClip.duration).toBe(splitFrame);
+
+              // Right clip: starts at split frame, ends at original out-point
+              expect(rightClip.inPoint).toBe(splitFrame);
+              expect(rightClip.outPoint).toBe(clipDuration);
+              expect(rightClip.duration).toBe(clipDuration - splitFrame);
+
+              // Combined duration equals original
+              expect(leftClip.duration + rightClip.duration).toBe(clipDuration);
+
+              // No gap or overlap between clips
+              expect(leftClip.outPoint).toBe(rightClip.inPoint);
+            }
+
+            editor.destroy();
+            container.remove();
+          }
+        ),
+        { numRuns: 100, seed: 107 }
+      );
+    });
+
+    /**
+     * **Validates: Requirements 6.1**
+     *
+     * Property 6: For any split point, the playhead position indicator SHALL
+     * remain at the exact split frame after the operation.
+     */
+    it('Property 6: Playhead remains at exact split frame after split', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 3, max: 5000 }),
+          fc.nat(),
+          (clipDuration, seed) => {
+            const container = createContainer();
+            const editor = new TimelineEditor(container, {}, {});
+
+            const clip: TimelineClip = {
+              id: 'split-clip',
+              startFrame: 0,
+              endFrame: clipDuration,
+              inPoint: 0,
+              outPoint: clipDuration,
+              duration: clipDuration,
+              sourceUrl: 'test.mp4',
+              type: 'video',
+            };
+            editor.addClip(clip);
+
+            const splitFrame = (seed % (clipDuration - 2)) + 1;
+            editor.seekToFrame(splitFrame);
+            editor.splitAtPlayhead();
+
+            const state = editor.getState();
+            // Playhead must remain at the exact split frame
+            expect(state.playheadFrame).toBe(splitFrame);
+
+            editor.destroy();
+            container.remove();
+          }
+        ),
+        { numRuns: 100, seed: 108 }
+      );
+    });
+  });
+
+  describe('Playback position indicator corresponds to displayed frame', () => {
+    /**
+     * **Validates: Requirements 6.1**
+     *
+     * Property 6: For any seek operation, the timecode display SHALL correspond
+     * exactly to the playhead frame position.
+     */
+    it('Property 6: Timecode display matches playhead frame position exactly', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 0, max: 5000 }),
+          arbFrameRate,
+          (targetFrame, frameRate) => {
+            const container = createContainer();
+            const editor = new TimelineEditor(container, { frameRate }, {});
+
+            const clipDuration = Math.max(targetFrame + 1, 100);
+            const clip: TimelineClip = {
+              id: 'display-clip',
+              startFrame: 0,
+              endFrame: clipDuration,
+              inPoint: 0,
+              outPoint: clipDuration,
+              duration: clipDuration,
+              sourceUrl: 'test.mp4',
+              type: 'video',
+            };
+            editor.addClip(clip);
+            editor.seekToFrame(targetFrame);
+
+            const state = editor.getState();
+            const expectedTimecode = frameToTimecode(state.playheadFrame, frameRate);
+
+            // The timecode display in the DOM should match
+            const display = container.querySelector('.timecode-display');
+            expect(display?.textContent?.trim()).toBe(expectedTimecode);
+
+            editor.destroy();
+            container.remove();
+          }
+        ),
+        { numRuns: 100, seed: 109 }
       );
     });
   });
