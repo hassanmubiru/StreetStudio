@@ -638,3 +638,94 @@ describe('TextOverlayManager', () => {
       expect(overlaps.length).toBeGreaterThanOrEqual(2);
     });
   });
+
+  // ─── Speech-to-Text Tests ───────────────────────────────────────────────
+
+  describe('speech-to-text integration', () => {
+    it('reports speech-to-text disabled by default', () => {
+      expect(manager.isSpeechToTextEnabled()).toBe(false);
+    });
+
+    it('reports speech-to-text enabled when configured', () => {
+      const m = createManager({ enableSpeechToText: true });
+      expect(m.isSpeechToTextEnabled()).toBe(true);
+    });
+
+    it('starts speech-to-text when enabled', () => {
+      const m = createManager({ enableSpeechToText: true }, callbacks);
+      const result = m.startSpeechToText();
+      expect(result).toBe(true);
+      expect(m.isSpeechToTextActive()).toBe(true);
+      expect(callbacks.onSpeechToTextStart).toHaveBeenCalled();
+    });
+
+    it('fails to start when not enabled', () => {
+      const result = manager.startSpeechToText();
+      expect(result).toBe(false);
+      expect(manager.isSpeechToTextActive()).toBe(false);
+    });
+
+    it('fails to start when already active', () => {
+      const m = createManager({ enableSpeechToText: true }, callbacks);
+      m.startSpeechToText();
+      const result = m.startSpeechToText();
+      expect(result).toBe(false);
+    });
+
+    it('processes speech-to-text results into captions', () => {
+      const m = createManager({ enableSpeechToText: true }, callbacks);
+      m.startSpeechToText();
+
+      const results: SpeechToTextResult[] = [
+        { text: 'Hello world', startTime: 0, endTime: 2, confidence: 0.95 },
+        { text: 'How are you?', startTime: 2.5, endTime: 4, confidence: 0.9 },
+      ];
+
+      const captions = m.processSpeechToTextResults(results);
+      expect(captions).toHaveLength(2);
+      expect(captions[0].text).toBe('Hello world');
+      expect(captions[0].startFrame).toBe(0);
+      expect(captions[0].endFrame).toBe(60); // 2s * 30fps
+      expect(captions[1].text).toBe('How are you?');
+      expect(captions[1].startFrame).toBe(75); // 2.5s * 30fps
+      expect(m.isSpeechToTextActive()).toBe(false);
+      expect(callbacks.onSpeechToTextComplete).toHaveBeenCalledWith(results);
+    });
+
+    it('skips empty text results', () => {
+      const m = createManager({ enableSpeechToText: true }, callbacks);
+      m.startSpeechToText();
+
+      const results: SpeechToTextResult[] = [
+        { text: '', startTime: 0, endTime: 1, confidence: 0.5 },
+        { text: '   ', startTime: 1, endTime: 2, confidence: 0.5 },
+        { text: 'Valid', startTime: 2, endTime: 3, confidence: 0.9 },
+      ];
+
+      const captions = m.processSpeechToTextResults(results);
+      expect(captions).toHaveLength(1);
+      expect(captions[0].text).toBe('Valid');
+    });
+
+    it('includes speaker in captions from STT', () => {
+      const m = createManager({ enableSpeechToText: true }, callbacks);
+      m.startSpeechToText();
+
+      const results: SpeechToTextResult[] = [
+        { text: 'Hi', startTime: 0, endTime: 1, confidence: 0.9, speaker: 'Bob' },
+      ];
+
+      const captions = m.processSpeechToTextResults(results);
+      expect(captions[0].speaker).toBe('Bob');
+    });
+
+    it('handles speech-to-text error', () => {
+      const m = createManager({ enableSpeechToText: true }, callbacks);
+      m.startSpeechToText();
+
+      const error = new Error('STT failed');
+      m.handleSpeechToTextError(error);
+      expect(m.isSpeechToTextActive()).toBe(false);
+      expect(callbacks.onSpeechToTextError).toHaveBeenCalledWith(error);
+    });
+  });
