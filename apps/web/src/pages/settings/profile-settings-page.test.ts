@@ -480,3 +480,143 @@ describe('ProfileSettingsPage', () => {
     });
   });
 });
+
+describe('validateAvatarFile', () => {
+  it('should accept valid JPEG file', () => {
+    const file = new File(['data'], 'photo.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(file, 'size', { value: 1024 * 1024 }); // 1MB
+    expect(validateAvatarFile(file)).toEqual({ valid: true });
+  });
+
+  it('should accept valid PNG file', () => {
+    const file = new File(['data'], 'photo.png', { type: 'image/png' });
+    Object.defineProperty(file, 'size', { value: 2 * 1024 * 1024 }); // 2MB
+    expect(validateAvatarFile(file)).toEqual({ valid: true });
+  });
+
+  it('should accept valid WebP file', () => {
+    const file = new File(['data'], 'photo.webp', { type: 'image/webp' });
+    Object.defineProperty(file, 'size', { value: 500 * 1024 }); // 500KB
+    expect(validateAvatarFile(file)).toEqual({ valid: true });
+  });
+
+  it('should reject unsupported file type', () => {
+    const file = new File(['data'], 'doc.pdf', { type: 'application/pdf' });
+    Object.defineProperty(file, 'size', { value: 1024 });
+    const result = validateAvatarFile(file);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('not supported');
+  });
+
+  it('should reject file exceeding size limit', () => {
+    const file = new File(['data'], 'large.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(file, 'size', { value: 6 * 1024 * 1024 }); // 6MB
+    const result = validateAvatarFile(file);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('5MB');
+  });
+});
+
+describe('detectTimezone', () => {
+  it('should return a string timezone identifier', () => {
+    const tz = detectTimezone();
+    expect(typeof tz).toBe('string');
+    expect(tz.length).toBeGreaterThan(0);
+  });
+
+  it('should return UTC when Intl is unavailable', () => {
+    const originalIntl = globalThis.Intl;
+    // @ts-ignore
+    globalThis.Intl = undefined;
+    const tz = detectTimezone();
+    expect(tz).toBe('UTC');
+    globalThis.Intl = originalIntl;
+  });
+});
+
+describe('getTimezoneOptions', () => {
+  it('should return a non-empty array of timezone options', () => {
+    const options = getTimezoneOptions();
+    expect(options.length).toBeGreaterThan(0);
+  });
+
+  it('should have required fields on each option', () => {
+    const options = getTimezoneOptions();
+    for (const opt of options) {
+      expect(opt.value).toBeTruthy();
+      expect(opt.label).toBeTruthy();
+      expect(opt.region).toBeTruthy();
+    }
+  });
+
+  it('should include common timezones', () => {
+    const options = getTimezoneOptions();
+    const values = options.map(o => o.value);
+    expect(values).toContain('America/New_York');
+    expect(values).toContain('Europe/London');
+    expect(values).toContain('Asia/Tokyo');
+  });
+});
+
+describe('createDefaultNotificationPreferences', () => {
+  it('should return preferences for all three channels', () => {
+    const prefs = createDefaultNotificationPreferences();
+    expect(prefs.email).toBeTruthy();
+    expect(prefs.push).toBeTruthy();
+    expect(prefs.inApp).toBeTruthy();
+  });
+
+  it('should have all category keys in each channel', () => {
+    const prefs = createDefaultNotificationPreferences();
+    const expectedKeys: (keyof typeof prefs.email)[] = [
+      'comments', 'mentions', 'reactions', 'projectUpdates',
+      'teamInvitations', 'videoProcessing', 'weeklyDigest', 'securityAlerts',
+    ];
+    for (const key of expectedKeys) {
+      expect(typeof prefs.email[key]).toBe('boolean');
+      expect(typeof prefs.push[key]).toBe('boolean');
+      expect(typeof prefs.inApp[key]).toBe('boolean');
+    }
+  });
+
+  it('should disable email reactions by default', () => {
+    const prefs = createDefaultNotificationPreferences();
+    expect(prefs.email.reactions).toBe(false);
+  });
+
+  it('should disable push weekly digest by default', () => {
+    const prefs = createDefaultNotificationPreferences();
+    expect(prefs.push.weeklyDigest).toBe(false);
+  });
+});
+
+describe('createProfileValidator', () => {
+  it('should fail validation for empty display name', () => {
+    const validator = createProfileValidator();
+    const result = validator.validate({ displayName: '', bio: '' });
+    expect(result.isValid).toBe(false);
+    expect(result.errors.displayName).toBeTruthy();
+  });
+
+  it('should fail validation for short display name', () => {
+    const validator = createProfileValidator();
+    const result = validator.validate({ displayName: 'A', bio: '' });
+    expect(result.isValid).toBe(false);
+  });
+
+  it('should pass validation for valid profile', () => {
+    const validator = createProfileValidator();
+    const result = validator.validate({ displayName: 'John Doe', bio: 'A bio.' });
+    expect(result.isValid).toBe(true);
+  });
+
+  it('should fail validation for bio exceeding max length', () => {
+    const validator = createProfileValidator();
+    const result = validator.validate({
+      displayName: 'John',
+      bio: 'x'.repeat(BIO_MAX_LENGTH + 1),
+    });
+    expect(result.isValid).toBe(false);
+    expect(result.errors.bio).toBeTruthy();
+  });
+});

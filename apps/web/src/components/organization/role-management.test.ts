@@ -373,3 +373,60 @@ describe('PermissionMatrix', () => {
     expect(checkbox.checked).toBe(true);
   });
 });
+
+// --------------------------------------------------------------------------
+// Role Management - Utility functions
+// --------------------------------------------------------------------------
+
+describe('validateRoleName', () => {
+  it('accepts valid role names', () => {
+    expect(validateRoleName('Editor').valid).toBe(true);
+    expect(validateRoleName('Content Manager').valid).toBe(true);
+    expect(validateRoleName('super-admin_1').valid).toBe(true);
+  });
+
+  it('rejects empty names', () => {
+    const result = validateRoleName('');
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('Role name is required');
+  });
+
+  it('rejects whitespace-only names', () => {
+    const result = validateRoleName('   ');
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('Role name is required');
+  });
+
+  it('rejects names over 50 characters', () => {
+    const longName = 'a'.repeat(51);
+    const result = validateRoleName(longName);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('50 characters');
+  });
+
+  it('rejects names with special characters', () => {
+    const result = validateRoleName('Admin<script>');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('letters, numbers');
+  });
+});
+
+describe('rolePermissionsToEntries', () => {
+  const resources = [{ id: 'projects', name: 'Projects', description: '' }];
+  const actions = [
+    { id: 'view', name: 'View', description: '' },
+    { id: 'edit', name: 'Edit', description: '' },
+  ];
+
+  it('creates entries with correct granted state', () => {
+    const entries = rolePermissionsToEntries(['projects:view'], resources, actions);
+    expect(entries.length).toBe(2);
+    expect(entries.find(e => e.actionId === 'view')?.granted).toBe(true);
+    expect(entries.find(e => e.actionId === 'edit')?.granted).toBe(false);
+  });
+
+  it('handles empty permissions', () => {
+    const entries = rolePermissionsToEntries([], resources, actions);
+    expect(entries.every(e => e.granted === false)).toBe(true);
+  });
+});
