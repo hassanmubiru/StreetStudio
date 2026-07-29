@@ -133,7 +133,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Create permission handling with clear user guidance
     - _Requirements: 3.3, 3.6, 3.10_
 
-  - [-] 4.5 Write unit tests for recording functionality
+  - [x] 4.5 Write unit tests for recording functionality
     - Test screen capture initialization and permission handling
     - Test recording control state transitions and keyboard shortcuts
     - Test drawing tool functionality and overlay rendering

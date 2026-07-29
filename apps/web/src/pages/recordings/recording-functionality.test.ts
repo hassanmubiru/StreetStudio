@@ -22,6 +22,14 @@ import { DrawingToolbar } from '../../components/drawing/drawing-toolbar.js';
 // Mock Setup
 // ============================================================================
 
+// Mock ResizeObserver (not available in jsdom)
+class MockResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+(global as any).ResizeObserver = MockResizeObserver;
+
 // Mock client-logger
 vi.mock('../../app/client-logger.js', () => ({
   logger: {
