@@ -541,7 +541,7 @@ describe('RoleManagement', () => {
     saveBtn.click();
 
     await vi.waitFor(() => {
-      const error = container.querySelector('#role-name-error');
+      const error = container.querySelector('.form-error');
       expect(error?.textContent).toBe('Role name is required');
     });
   });
@@ -840,7 +840,7 @@ describe('TeamManagement', () => {
     saveBtn.click();
 
     await vi.waitFor(() => {
-      const error = container.querySelector('#team-name-error');
+      const error = container.querySelector('.form-error');
       expect(error?.textContent).toBe('Team name is required');
     });
   });
