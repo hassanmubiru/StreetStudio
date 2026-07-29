@@ -423,3 +423,93 @@ describe('UploadManager', () => {
       // Upload should reject
       await expect(uploadPromise).rejects.toThrow();
     });
+
+    it('should return false when cancelling non-existent upload', () => {
+      const result = manager.cancelUpload('non-existent-id');
+      expect(result).toBe(false);
+    });
+
+    it('should cancel all active uploads', () => {
+      manager.cancelAllUploads();
+      expect(manager.getActiveUploads()).toHaveLength(0);
+    });
+  });
+
+  describe('Concurrent Upload Limits', () => {
+    it('should reject uploads exceeding concurrent limit', async () => {
+      manager.configure({ maxConcurrentUploads: 1 });
+
+      const { apiClient } = await import('./api.js');
+      const file1 = createMockFile('video1.mp4', 6 * 1024 * 1024, 'video/mp4');
+      const file2 = createMockFile('video2.mp4', 6 * 1024 * 1024, 'video/mp4');
+
+      // First upload hangs
+      (apiClient.post as any).mockImplementation(async () => {
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        return { data: { uploadId: 'upload-1', uploadUrl: '/chunks' } };
+      });
+
+      // Start first upload
+      const upload1Promise = manager.uploadFile(file1);
+
+      // Second upload should fail due to concurrent limit
+      await expect(manager.uploadFile(file2)).rejects.toThrow(/Too many active uploads/);
+
+      // Cleanup
+      manager.cancelAllUploads();
+      await vi.advanceTimersByTimeAsync(20000);
+      try { await upload1Promise; } catch {}
+    });
+  });
+
+  describe('File Validation', () => {
+    it('should run custom file validation before upload', async () => {
+      const file = createMockFile('document.pdf', 1024, 'application/pdf');
+
+      const validateFile = vi.fn().mockRejectedValue(new Error('Only video files allowed'));
+
+      await expect(
+        manager.uploadFile(file, { validateFile })
+      ).rejects.toThrow('File validation failed: Only video files allowed');
+
+      expect(validateFile).toHaveBeenCalledWith(file);
+    });
+
+    it('should not start upload if validation fails', async () => {
+      const { apiClient } = await import('./api.js');
+      const file = createMockFile('bad.exe', 1024, 'application/exe');
+
+      const validateFile = vi.fn().mockRejectedValue(new Error('Invalid file type'));
+
+      try {
+        await manager.uploadFile(file, { validateFile });
+      } catch {}
+
+      // Should never call init
+      expect(apiClient.post).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Resume Functionality', () => {
+    it('should save resume info to localStorage', async () => {
+      const { apiClient } = await import('./api.js');
+      const file = createMockFile('video.mp4', 10 * 1024 * 1024, 'video/mp4');
+
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { uploadId: 'upload-resume', uploadUrl: '/uploads/upload-resume/chunks' }
+      });
+
+      mockFetch.mockResolvedValue({ ok: true });
+
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { id: 'result-resume', url: '/videos/result-resume' }
+      });
+
+      await manager.uploadFile(file, {
+        chunkSize: 5 * 1024 * 1024,
+        enableResume: true
+      });
+
+      // Resume info should have been saved and then cleared on success
+      expect(localStorageMock.setItem).toHaveBeenCalled();
+    });
