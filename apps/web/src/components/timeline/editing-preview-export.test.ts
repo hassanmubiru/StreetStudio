@@ -747,3 +747,52 @@ describe('BackgroundProcessingManager', () => {
     });
   });
 });
+
+// ─── ExportHistoryManager Tests ───────────────────────────────────────────────
+
+describe('ExportHistoryManager', () => {
+  let historyManager: ExportHistoryManager;
+
+  const createTestJob = (overrides: Partial<ExportJob> = {}): ExportJob => ({
+    id: generateExportId(),
+    videoId: 'video-1',
+    quality: 'high',
+    format: 'mp4',
+    resolution: { width: 1920, height: 1080 },
+    bitrate: 6000,
+    status: 'completed',
+    progress: 100,
+    createdAt: new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+    downloadUrl: 'https://cdn.example.com/video.mp4',
+    fileSizeBytes: 50000000,
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    historyManager = new ExportHistoryManager();
+  });
+
+  describe('adding entries', () => {
+    it('adds an entry to history', () => {
+      historyManager.addEntry(createTestJob());
+      expect(historyManager.getCount()).toBe(1);
+    });
+
+    it('adds entries in reverse chronological order', () => {
+      const job1 = createTestJob({ id: 'first' });
+      const job2 = createTestJob({ id: 'second' });
+      historyManager.addEntry(job1);
+      historyManager.addEntry(job2);
+      expect(historyManager.getEntries()[0].id).toBe('second');
+    });
+
+    it('caps history at max items', () => {
+      const maxItems = 5;
+      const mgr = new ExportHistoryManager(maxItems);
+      for (let i = 0; i < 10; i++) {
+        mgr.addEntry(createTestJob());
+      }
+      expect(mgr.getCount()).toBe(maxItems);
+    });
+  });

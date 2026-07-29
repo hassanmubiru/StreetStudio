@@ -536,3 +536,126 @@ describe('CollaborativeEditingManager', () => {
       mgr.destroy();
     });
   });
+
+  describe('conflict detection', () => {
+    it('beginEdit returns null when no conflict exists', () => {
+      manager.startSession();
+      const conflict = manager.beginEdit('clip-A', 'trim');
+      expect(conflict).toBeNull();
+    });
+
+    it('beginEdit detects a conflict when another user is editing', () => {
+      manager.startSession();
+      // Simulate another user registering an edit
+      manager.getConflictDetector().registerEdit('remote-1', 'clip-A', 'trim');
+
+      const conflict = manager.beginEdit('clip-A', 'split');
+      expect(conflict).not.toBeNull();
+      expect(conflict!.initiatorUserId).toBe('remote-1');
+      expect(conflict!.conflictingUserId).toBe('me');
+    });
+
+    it('completeEdit clears the active edit and records history', () => {
+      manager.startSession();
+      manager.beginEdit('clip-A', 'trim');
+
+      const op = manager.completeEdit('clip-A', 'trim', 'Trimmed clip', '{"in":0}', '{"in":30}');
+      expect(op.type).toBe('trim');
+      expect(op.clipId).toBe('clip-A');
+
+      // Edit lock should be released
+      expect(manager.getConflictDetector().hasActiveLock('clip-A')).toBe(false);
+    });
+
+    it('resolveConflict resolves an existing conflict', () => {
+      manager.startSession();
+      manager.getConflictDetector().registerEdit('remote-1', 'clip-A', 'trim');
+      const conflict = manager.beginEdit('clip-A', 'split')!;
+
+      const resolved = manager.resolveConflict(conflict.id, 'merge');
+      expect(resolved!.resolution).toBe('merge');
+    });
+
+    it('calls onConflictDetected callback', () => {
+      const onConflict = vi.fn();
+      const mgr = new CollaborativeEditingManager(defaultOptions, { onConflictDetected: onConflict });
+      mgr.startSession();
+      mgr.getConflictDetector().registerEdit('remote-1', 'clip-A', 'trim');
+      mgr.beginEdit('clip-A', 'split');
+
+      expect(onConflict).toHaveBeenCalledTimes(1);
+      mgr.destroy();
+    });
+  });
+
+  describe('edit history', () => {
+    it('completeEdit adds entry to history', () => {
+      manager.startSession();
+      manager.beginEdit('clip-A', 'trim');
+      manager.completeEdit('clip-A', 'trim', 'Trimmed', '{}', '{}');
+
+      const hist = manager.getHistoryManager().getHistory();
+      expect(hist).toHaveLength(1);
+      expect(hist[0].type).toBe('trim');
+    });
+
+    it('handleRemoteEdit records remote operations in history', () => {
+      manager.startSession();
+      const remoteOp: EditOperation = {
+        id: 'op-1',
+        userId: 'remote-1',
+        type: 'split',
+        timestamp: new Date().toISOString(),
+        clipId: 'clip-B',
+        description: 'Split by remote',
+        previousState: '{}',
+        newState: '{}',
+      };
+
+      manager.handleRemoteEdit(remoteOp);
+
+      const hist = manager.getHistoryManager().getHistory();
+      expect(hist).toHaveLength(1);
+    });
+
+    it('version increments with each edit', () => {
+      manager.startSession();
+      manager.beginEdit('clip-A', 'trim');
+      manager.completeEdit('clip-A', 'trim', 'op1', '{}', '{}');
+      manager.beginEdit('clip-B', 'split');
+      manager.completeEdit('clip-B', 'split', 'op2', '{}', '{}');
+
+      expect(manager.getHistoryManager().getCurrentVersion()).toBe(2);
+    });
+
+    it('calls onVersionChange callback', () => {
+      const onVersion = vi.fn();
+      const mgr = new CollaborativeEditingManager(defaultOptions, { onVersionChange: onVersion });
+      mgr.startSession();
+      mgr.beginEdit('clip-A', 'trim');
+      mgr.completeEdit('clip-A', 'trim', 'op1', '{}', '{}');
+
+      expect(onVersion).toHaveBeenCalledWith(1);
+      mgr.destroy();
+    });
+  });
+
+  describe('user left handling', () => {
+    it('handleUserLeft dismisses pending conflicts from that user', () => {
+      manager.startSession();
+      // remote-1 starts editing
+      manager.getConflictDetector().registerEdit('remote-1', 'clip-A', 'trim');
+      // current user conflicts
+      manager.beginEdit('clip-A', 'split');
+
+      const pending = manager.getConflictDetector().getPendingConflicts();
+      expect(pending).toHaveLength(1);
+
+      // remote-1 leaves
+      manager.handleUserLeft('remote-1');
+
+      const afterLeave = manager.getConflictDetector().getPendingConflicts();
+      expect(afterLeave).toHaveLength(0);
+    });
+  });
+});
