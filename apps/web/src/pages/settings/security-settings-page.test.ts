@@ -436,3 +436,71 @@ describe('SecuritySettingsPage', () => {
       expect(el.textContent).toContain('No active sessions');
     });
   });
+
+  describe('Login History Section', () => {
+    it('should display login history entries', () => {
+      page = new SecuritySettingsPage({ loginHistory: mockLoginHistory });
+      const el = page.getElement();
+
+      const rows = el.querySelectorAll('table[aria-label="Login history"] tbody tr');
+      expect(rows.length).toBe(2);
+    });
+
+    it('should show suspicious activity alert banner', () => {
+      page = new SecuritySettingsPage({ loginHistory: mockLoginHistory });
+      const el = page.getElement();
+
+      const alert = el.querySelector('[role="alert"]');
+      expect(alert?.textContent).toContain('suspicious');
+    });
+
+    it('should not show alert banner when no suspicious entries', () => {
+      const safeHistory = [mockLoginHistory[0]];
+      page = new SecuritySettingsPage({ loginHistory: safeHistory });
+      const el = page.getElement();
+
+      const alerts = el.querySelectorAll('section[aria-labelledby="login-history-heading"] [role="alert"]');
+      expect(alerts.length).toBe(0);
+    });
+
+    it('should highlight suspicious entries', () => {
+      page = new SecuritySettingsPage({ loginHistory: mockLoginHistory });
+      const el = page.getElement();
+
+      const rows = el.querySelectorAll('table tbody tr');
+      const suspiciousRow = rows[1];
+      expect(suspiciousRow.className).toContain('bg-red-50');
+    });
+
+    it('should show status icons for success and failure', () => {
+      page = new SecuritySettingsPage({ loginHistory: mockLoginHistory });
+      const el = page.getElement();
+
+      const rows = el.querySelectorAll('table tbody tr');
+      expect(rows[0].textContent).toContain('Success');
+      expect(rows[1].textContent).toContain('Suspicious');
+    });
+
+    it('should display location and IP information', () => {
+      page = new SecuritySettingsPage({ loginHistory: mockLoginHistory });
+      const el = page.getElement();
+
+      expect(el.textContent).toContain('San Francisco, CA');
+      expect(el.textContent).toContain('192.168.1.1');
+      expect(el.textContent).toContain('Moscow, Russia');
+    });
+
+    it('should show reason for suspicious entries', () => {
+      page = new SecuritySettingsPage({ loginHistory: mockLoginHistory });
+      const el = page.getElement();
+
+      expect(el.textContent).toContain('Unusual location');
+    });
+
+    it('should show empty message when no login history', () => {
+      page = new SecuritySettingsPage({ loginHistory: [] });
+      const el = page.getElement();
+
+      expect(el.textContent).toContain('No login history');
+    });
+  });
