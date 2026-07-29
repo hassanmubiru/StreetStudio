@@ -267,3 +267,53 @@ export class PresenceManager {
     this.onUpdate = null;
   }
 }
+
+// ─── Conflict Detection and Resolution ────────────────────────────────────────
+
+/**
+ * Detects and resolves edit conflicts when multiple users edit the same clip.
+ */
+export class ConflictDetector {
+  private activeEdits: Map<string, { userId: Uuid; operation: EditOperationType; startedAt: string }> = new Map();
+  private conflicts: Map<Uuid, EditConflict> = new Map();
+  private onConflictDetected: ((conflict: EditConflict) => void) | null = null;
+  private onConflictResolved: ((conflict: EditConflict) => void) | null = null;
+
+  /** Set callback for when a conflict is detected. */
+  public setOnConflictDetected(callback: ((conflict: EditConflict) => void) | null): void {
+    this.onConflictDetected = callback;
+  }
+
+  /** Set callback for when a conflict is resolved. */
+  public setOnConflictResolved(callback: ((conflict: EditConflict) => void) | null): void {
+    this.onConflictResolved = callback;
+  }
+
+  /**
+   * Register that a user has started editing a clip.
+   * Returns a conflict if another user is already editing the same clip.
+   */
+  public registerEdit(userId: Uuid, clipId: string, operation: EditOperationType): EditConflict | null {
+    const existing = this.activeEdits.get(clipId);
+
+    if (existing && existing.userId !== userId) {
+      // Conflict detected!
+      const conflict: EditConflict = {
+        id: generateId(),
+        clipId,
+        initiatorUserId: existing.userId,
+        conflictingUserId: userId,
+        initiatorOperation: existing.operation,
+        conflictingOperation: operation,
+        detectedAt: now(),
+        resolution: 'pending',
+      };
+      this.conflicts.set(conflict.id, conflict);
+      this.onConflictDetected?.(conflict);
+      return conflict;
+    }
+
+    // No conflict, register the edit
+    this.activeEdits.set(clipId, { userId, operation, startedAt: now() });
+    return null;
+  }

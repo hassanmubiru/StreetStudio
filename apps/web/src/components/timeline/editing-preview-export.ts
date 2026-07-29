@@ -459,3 +459,58 @@ export class ExportManager {
     this.processNextInQueue();
     return true;
   }
+
+  /** Update progress for an active export */
+  public updateProgress(exportId: string, progress: ExportProgress): void {
+    const job = this.jobs.get(exportId);
+    if (!job || job.status === 'cancelled' || job.status === 'completed') {
+      return;
+    }
+
+    job.status = progress.status;
+    job.progress = Math.min(100, Math.max(0, progress.percent));
+
+    this.callbacks.onExportProgress?.(progress);
+
+    if (progress.status === 'completed') {
+      this.completeJob(job);
+    } else if (progress.status === 'failed') {
+      this.failJob(job, new Error(progress.currentStep || 'Export failed'));
+    }
+  }
+
+  /** Mark job as completed with download URL */
+  public completeJob(job: ExportJob, downloadUrl?: string): void {
+    job.status = 'completed';
+    job.progress = 100;
+    job.completedAt = new Date().toISOString();
+    if (downloadUrl) {
+      job.downloadUrl = downloadUrl;
+    }
+    this.activeExports = Math.max(0, this.activeExports - 1);
+    this.addToHistory(job);
+    this.callbacks.onExportComplete?.(job);
+    this.processNextInQueue();
+  }
+
+  /** Mark job as failed with error details */
+  public failJob(job: ExportJob, error: Error): void {
+    job.status = 'failed';
+    job.error = error.message;
+    this.activeExports = Math.max(0, this.activeExports - 1);
+    this.addToHistory(job);
+    this.callbacks.onExportError?.(job, error);
+    this.processNextInQueue();
+  }
+
+  /** Get a specific export job */
+  public getJob(exportId: string): ExportJob | undefined {
+    return this.jobs.get(exportId);
+  }
+
+  /** Get all active (non-completed, non-failed) jobs */
+  public getActiveJobs(): ExportJob[] {
+    return Array.from(this.jobs.values()).filter(
+      (j) => j.status !== 'completed' && j.status !== 'failed' && j.status !== 'cancelled'
+    );
+  }
