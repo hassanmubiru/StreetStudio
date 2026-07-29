@@ -933,3 +933,59 @@ describe('resolvePermissions', () => {
     expect(editPerm?.isOverridden).toBe(true);
     expect(editPerm?.source.type).toBe('direct');
   });
+
+  it('tracks inheritance chain correctly', () => {
+    const sources: PermissionSource[] = [
+      { type: 'role', id: 'role-1', name: 'Editor', priority: 1 },
+      { type: 'team', id: 'team-1', name: 'Design', priority: 2 },
+    ];
+    const permsBySource = new Map<string, string[]>();
+    permsBySource.set('role-1', ['projects:view']);
+    permsBySource.set('team-1', ['projects:view']);
+
+    const resolved = resolvePermissions(sources, permsBySource, [], resources, actions);
+    const viewPerm = resolved.find(r => r.actionId === 'view');
+    expect(viewPerm?.inheritedFrom?.length).toBe(2);
+  });
+
+  it('handles empty sources', () => {
+    const resolved = resolvePermissions([], new Map(), [], resources, actions);
+    expect(resolved.length).toBe(2);
+    expect(resolved.every(r => r.granted === false)).toBe(true);
+  });
+});
+
+describe('getEffectivePermission', () => {
+  it('returns the resolved permission for a specific resource/action', () => {
+    const resolved = resolvePermissions(
+      [{ type: 'role', id: 'r1', name: 'Admin', priority: 1 }],
+      new Map([['r1', ['projects:view']]]),
+      [],
+      [{ id: 'projects', name: 'Projects', description: '' }],
+      [{ id: 'view', name: 'View', description: '' }]
+    );
+    const perm = getEffectivePermission(resolved, 'projects', 'view');
+    expect(perm?.granted).toBe(true);
+  });
+
+  it('returns undefined for non-existent resource/action', () => {
+    const perm = getEffectivePermission([], 'unknown', 'unknown');
+    expect(perm).toBeUndefined();
+  });
+});
+
+describe('countOverrides', () => {
+  it('counts overridden permissions', () => {
+    const resolved = resolvePermissions(
+      [{ type: 'role', id: 'r1', name: 'Admin', priority: 1 }],
+      new Map([['r1', ['projects:view', 'projects:edit']]]),
+      [{ resourceId: 'projects', actionId: 'edit', granted: false, sourceType: 'direct', sourceId: 'direct' }],
+      [{ id: 'projects', name: 'Projects', description: '' }],
+      [
+        { id: 'view', name: 'View', description: '' },
+        { id: 'edit', name: 'Edit', description: '' },
+      ]
+    );
+    expect(countOverrides(resolved)).toBe(1);
+  });
+});

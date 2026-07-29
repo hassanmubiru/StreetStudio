@@ -657,13 +657,17 @@ export class MemberManagement {
 
   private updateMembersList(): void {
     const filteredMembers = this.getFilteredMembers();
-    const tableContainer = this.element.querySelector('[data-members-table]')?.parentElement;
-    if (tableContainer) {
-      tableContainer.innerHTML = this.renderMembersTable(filteredMembers);
-    }
+
+    // Update the member count
     const countEl = this.element.querySelector('[data-member-count]');
     if (countEl) {
       countEl.textContent = `${filteredMembers.length} member${filteredMembers.length !== 1 ? 's' : ''}`;
+    }
+
+    // Replace the table content
+    const tableWrapper = this.element.querySelector('[data-members-table-wrapper]');
+    if (tableWrapper) {
+      tableWrapper.innerHTML = this.renderMembersTable(filteredMembers);
     }
   }
 
