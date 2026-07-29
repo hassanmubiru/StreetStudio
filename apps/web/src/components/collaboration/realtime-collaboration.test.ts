@@ -584,3 +584,108 @@ describe('Collaborative Viewing', () => {
       const hostBtn = container.querySelector('.collab-host-btn');
       expect(hostBtn).not.toBeNull();
     });
+
+    it('switches to host mode when host button is clicked', () => {
+      const collab = new CollaborativeViewing(container, {
+        videoId: 'v1',
+        currentUserId: 'me',
+        videoDuration: 120,
+      });
+
+      // Enable sync first
+      const syncBtn = container.querySelector('.collab-sync-btn') as HTMLButtonElement;
+      syncBtn.click();
+
+      // Then become host
+      const hostBtn = container.querySelector('.collab-host-btn') as HTMLButtonElement;
+      hostBtn.click();
+
+      expect(collab.getSyncMode()).toBe('host');
+      expect(collab.getHostId()).toBe('me');
+    });
+
+    it('syncs playback when remote state differs beyond tolerance', () => {
+      const onSeek = vi.fn();
+      const collab = new CollaborativeViewing(
+        container,
+        { videoId: 'v1', currentUserId: 'me', videoDuration: 120, syncToleranceSeconds: 2 },
+        { onSeek }
+      );
+
+      // Enable sync and set a host
+      const syncBtn = container.querySelector('.collab-sync-btn') as HTMLButtonElement;
+      syncBtn.click();
+      collab.updateParticipant({
+        id: 'host-1',
+        displayName: 'Host',
+        syncMode: 'host',
+        currentTime: 0,
+        isPlaying: false,
+      });
+
+      // Simulate remote state from host that's far from local
+      collab.updateLocalPlayback({ currentTime: 10 });
+      collab.handleRemotePlaybackState('host-1', {
+        currentTime: 50,
+        isPlaying: false,
+        playbackRate: 1,
+        timestamp: new Date().toISOString(),
+      });
+
+      expect(onSeek).toHaveBeenCalledWith(50);
+    });
+
+    it('does not seek when within sync tolerance', () => {
+      const onSeek = vi.fn();
+      const collab = new CollaborativeViewing(
+        container,
+        { videoId: 'v1', currentUserId: 'me', videoDuration: 120, syncToleranceSeconds: 2 },
+        { onSeek }
+      );
+
+      const syncBtn = container.querySelector('.collab-sync-btn') as HTMLButtonElement;
+      syncBtn.click();
+      collab.updateParticipant({
+        id: 'host-1',
+        displayName: 'Host',
+        syncMode: 'host',
+        currentTime: 0,
+        isPlaying: false,
+      });
+
+      collab.updateLocalPlayback({ currentTime: 10 });
+      collab.handleRemotePlaybackState('host-1', {
+        currentTime: 11,
+        isPlaying: false,
+        playbackRate: 1,
+        timestamp: new Date().toISOString(),
+      });
+
+      expect(onSeek).not.toHaveBeenCalled();
+    });
+
+    it('reverts to independent when host leaves', () => {
+      const onSyncModeChange = vi.fn();
+      const collab = new CollaborativeViewing(
+        container,
+        { videoId: 'v1', currentUserId: 'me', videoDuration: 120 },
+        { onSyncModeChange }
+      );
+
+      // Enable sync
+      const syncBtn = container.querySelector('.collab-sync-btn') as HTMLButtonElement;
+      syncBtn.click();
+      collab.updateParticipant({
+        id: 'host-1',
+        displayName: 'Host',
+        syncMode: 'host',
+        currentTime: 0,
+        isPlaying: false,
+      });
+
+      // Host leaves
+      collab.removeParticipant('host-1');
+      expect(collab.getSyncMode()).toBe('independent');
+    });
+  });
+});

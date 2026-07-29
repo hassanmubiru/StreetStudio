@@ -510,3 +510,71 @@ describe('ExportManager', () => {
       expect(callbacks.onExportError).toHaveBeenCalled();
     });
   });
+
+  describe('cancellation', () => {
+    it('cancels an active export', () => {
+      const job = manager.startExport(createExportOptions());
+      const cancelled = manager.cancelExport(job.id);
+      expect(cancelled).toBe(true);
+      expect(callbacks.onExportCancelled).toHaveBeenCalled();
+    });
+
+    it('returns false for non-existent job', () => {
+      expect(manager.cancelExport('non-existent')).toBe(false);
+    });
+
+    it('returns false for already completed jobs', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.completeJob(job, 'https://download.com/file.mp4');
+      expect(manager.cancelExport(job.id)).toBe(false);
+    });
+  });
+
+  describe('job retrieval', () => {
+    it('gets a job by ID', () => {
+      const job = manager.startExport(createExportOptions());
+      expect(manager.getJob(job.id)).toBeDefined();
+      expect(manager.getJob(job.id)?.id).toBe(job.id);
+    });
+
+    it('returns undefined for unknown ID', () => {
+      expect(manager.getJob('unknown')).toBeUndefined();
+    });
+
+    it('gets active jobs', () => {
+      manager.startExport(createExportOptions({ videoId: 'v1' }));
+      manager.startExport(createExportOptions({ videoId: 'v2' }));
+      expect(manager.getActiveJobs()).toHaveLength(2);
+    });
+  });
+
+  describe('export history', () => {
+    it('adds completed jobs to history', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.completeJob(job, 'https://download.com/file.mp4');
+      expect(manager.getHistory()).toHaveLength(1);
+      expect(manager.getHistory()[0].status).toBe('completed');
+    });
+
+    it('adds failed jobs to history', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.failJob(job, new Error('Network error'));
+      expect(manager.getHistory()).toHaveLength(1);
+      expect(manager.getHistory()[0].status).toBe('failed');
+    });
+
+    it('clears history', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.completeJob(job);
+      manager.clearHistory();
+      expect(manager.getHistory()).toHaveLength(0);
+    });
+
+    it('removes specific entry from history', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.completeJob(job);
+      const removed = manager.removeFromHistory(job.id);
+      expect(removed).toBe(true);
+      expect(manager.getHistory()).toHaveLength(0);
+    });
+  });

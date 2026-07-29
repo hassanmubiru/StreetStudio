@@ -355,3 +355,73 @@ describe('EditHistoryManager', () => {
 
     expect(history.getHistory()).toHaveLength(2);
   });
+
+  it('getClipHistory filters by clipId', () => {
+    history.recordEdit({ userId: 'u1', type: 'trim', clipId: 'c1', description: '', previousState: '', newState: '' });
+    history.recordEdit({ userId: 'u1', type: 'split', clipId: 'c2', description: '', previousState: '', newState: '' });
+    history.recordEdit({ userId: 'u2', type: 'move', clipId: 'c1', description: '', previousState: '', newState: '' });
+
+    const clipHistory = history.getClipHistory('c1');
+    expect(clipHistory).toHaveLength(2);
+    expect(clipHistory.every((op) => op.clipId === 'c1')).toBe(true);
+  });
+
+  it('getUserHistory filters by userId', () => {
+    history.recordEdit({ userId: 'u1', type: 'trim', clipId: 'c1', description: '', previousState: '', newState: '' });
+    history.recordEdit({ userId: 'u2', type: 'split', clipId: 'c2', description: '', previousState: '', newState: '' });
+    history.recordEdit({ userId: 'u1', type: 'move', clipId: 'c3', description: '', previousState: '', newState: '' });
+
+    const userHistory = history.getUserHistory('u1');
+    expect(userHistory).toHaveLength(2);
+    expect(userHistory.every((op) => op.userId === 'u1')).toBe(true);
+  });
+
+  it('getRecentHistory returns last N entries', () => {
+    for (let i = 0; i < 10; i++) {
+      history.recordEdit({ userId: 'u1', type: 'trim', clipId: `c${i}`, description: `op${i}`, previousState: '', newState: '' });
+    }
+
+    const recent = history.getRecentHistory(3);
+    expect(recent).toHaveLength(3);
+    expect(recent[0].clipId).toBe('c7');
+    expect(recent[2].clipId).toBe('c9');
+  });
+
+  it('trims history when exceeding maxSize', () => {
+    const smallHistory = new EditHistoryManager(5);
+    for (let i = 0; i < 10; i++) {
+      smallHistory.recordEdit({ userId: 'u1', type: 'trim', clipId: `c${i}`, description: '', previousState: '', newState: '' });
+    }
+
+    expect(smallHistory.getHistorySize()).toBe(5);
+    // Should keep the most recent entries
+    const all = smallHistory.getHistory();
+    expect(all[0].clipId).toBe('c5');
+    expect(all[4].clipId).toBe('c9');
+  });
+
+  it('getLastEdit returns the most recent operation', () => {
+    expect(history.getLastEdit()).toBeUndefined();
+
+    history.recordEdit({ userId: 'u1', type: 'trim', clipId: 'c1', description: 'first', previousState: '', newState: '' });
+    history.recordEdit({ userId: 'u1', type: 'split', clipId: 'c2', description: 'second', previousState: '', newState: '' });
+
+    expect(history.getLastEdit()!.description).toBe('second');
+  });
+
+  it('calls onVersionChange callback', () => {
+    const onVersion = vi.fn();
+    history.setOnVersionChange(onVersion);
+
+    history.recordEdit({ userId: 'u1', type: 'trim', clipId: 'c1', description: '', previousState: '', newState: '' });
+    expect(onVersion).toHaveBeenCalledWith(1);
+  });
+
+  it('clear resets history and version', () => {
+    history.recordEdit({ userId: 'u1', type: 'trim', clipId: 'c1', description: '', previousState: '', newState: '' });
+    history.clear();
+
+    expect(history.getHistorySize()).toBe(0);
+    expect(history.getCurrentVersion()).toBe(0);
+  });
+});
