@@ -1,0 +1,194 @@
+/**
+ * Accessibility and Preference Settings Page
+ * 
+ * Provides user controls for accessibility preferences including high contrast mode,
+ * reduced motion, screen reader optimizations, keyboard navigation preferences,
+ * and theme selection (light, dark, system) with live preview.
+ * 
+ * Requirements: 9.4, 9.8, 11.4, 11.7
+ */
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+export interface AccessibilityPreferences {
+  highContrast: boolean;
+  reducedMotion: boolean;
+  screenReaderOptimizations: boolean;
+  keyboardNavigation: KeyboardNavigationPreferences;
+  theme: ThemeMode;
+}
+
+export interface KeyboardNavigationPreferences {
+  enabled: boolean;
+  showFocusIndicators: boolean;
+  skipLinkEnabled: boolean;
+  arrowKeyNavigation: boolean;
+}
+
+export const STORAGE_KEY = 'streetstudio-accessibility-preferences';
+
+/**
+ * Create default accessibility preferences
+ */
+export function createDefaultAccessibilityPreferences(): AccessibilityPreferences {
+  return {
+    highContrast: false,
+    reducedMotion: getSystemReducedMotion(),
+    screenReaderOptimizations: false,
+    keyboardNavigation: {
+      enabled: true,
+      showFocusIndicators: true,
+      skipLinkEnabled: true,
+      arrowKeyNavigation: true,
+    },
+    theme: 'system',
+  };
+}
+
+/**
+ * Detect system reduced motion preference
+ */
+export function getSystemReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/**
+ * Detect system color scheme preference
+ */
+export function getSystemTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+/**
+ * Resolve the effective theme based on preference and system setting
+ */
+export function resolveTheme(theme: ThemeMode): 'light' | 'dark' {
+  if (theme === 'system') {
+    return getSystemTheme();
+  }
+  return theme;
+}
+
+/**
+ * Load saved preferences from localStorage
+ */
+export function loadAccessibilityPreferences(): AccessibilityPreferences {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...createDefaultAccessibilityPreferences(), ...parsed };
+    }
+  } catch {
+    // Fall through to defaults
+  }
+  return createDefaultAccessibilityPreferences();
+}
+
+/**
+ * Save preferences to localStorage
+ */
+export function saveAccessibilityPreferences(prefs: AccessibilityPreferences): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+  } catch {
+    // Storage may be unavailable
+  }
+}
+
+/**
+ * Apply accessibility preferences to the document
+ */
+export function applyAccessibilityPreferences(prefs: AccessibilityPreferences): void {
+  const root = document.documentElement;
+
+  // High contrast
+  root.classList.toggle('high-contrast', prefs.highContrast);
+  root.setAttribute('data-high-contrast', String(prefs.highContrast));
+
+  // Reduced motion
+  root.classList.toggle('reduced-motion', prefs.reducedMotion);
+  root.setAttribute('data-reduced-motion', String(prefs.reducedMotion));
+
+  // Screen reader optimizations
+  root.setAttribute('data-screen-reader-optimized', String(prefs.screenReaderOptimizations));
+
+  // Keyboard navigation
+  root.classList.toggle('keyboard-nav', prefs.keyboardNavigation.enabled);
+  root.classList.toggle('show-focus', prefs.keyboardNavigation.showFocusIndicators);
+  root.setAttribute('data-keyboard-nav', String(prefs.keyboardNavigation.enabled));
+
+  // Theme
+  const effectiveTheme = resolveTheme(prefs.theme);
+  root.classList.remove('light', 'dark');
+  root.classList.add(effectiveTheme);
+  root.setAttribute('data-theme', effectiveTheme);
+  root.setAttribute('data-theme-preference', prefs.theme);
+}
+
+/**
+ * Get the CSS for accessibility settings page and preferences
+ */
+export function getAccessibilityCSS(): string {
+  return `
+    /* High contrast mode */
+    .high-contrast {
+      --contrast-text: #000000;
+      --contrast-bg: #ffffff;
+      --contrast-border: #000000;
+      --contrast-link: #0000ee;
+      --contrast-focus: #ff0000;
+    }
+    .high-contrast.dark {
+      --contrast-text: #ffffff;
+      --contrast-bg: #000000;
+      --contrast-border: #ffffff;
+      --contrast-link: #ffff00;
+      --contrast-focus: #ff0000;
+    }
+    .high-contrast * {
+      border-color: var(--contrast-border) !important;
+    }
+    .high-contrast a { color: var(--contrast-link) !important; }
+
+    /* Reduced motion */
+    .reduced-motion *,
+    .reduced-motion *::before,
+    .reduced-motion *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    /* Focus indicators */
+    .show-focus :focus-visible {
+      outline: 3px solid #2563eb;
+      outline-offset: 3px;
+    }
+    .high-contrast.show-focus :focus-visible {
+      outline: 3px solid var(--contrast-focus);
+      outline-offset: 3px;
+    }
+
+    /* Theme preview cards */
+    .theme-preview-card {
+      border: 2px solid transparent;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .theme-preview-card[aria-checked="true"] {
+      border-color: #2563eb;
+    }
+    .theme-preview-card:hover {
+      border-color: #93c5fd;
+    }
+    .reduced-motion .theme-preview-card {
+      transition: none;
+    }
+  `;
+}

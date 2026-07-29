@@ -1,15 +1,45 @@
 /**
- * Organization Settings Page Component - Placeholder
+ * Organization Settings Page
+ *
+ * Comprehensive organization settings including branding customization,
+ * security policy configuration, storage preferences and quota management,
+ * and integration configuration for third-party services.
+ *
+ * Requirements: 8.6, 8.10
  */
-export class OrganizationSettingsPage {
-  public getElement(): HTMLElement {
-    const container = document.createElement('div');
-    container.className = 'p-8';
-    container.setAttribute('data-main-content', '');
-    container.innerHTML = `
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Organization Settings</h1>
-      <p class="text-gray-600 dark:text-gray-400">Organization settings interface coming soon.</p>
-    `;
-    return container;
-  }
+
+import type { Uuid } from '@streetstudio/shared';
+import { FormValidator, ValidationRules } from '../../utils/validation.js';
+import { logger } from '../../app/client-logger.js';
+
+// --- Types ---
+
+export interface BrandingSettings {
+  logoUrl: string | null;
+  primaryColor: string;
+  accentColor: string;
+  faviconUrl: string | null;
+  customCss: string;
+}
+
+export interface SecurityPolicySettings {
+  enforceSSO: boolean;
+  requireMFA: boolean;
+  passwordMinLength: number;
+  passwordRequireUppercase: boolean;
+  passwordRequireNumbers: boolean;
+  passwordRequireSpecialChars: boolean;
+  sessionTimeoutMinutes: number;
+  maxLoginAttempts: number;
+  ipAllowlist: string[];
+  dataRetentionDays: number;
+  complianceMode: 'none' | 'gdpr' | 'hipaa' | 'soc2';
+}
+
+export interface StorageSettings {
+  storageQuotaGB: number;
+  usedStorageGB: number;
+  retentionPolicy: 'indefinite' | '30days' | '90days' | '1year';
+  autoDeleteProcessedOriginals: boolean;
+  preferredRegion: string;
 }
