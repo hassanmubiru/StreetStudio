@@ -30,6 +30,24 @@ import type {
   WaveformData,
 } from './timeline-editor';
 
+// ─── Test Environment Mocks ───────────────────────────────────────────────────
+
+// Mock ResizeObserver (not available in jsdom)
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  })) as any;
+}
+
+// Mock HTMLCanvasElement.getContext for jsdom
+HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
+  clearRect: vi.fn(),
+  fillRect: vi.fn(),
+  fillStyle: '',
+}) as any;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function createContainer(): HTMLElement {
