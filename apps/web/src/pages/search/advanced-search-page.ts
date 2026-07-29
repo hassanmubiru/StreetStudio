@@ -550,3 +550,126 @@ export class AdvancedSearchPage {
       </div>
     `;
   }
+
+  private attachEventListeners(): void {
+    // Search form submission
+    const form = this.element.querySelector('[data-search-form]');
+    form?.addEventListener('submit', (e) => this.handleSearchSubmit(e));
+
+    // Date range filter
+    const dateSelect = this.element.querySelector('[data-filter-select="dateRange"]') as HTMLSelectElement;
+    dateSelect?.addEventListener('change', () => {
+      const value = dateSelect.value;
+      this.handleFilterChange('dateRange', value ? { preset: value } : null);
+    });
+
+    // Content type filter
+    const typeSelect = this.element.querySelector('[data-filter-select="contentType"]') as HTMLSelectElement;
+    typeSelect?.addEventListener('change', () => {
+      const selected = Array.from(typeSelect.selectedOptions).map(o => o.value);
+      this.handleFilterChange('contentType', selected.length > 0 ? { types: selected } : null);
+    });
+
+    // Creator filter
+    const creatorInput = this.element.querySelector('[data-filter-input="creator"]') as HTMLInputElement;
+    creatorInput?.addEventListener('change', () => {
+      const ids = creatorInput.value.split(',').map(s => s.trim()).filter(Boolean);
+      this.handleFilterChange('creator', ids.length > 0 ? { creatorIds: ids } : null);
+    });
+
+    // Scope filter
+    const scopeSelect = this.element.querySelector('[data-filter-select="scope"]') as HTMLSelectElement;
+    scopeSelect?.addEventListener('change', () => {
+      this.handleFilterChange('scope', scopeSelect.value || undefined);
+    });
+
+    // Sort filter
+    const sortSelect = this.element.querySelector('[data-filter-select="sortBy"]') as HTMLSelectElement;
+    sortSelect?.addEventListener('change', () => {
+      this.handleFilterChange('sortBy', sortSelect.value || undefined);
+    });
+
+    // Clear filters
+    this.element.querySelectorAll('[data-action="clear-filters"]').forEach(btn => {
+      btn.addEventListener('click', () => this.handleClearFilters());
+    });
+
+    // Save search
+    const saveBtn = this.element.querySelector('[data-action="save-search"]');
+    saveBtn?.addEventListener('click', () => {
+      this.showSaveDialog = true;
+      this.render();
+    });
+
+    // Confirm save
+    const confirmSaveBtn = this.element.querySelector('[data-action="confirm-save"]');
+    confirmSaveBtn?.addEventListener('click', () => {
+      const nameInput = this.element.querySelector('[data-save-search-name]') as HTMLInputElement;
+      if (nameInput) this.handleSaveSearch(nameInput.value);
+    });
+
+    // Cancel save
+    const cancelSaveBtn = this.element.querySelector('[data-action="cancel-save"]');
+    cancelSaveBtn?.addEventListener('click', () => {
+      this.showSaveDialog = false;
+      this.render();
+    });
+
+    // Load saved search
+    this.element.querySelectorAll('[data-action="load-saved"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = (btn as HTMLElement).dataset.savedId;
+        if (id) {
+          const saved = this.advancedSearchService.getSavedSearchById(id);
+          if (saved) this.handleLoadSavedSearch(saved);
+        }
+      });
+    });
+
+    // Remove saved search
+    this.element.querySelectorAll('[data-action="remove-saved"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = (btn as HTMLElement).dataset.savedId;
+        if (id) this.handleRemoveSavedSearch(id);
+      });
+    });
+
+    // Facet clicks
+    this.element.querySelectorAll('[data-facet-type]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = (btn as HTMLElement).dataset.facetType;
+        if (type) {
+          const currentTypes = this.filters.contentType?.types || [];
+          if (currentTypes.includes(type as any)) {
+            const newTypes = currentTypes.filter(t => t !== type);
+            this.handleFilterChange('contentType', newTypes.length > 0 ? { types: newTypes } : null);
+          } else {
+            this.handleFilterChange('contentType', { types: [...currentTypes, type] });
+          }
+        }
+      });
+    });
+
+    this.element.querySelectorAll('[data-facet-creator]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const creator = (btn as HTMLElement).dataset.facetCreator;
+        if (creator) {
+          const currentIds = this.filters.creator?.creatorIds || [];
+          if (currentIds.includes(creator)) {
+            const newIds = currentIds.filter(id => id !== creator);
+            this.handleFilterChange('creator', newIds.length > 0 ? { creatorIds: newIds } : null);
+          } else {
+            this.handleFilterChange('creator', { creatorIds: [...currentIds, creator] });
+          }
+        }
+      });
+    });
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+}
