@@ -531,7 +531,7 @@ describe('RoleManagement', () => {
     expect(container.querySelector('.role-name-input')).not.toBeNull();
   });
 
-  it('validates role name in editor', () => {
+  it('validates role name in editor', async () => {
     const mgmt = new RoleManagement(container, defaultRoleOptions, callbacks);
     mgmt.startCreateRole();
 
@@ -540,8 +540,10 @@ describe('RoleManagement', () => {
     const saveBtn = container.querySelector('.role-save-btn') as HTMLButtonElement;
     saveBtn.click();
 
-    const error = container.querySelector('#role-name-error');
-    expect(error?.textContent).toBe('Role name is required');
+    await vi.waitFor(() => {
+      const error = container.querySelector('#role-name-error');
+      expect(error?.textContent).toBe('Role name is required');
+    });
   });
 
   it('calls onCreateRole with correct data', async () => {
