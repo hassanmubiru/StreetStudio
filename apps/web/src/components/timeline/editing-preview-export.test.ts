@@ -634,3 +634,116 @@ describe('ExportManager', () => {
     });
   });
 });
+
+// ─── BackgroundProcessingManager Tests ────────────────────────────────────────
+
+describe('BackgroundProcessingManager', () => {
+  let exportManager: ExportManager;
+  let bgManager: BackgroundProcessingManager;
+  let callbacks: BackgroundProcessCallbacks;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    exportManager = new ExportManager();
+    callbacks = {
+      onStatusUpdate: vi.fn(),
+      onConnectionChange: vi.fn(),
+    };
+    bgManager = new BackgroundProcessingManager(exportManager, callbacks);
+  });
+
+  afterEach(() => {
+    bgManager.destroy();
+    exportManager.destroy();
+    vi.useRealTimers();
+  });
+
+  describe('polling', () => {
+    it('starts polling and reports connected', () => {
+      bgManager.startPolling(1000);
+      expect(bgManager.isPolling()).toBe(true);
+      expect(callbacks.onConnectionChange).toHaveBeenCalledWith(true);
+    });
+
+    it('stops polling and reports disconnected', () => {
+      bgManager.startPolling(1000);
+      bgManager.stopPolling();
+      expect(bgManager.isPolling()).toBe(false);
+      expect(callbacks.onConnectionChange).toHaveBeenCalledWith(false);
+    });
+
+    it('does not start multiple poll intervals', () => {
+      bgManager.startPolling(1000);
+      bgManager.startPolling(1000); // second call should be no-op
+      bgManager.stopPolling();
+      expect(bgManager.isPolling()).toBe(false);
+    });
+  });
+
+  describe('job tracking', () => {
+    it('tracks a job', () => {
+      bgManager.trackJob('job-1');
+      expect(bgManager.getTrackedJobs()).toContain('job-1');
+    });
+
+    it('untracks a job', () => {
+      bgManager.trackJob('job-1');
+      bgManager.untrackJob('job-1');
+      expect(bgManager.getTrackedJobs()).not.toContain('job-1');
+    });
+  });
+
+  describe('status updates', () => {
+    it('relays status update for tracked job', () => {
+      bgManager.trackJob('job-1');
+      bgManager.receiveStatusUpdate('job-1', 'encoding');
+      expect(callbacks.onStatusUpdate).toHaveBeenCalledWith('job-1', 'encoding');
+    });
+
+    it('ignores status for untracked job', () => {
+      bgManager.receiveStatusUpdate('unknown', 'processing');
+      expect(callbacks.onStatusUpdate).not.toHaveBeenCalled();
+    });
+
+    it('untracks job on completion', () => {
+      bgManager.trackJob('job-1');
+      bgManager.receiveStatusUpdate('job-1', 'completed');
+      expect(bgManager.getTrackedJobs()).not.toContain('job-1');
+    });
+
+    it('untracks job on failure', () => {
+      bgManager.trackJob('job-1');
+      bgManager.receiveStatusUpdate('job-1', 'failed');
+      expect(bgManager.getTrackedJobs()).not.toContain('job-1');
+    });
+
+    it('polls tracked jobs for status', () => {
+      const job = exportManager.startExport({
+        videoId: 'v1',
+        quality: 'high',
+        format: 'mp4',
+        clips: [],
+        editOperations: [],
+        includeOverlays: true,
+        includeCaptions: true,
+      });
+      bgManager.trackJob(job.id);
+      bgManager.startPolling(1000);
+      vi.advanceTimersByTime(1000);
+      expect(callbacks.onStatusUpdate).toHaveBeenCalledWith(
+        job.id,
+        'processing'
+      );
+    });
+  });
+
+  describe('destroy', () => {
+    it('stops polling and clears tracked jobs', () => {
+      bgManager.trackJob('job-1');
+      bgManager.startPolling(1000);
+      bgManager.destroy();
+      expect(bgManager.isPolling()).toBe(false);
+      expect(bgManager.getTrackedJobs()).toHaveLength(0);
+    });
+  });
+});

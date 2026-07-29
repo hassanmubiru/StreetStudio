@@ -737,3 +737,66 @@ describe('Activity Feed', () => {
       expect(formatRelativeTime(past, now)).toBe('2d ago');
     });
   });
+
+  describe('groupActivities', () => {
+    it('returns empty array for empty input', () => {
+      expect(groupActivities([])).toEqual([]);
+    });
+
+    it('groups consecutive events from same actor', () => {
+      const now = new Date();
+      const events = [
+        makeActivityEvent({ id: 'e1', actorId: 'u1', createdAt: now.toISOString() }),
+        makeActivityEvent({ id: 'e2', actorId: 'u1', createdAt: new Date(now.getTime() - 60000).toISOString() }),
+      ];
+      const groups = groupActivities(events);
+      expect(groups.length).toBe(1);
+      expect(groups[0].length).toBe(2);
+    });
+
+    it('separates events from different actors', () => {
+      const now = new Date();
+      const events = [
+        makeActivityEvent({ id: 'e1', actorId: 'u1', createdAt: now.toISOString() }),
+        makeActivityEvent({ id: 'e2', actorId: 'u2', createdAt: new Date(now.getTime() - 60000).toISOString() }),
+      ];
+      const groups = groupActivities(events);
+      expect(groups.length).toBe(2);
+    });
+
+    it('splits groups when time gap exceeds window', () => {
+      const now = new Date();
+      const events = [
+        makeActivityEvent({ id: 'e1', actorId: 'u1', createdAt: now.toISOString() }),
+        makeActivityEvent({ id: 'e2', actorId: 'u1', createdAt: new Date(now.getTime() - 600000).toISOString() }),
+      ];
+      const groups = groupActivities(events, 300000); // 5 min window
+      expect(groups.length).toBe(2);
+    });
+  });
+
+  describe('filterActivities', () => {
+    it('returns all events when no filter', () => {
+      const events = [
+        makeActivityEvent({ type: 'comment_added' }),
+        makeActivityEvent({ type: 'video_uploaded' }),
+      ];
+      expect(filterActivities(events)).toEqual(events);
+    });
+
+    it('filters to specified types', () => {
+      const events = [
+        makeActivityEvent({ id: 'e1', type: 'comment_added' }),
+        makeActivityEvent({ id: 'e2', type: 'video_uploaded' }),
+        makeActivityEvent({ id: 'e3', type: 'comment_reply' }),
+      ];
+      const result = filterActivities(events, ['comment_added', 'comment_reply']);
+      expect(result.length).toBe(2);
+      expect(result.every(e => e.type !== 'video_uploaded')).toBe(true);
+    });
+
+    it('returns empty when no matches', () => {
+      const events = [makeActivityEvent({ type: 'comment_added' })];
+      expect(filterActivities(events, ['video_uploaded'])).toEqual([]);
+    });
+  });

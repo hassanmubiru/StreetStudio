@@ -495,3 +495,44 @@ describe('CollaborativeEditingManager', () => {
       mgr.destroy();
     });
   });
+
+  describe('presence', () => {
+    it('updatePlayheadPosition updates the current user presence', () => {
+      manager.startSession();
+      manager.updatePlayheadPosition(150);
+
+      const session = manager.getSession();
+      const self = session!.participants.find((p) => p.userId === 'me');
+      expect(self!.playheadFrame).toBe(150);
+    });
+
+    it('handleUserJoined adds a remote participant', () => {
+      manager.startSession();
+      manager.handleUserJoined(createPresence({
+        userId: 'remote-1',
+        displayName: 'Remote User',
+      }));
+
+      const session = manager.getSession();
+      expect(session!.participants).toHaveLength(2);
+    });
+
+    it('handleUserLeft removes a remote participant', () => {
+      manager.startSession();
+      manager.handleUserJoined(createPresence({ userId: 'remote-1' }));
+      manager.handleUserLeft('remote-1');
+
+      const presence = manager.getPresenceManager().getParticipant('remote-1');
+      expect(presence).toBeUndefined();
+    });
+
+    it('calls onPresenceUpdate when participants change', () => {
+      const onPresence = vi.fn();
+      const mgr = new CollaborativeEditingManager(defaultOptions, { onPresenceUpdate: onPresence });
+      mgr.startSession();
+
+      mgr.handleUserJoined(createPresence({ userId: 'remote-1' }));
+      expect(onPresence).toHaveBeenCalled();
+      mgr.destroy();
+    });
+  });
