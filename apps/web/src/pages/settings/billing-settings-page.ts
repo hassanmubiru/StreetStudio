@@ -241,3 +241,70 @@ export class BillingSettingsPage {
     `;
     return container;
   }
+
+  private renderError(): HTMLElement {
+    const container = document.createElement('div');
+    container.className = 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center';
+    container.setAttribute('role', 'alert');
+    container.innerHTML = `
+      <svg class="w-12 h-12 mx-auto text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      <p class="text-red-700 dark:text-red-300 font-medium mb-2">${this.error || 'Unable to load billing information'}</p>
+      <button
+        id="retry-load"
+        class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 dark:text-red-200 bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+      >
+        Try Again
+      </button>
+    `;
+    return container;
+  }
+
+  private renderSubscriptionStatus(): HTMLElement {
+    const data = this.billingData!;
+    const sub = data.subscription;
+    const statusClass = getStatusBadgeClass(sub.status);
+    const periodEnd = formatDate(sub.currentPeriodEnd);
+
+    const section = document.createElement('section');
+    section.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6';
+    section.setAttribute('aria-labelledby', 'subscription-heading');
+    section.innerHTML = `
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 id="subscription-heading" class="text-lg font-medium text-gray-900 dark:text-white">
+            Current Plan
+          </h2>
+          <div class="mt-2 flex items-center gap-3">
+            <span class="text-2xl font-bold text-gray-900 dark:text-white">${this.escapeHtml(sub.planName)}</span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+              ${sub.status}
+            </span>
+          </div>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            ${sub.cancelAtPeriodEnd
+              ? `Cancels on ${periodEnd}`
+              : `Renews on ${periodEnd}`}
+          </p>
+        </div>
+        <div class="flex gap-3">
+          <button
+            id="change-plan-btn"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Change Plan
+          </button>
+          ${!sub.cancelAtPeriodEnd ? `
+            <button
+              id="cancel-subscription-btn"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 dark:text-red-200 bg-white dark:bg-gray-700 border border-red-300 dark:border-red-600 rounded-md shadow-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              Cancel Plan
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+    return section;
+  }

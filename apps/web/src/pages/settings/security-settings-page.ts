@@ -364,3 +364,45 @@ export class SecuritySettingsPage {
     `;
     return section;
   }
+
+  private renderStrengthBar(): string {
+    const { strength, score } = this.passwordStrengthResult;
+    if (!this.passwordData.newPassword) {
+      return `<div class="flex gap-1"><span class="h-1 flex-1 rounded bg-gray-200 dark:bg-gray-600"></span><span class="h-1 flex-1 rounded bg-gray-200 dark:bg-gray-600"></span><span class="h-1 flex-1 rounded bg-gray-200 dark:bg-gray-600"></span><span class="h-1 flex-1 rounded bg-gray-200 dark:bg-gray-600"></span></div>`;
+    }
+    const color = STRENGTH_COLORS[strength];
+    const label = STRENGTH_LABELS[strength];
+    const bars = Array.from({ length: 4 }, (_, i) =>
+      `<span class="h-1 flex-1 rounded ${i <= score ? color : 'bg-gray-200 dark:bg-gray-600'}"></span>`
+    ).join('');
+    return `
+      <div class="flex gap-1">${bars}</div>
+      <div class="flex justify-between items-center mt-1">
+        <span class="text-xs font-medium ${color.replace('bg-', 'text-')}">${label}</span>
+      </div>
+    `;
+  }
+
+  private renderTwoFactorSection(): HTMLElement {
+    const section = document.createElement('section');
+    section.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6';
+    section.setAttribute('aria-labelledby', 'two-factor-heading');
+
+    let content: string;
+    if (this.twoFactorData.isEnabled) {
+      content = this.renderTwoFactorEnabled();
+    } else if (this.showTwoFactorSetup) {
+      content = this.renderTwoFactorSetupFlow();
+    } else {
+      content = this.renderTwoFactorDisabled();
+    }
+
+    section.innerHTML = `
+      <h2 id="two-factor-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Two-Factor Authentication</h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Add an extra layer of security to your account by requiring a verification code in addition to your password.
+      </p>
+      ${content}
+    `;
+    return section;
+  }

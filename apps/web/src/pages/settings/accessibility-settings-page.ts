@@ -293,3 +293,50 @@ export class AccessibilitySettingsPage {
     `;
     return header;
   }
+
+  private renderThemeSection(): HTMLElement {
+    const section = document.createElement('section');
+    section.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6';
+    section.setAttribute('aria-labelledby', 'theme-heading');
+
+    const currentTheme = this.preferences.theme;
+    const effectiveTheme = resolveTheme(currentTheme);
+
+    section.innerHTML = `
+      <h2 id="theme-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        Theme
+      </h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Choose your preferred color scheme. Changes are previewed immediately.
+      </p>
+      <div id="theme-group" role="radiogroup" aria-labelledby="theme-heading" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        ${this.renderThemeCard('light', 'Light', 'Always use light mode', currentTheme === 'light')}
+        ${this.renderThemeCard('dark', 'Dark', 'Always use dark mode', currentTheme === 'dark')}
+        ${this.renderThemeCard('system', 'System', `Follow system preference (currently ${effectiveTheme})`, currentTheme === 'system')}
+      </div>
+    `;
+    return section;
+  }
+
+  private renderThemeCard(value: ThemeMode, label: string, description: string, selected: boolean): string {
+    const previewBg = value === 'dark' ? 'bg-gray-900' : value === 'light' ? 'bg-white' : 'bg-gradient-to-r from-white to-gray-900';
+    const previewText = value === 'dark' ? 'text-white' : value === 'light' ? 'text-gray-900' : 'text-gray-600';
+    const borderClass = selected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 dark:border-gray-600';
+
+    return `
+      <div
+        role="radio"
+        aria-checked="${selected}"
+        aria-label="${label} theme"
+        tabindex="${selected ? '0' : '-1'}"
+        data-theme-value="${value}"
+        class="theme-preview-card border-2 ${borderClass} rounded-lg p-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <div class="h-16 rounded ${previewBg} border border-gray-300 dark:border-gray-600 mb-3 flex items-center justify-center">
+          <span class="text-xs ${previewText} font-medium">${label}</span>
+        </div>
+        <div class="text-sm font-medium text-gray-900 dark:text-white">${label}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${description}</div>
+      </div>
+    `;
+  }

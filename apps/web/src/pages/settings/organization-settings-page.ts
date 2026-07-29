@@ -153,3 +153,52 @@ export function createDefaultIntegrationSettings(): IntegrationSettings {
     ssoMetadataUrl: '',
   };
 }
+
+// --- Validators ---
+
+export function validateLogoFile(file: File): { valid: boolean; error?: string } {
+  if (!LOGO_ALLOWED_TYPES.includes(file.type)) {
+    return { valid: false, error: `File type "${file.type}" not supported. Use PNG, SVG, JPEG, or WebP.` };
+  }
+  if (file.size > LOGO_MAX_SIZE) {
+    return { valid: false, error: `File size exceeds 2MB limit. Your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB.` };
+  }
+  return { valid: true };
+}
+
+export function validateColor(color: string): boolean {
+  return COLOR_PATTERN.test(color);
+}
+
+export function validateIpAddress(ip: string): boolean {
+  return IP_PATTERN.test(ip);
+}
+
+export function validateWebhookUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+export function createSecurityValidator(): FormValidator {
+  return new FormValidator({
+    passwordMinLength: [
+      ValidationRules.required('Password minimum length is required'),
+      ValidationRules.min(6, 'Minimum password length must be at least 6'),
+      ValidationRules.max(128, 'Minimum password length cannot exceed 128'),
+    ],
+    sessionTimeoutMinutes: [
+      ValidationRules.required('Session timeout is required'),
+      ValidationRules.min(5, 'Session timeout must be at least 5 minutes'),
+      ValidationRules.max(10080, 'Session timeout cannot exceed 7 days'),
+    ],
+    maxLoginAttempts: [
+      ValidationRules.required('Max login attempts is required'),
+      ValidationRules.min(3, 'Max login attempts must be at least 3'),
+      ValidationRules.max(20, 'Max login attempts cannot exceed 20'),
+    ],
+  });
+}
