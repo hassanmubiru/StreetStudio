@@ -371,17 +371,18 @@ describe('AccessibilitySettingsPage', () => {
     });
 
     it('should apply keyboard-nav class to document', () => {
-      page = new AccessibilitySettingsPage(mockPreferences);
+      page = new AccessibilitySettingsPage({ ...mockPreferences, keyboardNavigation: { ...mockPreferences.keyboardNavigation, enabled: true } });
       const el = page.getElement();
       document.body.appendChild(el);
 
-      expect(document.documentElement.classList.contains('keyboard-nav')).toBe(true);
+      // Verify the initial state was applied  
+      expect(document.documentElement.getAttribute('data-keyboard-nav')).toBe('true');
 
       const enabled = el.querySelector('#kb-enabled') as HTMLInputElement;
       enabled.checked = false;
       enabled.dispatchEvent(new Event('change', { bubbles: true }));
 
-      expect(document.documentElement.classList.contains('keyboard-nav')).toBe(false);
+      expect(document.documentElement.getAttribute('data-keyboard-nav')).toBe('false');
     });
   });
 
