@@ -560,3 +560,95 @@ export class TextOverlayManager {
   public getAllCaptions(): CaptionCue[] {
     return Array.from(this.captions.values());
   }
+
+  /**
+   * Get captions visible at a specific frame.
+   */
+  public getCaptionsAtFrame(frame: number): CaptionCue[] {
+    return Array.from(this.captions.values()).filter(
+      c => frame >= c.startFrame && frame <= c.endFrame
+    );
+  }
+
+  /**
+   * Get captions sorted by start time.
+   */
+  public getCaptionsSorted(): CaptionCue[] {
+    return this.getAllCaptions().sort(
+      (a, b) => a.startFrame - b.startFrame
+    );
+  }
+
+  /**
+   * Update caption timing.
+   */
+  public setCaptionTiming(
+    id: string,
+    startFrame: number,
+    endFrame: number
+  ): CaptionCue | null {
+    return this.updateCaption(id, { startFrame, endFrame });
+  }
+
+  /**
+   * Update caption style.
+   */
+  public setCaptionStyle(
+    id: string,
+    style: Partial<CaptionStyle>
+  ): CaptionCue | null {
+    const caption = this.captions.get(id);
+    if (!caption) return null;
+
+    // Validate font size
+    if (style.fontSize !== undefined) {
+      style.fontSize = clamp(style.fontSize, MIN_FONT_SIZE, MAX_FONT_SIZE);
+    }
+    if (style.opacity !== undefined) {
+      style.opacity = clamp(style.opacity, 0, 1);
+    }
+
+    return this.updateCaption(id, {
+      style: { ...caption.style, ...style },
+    });
+  }
+
+  /**
+   * Check if a caption meets WCAG AA contrast requirements.
+   */
+  public checkCaptionAccessibility(id: string): {
+    meetsAA: boolean;
+    meetsAAA: boolean;
+    ratio: number;
+  } | null {
+    const caption = this.captions.get(id);
+    if (!caption) return null;
+
+    // Skip check for non-solid backgrounds
+    if (
+      caption.style.backgroundColor.includes('rgba') ||
+      caption.style.backgroundColor === 'transparent'
+    ) {
+      // For semi-transparent backgrounds, use the opaque equivalent
+      const bgHex = this.resolveBackgroundColor(caption.style.backgroundColor);
+      if (!bgHex) {
+        return { meetsAA: true, meetsAAA: false, ratio: 0 };
+      }
+      const ratio = contrastRatio(caption.style.color, bgHex);
+      return {
+        meetsAA: ratio >= 4.5,
+        meetsAAA: ratio >= 7,
+        ratio,
+      };
+    }
+
+    const ratio = contrastRatio(
+      caption.style.color,
+      caption.style.backgroundColor
+    );
+    return {
+      meetsAA: ratio >= 4.5,
+      meetsAAA: ratio >= 7,
+      ratio,
+    };
+  }
