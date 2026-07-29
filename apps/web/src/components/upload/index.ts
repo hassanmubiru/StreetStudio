@@ -19,3 +19,11 @@ export {
   UploadQueuePanel,
   type UploadQueueConfig
 } from './upload-queue-panel.js';
+
+export {
+  VideoMetadataForm,
+  type VideoMetadataFormData,
+  type VideoMetadataFormConfig,
+  type ProjectOption,
+  type TagSuggestion,
+} from './video-metadata-form.js';
