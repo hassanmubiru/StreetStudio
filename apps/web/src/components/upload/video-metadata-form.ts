@@ -242,3 +242,97 @@ export class VideoMetadataForm {
       </div>
     `;
   }
+
+  private setupEventListeners(): void {
+    const form = this.container.querySelector('form');
+    if (!form) return;
+
+    // Form submission
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleSubmit();
+    });
+
+    // Title input
+    const titleInput = this.container.querySelector('#video-title') as HTMLInputElement;
+    titleInput?.addEventListener('input', (e) => {
+      const value = (e.target as HTMLInputElement).value;
+      this.formData.title = value;
+      this.updateCharCount('title', value.length, 255);
+      this.validateField('title', value);
+      this.notifyChange();
+    });
+
+    // Description input
+    const descInput = this.container.querySelector('#video-description') as HTMLTextAreaElement;
+    descInput?.addEventListener('input', (e) => {
+      const value = (e.target as HTMLTextAreaElement).value;
+      this.formData.description = value;
+      this.updateCharCount('description', value.length, 2000);
+      this.validateField('description', value);
+      this.notifyChange();
+    });
+
+    // Project selection
+    const projectSelect = this.container.querySelector('#video-project') as HTMLSelectElement;
+    projectSelect?.addEventListener('change', (e) => {
+      const value = (e.target as HTMLSelectElement).value;
+      this.formData.projectId = value ? value as Uuid : null;
+      this.notifyChange();
+    });
+
+    // Privacy toggle
+    const privateCheckbox = this.container.querySelector('#video-private') as HTMLInputElement;
+    privateCheckbox?.addEventListener('change', (e) => {
+      this.formData.isPrivate = (e.target as HTMLInputElement).checked;
+      privateCheckbox.setAttribute('aria-checked', String(this.formData.isPrivate));
+      this.notifyChange();
+    });
+
+    // Developer mode toggle
+    const devModeCheckbox = this.container.querySelector('#video-developer-mode') as HTMLInputElement;
+    devModeCheckbox?.addEventListener('change', (e) => {
+      this.formData.developerMode = (e.target as HTMLInputElement).checked;
+      devModeCheckbox.setAttribute('aria-checked', String(this.formData.developerMode));
+      this.notifyChange();
+    });
+
+    // Tag input
+    this.setupTagInput();
+  }
+
+  private setupTagInput(): void {
+    if (!this.tagInput) return;
+
+    this.tagInput.addEventListener('input', () => {
+      this.handleTagInputChange();
+    });
+
+    this.tagInput.addEventListener('keydown', (e) => {
+      this.handleTagKeydown(e);
+    });
+
+    this.tagInput.addEventListener('focus', () => {
+      if (this.tagInput!.value.length > 0) {
+        this.showTagSuggestions(this.tagInput!.value);
+      }
+    });
+
+    this.tagInput.addEventListener('blur', () => {
+      // Delay hiding to allow click on suggestion
+      setTimeout(() => this.hideTagSuggestions(), 200);
+    });
+
+    // Tag remove buttons via event delegation
+    const tagsDisplay = this.container.querySelector('#tags-display');
+    tagsDisplay?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('tag-remove')) {
+        const chip = target.closest('.tag-chip') as HTMLElement;
+        const tag = chip?.dataset.tag;
+        if (tag) {
+          this.removeTag(tag);
+        }
+      }
+    });
+  }

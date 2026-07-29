@@ -241,3 +241,43 @@ export class UploadProgressInterface {
       suggestion
     };
   }
+
+  private startSpeedTracking(): void {
+    const trackSpeed = () => {
+      if (this.isVisible) {
+        const state = this.uploadStore.getState();
+        if (state.isUploading) {
+          this.updateSpeedDisplay(state);
+        }
+      }
+      this.animationFrameId = requestAnimationFrame(trackSpeed);
+    };
+    this.animationFrameId = requestAnimationFrame(trackSpeed);
+  }
+
+  private updateSpeedDisplay(state: UploadState): void {
+    const metrics = this.calculateSpeedMetrics(state);
+    const speedEl = this.container.querySelector('.batch-speed') as HTMLElement;
+    const etaEl = this.container.querySelector('.batch-eta') as HTMLElement;
+
+    if (speedEl && this.config.showSpeed) {
+      speedEl.textContent = this.formatSpeed(metrics.averageSpeed);
+    }
+    if (etaEl && this.config.showETA) {
+      etaEl.textContent = metrics.estimatedTimeRemaining > 0
+        ? this.formatTimeRemaining(metrics.estimatedTimeRemaining)
+        : 'Calculating...';
+    }
+  }
+
+  private render(): void {
+    const panel = document.createElement('div');
+    panel.className = `upload-progress-panel ${this.config.position}`;
+    panel.setAttribute('role', 'region');
+    panel.setAttribute('aria-label', 'Upload progress');
+    panel.style.display = 'none';
+
+    panel.innerHTML = this.buildPanelHTML();
+    this.container.appendChild(panel);
+    this.setupEventListeners();
+  }

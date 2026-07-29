@@ -398,3 +398,50 @@ export class AdaptiveVideoPlayer {
     const fullscreenBtn = this.controlsElement.querySelector('.fullscreen-btn');
     fullscreenBtn?.addEventListener('click', () => this.toggleFullscreen());
   }
+
+  private setupKeyboardShortcuts(): void {
+    this.keydownHandler = (event: KeyboardEvent) => {
+      // Only handle shortcuts when player container or its children are focused,
+      // or when no specific input element has focus
+      const activeEl = document.activeElement;
+      const isInputFocused = activeEl instanceof HTMLInputElement
+        || activeEl instanceof HTMLTextAreaElement
+        || activeEl instanceof HTMLSelectElement;
+
+      // Allow seek bar and volume bar interactions
+      if (isInputFocused && !this.container.contains(activeEl)) {
+        return;
+      }
+
+      // Skip if modifier keys are pressed (except Shift for < and >)
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      let handled = true;
+
+      switch (event.key) {
+        case KEYBOARD_SHORTCUTS.PLAY_PAUSE:
+          // Prevent page scroll on spacebar
+          if (!isInputFocused) {
+            this.togglePlayPause();
+          } else {
+            handled = false;
+          }
+          break;
+
+        case KEYBOARD_SHORTCUTS.SEEK_FORWARD:
+          this.seekRelative(SEEK_STEP_SECONDS);
+          break;
+
+        case KEYBOARD_SHORTCUTS.SEEK_BACKWARD:
+          this.seekRelative(-SEEK_STEP_SECONDS);
+          break;
+
+        case KEYBOARD_SHORTCUTS.VOLUME_UP:
+          this.adjustVolume(VOLUME_STEP);
+          break;
+
+        case KEYBOARD_SHORTCUTS.VOLUME_DOWN:
+          this.adjustVolume(-VOLUME_STEP);
+          break;
