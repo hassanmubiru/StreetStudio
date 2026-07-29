@@ -937,3 +937,73 @@ describe('validateColor', () => {
     expect(validateColor('red')).toBe(false);
   });
 });
+
+describe('validateIpAddress', () => {
+  it('should accept valid IPv4 addresses', () => {
+    expect(validateIpAddress('192.168.1.1')).toBe(true);
+    expect(validateIpAddress('10.0.0.1')).toBe(true);
+    expect(validateIpAddress('255.255.255.255')).toBe(true);
+  });
+
+  it('should accept CIDR notation', () => {
+    expect(validateIpAddress('192.168.1.0/24')).toBe(true);
+    expect(validateIpAddress('10.0.0.0/8')).toBe(true);
+  });
+
+  it('should reject invalid formats', () => {
+    expect(validateIpAddress('not-an-ip')).toBe(false);
+    expect(validateIpAddress('')).toBe(false);
+    expect(validateIpAddress('192.168.1')).toBe(false);
+  });
+});
+
+describe('validateWebhookUrl', () => {
+  it('should accept valid HTTPS URLs', () => {
+    expect(validateWebhookUrl('https://hooks.slack.com/services/T/B/x')).toBe(true);
+    expect(validateWebhookUrl('https://example.com/webhook')).toBe(true);
+  });
+
+  it('should reject HTTP URLs', () => {
+    expect(validateWebhookUrl('http://example.com/webhook')).toBe(false);
+  });
+
+  it('should reject invalid URLs', () => {
+    expect(validateWebhookUrl('not-a-url')).toBe(false);
+    expect(validateWebhookUrl('')).toBe(false);
+  });
+});
+
+describe('createSecurityValidator', () => {
+  it('should validate password min length bounds', () => {
+    const validator = createSecurityValidator();
+    const tooSmall = validator.validate({ passwordMinLength: 3, sessionTimeoutMinutes: 60, maxLoginAttempts: 5 });
+    expect(tooSmall.isValid).toBe(false);
+    expect(tooSmall.errors.passwordMinLength).toBeTruthy();
+
+    const tooLarge = validator.validate({ passwordMinLength: 200, sessionTimeoutMinutes: 60, maxLoginAttempts: 5 });
+    expect(tooLarge.isValid).toBe(false);
+  });
+
+  it('should validate session timeout bounds', () => {
+    const validator = createSecurityValidator();
+    const tooSmall = validator.validate({ passwordMinLength: 8, sessionTimeoutMinutes: 2, maxLoginAttempts: 5 });
+    expect(tooSmall.isValid).toBe(false);
+    expect(tooSmall.errors.sessionTimeoutMinutes).toBeTruthy();
+
+    const tooLarge = validator.validate({ passwordMinLength: 8, sessionTimeoutMinutes: 20000, maxLoginAttempts: 5 });
+    expect(tooLarge.isValid).toBe(false);
+  });
+
+  it('should validate max login attempts bounds', () => {
+    const validator = createSecurityValidator();
+    const tooSmall = validator.validate({ passwordMinLength: 8, sessionTimeoutMinutes: 60, maxLoginAttempts: 1 });
+    expect(tooSmall.isValid).toBe(false);
+    expect(tooSmall.errors.maxLoginAttempts).toBeTruthy();
+  });
+
+  it('should pass for valid settings', () => {
+    const validator = createSecurityValidator();
+    const result = validator.validate({ passwordMinLength: 12, sessionTimeoutMinutes: 480, maxLoginAttempts: 5 });
+    expect(result.isValid).toBe(true);
+  });
+});
