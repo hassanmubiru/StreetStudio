@@ -494,7 +494,7 @@ describe('AdvancedSearchService', () => {
       const newService = new AdvancedSearchService();
       const searches = newService.getSavedSearches();
       expect(searches).toHaveLength(1);
-      expect(searches[0].name).toBe('Loaded');
+      expect(searches[0]!.name).toBe('Loaded');
       newService.destroy();
     });
   });
