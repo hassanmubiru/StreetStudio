@@ -561,7 +561,7 @@ export class BillingSettingsPage {
     const setDefaultBtns = this.element.querySelectorAll('.set-default-btn');
     setDefaultBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const methodId = (e.target as HTMLElement).dataset.methodId;
+        const methodId = (e.currentTarget as HTMLElement).dataset.methodId;
         if (methodId) this.handleSetDefaultPaymentMethod(methodId);
       });
     });
@@ -570,7 +570,7 @@ export class BillingSettingsPage {
     const removeBtns = this.element.querySelectorAll('.remove-method-btn');
     removeBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const methodId = (e.target as HTMLElement).dataset.methodId;
+        const methodId = (e.currentTarget as HTMLElement).dataset.methodId;
         if (methodId) this.handleRemovePaymentMethod(methodId);
       });
     });
@@ -583,7 +583,7 @@ export class BillingSettingsPage {
     const selectPlanBtns = this.element.querySelectorAll('.select-plan-btn:not([disabled])');
     selectPlanBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const planId = (e.target as HTMLElement).dataset.planId;
+        const planId = (e.currentTarget as HTMLElement).dataset.planId;
         if (planId) this.handleSelectPlan(planId);
       });
     });
