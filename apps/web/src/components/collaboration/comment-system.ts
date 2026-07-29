@@ -721,3 +721,47 @@ export class TimelineCommentMarkers {
     return this.container;
   }
 }
+
+// --------------------------------------------------------------------------
+// CommentModerationTools - Moderation tools for organization admins
+// --------------------------------------------------------------------------
+
+/** Moderation statistics. */
+export interface ModerationStats {
+  total: number;
+  visible: number;
+  hidden: number;
+  pinned: number;
+  deleted: number;
+}
+
+/**
+ * CommentModerationTools provides admin controls for bulk comment moderation.
+ * Includes filtering by status, bulk actions, and moderation statistics.
+ */
+export class CommentModerationTools {
+  private container: HTMLElement;
+  private callbacks: CommentSystemCallbacks;
+  private stats: ModerationStats = { total: 0, visible: 0, hidden: 0, pinned: 0, deleted: 0 };
+  private filterStatus: CommentStatus | 'all' = 'all';
+  private onFilterChange?: (status: CommentStatus | 'all') => void;
+
+  constructor(
+    container: HTMLElement,
+    callbacks: CommentSystemCallbacks,
+    onFilterChange?: (status: CommentStatus | 'all') => void
+  ) {
+    this.container = container;
+    this.callbacks = callbacks;
+    this.onFilterChange = onFilterChange;
+    this.container.className = 'comment-moderation-tools';
+    this.container.setAttribute('role', 'toolbar');
+    this.container.setAttribute('aria-label', 'Comment moderation tools');
+    this.render();
+  }
+
+  /** Update moderation statistics. */
+  public updateStats(stats: ModerationStats): void {
+    this.stats = stats;
+    this.render();
+  }

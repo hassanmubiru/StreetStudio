@@ -957,3 +957,56 @@ export class TimelineEditor {
     this.renderWaveform();
     this.notifyStateChange();
   }
+
+  /** Load audio waveform data for visualization */
+  public loadWaveform(data: WaveformData): void {
+    if (!this.waveformRenderer) return;
+    this.waveformRenderer.setWaveformData(data);
+    this.updateWaveformSize();
+    this.renderWaveform();
+  }
+
+  /** Get the current timeline state */
+  public getState(): TimelineState {
+    return { ...this.state, clips: this.state.clips.map(c => ({ ...c })) };
+  }
+
+  /** Get a specific clip by ID */
+  public getClip(clipId: string): TimelineClip | undefined {
+    return this.state.clips.find(c => c.id === clipId);
+  }
+
+  /** Get the frame rate */
+  public getFrameRate(): number {
+    return this.state.frameRate;
+  }
+
+  /** Set the frame rate */
+  public setFrameRate(frameRate: number): void {
+    if (frameRate <= 0) return;
+    this.state.frameRate = frameRate;
+    this.updateTimecodeDisplay();
+    this.renderRuler();
+    this.notifyStateChange();
+  }
+
+  // ─── Internal Rendering ───────────────────────────────────────────────────
+
+  private renderRuler(): void {
+    if (!this.rulerElement) return;
+    const width = this.rulerElement.clientWidth;
+    if (width <= 0) return;
+
+    const framesVisible = this.getVisibleFrameCount();
+    const interval = this.calculateRulerInterval(framesVisible);
+    const startFrame = this.state.scrollOffset;
+    const firstMark = Math.ceil(startFrame / interval) * interval;
+
+    let html = '';
+    for (let frame = firstMark; frame < startFrame + framesVisible; frame += interval) {
+      const x = frameToPixel(frame - startFrame, this.state.zoomLevel);
+      const timecode = frameToTimecode(frame, this.state.frameRate);
+      html += `<span class="ruler-mark" style="left:${x}px" aria-hidden="true">${timecode}</span>`;
+    }
+    this.rulerElement.innerHTML = html;
+  }
