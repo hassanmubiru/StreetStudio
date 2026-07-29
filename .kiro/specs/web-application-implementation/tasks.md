@@ -310,14 +310,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
 - [ ] 10. Organization Management Interface
-  - [-] 10.1 Build member management interface
+  - [x] 10.1 Build member management interface
     - Create members page with role display and last activity
     - Implement member invitation form with role selection
     - Build member profile pages with activity history
     - Add member removal with confirmation and content handling
     - _Requirements: 8.1, 8.2, 8.8_
 
-  - [-] 10.2 Implement role and permission management
+  - [x] 10.2 Implement role and permission management
     - Create role management interface with permission matrix display
     - Build custom permission configuration for advanced users
     - Add team creation and member assignment interface
@@ -345,7 +345,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - _Requirements: 8.1, 8.3, 8.6_
 
 - [ ] 11. Settings and Profile Management
-  - [-] 11.1 Build user profile settings
+  - [x] 11.1 Build user profile settings
     - Create profile page with avatar upload and display name editing
     - Implement bio editing with character limits and formatting
     - Add timezone selection with automatic detection option
@@ -380,7 +380,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - _Requirements: 9.1, 9.2, 9.4_
 
 - [ ] 12. Search and Discovery Implementation
-  - [-] 12.1 Build global search interface
+  - [x] 12.1 Build global search interface
     - Create global search modal accessible via Cmd/Ctrl+K shortcut
     - Implement instant search with real-time results as users type
     - Add search autocomplete with recent searches and suggestions
