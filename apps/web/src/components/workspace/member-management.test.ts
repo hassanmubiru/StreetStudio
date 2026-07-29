@@ -122,7 +122,7 @@ describe('MemberManagement', () => {
       const element = await management.getElement();
       container.appendChild(element);
 
-      const rows = element.querySelectorAll('[data-member-id]');
+      const rows = element.querySelectorAll('tr[data-member-id]');
       expect(rows.length).toBe(3);
     });
 

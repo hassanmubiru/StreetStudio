@@ -877,3 +877,59 @@ describe('TeamManagement', () => {
     expect(container.querySelector('.team-list-empty')?.textContent).toContain('No teams');
   });
 });
+
+// --------------------------------------------------------------------------
+// Permission Inheritance
+// --------------------------------------------------------------------------
+
+describe('resolvePermissions', () => {
+  const resources = [{ id: 'projects', name: 'Projects', description: '' }];
+  const actions = [
+    { id: 'view', name: 'View', description: '' },
+    { id: 'edit', name: 'Edit', description: '' },
+  ];
+
+  it('grants permission from highest priority source', () => {
+    const sources: PermissionSource[] = [
+      { type: 'role', id: 'role-1', name: 'Editor', priority: 1 },
+      { type: 'team', id: 'team-1', name: 'Design', priority: 2 },
+    ];
+    const permsBySource = new Map<string, string[]>();
+    permsBySource.set('role-1', ['projects:view']);
+    permsBySource.set('team-1', ['projects:view', 'projects:edit']);
+
+    const resolved = resolvePermissions(sources, permsBySource, [], resources, actions);
+    const viewPerm = resolved.find(r => r.actionId === 'view');
+    expect(viewPerm?.granted).toBe(true);
+    expect(viewPerm?.source.name).toBe('Design'); // higher priority
+  });
+
+  it('denies permission when no source grants it', () => {
+    const sources: PermissionSource[] = [
+      { type: 'role', id: 'role-1', name: 'Viewer', priority: 1 },
+    ];
+    const permsBySource = new Map<string, string[]>();
+    permsBySource.set('role-1', ['projects:view']);
+
+    const resolved = resolvePermissions(sources, permsBySource, [], resources, actions);
+    const editPerm = resolved.find(r => r.actionId === 'edit');
+    expect(editPerm?.granted).toBe(false);
+  });
+
+  it('applies direct overrides over source permissions', () => {
+    const sources: PermissionSource[] = [
+      { type: 'role', id: 'role-1', name: 'Admin', priority: 10 },
+    ];
+    const permsBySource = new Map<string, string[]>();
+    permsBySource.set('role-1', ['projects:view', 'projects:edit']);
+
+    const overrides: PermissionOverride[] = [
+      { resourceId: 'projects', actionId: 'edit', granted: false, sourceType: 'direct', sourceId: 'direct' },
+    ];
+
+    const resolved = resolvePermissions(sources, permsBySource, overrides, resources, actions);
+    const editPerm = resolved.find(r => r.actionId === 'edit');
+    expect(editPerm?.granted).toBe(false);
+    expect(editPerm?.isOverridden).toBe(true);
+    expect(editPerm?.source.type).toBe('direct');
+  });
