@@ -95,3 +95,87 @@ describe('AdaptiveVideoPlayer', () => {
     }
     container.remove();
   });
+
+  describe('initialization', () => {
+    it('creates video element and controls inside the container', () => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+      const video = container.querySelector('video');
+      const controls = container.querySelector('.video-player-controls');
+      expect(video).not.toBeNull();
+      expect(controls).not.toBeNull();
+    });
+
+    it('sets proper ARIA attributes on container', () => {
+      player = new AdaptiveVideoPlayer(container);
+      expect(container.getAttribute('role')).toBe('region');
+      expect(container.getAttribute('aria-label')).toBe('Video player');
+    });
+
+    it('sets proper ARIA attributes on controls toolbar', () => {
+      player = new AdaptiveVideoPlayer(container);
+      const controls = container.querySelector('.video-player-controls');
+      expect(controls?.getAttribute('role')).toBe('toolbar');
+      expect(controls?.getAttribute('aria-label')).toBe('Video playback controls');
+    });
+
+    it('applies initial options to video element', () => {
+      player = new AdaptiveVideoPlayer(container, {
+        muted: true,
+        volume: 0.5,
+        playbackRate: 1.5,
+        loop: true,
+        preload: 'auto',
+      });
+      const video = player.getVideoElement();
+      expect(video.muted).toBe(true);
+      expect(video.volume).toBe(0.5);
+      expect(video.playbackRate).toBe(1.5);
+      expect(video.loop).toBe(true);
+      expect(video.preload).toBe('auto');
+    });
+
+    it('uses default options when none provided', () => {
+      player = new AdaptiveVideoPlayer(container);
+      const state = player.getState();
+      expect(state.volume).toBe(1);
+      expect(state.isMuted).toBe(false);
+      expect(state.playbackRate).toBe(1);
+      expect(state.isPlaying).toBe(false);
+    });
+  });
+
+  describe('playback controls', () => {
+    beforeEach(() => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+    });
+
+    it('play() calls video.play()', async () => {
+      const video = player.getVideoElement();
+      const playSpy = vi.spyOn(video, 'play').mockResolvedValue();
+      await player.play();
+      expect(playSpy).toHaveBeenCalled();
+    });
+
+    it('pause() calls video.pause()', () => {
+      const video = player.getVideoElement();
+      const pauseSpy = vi.spyOn(video, 'pause');
+      player.pause();
+      expect(pauseSpy).toHaveBeenCalled();
+    });
+
+    it('togglePlayPause() pauses when playing', () => {
+      const video = player.getVideoElement();
+      // Simulate playing state
+      video.dispatchEvent(new Event('play'));
+      const pauseSpy = vi.spyOn(video, 'pause');
+      player.togglePlayPause();
+      expect(pauseSpy).toHaveBeenCalled();
+    });
+
+    it('togglePlayPause() plays when paused', async () => {
+      const video = player.getVideoElement();
+      const playSpy = vi.spyOn(video, 'play').mockResolvedValue();
+      player.togglePlayPause();
+      expect(playSpy).toHaveBeenCalled();
+    });
+  });

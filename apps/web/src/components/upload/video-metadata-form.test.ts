@@ -214,3 +214,66 @@ describe('VideoMetadataForm', () => {
       expect(titleError?.textContent).toBeTruthy();
     });
   });
+
+  describe('Tag Management', () => {
+    beforeEach(() => {
+      form = new VideoMetadataForm(container, {
+        initialData: { title: 'Video' },
+        existingTags: [
+          { name: 'tutorial', count: 5 },
+          { name: 'demo', count: 3 },
+          { name: 'testing', count: 1 }
+        ]
+      });
+    });
+
+    it('should add tags via Enter key', () => {
+      const tagInput = container.querySelector('#tag-input') as HTMLInputElement;
+      tagInput.value = 'newtag';
+      tagInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const keyEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      tagInput.dispatchEvent(keyEvent);
+
+      const data = form.getFormData();
+      expect(data.tags).toContain('newtag');
+    });
+
+    it('should add tags via comma key', () => {
+      const tagInput = container.querySelector('#tag-input') as HTMLInputElement;
+      tagInput.value = 'commtag';
+      tagInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const keyEvent = new KeyboardEvent('keydown', { key: ',', bubbles: true });
+      tagInput.dispatchEvent(keyEvent);
+
+      const data = form.getFormData();
+      expect(data.tags).toContain('commtag');
+    });
+
+    it('should normalize tags to lowercase', () => {
+      const tagInput = container.querySelector('#tag-input') as HTMLInputElement;
+      tagInput.value = 'MyTag';
+      tagInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const keyEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      tagInput.dispatchEvent(keyEvent);
+
+      const data = form.getFormData();
+      expect(data.tags).toContain('mytag');
+    });
+
+    it('should prevent duplicate tags', () => {
+      form.setFormData({ title: 'Video', tags: ['existing'] });
+
+      const tagInput = container.querySelector('#tag-input') as HTMLInputElement;
+      tagInput.value = 'existing';
+      tagInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const keyEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      tagInput.dispatchEvent(keyEvent);
+
+      const data = form.getFormData();
+      const existingCount = data.tags.filter(t => t === 'existing').length;
+      expect(existingCount).toBe(1);
+    });
