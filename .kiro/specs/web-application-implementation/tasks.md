@@ -200,7 +200,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - _Requirements: 4.1, 4.4, 4.5_
 
 - [ ] 7. Video Player and Playback System
-  - [-] 7.1 Implement adaptive video player
+  - [ ] 7.1 Implement adaptive video player
     - Build HTML5 video player with adaptive bitrate streaming
     - Create standard playback controls (play, pause, seek, volume, speed)
     - Add keyboard shortcuts for all playback functions
