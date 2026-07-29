@@ -295,3 +295,287 @@ describe('AdaptiveVideoPlayer', () => {
       expect(player.getState().playbackRate).toBe(0.25);
     });
   });
+
+  describe('keyboard shortcuts', () => {
+    beforeEach(() => {
+      player = new AdaptiveVideoPlayer(container, { enableKeyboardShortcuts: true }, callbacks);
+    });
+
+    it('spacebar toggles play/pause', () => {
+      const video = player.getVideoElement();
+      const playSpy = vi.spyOn(video, 'play').mockResolvedValue();
+      pressKey(' ');
+      expect(playSpy).toHaveBeenCalled();
+    });
+
+    it('ArrowRight seeks forward by SEEK_STEP_SECONDS', () => {
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'duration', { value: 120, writable: true });
+      video.dispatchEvent(new Event('durationchange'));
+      Object.defineProperty(video, 'currentTime', { value: 30, writable: true, configurable: true });
+      pressKey('ArrowRight');
+      expect(player.getState().currentTime).toBe(35);
+    });
+
+    it('ArrowLeft seeks backward by SEEK_STEP_SECONDS', () => {
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'duration', { value: 120, writable: true });
+      video.dispatchEvent(new Event('durationchange'));
+      Object.defineProperty(video, 'currentTime', { value: 30, writable: true, configurable: true });
+      pressKey('ArrowLeft');
+      expect(player.getState().currentTime).toBe(25);
+    });
+
+    it('ArrowUp increases volume', () => {
+      player.setVolume(0.5);
+      pressKey('ArrowUp');
+      expect(player.getState().volume).toBeCloseTo(0.6);
+    });
+
+    it('ArrowDown decreases volume', () => {
+      player.setVolume(0.5);
+      pressKey('ArrowDown');
+      expect(player.getState().volume).toBeCloseTo(0.4);
+    });
+
+    it('m toggles mute', () => {
+      expect(player.getState().isMuted).toBe(false);
+      pressKey('m');
+      expect(player.getState().isMuted).toBe(true);
+    });
+
+    it('> increases speed', () => {
+      player.setPlaybackRate(1);
+      pressKey('>');
+      expect(player.getState().playbackRate).toBe(1.25);
+    });
+
+    it('< decreases speed', () => {
+      player.setPlaybackRate(1);
+      pressKey('<');
+      expect(player.getState().playbackRate).toBe(0.75);
+    });
+
+    it('number keys 1-8 set speed presets', () => {
+      pressKey('1');
+      expect(player.getState().playbackRate).toBe(PLAYBACK_RATES[0]);
+      pressKey('4');
+      expect(player.getState().playbackRate).toBe(PLAYBACK_RATES[3]);
+      pressKey('8');
+      expect(player.getState().playbackRate).toBe(PLAYBACK_RATES[7]);
+    });
+
+    it('ignores shortcuts when modifier keys are pressed', () => {
+      const video = player.getVideoElement();
+      const playSpy = vi.spyOn(video, 'play').mockResolvedValue();
+      pressKey(' ', { ctrlKey: true });
+      expect(playSpy).not.toHaveBeenCalled();
+    });
+
+    it('ignores shortcuts when external input is focused', () => {
+      const input = document.createElement('input');
+      document.body.appendChild(input);
+      input.focus();
+      const video = player.getVideoElement();
+      const playSpy = vi.spyOn(video, 'play').mockResolvedValue();
+      pressKey(' ');
+      expect(playSpy).not.toHaveBeenCalled();
+      input.remove();
+    });
+  });
+
+  describe('fullscreen', () => {
+    beforeEach(() => {
+      player = new AdaptiveVideoPlayer(container, { enableFullscreen: true }, callbacks);
+    });
+
+    it('toggleFullscreen() calls requestFullscreen when not fullscreen', async () => {
+      const requestSpy = vi.spyOn(container, 'requestFullscreen').mockResolvedValue();
+      await player.toggleFullscreen();
+      expect(requestSpy).toHaveBeenCalled();
+    });
+
+    it('toggleFullscreen() calls exitFullscreen when in fullscreen', async () => {
+      Object.defineProperty(document, 'fullscreenElement', { value: container, configurable: true });
+      document.dispatchEvent(new Event('fullscreenchange'));
+
+      const exitSpy = vi.spyOn(document, 'exitFullscreen').mockResolvedValue();
+      await player.toggleFullscreen();
+      expect(exitSpy).toHaveBeenCalled();
+
+      Object.defineProperty(document, 'fullscreenElement', { value: null, configurable: true });
+    });
+
+    it('does nothing when fullscreen is disabled', async () => {
+      player.destroy();
+      player = new AdaptiveVideoPlayer(container, { enableFullscreen: false }, callbacks);
+      const requestSpy = vi.spyOn(container, 'requestFullscreen').mockResolvedValue();
+      await player.toggleFullscreen();
+      expect(requestSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('picture-in-picture', () => {
+    beforeEach(() => {
+      player = new AdaptiveVideoPlayer(container, { enablePictureInPicture: true }, callbacks);
+    });
+
+    it('togglePictureInPicture() calls requestPictureInPicture', async () => {
+      const video = player.getVideoElement();
+      const pipSpy = vi.spyOn(video, 'requestPictureInPicture').mockResolvedValue({} as any);
+      await player.togglePictureInPicture();
+      expect(pipSpy).toHaveBeenCalled();
+    });
+
+    it('togglePictureInPicture() exits PIP when active', async () => {
+      const video = player.getVideoElement();
+      video.dispatchEvent(new Event('enterpictureinpicture'));
+
+      const exitSpy = vi.spyOn(document, 'exitPictureInPicture').mockResolvedValue();
+      await player.togglePictureInPicture();
+      expect(exitSpy).toHaveBeenCalled();
+    });
+
+    it('does nothing when PIP is disabled', async () => {
+      player.destroy();
+      player = new AdaptiveVideoPlayer(container, { enablePictureInPicture: false }, callbacks);
+      const video = player.getVideoElement();
+      const pipSpy = vi.spyOn(video, 'requestPictureInPicture').mockResolvedValue({} as any);
+      await player.togglePictureInPicture();
+      expect(pipSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('source loading', () => {
+    beforeEach(() => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+    });
+
+    it('loads mp4 source directly', async () => {
+      const sources: VideoSource[] = [{ url: 'test.mp4', type: 'mp4' }];
+      await player.loadSource(sources);
+      expect(player.getVideoElement().src).toContain('test.mp4');
+    });
+
+    it('loads webm source directly', async () => {
+      const sources: VideoSource[] = [{ url: 'test.webm', type: 'webm' }];
+      await player.loadSource(sources);
+      expect(player.getVideoElement().src).toContain('test.webm');
+    });
+
+    it('falls back to direct load when HLS is not supported', async () => {
+      const sources: VideoSource[] = [{ url: 'stream.m3u8', type: 'hls' }];
+      await player.loadSource(sources);
+      expect(player.getVideoElement().src).toContain('stream.m3u8');
+    });
+
+    it('getSources() returns loaded sources', async () => {
+      const sources: VideoSource[] = [
+        { url: 'test.mp4', type: 'mp4' },
+        { url: 'test.webm', type: 'webm' },
+      ];
+      await player.loadSource(sources);
+      expect(player.getSources()).toEqual(sources);
+    });
+  });
+
+  describe('event callbacks', () => {
+    beforeEach(() => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+    });
+
+    it('fires onPlay when video plays', () => {
+      const video = player.getVideoElement();
+      video.dispatchEvent(new Event('play'));
+      expect(callbacks.onPlay).toHaveBeenCalled();
+    });
+
+    it('fires onPause when video pauses', () => {
+      const video = player.getVideoElement();
+      video.dispatchEvent(new Event('pause'));
+      expect(callbacks.onPause).toHaveBeenCalled();
+    });
+
+    it('fires onEnded when video ends', () => {
+      const video = player.getVideoElement();
+      video.dispatchEvent(new Event('ended'));
+      expect(callbacks.onEnded).toHaveBeenCalled();
+    });
+
+    it('fires onBuffering(true) when waiting', () => {
+      const video = player.getVideoElement();
+      video.dispatchEvent(new Event('waiting'));
+      expect(callbacks.onBuffering).toHaveBeenCalledWith(true);
+    });
+
+    it('fires onBuffering(false) when canplay', () => {
+      const video = player.getVideoElement();
+      video.dispatchEvent(new Event('canplay'));
+      expect(callbacks.onBuffering).toHaveBeenCalledWith(false);
+    });
+
+    it('fires onError when video has error', () => {
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'error', {
+        value: { code: 4, message: 'Not supported' },
+        configurable: true,
+      });
+      video.dispatchEvent(new Event('error'));
+      expect(callbacks.onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 4,
+          message: 'Video format not supported',
+        })
+      );
+    });
+
+    it('fires onTimeUpdate during playback', () => {
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'currentTime', { value: 42, writable: true, configurable: true });
+      video.dispatchEvent(new Event('timeupdate'));
+      expect(callbacks.onTimeUpdate).toHaveBeenCalledWith(42);
+    });
+  });
+
+  describe('destroy', () => {
+    it('removes keyboard event listener', () => {
+      player = new AdaptiveVideoPlayer(container, { enableKeyboardShortcuts: true }, callbacks);
+      const removeSpy = vi.spyOn(document, 'removeEventListener');
+      player.destroy();
+      expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+    });
+
+    it('removes fullscreen event listener', () => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+      const removeSpy = vi.spyOn(document, 'removeEventListener');
+      player.destroy();
+      expect(removeSpy).toHaveBeenCalledWith('fullscreenchange', expect.any(Function));
+    });
+
+    it('clears the container', () => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+      player.destroy();
+      expect(container.innerHTML).toBe('');
+    });
+
+    it('does not double-destroy', () => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+      player.destroy();
+      expect(() => player.destroy()).not.toThrow();
+    });
+  });
+
+  describe('getState', () => {
+    it('returns a copy of playback state', () => {
+      player = new AdaptiveVideoPlayer(container, { volume: 0.7, playbackRate: 1.5 });
+      const state = player.getState();
+      expect(state.volume).toBe(0.7);
+      expect(state.playbackRate).toBe(1.5);
+      expect(state.isPlaying).toBe(false);
+      expect(state.isPaused).toBe(true);
+      // Mutation of returned state should not affect internal state
+      state.volume = 0;
+      expect(player.getState().volume).toBe(0.7);
+    });
+  });
+});
