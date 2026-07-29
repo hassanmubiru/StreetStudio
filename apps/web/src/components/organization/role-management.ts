@@ -413,7 +413,13 @@ export class RoleManagement {
             p => p.resourceId === resourceId && p.actionId === actionId
           );
           if (idx >= 0) {
-            editablePermissions[idx] = { ...editablePermissions[idx], granted };
+            editablePermissions[idx] = {
+              resourceId: editablePermissions[idx].resourceId,
+              actionId: editablePermissions[idx].actionId,
+              granted,
+              inherited: editablePermissions[idx].inherited,
+              overridden: editablePermissions[idx].overridden,
+            };
           }
         },
       }
