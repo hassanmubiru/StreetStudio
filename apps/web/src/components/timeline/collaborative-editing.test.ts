@@ -300,3 +300,58 @@ describe('ConflictDetector', () => {
     expect(detector.getAllConflicts()).toHaveLength(0);
   });
 });
+
+// ─── EditHistoryManager ───────────────────────────────────────────────────────
+
+describe('EditHistoryManager', () => {
+  let history: EditHistoryManager;
+
+  beforeEach(() => {
+    history = new EditHistoryManager(50);
+  });
+
+  it('records an edit and assigns id and timestamp', () => {
+    const op = history.recordEdit({
+      userId: 'user-1',
+      type: 'trim',
+      clipId: 'clip-A',
+      description: 'Trimmed in point',
+      previousState: '{"inPoint":0}',
+      newState: '{"inPoint":30}',
+    });
+
+    expect(op.id).toBeDefined();
+    expect(op.timestamp).toBeDefined();
+    expect(op.clipId).toBe('clip-A');
+  });
+
+  it('increments version on each record', () => {
+    expect(history.getCurrentVersion()).toBe(0);
+
+    history.recordEdit({
+      userId: 'user-1',
+      type: 'trim',
+      clipId: 'clip-A',
+      description: 'Edit 1',
+      previousState: '',
+      newState: '',
+    });
+    expect(history.getCurrentVersion()).toBe(1);
+
+    history.recordEdit({
+      userId: 'user-1',
+      type: 'split',
+      clipId: 'clip-B',
+      description: 'Edit 2',
+      previousState: '',
+      newState: '',
+    });
+    expect(history.getCurrentVersion()).toBe(2);
+  });
+
+  it('getHistory returns all recorded operations', () => {
+    history.recordEdit({ userId: 'u1', type: 'trim', clipId: 'c1', description: '', previousState: '', newState: '' });
+    history.recordEdit({ userId: 'u2', type: 'split', clipId: 'c2', description: '', previousState: '', newState: '' });
+
+    expect(history.getHistory()).toHaveLength(2);
+  });

@@ -442,3 +442,71 @@ describe('ExportManager', () => {
       expect(manager.getQueuedCount()).toBeGreaterThan(0);
     });
   });
+
+  describe('progress tracking', () => {
+    it('updates job progress', () => {
+      const job = manager.startExport(createExportOptions());
+      const progress: ExportProgress = {
+        exportId: job.id,
+        status: 'encoding',
+        percent: 50,
+        currentStep: 'Encoding video',
+        elapsedMs: 5000,
+        estimatedRemainingMs: 5000,
+        bytesProcessed: 5000000,
+        totalBytes: 10000000,
+      };
+      manager.updateProgress(job.id, progress);
+      const updated = manager.getJob(job.id);
+      expect(updated?.progress).toBe(50);
+      expect(updated?.status).toBe('encoding');
+      expect(callbacks.onExportProgress).toHaveBeenCalledWith(progress);
+    });
+
+    it('clamps progress to 0-100', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.updateProgress(job.id, {
+        exportId: job.id,
+        status: 'encoding',
+        percent: 150,
+        currentStep: 'Over',
+        elapsedMs: 0,
+        estimatedRemainingMs: 0,
+        bytesProcessed: 0,
+        totalBytes: 0,
+      });
+      expect(manager.getJob(job.id)?.progress).toBe(100);
+    });
+
+    it('completes job on completed status', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.updateProgress(job.id, {
+        exportId: job.id,
+        status: 'completed',
+        percent: 100,
+        currentStep: 'Done',
+        elapsedMs: 10000,
+        estimatedRemainingMs: 0,
+        bytesProcessed: 10000000,
+        totalBytes: 10000000,
+      });
+      expect(manager.getJob(job.id)?.status).toBe('completed');
+      expect(callbacks.onExportComplete).toHaveBeenCalled();
+    });
+
+    it('fails job on failed status', () => {
+      const job = manager.startExport(createExportOptions());
+      manager.updateProgress(job.id, {
+        exportId: job.id,
+        status: 'failed',
+        percent: 30,
+        currentStep: 'Encoding error',
+        elapsedMs: 5000,
+        estimatedRemainingMs: 0,
+        bytesProcessed: 3000000,
+        totalBytes: 10000000,
+      });
+      expect(manager.getJob(job.id)?.status).toBe('failed');
+      expect(callbacks.onExportError).toHaveBeenCalled();
+    });
+  });

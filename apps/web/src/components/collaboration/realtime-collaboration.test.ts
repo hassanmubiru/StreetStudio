@@ -457,3 +457,63 @@ describe('Typing Indicators', () => {
     });
   });
 });
+
+// ==========================================================================
+// Collaborative Viewing Tests
+// ==========================================================================
+
+describe('Collaborative Viewing', () => {
+  describe('needsSyncCorrection', () => {
+    it('returns false when within tolerance', () => {
+      expect(needsSyncCorrection(10, 11, 2)).toBe(false);
+    });
+
+    it('returns true when beyond tolerance', () => {
+      expect(needsSyncCorrection(10, 15, 2)).toBe(true);
+    });
+
+    it('returns false when exactly at tolerance boundary', () => {
+      expect(needsSyncCorrection(10, 12, 2)).toBe(false);
+    });
+
+    it('handles negative difference', () => {
+      expect(needsSyncCorrection(15, 10, 2)).toBe(true);
+    });
+  });
+
+  describe('adjustForLatency', () => {
+    it('returns remote time when not playing', () => {
+      const result = adjustForLatency(10, new Date().toISOString(), false);
+      expect(result).toBe(10);
+    });
+
+    it('adds estimated latency when playing', () => {
+      const pastTime = new Date(Date.now() - 500).toISOString();
+      const result = adjustForLatency(10, pastTime, true, 1);
+      // Should be approximately 10.5 (10 + 0.5s latency)
+      expect(result).toBeGreaterThan(10);
+      expect(result).toBeLessThan(11);
+    });
+
+    it('accounts for playback rate', () => {
+      const pastTime = new Date(Date.now() - 1000).toISOString();
+      const result = adjustForLatency(10, pastTime, true, 2);
+      // Should be approximately 12 (10 + 1s * 2x rate)
+      expect(result).toBeGreaterThan(11);
+      expect(result).toBeLessThan(13);
+    });
+  });
+
+  describe('formatSyncStatus', () => {
+    it('formats host status', () => {
+      expect(formatSyncStatus('host')).toContain('hosting');
+    });
+
+    it('formats follower status with host name', () => {
+      expect(formatSyncStatus('follower', 'Alice')).toContain('Alice');
+    });
+
+    it('formats independent status', () => {
+      expect(formatSyncStatus('independent')).toContain('disabled');
+    });
+  });
