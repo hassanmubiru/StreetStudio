@@ -1,34 +1,40 @@
 /**
- * Timeline Components
+ * Timeline Editor Components
  * 
- * Frame-accurate timeline with zoom controls, playback position indicator,
- * scrubbing, markers for comments/annotations, and jump-to-timestamp functionality.
+ * Frame-accurate timeline editor with zoom, navigation, trim tools,
+ * split functionality, and audio waveform visualization.
  * 
- * Requirements: 5.3, 5.10, 6.1
+ * Requirements: 6.1, 6.2, 6.3, 6.9
  */
-
 export {
-  TimelineController,
-  snapToFrame,
-  frameToTime,
-  timeToFrame,
-  formatTimecode,
-  DEFAULT_FRAME_RATE,
+  TimelineEditor,
+  WaveformRenderer,
+  frameToTimecode,
+  timecodeToFrame,
+  frameToSeconds,
+  secondsToFrame,
+  frameToPixel,
+  pixelToFrame,
   MIN_ZOOM,
   MAX_ZOOM,
   DEFAULT_ZOOM,
-} from './timeline-controller.js';
+  DEFAULT_FRAME_RATE,
+  PIXELS_PER_FRAME_BASE,
+  TRIM_HANDLE_WIDTH,
+  PLAYHEAD_WIDTH,
+  WAVEFORM_HEIGHT,
+  TIMELINE_TRACK_HEIGHT,
+  RULER_HEIGHT,
+  MIN_CLIP_FRAMES,
+} from './timeline-editor.js';
 
 export type {
-  TimelineMarker,
+  TimelineClip,
   TimelineState,
-  TimelineOptions,
-  TimelineCallbacks,
-} from './timeline-controller.js';
-
-export { TimelineComponent } from './timeline-component.js';
-
-export type {
-  TimelineComponentOptions,
-  TimelineComponentCallbacks,
-} from './timeline-component.js';
+  TrimMode,
+  TrimOperation,
+  SplitOperation,
+  WaveformData,
+  TimelineEditorOptions,
+  TimelineEditorCallbacks,
+} from './timeline-editor.js';
