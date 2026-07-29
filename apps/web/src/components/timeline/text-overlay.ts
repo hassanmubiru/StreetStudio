@@ -903,3 +903,74 @@ export class TextOverlayManager {
       String(ms).padStart(3, '0')
     );
   }
+
+  /**
+   * Parse VTT time string to seconds.
+   */
+  private parseVTTTime(timeStr: string): number {
+    const parts = timeStr.split(':');
+    if (parts.length === 3) {
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const secParts = parts[2].split('.');
+      const s = parseInt(secParts[0], 10);
+      const ms = secParts[1] ? parseInt(secParts[1].padEnd(3, '0'), 10) : 0;
+      return h * 3600 + m * 60 + s + ms / 1000;
+    }
+    if (parts.length === 2) {
+      const m = parseInt(parts[0], 10);
+      const secParts = parts[1].split('.');
+      const s = parseInt(secParts[0], 10);
+      const ms = secParts[1] ? parseInt(secParts[1].padEnd(3, '0'), 10) : 0;
+      return m * 60 + s + ms / 1000;
+    }
+    return 0;
+  }
+
+  // ─── State & Cleanup ───────────────────────────────────────────────────
+
+  /**
+   * Get the frame rate.
+   */
+  public getFrameRate(): number {
+    return this.options.frameRate;
+  }
+
+  /**
+   * Set the frame rate. Recalculates all timing.
+   */
+  public setFrameRate(frameRate: number): void {
+    if (frameRate <= 0) return;
+    this.options.frameRate = frameRate;
+  }
+
+  /**
+   * Get total overlay count.
+   */
+  public getOverlayCount(): number {
+    return this.overlays.size;
+  }
+
+  /**
+   * Get total caption count.
+   */
+  public getCaptionCount(): number {
+    return this.captions.size;
+  }
+
+  /**
+   * Clear all overlays and captions.
+   */
+  public clear(): void {
+    this.overlays.clear();
+    this.captions.clear();
+  }
+
+  /**
+   * Destroy the manager and release resources.
+   */
+  public destroy(): void {
+    this.clear();
+    this.speechToTextActive = false;
+  }
+}
