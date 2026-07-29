@@ -94,3 +94,197 @@ export function formatTimestamp(seconds: number): string {
   }
   return `${mins}:${String(secs).padStart(2, '0')}`;
 }
+
+/**
+ * Builds a tree structure from a flat list of comments.
+ * Top-level comments (no parentCommentId) become roots.
+ * Replies are nested under their parent.
+ */
+export function buildCommentTree(
+  comments: Comment[],
+  authorMap: Map<Uuid, CommentAuthor>
+): CommentWithState[] {
+  const map = new Map<Uuid, CommentWithState>();
+  const roots: CommentWithState[] = [];
+
+  // Create CommentWithState for each comment
+  for (const comment of comments) {
+    map.set(comment.id, {
+      ...comment,
+      status: 'visible',
+      author: authorMap.get(comment.authorId),
+      replies: [],
+      isCollapsed: false,
+    });
+  }
+
+  // Build the tree
+  for (const comment of comments) {
+    const node = map.get(comment.id)!;
+    if (comment.parentCommentId && map.has(comment.parentCommentId)) {
+      map.get(comment.parentCommentId)!.replies.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  // Sort roots by creation date (newest first)
+  roots.sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  return roots;
+}
+
+/**
+ * Calculates comment marker positions as percentages along a timeline.
+ */
+export function getCommentMarkerPositions(
+  comments: Comment[],
+  videoDuration: number
+): Array<{ commentId: Uuid; position: number; timestampSeconds: number }> {
+  if (videoDuration <= 0) return [];
+  return comments
+    .filter(c => c.timestampSeconds != null && c.timestampSeconds >= 0)
+    .map(c => ({
+      commentId: c.id,
+      position: Math.min(100, (c.timestampSeconds! / videoDuration) * 100),
+      timestampSeconds: c.timestampSeconds!,
+    }));
+}
+
+// --------------------------------------------------------------------------
+// CommentInput - Timestamped comment input with timeline integration
+// --------------------------------------------------------------------------
+
+/**
+ * CommentInput manages the comment composition area.
+ * It provides a textarea with optional timestamp anchoring,
+ * reply-to functionality, and @mention support.
+ */
+export class CommentInput {
+  private container: HTMLElement;
+  private textareaEl!: HTMLTextAreaElement;
+  private timestampToggle!: HTMLButtonElement;
+  private submitBtn!: HTMLButtonElement;
+  private timestampDisplay!: HTMLSpanElement;
+  private replyIndicator!: HTMLElement;
+  private mentionDropdown!: HTMLElement;
+
+  private includeTimestamp = true;
+  private currentTime = 0;
+  private replyToId: Uuid | null = null;
+  private callbacks: CommentSystemCallbacks;
+  private options: CommentSystemOptions;
+  private isSubmitting = false;
+
+  constructor(
+    container: HTMLElement,
+    options: CommentSystemOptions,
+    callbacks: CommentSystemCallbacks
+  ) {
+    this.container = container;
+    this.options = options;
+    this.callbacks = callbacks;
+    this.currentTime = options.currentTime ?? 0;
+    this.render();
+  }
+
+  private render(): void {
+    this.container.innerHTML = '';
+    this.container.className = 'comment-input-container';
+    this.container.setAttribute('role', 'form');
+    this.container.setAttribute('aria-label', 'Add comment');
+
+    // Reply indicator (hidden by default)
+    this.replyIndicator = document.createElement('div');
+    this.replyIndicator.className = 'comment-reply-indicator';
+    this.replyIndicator.style.display = 'none';
+    this.replyIndicator.setAttribute('aria-live', 'polite');
+    this.container.appendChild(this.replyIndicator);
+
+    // Textarea
+    this.textareaEl = document.createElement('textarea');
+    this.textareaEl.className = 'comment-textarea';
+    this.textareaEl.placeholder = 'Add a comment...';
+    this.textareaEl.setAttribute('aria-label', 'Comment text');
+    this.textareaEl.rows = 2;
+    this.textareaEl.maxLength = 1000;
+    this.textareaEl.addEventListener('keydown', this.handleKeydown.bind(this));
+    this.textareaEl.addEventListener('input', this.handleInput.bind(this));
+    this.container.appendChild(this.textareaEl);
+
+    // Mention dropdown
+    this.mentionDropdown = document.createElement('div');
+    this.mentionDropdown.className = 'mention-dropdown';
+    this.mentionDropdown.setAttribute('role', 'listbox');
+    this.mentionDropdown.setAttribute('aria-label', 'Mention suggestions');
+    this.mentionDropdown.style.display = 'none';
+    this.container.appendChild(this.mentionDropdown);
+
+    // Controls row
+    const controlsRow = document.createElement('div');
+    controlsRow.className = 'comment-controls-row';
+
+    // Timestamp toggle
+    this.timestampToggle = document.createElement('button');
+    this.timestampToggle.type = 'button';
+    this.timestampToggle.className = 'timestamp-toggle active';
+    this.timestampToggle.setAttribute('aria-pressed', 'true');
+    this.timestampToggle.setAttribute('aria-label', 'Include timestamp');
+    this.timestampToggle.addEventListener('click', this.toggleTimestamp.bind(this));
+    controlsRow.appendChild(this.timestampToggle);
+
+    // Timestamp display
+    this.timestampDisplay = document.createElement('span');
+    this.timestampDisplay.className = 'timestamp-display';
+    this.timestampDisplay.textContent = formatTimestamp(this.currentTime);
+    controlsRow.appendChild(this.timestampDisplay);
+
+    // Submit button
+    this.submitBtn = document.createElement('button');
+    this.submitBtn.type = 'button';
+    this.submitBtn.className = 'comment-submit-btn';
+    this.submitBtn.textContent = 'Comment';
+    this.submitBtn.setAttribute('aria-label', 'Submit comment');
+    this.submitBtn.disabled = true;
+    this.submitBtn.addEventListener('click', this.handleSubmit.bind(this));
+    controlsRow.appendChild(this.submitBtn);
+
+    this.container.appendChild(controlsRow);
+  }
+
+  private handleKeydown(event: KeyboardEvent): void {
+    // Submit on Ctrl/Cmd+Enter
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      this.handleSubmit();
+    }
+    // Cancel reply on Escape
+    if (event.key === 'Escape' && this.replyToId) {
+      this.cancelReply();
+    }
+  }
+
+  private handleInput(): void {
+    const hasContent = this.textareaEl.value.trim().length > 0;
+    this.submitBtn.disabled = hasContent ? false : true;
+
+    // Check for @mention triggers
+    this.checkForMentionTrigger();
+  }
+
+  private async checkForMentionTrigger(): Promise<void> {
+    const value = this.textareaEl.value;
+    const cursorPos = this.textareaEl.selectionStart;
+    const textUpToCursor = value.substring(0, cursorPos);
+    const mentionMatch = textUpToCursor.match(/@(\w*)$/);
+
+    if (mentionMatch && this.callbacks.onMention) {
+      const query = mentionMatch[1];
+      const suggestions = await this.callbacks.onMention(query);
+      this.showMentionDropdown(suggestions);
+    } else {
+      this.hideMentionDropdown();
+    }
+  }

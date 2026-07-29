@@ -301,3 +301,152 @@ export class TimelineEditor {
     enableKeyboardShortcuts: true,
     snapToFrame: true,
   };
+
+  constructor(
+    container: HTMLElement,
+    options: TimelineEditorOptions = {},
+    callbacks: TimelineEditorCallbacks = {}
+  ) {
+    this.container = container;
+    this.options = { ...this.defaultOptions, ...options };
+    this.callbacks = callbacks;
+    this.state = this.createInitialState();
+
+    this.createDOM();
+    this.setupEventListeners();
+
+    if (this.options.enableKeyboardShortcuts) {
+      this.setupKeyboardShortcuts();
+    }
+
+    this.setupResizeObserver();
+  }
+
+  private createInitialState(): TimelineState {
+    return {
+      clips: [],
+      playheadFrame: 0,
+      zoomLevel: this.options?.defaultZoom ?? DEFAULT_ZOOM,
+      scrollOffset: 0,
+      isPlaying: false,
+      duration: 0,
+      frameRate: this.options?.frameRate ?? DEFAULT_FRAME_RATE,
+      selectedClipId: null,
+      trimMode: null,
+      splitPreviewFrame: null,
+    };
+  }
+
+  // ─── DOM Construction ─────────────────────────────────────────────────────
+
+  private createDOM(): void {
+    this.container.innerHTML = '';
+    this.container.classList.add('timeline-editor');
+
+    // Controls bar
+    this.controlsElement = document.createElement('div');
+    this.controlsElement.className = 'timeline-controls';
+    this.controlsElement.setAttribute('role', 'toolbar');
+    this.controlsElement.setAttribute('aria-label', 'Timeline editor controls');
+    this.controlsElement.innerHTML = this.getControlsHTML();
+    this.container.appendChild(this.controlsElement);
+
+    // Timeline area
+    this.timelineElement = document.createElement('div');
+    this.timelineElement.className = 'timeline-area';
+    this.timelineElement.setAttribute('role', 'region');
+    this.timelineElement.setAttribute('aria-label', 'Timeline');
+
+    // Ruler (time scale)
+    this.rulerElement = document.createElement('div');
+    this.rulerElement.className = 'timeline-ruler';
+    this.rulerElement.style.height = `${RULER_HEIGHT}px`;
+    this.timelineElement.appendChild(this.rulerElement);
+
+    // Track area
+    this.trackElement = document.createElement('div');
+    this.trackElement.className = 'timeline-track';
+    this.trackElement.style.height = `${TIMELINE_TRACK_HEIGHT}px`;
+    this.trackElement.setAttribute('role', 'slider');
+    this.trackElement.setAttribute('aria-label', 'Timeline track');
+    this.trackElement.setAttribute('aria-valuemin', '0');
+    this.trackElement.setAttribute('aria-valuemax', String(this.state.duration));
+    this.trackElement.setAttribute('aria-valuenow', '0');
+    this.trackElement.setAttribute('tabindex', '0');
+    this.timelineElement.appendChild(this.trackElement);
+
+    // Waveform canvas
+    this.waveformCanvas = document.createElement('canvas');
+    this.waveformCanvas.className = 'timeline-waveform';
+    this.waveformCanvas.style.height = `${WAVEFORM_HEIGHT}px`;
+    this.waveformCanvas.setAttribute('aria-label', 'Audio waveform');
+    this.waveformCanvas.setAttribute('role', 'img');
+    if (this.options.enableWaveform) {
+      this.timelineElement.appendChild(this.waveformCanvas);
+      this.waveformRenderer = new WaveformRenderer(
+        this.waveformCanvas,
+        this.options.waveformColor,
+        this.options.waveformBackgroundColor
+      );
+    }
+
+    // Playhead
+    this.playheadElement = document.createElement('div');
+    this.playheadElement.className = 'timeline-playhead';
+    this.playheadElement.style.width = `${PLAYHEAD_WIDTH}px`;
+    this.playheadElement.style.backgroundColor = this.options.playheadColor;
+    this.playheadElement.setAttribute('role', 'separator');
+    this.playheadElement.setAttribute('aria-label', 'Playhead position');
+    this.playheadElement.setAttribute('aria-orientation', 'vertical');
+    this.timelineElement.appendChild(this.playheadElement);
+
+    // Split preview line
+    this.splitPreviewElement = document.createElement('div');
+    this.splitPreviewElement.className = 'timeline-split-preview';
+    this.splitPreviewElement.style.backgroundColor = this.options.splitPreviewColor;
+    this.splitPreviewElement.style.display = 'none';
+    this.splitPreviewElement.setAttribute('aria-hidden', 'true');
+    this.timelineElement.appendChild(this.splitPreviewElement);
+
+    this.container.appendChild(this.timelineElement);
+
+    // Cache control references
+    this.timecodeDisplay = this.controlsElement.querySelector(
+      '.timecode-display'
+    ) as HTMLElement;
+    this.zoomSlider = this.controlsElement.querySelector(
+      '.zoom-slider'
+    ) as HTMLInputElement;
+
+    this.updatePlayheadPosition();
+    this.renderRuler();
+  }
+
+  private getControlsHTML(): string {
+    const zoomPercent = Math.round(this.state.zoomLevel * 100);
+    return `
+      <div class="timeline-controls-group" role="group" aria-label="Playback controls">
+        <button class="btn-prev-frame" aria-label="Previous frame" title="Previous frame (,)">⏮</button>
+        <button class="btn-play-pause" aria-label="Play/Pause" title="Play/Pause (Space)">▶</button>
+        <button class="btn-next-frame" aria-label="Next frame" title="Next frame (.)">⏭</button>
+      </div>
+      <div class="timeline-controls-group" role="group" aria-label="Timecode">
+        <span class="timecode-display" aria-live="polite" aria-atomic="true">
+          ${frameToTimecode(this.state.playheadFrame, this.state.frameRate)}
+        </span>
+      </div>
+      <div class="timeline-controls-group" role="group" aria-label="Edit tools">
+        <button class="btn-trim-in" aria-label="Set in point" title="Set in point (I)">In</button>
+        <button class="btn-trim-out" aria-label="Set out point" title="Set out point (O)">Out</button>
+        <button class="btn-split" aria-label="Split at playhead" title="Split at playhead (S)">✂</button>
+      </div>
+      <div class="timeline-controls-group" role="group" aria-label="Zoom controls">
+        <button class="btn-zoom-out" aria-label="Zoom out" title="Zoom out (-)">−</button>
+        <input type="range" class="zoom-slider" min="${this.options.minZoom * 100}"
+               max="${this.options.maxZoom * 100}" value="${zoomPercent}"
+               aria-label="Zoom level" aria-valuetext="${zoomPercent}%">
+        <button class="btn-zoom-in" aria-label="Zoom in" title="Zoom in (+)">+</button>
+        <button class="btn-zoom-fit" aria-label="Fit to view" title="Fit to view (F)">⬜</button>
+      </div>
+    `;
+  }
