@@ -611,3 +611,60 @@ export class ExportManager {
     this.activeExports = 0;
   }
 }
+
+// ─── BackgroundProcessingManager ──────────────────────────────────────────────
+
+/**
+ * Manages background processing integration with status updates.
+ * Polls for status updates on active exports and relays notifications.
+ */
+export class BackgroundProcessingManager {
+  private pollInterval: ReturnType<typeof setInterval> | null = null;
+  private trackedJobs: Set<string> = new Set();
+  private callbacks: BackgroundProcessCallbacks;
+  private isConnected = false;
+  private isDestroyed = false;
+  private exportManager: ExportManager;
+
+  constructor(
+    exportManager: ExportManager,
+    callbacks: BackgroundProcessCallbacks = {}
+  ) {
+    this.exportManager = exportManager;
+    this.callbacks = callbacks;
+  }
+
+  /** Start polling for status updates */
+  public startPolling(intervalMs: number = EXPORT_POLL_INTERVAL_MS): void {
+    if (this.isDestroyed || this.pollInterval !== null) return;
+    this.isConnected = true;
+    this.callbacks.onConnectionChange?.(true);
+    this.pollInterval = setInterval(() => {
+      this.pollStatus();
+    }, intervalMs);
+  }
+
+  /** Stop polling for status updates */
+  public stopPolling(): void {
+    if (this.pollInterval !== null) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
+    this.isConnected = false;
+    this.callbacks.onConnectionChange?.(false);
+  }
+
+  /** Register a job for tracking */
+  public trackJob(jobId: string): void {
+    this.trackedJobs.add(jobId);
+  }
+
+  /** Stop tracking a specific job */
+  public untrackJob(jobId: string): void {
+    this.trackedJobs.delete(jobId);
+  }
+
+  /** Get all tracked job IDs */
+  public getTrackedJobs(): string[] {
+    return Array.from(this.trackedJobs);
+  }

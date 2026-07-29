@@ -216,7 +216,8 @@ describe('Property 7: Collaboration Presence Reliability', () => {
             if (viewer.avatarUrl) {
               const img = avatar.querySelector('img');
               expect(img).not.toBeNull();
-              expect(img!.src).toBe(viewer.avatarUrl);
+              // Use getAttribute to avoid browser URL normalization
+              expect(img!.getAttribute('src')).toBe(viewer.avatarUrl);
             } else {
               const initials = avatar.querySelector('.presence-avatar-initials');
               expect(initials).not.toBeNull();

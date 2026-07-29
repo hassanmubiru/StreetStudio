@@ -379,3 +379,87 @@ export class ConflictDetector {
     this.conflicts.clear();
   }
 }
+
+// ─── Edit History and Version Control ─────────────────────────────────────────
+
+/**
+ * Tracks edit history for version control display.
+ * Maintains an ordered list of operations that can be displayed and navigated.
+ */
+export class EditHistoryManager {
+  private history: EditOperation[] = [];
+  private maxSize: number;
+  private currentVersion: number = 0;
+  private onVersionChange: ((version: number) => void) | null = null;
+
+  constructor(maxSize = DEFAULT_MAX_HISTORY_SIZE) {
+    this.maxSize = maxSize;
+  }
+
+  /** Set callback for version changes. */
+  public setOnVersionChange(callback: ((version: number) => void) | null): void {
+    this.onVersionChange = callback;
+  }
+
+  /** Record a new edit operation. */
+  public recordEdit(operation: Omit<EditOperation, 'id' | 'timestamp'>): EditOperation {
+    const entry: EditOperation = {
+      ...operation,
+      id: generateId(),
+      timestamp: now(),
+    };
+
+    this.history.push(entry);
+    this.currentVersion++;
+
+    // Trim history if exceeding max size
+    if (this.history.length > this.maxSize) {
+      this.history = this.history.slice(this.history.length - this.maxSize);
+    }
+
+    this.onVersionChange?.(this.currentVersion);
+    return entry;
+  }
+
+  /** Get the full edit history. */
+  public getHistory(): EditOperation[] {
+    return [...this.history];
+  }
+
+  /** Get history entries for a specific clip. */
+  public getClipHistory(clipId: string): EditOperation[] {
+    return this.history.filter((op) => op.clipId === clipId);
+  }
+
+  /** Get history entries by a specific user. */
+  public getUserHistory(userId: Uuid): EditOperation[] {
+    return this.history.filter((op) => op.userId === userId);
+  }
+
+  /** Get recent history entries (last N). */
+  public getRecentHistory(count: number): EditOperation[] {
+    return this.history.slice(-count);
+  }
+
+  /** Get the current version number. */
+  public getCurrentVersion(): number {
+    return this.currentVersion;
+  }
+
+  /** Get the total number of recorded operations. */
+  public getHistorySize(): number {
+    return this.history.length;
+  }
+
+  /** Get the last edit operation, if any. */
+  public getLastEdit(): EditOperation | undefined {
+    return this.history[this.history.length - 1];
+  }
+
+  /** Clear all history. */
+  public clear(): void {
+    this.history = [];
+    this.currentVersion = 0;
+    this.onVersionChange?.(0);
+  }
+}
