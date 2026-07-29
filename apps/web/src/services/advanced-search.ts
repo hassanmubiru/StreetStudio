@@ -212,9 +212,10 @@ export class AdvancedSearchService {
     const index = this.savedSearches.findIndex(s => s.id === id);
     if (index === -1) return null;
 
-    const existing = this.savedSearches[index];
+    const existing = this.savedSearches[index]!;
     const updated: SavedSearch = {
-      ...existing,
+      id: existing.id,
+      createdAt: existing.createdAt,
       name: updates.name?.trim() || existing.name,
       query: updates.query !== undefined ? updates.query.trim() : existing.query,
       filters: updates.filters ?? existing.filters,
@@ -245,7 +246,7 @@ export class AdvancedSearchService {
    */
   public resolveDateRangePreset(preset: DateRangeFilter['preset']): { from: string; to: string } {
     const now = new Date();
-    const to = now.toISOString().split('T')[0];
+    const to = now.toISOString().split('T')[0] as string;
 
     switch (preset) {
       case 'today': {
@@ -254,22 +255,22 @@ export class AdvancedSearchService {
       case 'last-7-days': {
         const from = new Date(now);
         from.setDate(from.getDate() - 7);
-        return { from: from.toISOString().split('T')[0], to };
+        return { from: from.toISOString().split('T')[0] as string, to };
       }
       case 'last-30-days': {
         const from = new Date(now);
         from.setDate(from.getDate() - 30);
-        return { from: from.toISOString().split('T')[0], to };
+        return { from: from.toISOString().split('T')[0] as string, to };
       }
       case 'last-90-days': {
         const from = new Date(now);
         from.setDate(from.getDate() - 90);
-        return { from: from.toISOString().split('T')[0], to };
+        return { from: from.toISOString().split('T')[0] as string, to };
       }
       case 'last-year': {
         const from = new Date(now);
         from.setFullYear(from.getFullYear() - 1);
-        return { from: from.toISOString().split('T')[0], to };
+        return { from: from.toISOString().split('T')[0] as string, to };
       }
       default:
         return { from: '', to: '' };

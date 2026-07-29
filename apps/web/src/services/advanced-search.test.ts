@@ -158,28 +158,39 @@ describe('AdvancedSearchService', () => {
     });
 
     test('should abort previous request on new search', async () => {
-      let resolveFirst: any;
-      const firstPromise = new Promise(r => { resolveFirst = r; });
+      const abortError = new Error('Aborted');
+      abortError.name = 'AbortError';
+
       (global.fetch as any)
-        .mockImplementationOnce(() => firstPromise)
+        .mockImplementationOnce((_url: string, opts: { signal: AbortSignal }) => {
+          // Simulate the first request being aborted
+          return new Promise((_, reject) => {
+            // Check if already aborted
+            if (opts.signal?.aborted) {
+              reject(abortError);
+              return;
+            }
+            // Listen for abort
+            opts.signal?.addEventListener('abort', () => reject(abortError));
+          });
+        })
         .mockResolvedValueOnce({
           ok: true,
           json: vi.fn().mockResolvedValue({ results: [], totalCount: 0, facets: { contentTypes: [], creators: [], projects: [], dateRanges: [] } }),
         });
 
-      // Start first search (don't await)
+      // Start first search (don't await - it will be aborted)
       const p1 = service.searchWithFilters('first', {});
 
       // Start second search - should abort first
       const p2 = service.searchWithFilters('second', {});
 
-      // Resolve first with abort error
-      const abortError = new Error('Aborted');
-      abortError.name = 'AbortError';
-      resolveFirst({ ok: false });
+      // First should resolve with empty (abort handled gracefully)
+      const result1 = await p1;
+      expect(result1.results).toEqual([]);
 
-      const result = await p2;
-      expect(result.results).toEqual([]);
+      const result2 = await p2;
+      expect(result2.results).toEqual([]);
     });
   });
 
