@@ -147,3 +147,107 @@ export function pixelToFrame(pixel: number, zoomLevel: number): number {
   if (ppf === 0) return 0;
   return Math.round(pixel / ppf);
 }
+
+/** Clamp a value between min and max */
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+/** Generate a simple unique ID */
+function generateId(): string {
+  return `clip-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+// ─── Waveform Renderer ────────────────────────────────────────────────────────
+
+/**
+ * Renders audio waveform data to a canvas for audio-visual synchronization.
+ */
+export class WaveformRenderer {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+  private waveformData: WaveformData | null = null;
+  private color: string;
+  private backgroundColor: string;
+
+  constructor(canvas: HTMLCanvasElement, color = '#4fc3f7', backgroundColor = '#1a1a2e') {
+    this.canvas = canvas;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas 2D context not available');
+    this.ctx = ctx;
+    this.color = color;
+    this.backgroundColor = backgroundColor;
+  }
+
+  /** Load waveform data for rendering */
+  public setWaveformData(data: WaveformData): void {
+    this.waveformData = data;
+  }
+
+  /** Get the currently loaded waveform data */
+  public getWaveformData(): WaveformData | null {
+    return this.waveformData;
+  }
+
+  /**
+   * Render the waveform for a visible range.
+   * @param startFrame - First visible frame
+   * @param endFrame - Last visible frame
+   * @param frameRate - Frames per second
+   * @param zoomLevel - Current zoom level
+   */
+  public render(
+    startFrame: number,
+    endFrame: number,
+    frameRate: number,
+    zoomLevel: number
+  ): void {
+    const { width, height } = this.canvas;
+    this.ctx.clearRect(0, 0, width, height);
+    this.ctx.fillStyle = this.backgroundColor;
+    this.ctx.fillRect(0, 0, width, height);
+
+    if (!this.waveformData || frameRate <= 0) return;
+
+    const { peaks, sampleRate, duration } = this.waveformData;
+    const totalSamples = peaks.length;
+    if (totalSamples === 0) return;
+
+    const startSeconds = frameToSeconds(startFrame, frameRate);
+    const endSeconds = frameToSeconds(endFrame, frameRate);
+    const visibleDuration = endSeconds - startSeconds;
+    if (visibleDuration <= 0) return;
+
+    const samplesPerPixel = (visibleDuration * sampleRate) / width;
+    const startSample = Math.floor((startSeconds / duration) * totalSamples);
+
+    this.ctx.fillStyle = this.color;
+    const centerY = height / 2;
+
+    for (let px = 0; px < width; px++) {
+      const sampleIndex = startSample + Math.floor(px * samplesPerPixel);
+      if (sampleIndex < 0 || sampleIndex >= totalSamples) continue;
+
+      const amplitude = Math.abs(peaks[sampleIndex]);
+      const barHeight = amplitude * centerY;
+
+      this.ctx.fillRect(px, centerY - barHeight, 1, barHeight * 2);
+    }
+  }
+
+  /** Update canvas dimensions */
+  public resize(width: number, height: number): void {
+    this.canvas.width = width;
+    this.canvas.height = height;
+  }
+
+  /** Update waveform color */
+  public setColor(color: string): void {
+    this.color = color;
+  }
+
+  /** Update background color */
+  public setBackgroundColor(color: string): void {
+    this.backgroundColor = color;
+  }
+}

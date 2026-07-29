@@ -317,7 +317,9 @@ export class VideoInfoPanel {
       const transcriptEntry = this.transcriptEntries[index];
       if (transcriptEntry && time >= transcriptEntry.startTime && time < transcriptEntry.endTime) {
         entry.classList.add('transcript-entry--active');
-        entry.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (typeof entry.scrollIntoView === 'function') {
+          entry.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
       } else {
         entry.classList.remove('transcript-entry--active');
       }
