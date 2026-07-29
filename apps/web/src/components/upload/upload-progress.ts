@@ -398,3 +398,46 @@ export class UploadProgressInterface {
     btn.textContent = hasActive ? 'Pause All' : 'Resume All';
     btn.setAttribute('aria-label', hasActive ? 'Pause all uploads' : 'Resume all uploads');
   }
+
+  private updateIndividualItems(state: UploadState): void {
+    if (!this.config.showIndividualProgress) return;
+
+    const listEl = this.container.querySelector('.upload-items-list');
+    if (!listEl) return;
+
+    const visibleUploads = state.uploads.slice(0, this.config.maxVisibleItems);
+    const hiddenCount = Math.max(0, state.uploads.length - this.config.maxVisibleItems);
+
+    listEl.innerHTML = visibleUploads.map(upload => this.renderUploadItem(upload)).join('')
+      + (hiddenCount > 0
+        ? `<div class="upload-item-overflow">+${hiddenCount} more file${hiddenCount !== 1 ? 's' : ''}</div>`
+        : '');
+
+    // Attach action listeners via event delegation
+    listEl.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLElement;
+        const action = target.getAttribute('data-action');
+        const uploadId = target.getAttribute('data-upload-id');
+        if (!action || !uploadId) return;
+
+        switch (action) {
+          case 'retry':
+            this.uploadStore.retryUpload(uploadId);
+            break;
+          case 'pause':
+            this.uploadStore.pauseUpload(uploadId);
+            break;
+          case 'resume':
+            this.uploadStore.resumeUpload(uploadId);
+            break;
+          case 'cancel':
+            this.uploadStore.cancelUpload(uploadId);
+            break;
+          case 'remove':
+            this.uploadStore.removeUpload(uploadId);
+            break;
+        }
+      });
+    });
+  }

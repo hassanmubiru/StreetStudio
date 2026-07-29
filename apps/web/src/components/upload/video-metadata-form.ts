@@ -454,3 +454,56 @@ export class VideoMetadataForm {
       }
     }
   }
+
+  private addTag(tagName: string): void {
+    const normalized = tagName.trim().toLowerCase();
+    if (!normalized || this.formData.tags.includes(normalized)) {
+      this.tagInput!.value = '';
+      this.hideTagSuggestions();
+      return;
+    }
+
+    this.formData.tags.push(normalized);
+    this.tagInput!.value = '';
+    this.hideTagSuggestions();
+    this.renderTags();
+    this.notifyChange();
+    this.tagInput!.focus();
+  }
+
+  private removeTag(tagName: string): void {
+    this.formData.tags = this.formData.tags.filter(t => t !== tagName);
+    this.renderTags();
+    this.notifyChange();
+  }
+
+  private renderTags(): void {
+    const tagsDisplay = this.container.querySelector('#tags-display');
+    if (!tagsDisplay) return;
+
+    tagsDisplay.innerHTML = this.formData.tags
+      .map(tag => `<span class="tag-chip" data-tag="${tag}">${tag}<button type="button" class="tag-remove" aria-label="Remove tag ${tag}">&times;</button></span>`)
+      .join('');
+
+    // Update placeholder
+    if (this.tagInput) {
+      this.tagInput.placeholder = this.formData.tags.length > 0 ? '' : 'Add tags...';
+    }
+  }
+
+  private handleSubmit(): void {
+    const result = this.validate();
+    if (!result.isValid) {
+      this.displayErrors(result.errors);
+      // Focus first invalid field
+      const firstErrorField = Object.keys(result.errors)[0];
+      if (firstErrorField) {
+        const field = this.container.querySelector(`[name="${firstErrorField}"]`) as HTMLElement;
+        field?.focus();
+      }
+      return;
+    }
+
+    this.clearAllErrors();
+    this.config.onSubmit(this.getFormData());
+  }
