@@ -450,3 +450,116 @@ export class TimelineEditor {
       </div>
     `;
   }
+
+  // ─── Event Listeners ──────────────────────────────────────────────────────
+
+  private setupEventListeners(): void {
+    // Control button clicks
+    this.controlsElement.querySelector('.btn-prev-frame')?.addEventListener('click', () => this.prevFrame());
+    this.controlsElement.querySelector('.btn-play-pause')?.addEventListener('click', () => this.togglePlayPause());
+    this.controlsElement.querySelector('.btn-next-frame')?.addEventListener('click', () => this.nextFrame());
+    this.controlsElement.querySelector('.btn-trim-in')?.addEventListener('click', () => this.setInPoint());
+    this.controlsElement.querySelector('.btn-trim-out')?.addEventListener('click', () => this.setOutPoint());
+    this.controlsElement.querySelector('.btn-split')?.addEventListener('click', () => this.splitAtPlayhead());
+    this.controlsElement.querySelector('.btn-zoom-out')?.addEventListener('click', () => this.zoomOut());
+    this.controlsElement.querySelector('.btn-zoom-in')?.addEventListener('click', () => this.zoomIn());
+    this.controlsElement.querySelector('.btn-zoom-fit')?.addEventListener('click', () => this.zoomToFit());
+
+    // Zoom slider
+    this.zoomSlider?.addEventListener('input', (e) => {
+      const value = Number((e.target as HTMLInputElement).value);
+      this.setZoom(value / 100);
+    });
+
+    // Track click for playhead positioning
+    this.trackElement.addEventListener('mousedown', (e) => this.handleTrackMouseDown(e));
+    this.trackElement.addEventListener('mousemove', (e) => this.handleTrackMouseMove(e));
+
+    // Global mouse events for drag operations
+    document.addEventListener('mousemove', (e) => this.handleDocumentMouseMove(e));
+    document.addEventListener('mouseup', () => this.handleDocumentMouseUp());
+
+    // Timeline scroll
+    this.timelineElement.addEventListener('wheel', (e) => this.handleWheel(e), { passive: false });
+  }
+
+  private setupKeyboardShortcuts(): void {
+    this.keydownHandler = (e: KeyboardEvent) => {
+      if (this.isDestroyed) return;
+      // Don't capture if user is typing in an input
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+
+      switch (e.key) {
+        case ' ':
+          e.preventDefault();
+          this.togglePlayPause();
+          break;
+        case ',':
+          e.preventDefault();
+          this.prevFrame();
+          break;
+        case '.':
+          e.preventDefault();
+          this.nextFrame();
+          break;
+        case 'i':
+        case 'I':
+          e.preventDefault();
+          this.setInPoint();
+          break;
+        case 'o':
+        case 'O':
+          e.preventDefault();
+          this.setOutPoint();
+          break;
+        case 's':
+        case 'S':
+          if (!e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            this.splitAtPlayhead();
+          }
+          break;
+        case '-':
+        case '_':
+          e.preventDefault();
+          this.zoomOut();
+          break;
+        case '=':
+        case '+':
+          e.preventDefault();
+          this.zoomIn();
+          break;
+        case 'f':
+        case 'F':
+          e.preventDefault();
+          this.zoomToFit();
+          break;
+        case 'Home':
+          e.preventDefault();
+          this.seekToFrame(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          this.seekToFrame(this.state.duration);
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (e.shiftKey) {
+            this.seekRelativeFrames(-10);
+          } else {
+            this.prevFrame();
+          }
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (e.shiftKey) {
+            this.seekRelativeFrames(10);
+          } else {
+            this.nextFrame();
+          }
+          break;
+      }
+    };
+    document.addEventListener('keydown', this.keydownHandler);
+  }

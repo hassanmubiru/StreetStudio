@@ -288,3 +288,47 @@ export class CommentInput {
       this.hideMentionDropdown();
     }
   }
+
+  private showMentionDropdown(suggestions: CommentAuthor[]): void {
+    if (suggestions.length === 0) {
+      this.hideMentionDropdown();
+      return;
+    }
+    this.mentionDropdown.innerHTML = '';
+    this.mentionDropdown.style.display = 'block';
+
+    for (const author of suggestions) {
+      const item = document.createElement('div');
+      item.className = 'mention-item';
+      item.setAttribute('role', 'option');
+      item.setAttribute('aria-label', author.displayName);
+      item.textContent = `@${author.displayName}`;
+      item.addEventListener('click', () => this.insertMention(author));
+      this.mentionDropdown.appendChild(item);
+    }
+  }
+
+  private hideMentionDropdown(): void {
+    this.mentionDropdown.style.display = 'none';
+    this.mentionDropdown.innerHTML = '';
+  }
+
+  private insertMention(author: CommentAuthor): void {
+    const value = this.textareaEl.value;
+    const cursorPos = this.textareaEl.selectionStart;
+    const textUpToCursor = value.substring(0, cursorPos);
+    const mentionStart = textUpToCursor.lastIndexOf('@');
+    const after = value.substring(cursorPos);
+    const before = value.substring(0, mentionStart);
+    this.textareaEl.value = `${before}@${author.displayName} ${after}`;
+    this.textareaEl.focus();
+    this.hideMentionDropdown();
+    this.handleInput();
+  }
+
+  private toggleTimestamp(): void {
+    this.includeTimestamp = !this.includeTimestamp;
+    this.timestampToggle.classList.toggle('active', this.includeTimestamp);
+    this.timestampToggle.setAttribute('aria-pressed', String(this.includeTimestamp));
+    this.timestampDisplay.style.opacity = this.includeTimestamp ? '1' : '0.4';
+  }
