@@ -273,8 +273,8 @@ describe('PermissionMatrix', () => {
 
     const rowHeaders = container.querySelectorAll('.permission-matrix-row-header');
     expect(rowHeaders.length).toBe(2);
-    expect(rowHeaders[0].textContent).toBe('Projects');
-    expect(rowHeaders[1].textContent).toBe('Videos');
+    expect(rowHeaders[0]!.textContent).toBe('Projects');
+    expect(rowHeaders[1]!.textContent).toBe('Videos');
   });
 
   it('renders checkboxes with correct checked state', () => {
