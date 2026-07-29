@@ -276,3 +276,57 @@ export class AdvancedSearchPage {
 
     this.attachEventListeners();
   }
+
+  private renderDateRangeFilter(): string {
+    const currentPreset = this.filters.dateRange?.preset || '';
+    return `
+      <div class="relative" data-filter="dateRange">
+        <select
+          class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+          aria-label="Date range filter"
+          data-filter-select="dateRange"
+        >
+          <option value="" ${!currentPreset ? 'selected' : ''}>Any date</option>
+          <option value="today" ${currentPreset === 'today' ? 'selected' : ''}>Today</option>
+          <option value="last-7-days" ${currentPreset === 'last-7-days' ? 'selected' : ''}>Last 7 days</option>
+          <option value="last-30-days" ${currentPreset === 'last-30-days' ? 'selected' : ''}>Last 30 days</option>
+          <option value="last-90-days" ${currentPreset === 'last-90-days' ? 'selected' : ''}>Last 90 days</option>
+          <option value="last-year" ${currentPreset === 'last-year' ? 'selected' : ''}>Last year</option>
+        </select>
+      </div>
+    `;
+  }
+
+  private renderContentTypeFilter(): string {
+    const selectedTypes = this.filters.contentType?.types || [];
+    const types = ['video', 'project', 'comment', 'member', 'folder'];
+    return `
+      <div class="relative" data-filter="contentType">
+        <select
+          class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+          aria-label="Content type filter"
+          data-filter-select="contentType"
+          multiple
+        >
+          ${types.map(type => `
+            <option value="${type}" ${selectedTypes.includes(type as any) ? 'selected' : ''}>${type.charAt(0).toUpperCase() + type.slice(1)}s</option>
+          `).join('')}
+        </select>
+      </div>
+    `;
+  }
+
+  private renderCreatorFilter(): string {
+    return `
+      <div class="relative" data-filter="creator">
+        <input
+          type="text"
+          placeholder="Filter by creator..."
+          class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 w-40"
+          aria-label="Creator filter"
+          data-filter-input="creator"
+          value="${this.filters.creator?.creatorIds.join(', ') || ''}"
+        />
+      </div>
+    `;
+  }
