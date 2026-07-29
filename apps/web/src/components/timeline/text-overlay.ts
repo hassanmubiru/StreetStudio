@@ -441,3 +441,122 @@ export class TextOverlayManager {
   ): TextOverlay | null {
     return this.updateOverlay(id, { startFrame, endFrame });
   }
+
+  /**
+   * Update overlay style properties.
+   */
+  public setOverlayStyle(
+    id: string,
+    style: Partial<TextOverlayStyle>
+  ): TextOverlay | null {
+    const overlay = this.overlays.get(id);
+    if (!overlay) return null;
+
+    // Validate font size bounds
+    if (style.fontSize !== undefined) {
+      style.fontSize = clamp(style.fontSize, MIN_FONT_SIZE, MAX_FONT_SIZE);
+    }
+
+    // Validate opacity
+    if (style.opacity !== undefined) {
+      style.opacity = clamp(style.opacity, 0, 1);
+    }
+
+    return this.updateOverlay(id, {
+      style: { ...overlay.style, ...style },
+    });
+  }
+
+  /**
+   * Toggle overlay visibility.
+   */
+  public toggleOverlayVisibility(id: string): TextOverlay | null {
+    const overlay = this.overlays.get(id);
+    if (!overlay) return null;
+    return this.updateOverlay(id, { isVisible: !overlay.isVisible });
+  }
+
+  // ─── Caption Operations ─────────────────────────────────────────────────
+
+  /**
+   * Add a caption cue.
+   */
+  public addCaption(
+    text: string,
+    startFrame: number,
+    endFrame: number,
+    style?: Partial<CaptionStyle>,
+    speaker?: string
+  ): CaptionCue {
+    const id = generateOverlayId();
+    const caption: CaptionCue = {
+      id,
+      text,
+      startFrame: Math.max(0, Math.round(startFrame)),
+      endFrame: Math.max(
+        Math.round(startFrame) + MIN_OVERLAY_DURATION_FRAMES,
+        Math.round(endFrame)
+      ),
+      style: { ...createDefaultCaptionStyle(this.options), ...style },
+      speaker,
+    };
+
+    this.captions.set(id, caption);
+    this.callbacks.onCaptionAdd?.(caption);
+    return caption;
+  }
+
+  /**
+   * Update an existing caption.
+   */
+  public updateCaption(
+    id: string,
+    updates: Partial<Omit<CaptionCue, 'id'>>
+  ): CaptionCue | null {
+    const caption = this.captions.get(id);
+    if (!caption) return null;
+
+    const updated: CaptionCue = {
+      ...caption,
+      ...updates,
+      id,
+      style: updates.style
+        ? { ...caption.style, ...updates.style }
+        : caption.style,
+    };
+
+    updated.startFrame = Math.max(0, Math.round(updated.startFrame));
+    updated.endFrame = Math.max(
+      updated.startFrame + MIN_OVERLAY_DURATION_FRAMES,
+      Math.round(updated.endFrame)
+    );
+
+    this.captions.set(id, updated);
+    this.callbacks.onCaptionUpdate?.(updated);
+    return updated;
+  }
+
+  /**
+   * Remove a caption.
+   */
+  public removeCaption(id: string): boolean {
+    const existed = this.captions.delete(id);
+    if (existed) {
+      this.callbacks.onCaptionRemove?.(id);
+    }
+    return existed;
+  }
+
+  /**
+   * Get a specific caption by ID.
+   */
+  public getCaption(id: string): CaptionCue | undefined {
+    return this.captions.get(id);
+  }
+
+  /**
+   * Get all captions.
+   */
+  public getAllCaptions(): CaptionCue[] {
+    return Array.from(this.captions.values());
+  }
