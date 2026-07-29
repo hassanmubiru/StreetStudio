@@ -97,3 +97,53 @@ export const WAVEFORM_HEIGHT = 48;
 export const TIMELINE_TRACK_HEIGHT = 64;
 export const RULER_HEIGHT = 24;
 export const MIN_CLIP_FRAMES = 1;
+
+// ─── Utility Functions ────────────────────────────────────────────────────────
+
+/** Convert a frame number to a timecode string (HH:MM:SS:FF) */
+export function frameToTimecode(frame: number, frameRate: number): string {
+  if (!isFinite(frame) || frame < 0 || !isFinite(frameRate) || frameRate <= 0) {
+    return '00:00:00:00';
+  }
+  const totalFrames = Math.round(frame);
+  const fps = Math.round(frameRate);
+  const ff = totalFrames % fps;
+  const totalSeconds = Math.floor(totalFrames / fps);
+  const ss = totalSeconds % 60;
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const mm = totalMinutes % 60;
+  const hh = Math.floor(totalMinutes / 60);
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}:${String(ff).padStart(2, '0')}`;
+}
+
+/** Convert a timecode string back to frame number */
+export function timecodeToFrame(timecode: string, frameRate: number): number {
+  const parts = timecode.split(':').map(Number);
+  if (parts.length !== 4 || parts.some(isNaN)) return 0;
+  const [hh, mm, ss, ff] = parts;
+  const fps = Math.round(frameRate);
+  return hh * 3600 * fps + mm * 60 * fps + ss * fps + ff;
+}
+
+/** Convert a frame number to seconds */
+export function frameToSeconds(frame: number, frameRate: number): number {
+  if (frameRate <= 0) return 0;
+  return frame / frameRate;
+}
+
+/** Convert seconds to frame number */
+export function secondsToFrame(seconds: number, frameRate: number): number {
+  return Math.round(seconds * frameRate);
+}
+
+/** Calculate pixel position from frame given zoom level */
+export function frameToPixel(frame: number, zoomLevel: number): number {
+  return frame * PIXELS_PER_FRAME_BASE * zoomLevel;
+}
+
+/** Calculate frame from pixel position given zoom level */
+export function pixelToFrame(pixel: number, zoomLevel: number): number {
+  const ppf = PIXELS_PER_FRAME_BASE * zoomLevel;
+  if (ppf === 0) return 0;
+  return Math.round(pixel / ppf);
+}
