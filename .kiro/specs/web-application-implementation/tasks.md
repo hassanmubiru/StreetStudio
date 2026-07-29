@@ -324,14 +324,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Implement permission inheritance and override controls
     - _Requirements: 8.3, 8.4, 8.5_
 
-  - [-] 10.3 Create organization settings and configuration
+  - [x] 10.3 Create organization settings and configuration
     - Build branding customization interface with logo and color uploads
     - Implement security policy configuration with compliance controls
     - Add storage preferences and quota management display
     - Create integration configuration for third-party services
     - _Requirements: 8.6, 8.10_
 
-  - [-] 10.4 Add billing and subscription management
+  - [x] 10.4 Add billing and subscription management
     - Create billing information display with usage metrics
     - Implement payment method management for paid features
     - Build subscription upgrade/downgrade workflows
