@@ -207,14 +207,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Implement picture-in-picture and fullscreen modes
     - _Requirements: 5.1, 5.2, 5.3_
 
-  - [ ] 7.2 Add video information and metadata display
+  - [-] 7.2 Add video information and metadata display
     - Create video information panel with title, description, and metadata
     - Implement quality selection controls with automatic adaptation
     - Add playback position memory and auto-resume functionality
     - Build caption and transcript toggle controls
     - _Requirements: 5.4, 5.9, 5.10_
 
-  - [ ] 7.3 Implement timeline and seeking functionality
+  - [-] 7.3 Implement timeline and seeking functionality
     - Create frame-accurate timeline with zoom controls
     - Build precise playback position indicator and scrubbing
     - Add timeline markers for comments and annotations
@@ -232,7 +232,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - _Requirements: 5.1, 5.2, 5.3_
 
 - [ ] 8. Comment and Collaboration System
-  - [ ] 8.1 Build comment system interface
+  - [-] 8.1 Build comment system interface
     - Create timestamped comment input with timeline integration
     - Implement threaded comment display with proper nesting
     - Add comment markers on timeline with click-to-seek functionality
@@ -271,7 +271,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - _Requirements: 5.5, 5.6, 5.7, 5.8_
 
 - [ ] 9. Timeline Video Editor Implementation
-  - [ ] 9.1 Build timeline editor interface
+  - [-] 9.1 Build timeline editor interface
     - Create frame-accurate timeline with zoom and navigation controls
     - Implement trim tools with draggable in/out point handles
     - Add split functionality at playhead position with preview
