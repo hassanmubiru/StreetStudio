@@ -665,3 +665,91 @@ describe('Folder Management and Hierarchy Display', () => {
       manager.destroy();
     });
   });
+
+  describe('Folder Maximum Depth Enforcement (Requirement 4.5)', () => {
+    it('should mark folders at depth 9 as unable to create subfolders', async () => {
+      const deepFolders: FolderDto[] = [
+        { id: 'deep-f', projectId: 'proj-1', name: 'Deep Folder', depth: 9 }
+      ];
+      mockApiClient.get.mockResolvedValue({ data: deepFolders });
+
+      const manager = new FolderManager({
+        projectId: 'proj-1',
+        currentFolderId: null
+      });
+      await manager.getElement();
+
+      const current = manager.getCurrentFolder();
+      manager.selectFolderById('deep-f');
+
+      // After selecting, getCurrentFolder should report the folder
+      const folder = manager.getCurrentFolder();
+      expect(folder?.depth).toBe(9);
+      // canCreateSubfolder should be false for depth 9
+      expect(folder?.canCreateSubfolder).toBe(false);
+
+      manager.destroy();
+    });
+
+    it('should allow subfolder creation at depth < 9', async () => {
+      const shallowFolders: FolderDto[] = [
+        { id: 'shallow-f', projectId: 'proj-1', name: 'Shallow Folder', depth: 5 }
+      ];
+      mockApiClient.get.mockResolvedValue({ data: shallowFolders });
+
+      const manager = new FolderManager({
+        projectId: 'proj-1',
+        currentFolderId: null
+      });
+      await manager.getElement();
+
+      manager.selectFolderById('shallow-f');
+      const folder = manager.getCurrentFolder();
+      expect(folder?.canCreateSubfolder).toBe(true);
+
+      manager.destroy();
+    });
+  });
+
+  describe('Folder Context Menu', () => {
+    it('should show context menu on right-click of folder item', async () => {
+      const manager = new FolderManager({
+        projectId: 'proj-1',
+        currentFolderId: null
+      });
+      const element = await manager.getElement();
+      container.appendChild(element);
+
+      const folderRow = element.querySelector('[data-folder-item="root-1"]') as HTMLElement;
+      const contextEvent = new MouseEvent('contextmenu', {
+        clientX: 200,
+        clientY: 150,
+        bubbles: true
+      });
+      folderRow.dispatchEvent(contextEvent);
+
+      const contextMenu = document.querySelector('.folder-context-menu');
+      expect(contextMenu).toBeTruthy();
+      expect(contextMenu?.textContent).toContain('Open');
+      expect(contextMenu?.textContent).toContain('Rename');
+      expect(contextMenu?.textContent).toContain('Delete');
+
+      // Clean up
+      contextMenu?.remove();
+      manager.destroy();
+    });
+  });
+
+  describe('Folder Manager Cleanup', () => {
+    it('should clean up DOM elements on destroy', async () => {
+      const manager = new FolderManager({
+        projectId: 'proj-1',
+        currentFolderId: null
+      });
+      await manager.getElement();
+
+      // Should not throw on destroy
+      expect(() => manager.destroy()).not.toThrow();
+    });
+  });
+});
