@@ -542,6 +542,11 @@ export class BillingSettingsPage {
     return card;
   }
 
+  private setupRetryListener(): void {
+    const retryBtn = this.element.querySelector('#retry-load');
+    retryBtn?.addEventListener('click', () => this.handleRetry());
+  }
+
   private setupEventListeners(): void {
     // Retry button
     const retryBtn = this.element.querySelector('#retry-load');

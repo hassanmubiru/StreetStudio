@@ -73,3 +73,101 @@ describe('OrganizationSettingsPage', () => {
     page?.destroy();
     document.body.removeChild(container);
   });
+
+  describe('Initialization', () => {
+    it('should create page element with correct structure', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+
+      expect(el).toBeInstanceOf(HTMLElement);
+      expect(el.getAttribute('data-main-content')).toBe('');
+      expect(el.getAttribute('data-page')).toBe('organization-settings');
+      expect(el.querySelector('h1')?.textContent).toContain('Organization Settings');
+    });
+
+    it('should display organization name in subtitle', () => {
+      page = new OrganizationSettingsPage(createTestConfig({ organizationName: 'Acme Corp' }));
+      const el = page.getElement();
+
+      expect(el.textContent).toContain('Acme Corp');
+    });
+
+    it('should render with default settings when no initial settings provided', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const settings = page.getSettings();
+
+      expect(settings.branding).toEqual(createDefaultBrandingSettings());
+      expect(settings.security).toEqual(createDefaultSecuritySettings());
+      expect(settings.storage).toEqual(createDefaultStorageSettings());
+      expect(settings.integrations).toEqual(createDefaultIntegrationSettings());
+    });
+
+    it('should start on branding tab by default', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      expect(page.getActiveTab()).toBe('branding');
+    });
+
+    it('should not be dirty on initial render', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      expect(page.isDirtyState()).toBe(false);
+    });
+  });
+
+  describe('Tab Navigation', () => {
+    it('should render all four tabs', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const tabs = el.querySelectorAll('[role="tab"]');
+      expect(tabs.length).toBe(4);
+
+      const tabLabels = Array.from(tabs).map(t => t.textContent?.trim());
+      expect(tabLabels).toContain('Branding');
+      expect(tabLabels).toContain('Security');
+      expect(tabLabels).toContain('Storage');
+      expect(tabLabels).toContain('Integrations');
+    });
+
+    it('should mark branding tab as active by default', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const brandingTab = el.querySelector('#tab-branding');
+      expect(brandingTab?.getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('should switch tab when clicking a tab button', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const securityTab = el.querySelector('[data-tab="security"]') as HTMLButtonElement;
+      securityTab.click();
+
+      expect(page.getActiveTab()).toBe('security');
+    });
+
+    it('should update aria-selected on tab switch', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      page.switchTab('storage');
+
+      const storageTab = el.querySelector('#tab-storage');
+      expect(storageTab?.getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('should show correct panel for active tab', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+
+      page.switchTab('integrations');
+
+      const panel = el.querySelector('#panel-integrations');
+      expect(panel).toBeTruthy();
+    });
+  });
