@@ -330,3 +330,223 @@ export class AdvancedSearchPage {
       </div>
     `;
   }
+
+  private renderScopeFilter(): string {
+    const currentScope = this.filters.scope || 'all';
+    return `
+      <div class="relative" data-filter="scope">
+        <select
+          class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+          aria-label="Search scope"
+          data-filter-select="scope"
+        >
+          <option value="all" ${currentScope === 'all' ? 'selected' : ''}>All content</option>
+          <option value="organization" ${currentScope === 'organization' ? 'selected' : ''}>Organization</option>
+          <option value="personal" ${currentScope === 'personal' ? 'selected' : ''}>Personal</option>
+          <option value="project" ${currentScope === 'project' ? 'selected' : ''}>Current project</option>
+        </select>
+      </div>
+    `;
+  }
+
+  private renderSortFilter(): string {
+    const currentSort = this.filters.sortBy || 'relevance';
+    return `
+      <div class="relative" data-filter="sortBy">
+        <select
+          class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+          aria-label="Sort by"
+          data-filter-select="sortBy"
+        >
+          <option value="relevance" ${currentSort === 'relevance' ? 'selected' : ''}>Most relevant</option>
+          <option value="date-desc" ${currentSort === 'date-desc' ? 'selected' : ''}>Newest first</option>
+          <option value="date-asc" ${currentSort === 'date-asc' ? 'selected' : ''}>Oldest first</option>
+          <option value="title-asc" ${currentSort === 'title-asc' ? 'selected' : ''}>Title A-Z</option>
+          <option value="title-desc" ${currentSort === 'title-desc' ? 'selected' : ''}>Title Z-A</option>
+        </select>
+      </div>
+    `;
+  }
+
+  private renderFacets(): string {
+    return `
+      <div class="space-y-4">
+        ${this.facets.contentTypes.length > 0 ? `
+          <div>
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Content Type</h3>
+            <ul class="space-y-1" role="list">
+              ${this.facets.contentTypes.map(facet => `
+                <li>
+                  <button class="flex items-center justify-between w-full px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" data-facet-type="${facet.value}">
+                    <span>${facet.label}</span>
+                    <span class="text-xs bg-gray-200 dark:bg-gray-600 rounded-full px-1.5">${facet.count}</span>
+                  </button>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        ` : ''}
+        ${this.facets.creators.length > 0 ? `
+          <div>
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Creator</h3>
+            <ul class="space-y-1" role="list">
+              ${this.facets.creators.map(facet => `
+                <li>
+                  <button class="flex items-center justify-between w-full px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" data-facet-creator="${facet.value}">
+                    <span>${facet.label}</span>
+                    <span class="text-xs bg-gray-200 dark:bg-gray-600 rounded-full px-1.5">${facet.count}</span>
+                  </button>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  private renderSaveDialog(): string {
+    return `
+      <div class="mb-4 p-4 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 rounded-lg" role="dialog" aria-label="Save search">
+        <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Save this search</h3>
+        <div class="flex gap-2">
+          <input
+            type="text"
+            placeholder="Name your search..."
+            class="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
+            data-save-search-name
+            aria-label="Search name"
+          />
+          <button
+            class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            data-action="confirm-save"
+          >
+            Save
+          </button>
+          <button
+            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+            data-action="cancel-save"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderSavedSearches(): string {
+    if (this.savedSearches.length === 0) return '';
+
+    return `
+      <div class="mb-6">
+        <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Saved Searches</h2>
+        <div class="flex flex-wrap gap-2" role="list" aria-label="Saved searches">
+          ${this.savedSearches.map(saved => `
+            <div class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-full text-sm" role="listitem">
+              <button
+                class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                data-action="load-saved"
+                data-saved-id="${saved.id}"
+                aria-label="Load saved search: ${this.escapeHtml(saved.name)}"
+              >
+                ${this.escapeHtml(saved.name)}
+              </button>
+              <button
+                class="ml-1 text-gray-400 hover:text-red-500"
+                data-action="remove-saved"
+                data-saved-id="${saved.id}"
+                aria-label="Remove saved search: ${this.escapeHtml(saved.name)}"
+              >
+                ×
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  private renderResults(): string {
+    const baseService = this.advancedSearchService.getBaseSearchService();
+    return `
+      <div class="space-y-4" role="list" aria-label="Search results">
+        ${this.results.map(result => `
+          <a href="${this.escapeHtml(result.url)}" class="block p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-colors" role="listitem">
+            <div class="flex items-start gap-4">
+              ${result.thumbnailUrl ? `
+                <div class="shrink-0 w-16 h-12 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
+                  <img src="${this.escapeHtml(result.thumbnailUrl)}" alt="" class="w-full h-full object-cover" />
+                </div>
+              ` : ''}
+              <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  ${baseService.highlightMatch(result.title, this.query)}
+                </h3>
+                ${result.description ? `
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                    ${baseService.highlightMatch(result.description, this.query)}
+                  </p>
+                ` : ''}
+                <div class="flex items-center gap-2 mt-2">
+                  <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 capitalize">${result.type}</span>
+                  ${result.timestamp ? `<span class="text-xs text-gray-400">${result.timestamp}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          </a>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  private renderLoadingState(): string {
+    return `
+      <div class="space-y-4" aria-busy="true" aria-label="Loading search results">
+        ${Array.from({ length: 3 }, () => `
+          <div class="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 animate-pulse">
+            <div class="flex items-start gap-4">
+              <div class="w-16 h-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div class="flex-1">
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  private renderNoResults(): string {
+    return `
+      <div class="text-center py-12">
+        <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">No results found</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Try adjusting your filters or using different keywords
+        </p>
+        <button
+          class="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          data-action="clear-filters"
+        >
+          Clear all filters
+        </button>
+      </div>
+    `;
+  }
+
+  private renderDefaultState(): string {
+    return `
+      <div class="text-center py-12">
+        <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+        </svg>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Advanced Search</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Use filters to narrow down your search across videos, projects, and more
+        </p>
+      </div>
+    `;
+  }
