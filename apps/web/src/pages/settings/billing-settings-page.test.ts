@@ -130,3 +130,80 @@ const mockBillingData: BillingData = {
     },
   ],
 };
+
+describe('Helper Functions', () => {
+  describe('formatCurrency', () => {
+    it('should format cents to USD currency string', () => {
+      expect(formatCurrency(2900, 'usd')).toBe('$29.00');
+    });
+
+    it('should format zero amount', () => {
+      expect(formatCurrency(0, 'usd')).toBe('$0.00');
+    });
+
+    it('should format large amounts', () => {
+      expect(formatCurrency(99900, 'usd')).toBe('$999.00');
+    });
+
+    it('should handle different currencies', () => {
+      const result = formatCurrency(1500, 'eur');
+      expect(result).toContain('15.00');
+    });
+  });
+
+  describe('formatDate', () => {
+    it('should format ISO date string', () => {
+      const result = formatDate('2024-01-15T00:00:00Z');
+      expect(result).toContain('Jan');
+      expect(result).toContain('15');
+      expect(result).toContain('2024');
+    });
+
+    it('should return original string on invalid date', () => {
+      expect(formatDate('not-a-date')).toBe('Invalid Date');
+    });
+  });
+
+  describe('getUsageColor', () => {
+    it('should return blue for low usage', () => {
+      expect(getUsageColor(30)).toBe('blue');
+      expect(getUsageColor(0)).toBe('blue');
+      expect(getUsageColor(74)).toBe('blue');
+    });
+
+    it('should return amber for medium-high usage', () => {
+      expect(getUsageColor(75)).toBe('amber');
+      expect(getUsageColor(89)).toBe('amber');
+    });
+
+    it('should return red for high usage', () => {
+      expect(getUsageColor(90)).toBe('red');
+      expect(getUsageColor(100)).toBe('red');
+    });
+  });
+
+  describe('getStatusBadgeClass', () => {
+    it('should return green classes for active/paid', () => {
+      expect(getStatusBadgeClass('active')).toContain('green');
+      expect(getStatusBadgeClass('paid')).toContain('green');
+    });
+
+    it('should return blue classes for trialing', () => {
+      expect(getStatusBadgeClass('trialing')).toContain('blue');
+    });
+
+    it('should return amber classes for past_due/pending', () => {
+      expect(getStatusBadgeClass('past_due')).toContain('amber');
+      expect(getStatusBadgeClass('pending')).toContain('amber');
+    });
+
+    it('should return red classes for canceled/failed', () => {
+      expect(getStatusBadgeClass('canceled')).toContain('red');
+      expect(getStatusBadgeClass('failed')).toContain('red');
+    });
+
+    it('should return gray classes for unknown status', () => {
+      expect(getStatusBadgeClass('unknown')).toContain('gray');
+    });
+  });
+});

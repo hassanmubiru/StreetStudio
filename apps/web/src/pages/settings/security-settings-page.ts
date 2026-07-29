@@ -726,3 +726,39 @@ export class SecuritySettingsPage {
       this.twoFactorData.qrCodeUrl = undefined;
       this.render();
     });
+
+    // 2FA Verify button
+    const verify2faBtn = this.element.querySelector('#verify-2fa-btn');
+    verify2faBtn?.addEventListener('click', () => {
+      this.handleVerify2FA();
+    });
+
+    // 2FA Disable button
+    const disable2faBtn = this.element.querySelector('#disable-2fa-btn');
+    disable2faBtn?.addEventListener('click', () => {
+      this.handleDisable2FA();
+    });
+
+    // Verification code input
+    const verificationInput = this.element.querySelector('#verification-code') as HTMLInputElement;
+    verificationInput?.addEventListener('input', (e) => {
+      const value = (e.target as HTMLInputElement).value.replace(/\D/g, '');
+      (e.target as HTMLInputElement).value = value;
+      this.verificationCode = value;
+    });
+
+    // Session revoke buttons
+    const revokeButtons = this.element.querySelectorAll('.revoke-session-btn');
+    revokeButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const sessionId = (e.currentTarget as HTMLElement).dataset.sessionId;
+        if (sessionId) this.handleRevokeSession(sessionId);
+      });
+    });
+
+    // Revoke all sessions
+    const revokeAllBtn = this.element.querySelector('#revoke-all-sessions-btn');
+    revokeAllBtn?.addEventListener('click', () => {
+      this.handleRevokeAllSessions();
+    });
+  }

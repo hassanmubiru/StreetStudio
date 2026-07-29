@@ -529,3 +529,36 @@ export class OrganizationSettingsPage {
           <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">${usagePercent}% of storage quota used</p>
         </div>
       </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="storage-prefs-heading">
+        <h2 id="storage-prefs-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Storage Preferences</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label for="retention-policy" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Retention Policy</label>
+            <select id="retention-policy" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500">
+              <option value="indefinite" ${stor.retentionPolicy === 'indefinite' ? 'selected' : ''}>Keep indefinitely</option>
+              <option value="30days" ${stor.retentionPolicy === '30days' ? 'selected' : ''}>30 days</option>
+              <option value="90days" ${stor.retentionPolicy === '90days' ? 'selected' : ''}>90 days</option>
+              <option value="1year" ${stor.retentionPolicy === '1year' ? 'selected' : ''}>1 year</option>
+            </select>
+          </div>
+          <div>
+            <label for="preferred-region" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Preferred Region</label>
+            <select id="preferred-region" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500">
+              ${regionOptions}
+            </select>
+          </div>
+        </div>
+        <div class="mt-4">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input id="auto-delete-originals" type="checkbox" ${stor.autoDeleteProcessedOriginals ? 'checked' : ''} class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+            <div>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">Auto-delete processed originals</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Remove original uploads after processing to save storage.</p>
+            </div>
+          </label>
+        </div>
+      </section>
+    `;
+    return section;
+  }
