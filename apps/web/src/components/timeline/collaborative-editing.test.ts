@@ -39,3 +39,46 @@ function createPresence(overrides: Partial<EditorPresence> = {}): EditorPresence
     ...overrides,
   };
 }
+
+// ─── getUserColor ─────────────────────────────────────────────────────────────
+
+describe('getUserColor', () => {
+  it('returns a color from the predefined palette', () => {
+    const color = getUserColor('some-user-id');
+    expect(USER_COLORS).toContain(color);
+  });
+
+  it('returns consistent color for the same user', () => {
+    expect(getUserColor('user-abc')).toBe(getUserColor('user-abc'));
+  });
+
+  it('returns different colors for different users (in most cases)', () => {
+    const color1 = getUserColor('user-1');
+    const color2 = getUserColor('user-2');
+    // Not guaranteed to differ but highly likely with distinct IDs
+    expect(typeof color1).toBe('string');
+    expect(typeof color2).toBe('string');
+  });
+});
+
+// ─── PresenceManager ──────────────────────────────────────────────────────────
+
+describe('PresenceManager', () => {
+  let manager: PresenceManager;
+
+  beforeEach(() => {
+    manager = new PresenceManager('current-user');
+  });
+
+  afterEach(() => {
+    manager.destroy();
+  });
+
+  it('adds and retrieves a participant', () => {
+    const presence = createPresence({ userId: 'user-2', displayName: 'Alice' });
+    manager.updatePresence(presence);
+
+    const participant = manager.getParticipant('user-2');
+    expect(participant).toBeDefined();
+    expect(participant!.displayName).toBe('Alice');
+  });

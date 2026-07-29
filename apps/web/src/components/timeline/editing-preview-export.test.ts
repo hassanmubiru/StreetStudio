@@ -117,3 +117,45 @@ describe('formatDuration', () => {
     expect(formatDuration(-100)).toBe('0s');
   });
 });
+
+describe('getQualityOption', () => {
+  it('returns the correct option for low quality', () => {
+    const opt = getQualityOption('low');
+    expect(opt).toBeDefined();
+    expect(opt!.resolution.width).toBe(854);
+    expect(opt!.resolution.height).toBe(480);
+  });
+
+  it('returns the correct option for high quality', () => {
+    const opt = getQualityOption('high');
+    expect(opt).toBeDefined();
+    expect(opt!.resolution.width).toBe(1920);
+    expect(opt!.resolution.height).toBe(1080);
+  });
+
+  it('returns undefined for invalid quality', () => {
+    expect(getQualityOption('ultra' as any)).toBeUndefined();
+  });
+
+  it('QUALITY_OPTIONS has 4 entries', () => {
+    expect(QUALITY_OPTIONS).toHaveLength(4);
+  });
+});
+
+describe('estimateExportTime', () => {
+  it('returns higher estimate for higher quality', () => {
+    const low = estimateExportTime(60, 'low');
+    const high = estimateExportTime(60, 'high');
+    expect(high).toBeGreaterThan(low);
+  });
+
+  it('scales with duration', () => {
+    const short = estimateExportTime(30, 'medium');
+    const long = estimateExportTime(60, 'medium');
+    expect(long).toBe(short * 2);
+  });
+
+  it('returns 0 for zero duration', () => {
+    expect(estimateExportTime(0, 'high')).toBe(0);
+  });
+});

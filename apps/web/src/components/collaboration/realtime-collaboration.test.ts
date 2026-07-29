@@ -209,3 +209,70 @@ describe('Presence Indicators', () => {
       const avatars = container.querySelectorAll('.presence-avatar');
       expect(avatars.length).toBe(2);
     });
+
+    it('shows overflow indicator when users exceed max', () => {
+      const indicators = new PresenceIndicators(container, { maxVisible: 2, currentUserId: 'me' });
+      indicators.setUsers([
+        makePresenceUser({ id: 'u1' }),
+        makePresenceUser({ id: 'u2' }),
+        makePresenceUser({ id: 'u3' }),
+        makePresenceUser({ id: 'u4' }),
+      ]);
+      const overflow = container.querySelector('.presence-overflow');
+      expect(overflow).not.toBeNull();
+      expect(overflow!.textContent).toBe('+2');
+    });
+
+    it('excludes current user from display', () => {
+      const indicators = new PresenceIndicators(container, { currentUserId: 'me' });
+      indicators.setUsers([
+        makePresenceUser({ id: 'me', displayName: 'Me' }),
+        makePresenceUser({ id: 'u1', displayName: 'Alice' }),
+      ]);
+      expect(container.textContent).not.toContain('Me');
+      expect(container.textContent).toContain('1 viewer');
+    });
+
+    it('adds user via addUser method', () => {
+      const indicators = new PresenceIndicators(container, { currentUserId: 'me' });
+      indicators.setUsers([]);
+      indicators.addUser(makePresenceUser({ id: 'u1', displayName: 'Alice' }));
+      expect(indicators.getVisibleCount()).toBe(1);
+    });
+
+    it('removes user via removeUser method', () => {
+      const indicators = new PresenceIndicators(container, { currentUserId: 'me' });
+      indicators.setUsers([
+        makePresenceUser({ id: 'u1' }),
+        makePresenceUser({ id: 'u2' }),
+      ]);
+      indicators.removeUser('u1');
+      expect(indicators.getVisibleCount()).toBe(1);
+    });
+
+    it('updates user status', () => {
+      const indicators = new PresenceIndicators(container, { currentUserId: 'me' });
+      indicators.setUsers([makePresenceUser({ id: 'u1', status: 'active' })]);
+      indicators.updateUserStatus('u1', 'idle');
+      const users = indicators.getUsers();
+      expect(users[0].status).toBe('idle');
+    });
+
+    it('displays viewer count label', () => {
+      const indicators = new PresenceIndicators(container, { currentUserId: 'me' });
+      indicators.setUsers([
+        makePresenceUser({ id: 'u1' }),
+        makePresenceUser({ id: 'u2' }),
+        makePresenceUser({ id: 'u3' }),
+      ]);
+      expect(container.textContent).toContain('3 viewers');
+    });
+
+    it('shows initials when no avatar URL', () => {
+      const indicators = new PresenceIndicators(container, { currentUserId: 'me' });
+      indicators.setUsers([makePresenceUser({ id: 'u1', displayName: 'Alice Smith' })]);
+      const initials = container.querySelector('.presence-avatar-initials');
+      expect(initials?.textContent).toBe('AS');
+    });
+  });
+});
