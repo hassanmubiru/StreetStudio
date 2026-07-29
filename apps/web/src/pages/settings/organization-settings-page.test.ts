@@ -806,3 +806,134 @@ describe('OrganizationSettingsPage', () => {
       expect(status?.textContent).toBe('All changes saved');
     });
   });
+
+  describe('Accessibility', () => {
+    it('should have proper heading hierarchy', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+
+      const h1 = el.querySelector('h1');
+      expect(h1).toBeTruthy();
+
+      const h2s = el.querySelectorAll('h2');
+      expect(h2s.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should have aria-labelledby on sections', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+
+      const sections = el.querySelectorAll('section[aria-labelledby]');
+      expect(sections.length).toBeGreaterThan(0);
+    });
+
+    it('should have proper tablist role on navigation', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+
+      const tablist = el.querySelector('[role="tablist"]');
+      expect(tablist).toBeTruthy();
+    });
+
+    it('should have role=tabpanel on content area', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+
+      const panel = el.querySelector('[role="tabpanel"]');
+      expect(panel).toBeTruthy();
+      expect(panel?.getAttribute('aria-labelledby')).toBe('tab-branding');
+    });
+
+    it('should have role=alert on error containers', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+
+      const alerts = el.querySelectorAll('[role="alert"]');
+      expect(alerts.length).toBeGreaterThan(0);
+    });
+
+    it('should have aria-live=polite on dynamic content', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+
+      const liveRegions = el.querySelectorAll('[aria-live="polite"]');
+      expect(liveRegions.length).toBeGreaterThan(0);
+    });
+
+    it('should have aria-label on progressbar in storage tab', () => {
+      page = new OrganizationSettingsPage(createTestConfig());
+      const el = page.getElement();
+      container.appendChild(el);
+      page.switchTab('storage');
+
+      const progressbar = el.querySelector('[role="progressbar"]');
+      expect(progressbar?.getAttribute('aria-label')).toBe('Storage usage');
+    });
+  });
+});
+
+describe('validateLogoFile', () => {
+  it('should accept valid PNG file', () => {
+    const file = new File(['data'], 'logo.png', { type: 'image/png' });
+    Object.defineProperty(file, 'size', { value: 1024 * 1024 }); // 1MB
+    expect(validateLogoFile(file)).toEqual({ valid: true });
+  });
+
+  it('should accept valid SVG file', () => {
+    const file = new File(['<svg></svg>'], 'logo.svg', { type: 'image/svg+xml' });
+    Object.defineProperty(file, 'size', { value: 5000 });
+    expect(validateLogoFile(file)).toEqual({ valid: true });
+  });
+
+  it('should accept valid JPEG file', () => {
+    const file = new File(['data'], 'logo.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(file, 'size', { value: 500 * 1024 });
+    expect(validateLogoFile(file)).toEqual({ valid: true });
+  });
+
+  it('should accept valid WebP file', () => {
+    const file = new File(['data'], 'logo.webp', { type: 'image/webp' });
+    Object.defineProperty(file, 'size', { value: 200 * 1024 });
+    expect(validateLogoFile(file)).toEqual({ valid: true });
+  });
+
+  it('should reject unsupported file type', () => {
+    const file = new File(['data'], 'image.gif', { type: 'image/gif' });
+    Object.defineProperty(file, 'size', { value: 1024 });
+    const result = validateLogoFile(file);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('not supported');
+  });
+
+  it('should reject file exceeding size limit', () => {
+    const file = new File(['data'], 'huge.png', { type: 'image/png' });
+    Object.defineProperty(file, 'size', { value: 3 * 1024 * 1024 }); // 3MB
+    const result = validateLogoFile(file);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('2MB');
+  });
+
+  it('should reject file with exactly 0 bytes', () => {
+    const file = new File([], 'empty.png', { type: 'image/png' });
+    Object.defineProperty(file, 'size', { value: LOGO_MAX_SIZE + 1 });
+    const result = validateLogoFile(file);
+    expect(result.valid).toBe(false);
+  });
+});
+
+describe('validateColor', () => {
+  it('should accept valid hex colors', () => {
+    expect(validateColor('#000000')).toBe(true);
+    expect(validateColor('#ffffff')).toBe(true);
+    expect(validateColor('#2563eb')).toBe(true);
+    expect(validateColor('#FF00AA')).toBe(true);
+  });
+
+  it('should reject invalid hex colors', () => {
+    expect(validateColor('000000')).toBe(false);
+    expect(validateColor('#fff')).toBe(false);
+    expect(validateColor('#gggggg')).toBe(false);
+    expect(validateColor('')).toBe(false);
+    expect(validateColor('red')).toBe(false);
+  });
+});
