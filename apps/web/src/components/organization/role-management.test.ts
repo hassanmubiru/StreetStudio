@@ -474,3 +474,147 @@ describe('RoleManagement', () => {
     expect(container.querySelector('.role-management-title')?.textContent).toBe('Roles & Permissions');
     expect(container.querySelector('.role-management-description')).not.toBeNull();
   });
+
+  it('shows create button for admins', () => {
+    new RoleManagement(container, defaultRoleOptions, callbacks);
+    const btn = container.querySelector('.role-create-btn');
+    expect(btn).not.toBeNull();
+    expect(btn?.textContent).toBe('Create Custom Role');
+  });
+
+  it('hides create button for non-admins', () => {
+    new RoleManagement(container, { ...defaultRoleOptions, isAdmin: false }, callbacks);
+    expect(container.querySelector('.role-create-btn')).toBeNull();
+  });
+
+  it('renders role list with all roles', () => {
+    new RoleManagement(container, defaultRoleOptions, callbacks);
+    const items = container.querySelectorAll('.role-list-item');
+    expect(items.length).toBe(3);
+  });
+
+  it('shows built-in badge for built-in roles', () => {
+    new RoleManagement(container, defaultRoleOptions, callbacks);
+    const badges = container.querySelectorAll('.role-badge-builtin');
+    expect(badges.length).toBe(2); // Owner and Admin
+  });
+
+  it('shows custom badge for custom roles', () => {
+    new RoleManagement(container, defaultRoleOptions, callbacks);
+    const badges = container.querySelectorAll('.role-badge-custom');
+    expect(badges.length).toBe(1);
+  });
+
+  it('selects a role when clicked', () => {
+    const mgmt = new RoleManagement(container, defaultRoleOptions, callbacks);
+    const items = container.querySelectorAll('.role-list-item');
+    (items[0] as HTMLElement).click();
+    expect(mgmt.getSelectedRole()?.id).toBe('role-owner');
+  });
+
+  it('shows permission matrix when role is selected', () => {
+    const mgmt = new RoleManagement(container, defaultRoleOptions, callbacks);
+    mgmt.selectRole('role-admin');
+    expect(container.querySelector('.permission-matrix')).not.toBeNull();
+  });
+
+  it('shows placeholder when no role is selected', () => {
+    new RoleManagement(container, defaultRoleOptions, callbacks);
+    expect(container.querySelector('.role-detail-placeholder')).not.toBeNull();
+  });
+
+  it('shows role editor when create button is clicked', () => {
+    new RoleManagement(container, defaultRoleOptions, callbacks);
+    const createBtn = container.querySelector('.role-create-btn') as HTMLButtonElement;
+    createBtn.click();
+    expect(container.querySelector('.role-editor')).not.toBeNull();
+    expect(container.querySelector('.role-name-input')).not.toBeNull();
+  });
+
+  it('validates role name in editor', () => {
+    const mgmt = new RoleManagement(container, defaultRoleOptions, callbacks);
+    mgmt.startCreateRole();
+
+    const nameInput = container.querySelector('.role-name-input') as HTMLInputElement;
+    nameInput.value = '';
+    const saveBtn = container.querySelector('.role-save-btn') as HTMLButtonElement;
+    saveBtn.click();
+
+    const error = container.querySelector('#role-name-error');
+    expect(error?.textContent).toBe('Role name is required');
+  });
+
+  it('calls onCreateRole with correct data', async () => {
+    const mgmt = new RoleManagement(container, defaultRoleOptions, callbacks);
+    mgmt.startCreateRole();
+
+    const nameInput = container.querySelector('.role-name-input') as HTMLInputElement;
+    const descInput = container.querySelector('.role-desc-input') as HTMLInputElement;
+    nameInput.value = 'New Role';
+    descInput.value = 'A new custom role';
+
+    const saveBtn = container.querySelector('.role-save-btn') as HTMLButtonElement;
+    saveBtn.click();
+
+    await vi.waitFor(() => {
+      expect(callbacks.onCreateRole).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'New Role',
+          description: 'A new custom role',
+        })
+      );
+    });
+  });
+
+  it('shows delete button for custom roles (admin only)', () => {
+    const mgmt = new RoleManagement(container, defaultRoleOptions, callbacks);
+    mgmt.selectRole('role-custom');
+    expect(container.querySelector('.role-delete-btn')).not.toBeNull();
+  });
+
+  it('does not show delete button for built-in roles', () => {
+    const mgmt = new RoleManagement(container, defaultRoleOptions, callbacks);
+    mgmt.selectRole('role-owner');
+    expect(container.querySelector('.role-delete-btn')).toBeNull();
+  });
+
+  it('hides editor on cancel', () => {
+    const mgmt = new RoleManagement(container, defaultRoleOptions, callbacks);
+    mgmt.startCreateRole();
+    expect(container.querySelector('.role-editor')).not.toBeNull();
+
+    const cancelBtn = container.querySelector('.role-cancel-btn') as HTMLButtonElement;
+    cancelBtn.click();
+    expect(container.querySelector('.role-editor')).toBeNull();
+  });
+});
+
+// --------------------------------------------------------------------------
+// Team Management - Utility functions
+// --------------------------------------------------------------------------
+
+describe('validateTeamName', () => {
+  it('accepts valid team names', () => {
+    expect(validateTeamName('Engineering').valid).toBe(true);
+    expect(validateTeamName('Content Team').valid).toBe(true);
+    expect(validateTeamName('team-alpha_1').valid).toBe(true);
+  });
+
+  it('rejects empty names', () => {
+    const result = validateTeamName('');
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('Team name is required');
+  });
+
+  it('rejects names over 100 characters', () => {
+    const longName = 'a'.repeat(101);
+    const result = validateTeamName(longName);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('100 characters');
+  });
+
+  it('rejects special characters', () => {
+    const result = validateTeamName('Team<>!');
+    expect(result.valid).toBe(false);
+  });
+});

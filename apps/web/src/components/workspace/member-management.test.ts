@@ -107,3 +107,187 @@ describe('MemberManagement', () => {
   afterEach(() => {
     document.body.removeChild(container);
   });
+
+  // ============================================================
+  // Section 1: Members Page with Role Display and Last Activity
+  // Validates: Requirement 8.1
+  // ============================================================
+
+  describe('Members List Rendering (Requirement 8.1)', () => {
+    it('should render members table with all members', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const rows = element.querySelectorAll('[data-member-id]');
+      expect(rows.length).toBe(3);
+    });
+
+    it('should display member name and email', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const aliceRow = element.querySelector('[data-member-id="member-1"]');
+      expect(aliceRow?.textContent).toContain('Alice Johnson');
+      expect(aliceRow?.textContent).toContain('alice@example.com');
+    });
+
+    it('should display member roles', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const roleEl = element.querySelector('[data-member-role="member-1"]');
+      expect(roleEl?.textContent?.trim()).toBe('Admin');
+
+      const editorRole = element.querySelector('[data-member-role="member-2"]');
+      expect(editorRole?.textContent?.trim()).toBe('Editor');
+    });
+
+    it('should display last activity for each member', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const activityEl = element.querySelector('[data-member-activity="member-1"]');
+      expect(activityEl?.textContent?.trim()).toBeTruthy();
+      // Activity should contain relative time
+      expect(activityEl?.textContent).toMatch(/ago|Just now/);
+    });
+
+    it('should display member count', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const countEl = element.querySelector('[data-member-count]');
+      expect(countEl?.textContent).toContain('3 members');
+    });
+
+    it('should mark current user with "(you)" label', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const aliceRow = element.querySelector('[data-member-id="member-1"]');
+      expect(aliceRow?.textContent).toContain('(you)');
+    });
+
+    it('should not show remove button for current user', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const aliceRow = element.querySelector('[data-member-id="member-1"]');
+      const removeBtn = aliceRow?.querySelector('[data-action="remove-member"]');
+      expect(removeBtn).toBeFalsy();
+    });
+
+    it('should show remove button for other members', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const bobRow = element.querySelector('[data-member-id="member-2"]');
+      const removeBtn = bobRow?.querySelector('[data-action="remove-member"]');
+      expect(removeBtn).toBeTruthy();
+    });
+  });
+
+  // ============================================================
+  // Section 2: Member Search and Sorting
+  // Validates: Requirement 8.1
+  // ============================================================
+
+  describe('Member Search and Sorting', () => {
+    it('should filter members by search query', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const searchInput = element.querySelector('[data-field="member-search"]') as HTMLInputElement;
+      searchInput.value = 'alice';
+      searchInput.dispatchEvent(new Event('input'));
+
+      // After search, count should be updated
+      const countEl = element.querySelector('[data-member-count]');
+      expect(countEl?.textContent).toContain('1 member');
+    });
+
+    it('should filter members by email', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const searchInput = element.querySelector('[data-field="member-search"]') as HTMLInputElement;
+      searchInput.value = 'bob@';
+      searchInput.dispatchEvent(new Event('input'));
+
+      const countEl = element.querySelector('[data-member-count]');
+      expect(countEl?.textContent).toContain('1 member');
+    });
+
+    it('should show empty state when no members match search', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const searchInput = element.querySelector('[data-field="member-search"]') as HTMLInputElement;
+      searchInput.value = 'nonexistent';
+      searchInput.dispatchEvent(new Event('input'));
+
+      const countEl = element.querySelector('[data-member-count]');
+      expect(countEl?.textContent).toContain('0 members');
+    });
+
+    it('should have sortable table columns', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const nameSort = element.querySelector('[data-sort="name"]');
+      const roleSort = element.querySelector('[data-sort="role"]');
+      const activitySort = element.querySelector('[data-sort="activity"]');
+
+      expect(nameSort).toBeTruthy();
+      expect(roleSort).toBeTruthy();
+      expect(activitySort).toBeTruthy();
+    });
+  });
