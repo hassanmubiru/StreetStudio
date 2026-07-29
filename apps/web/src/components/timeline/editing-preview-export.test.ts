@@ -553,14 +553,14 @@ describe('ExportManager', () => {
       const job = manager.startExport(createExportOptions());
       manager.completeJob(job, 'https://download.com/file.mp4');
       expect(manager.getHistory()).toHaveLength(1);
-      expect(manager.getHistory()[0].status).toBe('completed');
+      expect(manager.getHistory()[0]!.status).toBe('completed');
     });
 
     it('adds failed jobs to history', () => {
       const job = manager.startExport(createExportOptions());
       manager.failJob(job, new Error('Network error'));
       expect(manager.getHistory()).toHaveLength(1);
-      expect(manager.getHistory()[0].status).toBe('failed');
+      expect(manager.getHistory()[0]!.status).toBe('failed');
     });
 
     it('clears history', () => {
@@ -784,7 +784,7 @@ describe('ExportHistoryManager', () => {
       const job2 = createTestJob({ id: 'second' });
       historyManager.addEntry(job1);
       historyManager.addEntry(job2);
-      expect(historyManager.getEntries()[0].id).toBe('second');
+      expect(historyManager.getEntries()[0]!.id).toBe('second');
     });
 
     it('caps history at max items', () => {
