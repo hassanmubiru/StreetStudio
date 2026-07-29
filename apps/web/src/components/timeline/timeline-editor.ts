@@ -251,3 +251,53 @@ export class WaveformRenderer {
     this.backgroundColor = color;
   }
 }
+
+// ─── Timeline Editor ──────────────────────────────────────────────────────────
+
+/**
+ * TimelineEditor
+ * 
+ * Frame-accurate timeline editor with zoom/navigation controls, trim tools,
+ * split functionality, and audio waveform visualization. Designed for precise
+ * video editing with keyboard shortcuts and accessible drag handles.
+ */
+export class TimelineEditor {
+  private container: HTMLElement;
+  private options: Required<TimelineEditorOptions>;
+  private callbacks: TimelineEditorCallbacks;
+  private state: TimelineState;
+  private waveformRenderer: WaveformRenderer | null = null;
+
+  // DOM elements
+  private timelineElement!: HTMLElement;
+  private rulerElement!: HTMLElement;
+  private trackElement!: HTMLElement;
+  private playheadElement!: HTMLElement;
+  private waveformCanvas!: HTMLCanvasElement;
+  private controlsElement!: HTMLElement;
+  private timecodeDisplay!: HTMLElement;
+  private zoomSlider!: HTMLInputElement;
+  private splitPreviewElement!: HTMLElement;
+
+  // Interaction state
+  private isDraggingPlayhead = false;
+  private isDraggingTrimHandle = false;
+  private activeTrimOperation: TrimOperation | null = null;
+  private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  private isDestroyed = false;
+
+  private readonly defaultOptions: Required<TimelineEditorOptions> = {
+    frameRate: DEFAULT_FRAME_RATE,
+    minZoom: MIN_ZOOM,
+    maxZoom: MAX_ZOOM,
+    defaultZoom: DEFAULT_ZOOM,
+    waveformColor: '#4fc3f7',
+    waveformBackgroundColor: '#1a1a2e',
+    playheadColor: '#ff5252',
+    trimHandleColor: '#ffab40',
+    splitPreviewColor: '#69f0ae',
+    enableWaveform: true,
+    enableKeyboardShortcuts: true,
+    snapToFrame: true,
+  };

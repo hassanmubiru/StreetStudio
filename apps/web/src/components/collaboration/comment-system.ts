@@ -46,3 +46,51 @@ export interface CreateCommentInput {
 
 /** Moderation action types. */
 export type ModerationAction = 'delete' | 'hide' | 'pin' | 'unpin';
+
+/** Status of a comment for moderation purposes. */
+export type CommentStatus = 'visible' | 'hidden' | 'pinned' | 'deleted';
+
+/** Extended comment with UI state. */
+export interface CommentWithState extends Comment {
+  status: CommentStatus;
+  author?: CommentAuthor;
+  replies: CommentWithState[];
+  isCollapsed: boolean;
+}
+
+/** Callbacks for the comment system. */
+export interface CommentSystemCallbacks {
+  onSubmit?: (input: CreateCommentInput) => Promise<Comment | null>;
+  onDelete?: (commentId: Uuid) => Promise<boolean>;
+  onModerate?: (commentId: Uuid, action: ModerationAction) => Promise<boolean>;
+  onSeek?: (timestampSeconds: number) => void;
+  onMention?: (query: string) => Promise<CommentAuthor[]>;
+}
+
+/** Configuration for the comment system. */
+export interface CommentSystemOptions {
+  videoId: Uuid;
+  videoDuration: number;
+  currentUserId: Uuid;
+  isAdmin?: boolean;
+  /** Current playback time in seconds for timestamped comment input. */
+  currentTime?: number;
+}
+
+// --------------------------------------------------------------------------
+// Utility functions
+// --------------------------------------------------------------------------
+
+/**
+ * Formats seconds into a time string (e.g., "1:23" or "1:05:30").
+ */
+export function formatTimestamp(seconds: number): string {
+  if (!isFinite(seconds) || seconds < 0) return '0:00';
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  if (hrs > 0) {
+    return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+}
