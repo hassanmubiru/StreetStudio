@@ -287,3 +287,55 @@ describe('SecuritySettingsPage', () => {
       expect(input.getAttribute('maxlength')).toBe('6');
       expect(input.getAttribute('inputmode')).toBe('numeric');
     });
+
+    it('should show error for incomplete verification code', () => {
+      page = new SecuritySettingsPage({ twoFactor: { isEnabled: false } });
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      (el.querySelector('#enable-2fa-btn') as HTMLButtonElement).click();
+
+      const input = el.querySelector('#verification-code') as HTMLInputElement;
+      input.value = '123';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      (el.querySelector('#verify-2fa-btn') as HTMLButtonElement).click();
+
+      const error = el.querySelector('#verification-error');
+      expect(error?.textContent).toContain('6-digit');
+    });
+
+    it('should dispatch two-factor-enable event on valid verification', () => {
+      page = new SecuritySettingsPage({ twoFactor: { isEnabled: false } });
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const handler = vi.fn();
+      el.addEventListener('two-factor-enable', handler);
+
+      (el.querySelector('#enable-2fa-btn') as HTMLButtonElement).click();
+
+      const input = el.querySelector('#verification-code') as HTMLInputElement;
+      input.value = '123456';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      (el.querySelector('#verify-2fa-btn') as HTMLButtonElement).click();
+
+      expect(handler).toHaveBeenCalled();
+      expect(handler.mock.calls[0][0].detail.verificationCode).toBe('123456');
+      expect(handler.mock.calls[0][0].detail.secret).toBeTruthy();
+    });
+
+    it('should dispatch two-factor-disable event when disabling', () => {
+      page = new SecuritySettingsPage({ twoFactor: { isEnabled: true } });
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const handler = vi.fn();
+      el.addEventListener('two-factor-disable', handler);
+
+      (el.querySelector('#disable-2fa-btn') as HTMLButtonElement).click();
+
+      expect(handler).toHaveBeenCalled();
+    });
+  });

@@ -834,3 +834,50 @@ export class OrganizationSettingsPage {
       });
     });
   }
+
+  private setupStorageListeners(): void {
+    const retentionSelect = this.element.querySelector('#retention-policy') as HTMLSelectElement;
+    retentionSelect?.addEventListener('change', (e) => {
+      this.settings.storage.retentionPolicy = (e.target as HTMLSelectElement).value as StorageSettings['retentionPolicy'];
+      this.markDirty();
+    });
+
+    const regionSelect = this.element.querySelector('#preferred-region') as HTMLSelectElement;
+    regionSelect?.addEventListener('change', (e) => {
+      this.settings.storage.preferredRegion = (e.target as HTMLSelectElement).value;
+      this.markDirty();
+    });
+
+    const autoDeleteCheckbox = this.element.querySelector('#auto-delete-originals') as HTMLInputElement;
+    autoDeleteCheckbox?.addEventListener('change', (e) => {
+      this.settings.storage.autoDeleteProcessedOriginals = (e.target as HTMLInputElement).checked;
+      this.markDirty();
+    });
+  }
+
+  private setupIntegrationListeners(): void {
+    // Slack
+    const slackEnabled = this.element.querySelector('#slack-enabled') as HTMLInputElement;
+    const slackUrl = this.element.querySelector('#slack-webhook-url') as HTMLInputElement;
+    slackEnabled?.addEventListener('change', (e) => {
+      this.settings.integrations.slackEnabled = (e.target as HTMLInputElement).checked;
+      if (slackUrl) slackUrl.disabled = !this.settings.integrations.slackEnabled;
+      this.markDirty();
+    });
+    slackUrl?.addEventListener('input', (e) => {
+      this.settings.integrations.slackWebhookUrl = (e.target as HTMLInputElement).value;
+      this.markDirty();
+    });
+
+    // Teams
+    const teamsEnabled = this.element.querySelector('#teams-enabled') as HTMLInputElement;
+    const teamsUrl = this.element.querySelector('#teams-webhook-url') as HTMLInputElement;
+    teamsEnabled?.addEventListener('change', (e) => {
+      this.settings.integrations.teamsEnabled = (e.target as HTMLInputElement).checked;
+      if (teamsUrl) teamsUrl.disabled = !this.settings.integrations.teamsEnabled;
+      this.markDirty();
+    });
+    teamsUrl?.addEventListener('input', (e) => {
+      this.settings.integrations.teamsWebhookUrl = (e.target as HTMLInputElement).value;
+      this.markDirty();
+    });

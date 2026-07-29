@@ -664,3 +664,132 @@ describe('BillingSettingsPage', () => {
       expect(page.getCurrentView()).toBe('overview');
     });
   });
+
+  describe('Payment Method Actions', () => {
+    it('should call API to set default payment method', async () => {
+      (apiClient.put as ReturnType<typeof vi.fn>).mockResolvedValue({ data: {}, status: 200, success: true });
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const setDefaultBtn = el.querySelector('.set-default-btn[data-method-id="pm_2"]') as HTMLButtonElement;
+      setDefaultBtn.click();
+
+      await vi.waitFor(() => {
+        expect(apiClient.put).toHaveBeenCalledWith(
+          '/organizations/org-123/billing/payment-methods/pm_2/default',
+          {}
+        );
+      });
+    });
+
+    it('should call API to remove non-default payment method', async () => {
+      (apiClient.delete as ReturnType<typeof vi.fn>).mockResolvedValue({ data: {}, status: 200, success: true });
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const removeBtn = el.querySelector('.remove-method-btn[data-method-id="pm_2"]') as HTMLButtonElement;
+      removeBtn.click();
+
+      await vi.waitFor(() => {
+        expect(apiClient.delete).toHaveBeenCalledWith(
+          '/organizations/org-123/billing/payment-methods/pm_2'
+        );
+      });
+    });
+
+    it('should emit event when add payment method is clicked', async () => {
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const eventSpy = vi.fn();
+      el.addEventListener('add-payment-method', eventSpy);
+
+      const addBtn = el.querySelector('#add-payment-method-btn') as HTMLButtonElement;
+      addBtn.click();
+
+      expect(eventSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('Subscription Actions', () => {
+    it('should call API to cancel subscription on confirm', async () => {
+      (apiClient.post as ReturnType<typeof vi.fn>).mockResolvedValue({ data: {}, status: 200, success: true });
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const cancelBtn = el.querySelector('#cancel-subscription-btn') as HTMLButtonElement;
+      cancelBtn.click();
+
+      await vi.waitFor(() => {
+        expect(apiClient.post).toHaveBeenCalledWith(
+          '/organizations/org-123/billing/cancel',
+          {}
+        );
+      });
+    });
+
+    it('should not call API when cancel is not confirmed', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const cancelBtn = el.querySelector('#cancel-subscription-btn') as HTMLButtonElement;
+      cancelBtn.click();
+
+      expect(apiClient.post).not.toHaveBeenCalled();
+    });
+
+    it('should call API to change plan on confirm', async () => {
+      (apiClient.post as ReturnType<typeof vi.fn>).mockResolvedValue({ data: {}, status: 200, success: true });
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      // Switch to change plan view
+      const changePlanBtn = el.querySelector('#change-plan-btn') as HTMLButtonElement;
+      changePlanBtn.click();
+
+      // Select the enterprise plan
+      const selectBtn = el.querySelector('.select-plan-btn[data-plan-id="enterprise"]') as HTMLButtonElement;
+      selectBtn.click();
+
+      await vi.waitFor(() => {
+        expect(apiClient.post).toHaveBeenCalledWith(
+          '/organizations/org-123/billing/change-plan',
+          { planId: 'enterprise' }
+        );
+      });
+    });
+
+    it('should return to overview after successful plan change', async () => {
+      (apiClient.post as ReturnType<typeof vi.fn>).mockResolvedValue({ data: {}, status: 200, success: true });
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      page = new BillingSettingsPage({ organizationId: 'org-123' as any });
+      const el = await page.getElement();
+      document.body.appendChild(el);
+
+      const changePlanBtn = el.querySelector('#change-plan-btn') as HTMLButtonElement;
+      changePlanBtn.click();
+
+      const selectBtn = el.querySelector('.select-plan-btn[data-plan-id="enterprise"]') as HTMLButtonElement;
+      selectBtn.click();
+
+      await vi.waitFor(() => {
+        expect(page.getCurrentView()).toBe('overview');
+      });
+    });
+  });
