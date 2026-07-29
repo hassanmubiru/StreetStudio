@@ -336,3 +336,65 @@ export class VideoMetadataForm {
       }
     });
   }
+
+  private handleTagInputChange(): void {
+    const value = this.tagInput!.value.trim();
+
+    if (value.length > 0) {
+      this.showTagSuggestions(value);
+    } else {
+      this.hideTagSuggestions();
+    }
+  }
+
+  private handleTagKeydown(e: KeyboardEvent): void {
+    const value = this.tagInput!.value.trim();
+
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      if (this.activeSuggestionIndex >= 0) {
+        this.selectActiveSuggestion();
+      } else if (value.length > 0) {
+        this.addTag(value);
+      }
+    } else if (e.key === 'Backspace' && value === '' && this.formData.tags.length > 0) {
+      this.removeTag(this.formData.tags[this.formData.tags.length - 1]);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      this.navigateSuggestions(1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      this.navigateSuggestions(-1);
+    } else if (e.key === 'Escape') {
+      this.hideTagSuggestions();
+    }
+  }
+
+  private showTagSuggestions(query: string): void {
+    if (!this.tagSuggestionsContainer) return;
+
+    const lowerQuery = query.toLowerCase();
+    const suggestions = this.availableTags
+      .filter(tag =>
+        tag.name.toLowerCase().includes(lowerQuery) &&
+        !this.formData.tags.includes(tag.name)
+      )
+      .slice(0, 8);
+
+    if (suggestions.length === 0) {
+      this.hideTagSuggestions();
+      return;
+    }
+
+    this.activeSuggestionIndex = -1;
+    this.tagSuggestionsContainer.innerHTML = suggestions
+      .map((tag, index) => `
+        <div class="tag-suggestion" role="option" data-index="${index}" data-tag="${tag.name}" aria-selected="false">
+          <span class="suggestion-name">${this.highlightMatch(tag.name, query)}</span>
+          <span class="suggestion-count">${tag.count} video${tag.count !== 1 ? 's' : ''}</span>
+        </div>
+      `)
+      .join('');
+
+    this.tagSuggestionsContainer.style.display = 'block';
+    this.tagInput!.setAttribute('aria-expanded', 'true');

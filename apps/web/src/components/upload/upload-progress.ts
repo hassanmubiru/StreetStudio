@@ -321,3 +321,39 @@ export class UploadProgressInterface {
       </div>
     `;
   }
+
+  private setupEventListeners(): void {
+    const panel = this.container.querySelector('.upload-progress-panel');
+    if (!panel) return;
+
+    const minimizeBtn = panel.querySelector('.btn-minimize');
+    minimizeBtn?.addEventListener('click', () => this.toggleMinimize());
+
+    const closeBtn = panel.querySelector('.btn-close');
+    closeBtn?.addEventListener('click', () => this.hide());
+
+    const pauseAllBtn = panel.querySelector('.btn-pause-all');
+    pauseAllBtn?.addEventListener('click', () => {
+      const state = this.uploadStore.getState();
+      const hasActive = state.uploads.some(u => u.status === 'uploading');
+      if (hasActive) {
+        this.uploadStore.pauseAllActiveUploads();
+      } else {
+        this.uploadStore.resumeQueuedUploads();
+      }
+      this.updatePauseButton(state);
+    });
+
+    const clearDoneBtn = panel.querySelector('.btn-clear-done');
+    clearDoneBtn?.addEventListener('click', () => {
+      this.uploadStore.clearCompleted();
+    });
+  }
+
+  private updateDisplay(state: UploadState): void {
+    this.updateBatchProgress(state);
+    this.updateIndividualItems(state);
+    this.updateErrorSection(state);
+    this.updateUploadCount(state);
+    this.updatePauseButton(state);
+  }
