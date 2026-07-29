@@ -218,10 +218,18 @@ export class OrganizationSettingsPage {
   constructor(config: OrganizationSettingsPageConfig) {
     this.config = config;
     this.settings = {
-      branding: config.initialSettings?.branding || createDefaultBrandingSettings(),
-      security: config.initialSettings?.security || createDefaultSecuritySettings(),
-      storage: config.initialSettings?.storage || createDefaultStorageSettings(),
-      integrations: config.initialSettings?.integrations || createDefaultIntegrationSettings(),
+      branding: config.initialSettings?.branding
+        ? { ...config.initialSettings.branding }
+        : createDefaultBrandingSettings(),
+      security: config.initialSettings?.security
+        ? { ...config.initialSettings.security, ipAllowlist: [...(config.initialSettings.security.ipAllowlist || [])] }
+        : createDefaultSecuritySettings(),
+      storage: config.initialSettings?.storage
+        ? { ...config.initialSettings.storage }
+        : createDefaultStorageSettings(),
+      integrations: config.initialSettings?.integrations
+        ? { ...config.initialSettings.integrations, webhookEndpoints: [...(config.initialSettings.integrations.webhookEndpoints || []).map(ep => ({ ...ep, events: [...ep.events] }))] }
+        : createDefaultIntegrationSettings(),
     };
 
     this.element = document.createElement('div');
@@ -1012,12 +1020,20 @@ export class OrganizationSettingsPage {
     this.pendingLogoFile = null;
     this.isDirty = false;
 
-    // Reset to initial settings
+    // Reset to initial settings (deep copy to avoid reference mutation)
     this.settings = {
-      branding: this.config.initialSettings?.branding || createDefaultBrandingSettings(),
-      security: this.config.initialSettings?.security || createDefaultSecuritySettings(),
-      storage: this.config.initialSettings?.storage || createDefaultStorageSettings(),
-      integrations: this.config.initialSettings?.integrations || createDefaultIntegrationSettings(),
+      branding: this.config.initialSettings?.branding
+        ? { ...this.config.initialSettings.branding }
+        : createDefaultBrandingSettings(),
+      security: this.config.initialSettings?.security
+        ? { ...this.config.initialSettings.security, ipAllowlist: [...(this.config.initialSettings.security.ipAllowlist || [])] }
+        : createDefaultSecuritySettings(),
+      storage: this.config.initialSettings?.storage
+        ? { ...this.config.initialSettings.storage }
+        : createDefaultStorageSettings(),
+      integrations: this.config.initialSettings?.integrations
+        ? { ...this.config.initialSettings.integrations, webhookEndpoints: [...(this.config.initialSettings.integrations.webhookEndpoints || []).map(ep => ({ ...ep, events: [...ep.events] }))] }
+        : createDefaultIntegrationSettings(),
     };
     this.render();
   }
