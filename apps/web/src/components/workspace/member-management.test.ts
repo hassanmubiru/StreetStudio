@@ -435,3 +435,76 @@ describe('MemberManagement', () => {
       );
     });
   });
+
+  // ============================================================
+  // Section 4: Pending Invitations
+  // Validates: Requirement 8.2
+  // ============================================================
+
+  describe('Pending Invitations', () => {
+    it('should display pending invitations section', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const pendingSection = element.querySelector('[data-pending-invitations]');
+      expect(pendingSection).toBeTruthy();
+      expect(pendingSection?.textContent).toContain('Pending Invitations');
+      expect(pendingSection?.textContent).toContain('pending@example.com');
+    });
+
+    it('should show revoke button for pending invitations', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const revokeBtn = element.querySelector('[data-action="revoke-invitation"]');
+      expect(revokeBtn).toBeTruthy();
+      expect(revokeBtn?.textContent?.trim()).toBe('Revoke');
+    });
+
+    it('should revoke invitation on click', async () => {
+      mockApiClient.delete.mockResolvedValue({ data: {} });
+
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const revokeBtn = element.querySelector('[data-action="revoke-invitation"]') as HTMLElement;
+      revokeBtn.click();
+
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(mockApiClient.delete).toHaveBeenCalledWith(
+        '/organizations/org-1/invitations/inv-1'
+      );
+    });
+
+    it('should not show pending section when no invitations', async () => {
+      mockApiClient.get.mockImplementation((url: string) => {
+        if (url.includes('/members')) return Promise.resolve({ data: mockMembers });
+        if (url.includes('/roles')) return Promise.resolve({ data: mockRoles });
+        if (url.includes('/invitations')) return Promise.resolve({ data: [] });
+        return Promise.resolve({ data: [] });
+      });
+
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const pendingSection = element.querySelector('[data-pending-invitations]');
+      expect(pendingSection).toBeFalsy();
+    });
+  });
