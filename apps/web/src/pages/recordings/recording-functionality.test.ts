@@ -444,3 +444,62 @@ describe('Recording Control State Transitions and Keyboard Shortcuts', () => {
       expect(hints?.textContent).toContain('Esc');
     });
   });
+
+  describe('Floating controls mode', () => {
+    let container: HTMLElement;
+
+    beforeEach(() => {
+      container = document.createElement('div');
+      document.body.appendChild(container);
+    });
+
+    afterEach(() => {
+      container.remove();
+      // Clean up floating elements
+      document.querySelectorAll('.floating-controls, .minimized-controls').forEach(el => el.remove());
+    });
+
+    it('should switch to floating mode during recording', () => {
+      const { RecordingControls } = require('./components/recording-controls.js');
+      const controls = new RecordingControls();
+      const element = controls.getElement();
+      container.appendChild(element);
+
+      controls.setFloatingMode(true);
+
+      const floatingControls = document.querySelector('.floating-controls');
+      expect(floatingControls).toBeTruthy();
+
+      const embeddedControls = element.querySelector('#embedded-controls');
+      expect(embeddedControls?.classList.contains('hidden')).toBe(true);
+    });
+
+    it('should switch back to embedded mode when recording stops', () => {
+      const { RecordingControls } = require('./components/recording-controls.js');
+      const controls = new RecordingControls();
+      const element = controls.getElement();
+      container.appendChild(element);
+
+      controls.setFloatingMode(true);
+      controls.setFloatingMode(false);
+
+      const floatingControls = document.querySelector('.floating-controls');
+      expect(floatingControls).toBeFalsy();
+
+      const embeddedControls = element.querySelector('#embedded-controls');
+      expect(embeddedControls?.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should have proper toolbar role on floating controls', () => {
+      const { RecordingControls } = require('./components/recording-controls.js');
+      const controls = new RecordingControls();
+      const element = controls.getElement();
+      container.appendChild(element);
+
+      controls.setFloatingMode(true);
+
+      const floatingControls = document.querySelector('.floating-controls');
+      expect(floatingControls?.getAttribute('role')).toBe('toolbar');
+      expect(floatingControls?.getAttribute('aria-label')).toBe('Floating Recording Controls');
+    });
+  });

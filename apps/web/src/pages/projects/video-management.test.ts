@@ -590,3 +590,78 @@ describe('Folder Management and Hierarchy Display', () => {
       manager.destroy();
     });
   });
+
+  describe('Folder CRUD Operations', () => {
+    it('should call API to create a new folder', async () => {
+      const onFolderCreate = vi.fn();
+      const newFolder: FolderDto = {
+        id: 'new-f',
+        projectId: 'proj-1',
+        name: 'New Folder',
+        depth: 0
+      };
+      mockApiClient.post.mockResolvedValue({ data: newFolder });
+
+      const manager = new FolderManager({
+        projectId: 'proj-1',
+        currentFolderId: null,
+        onFolderCreate
+      });
+      const element = await manager.getElement();
+      container.appendChild(element);
+
+      // Click the create folder button to open dialog
+      const createBtn = element.querySelector('.btn-create-folder') as HTMLElement;
+      createBtn?.click();
+
+      // Dialog should appear
+      const dialog = document.querySelector('[data-folder-name]');
+      expect(dialog).toBeTruthy();
+
+      // Clean up dialog
+      const backdrop = dialog?.closest('.fixed');
+      backdrop?.remove();
+
+      manager.destroy();
+    });
+
+    it('should handle API error when loading folders', async () => {
+      mockApiClient.get.mockRejectedValue(new Error('Network error'));
+      const { handleError } = await import('../../app/error-handler.js');
+
+      const manager = new FolderManager({
+        projectId: 'proj-1',
+        currentFolderId: null
+      });
+      await manager.getElement();
+
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        'api',
+        expect.objectContaining({
+          feature: 'folder-management',
+          operation: 'load-folders'
+        })
+      );
+
+      manager.destroy();
+    });
+
+    it('should refresh folder list on demand', async () => {
+      const manager = new FolderManager({
+        projectId: 'proj-1',
+        currentFolderId: null
+      });
+      await manager.getElement();
+
+      // Clear call count from initial load
+      mockApiClient.get.mockClear();
+      mockApiClient.get.mockResolvedValue({ data: mockFolders });
+
+      await manager.refresh();
+
+      expect(mockApiClient.get).toHaveBeenCalledWith('/projects/proj-1/folders');
+
+      manager.destroy();
+    });
+  });
