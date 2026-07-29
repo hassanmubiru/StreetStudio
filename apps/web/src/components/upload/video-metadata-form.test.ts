@@ -323,3 +323,47 @@ describe('VideoMetadataForm', () => {
       expect(suggestions?.style.display).toBe('none');
     });
   });
+
+  describe('Change Notifications', () => {
+    it('should call onChange when title changes', () => {
+      const onChange = vi.fn();
+      form = new VideoMetadataForm(container, { onChange });
+
+      const titleInput = container.querySelector('#video-title') as HTMLInputElement;
+      titleInput.value = 'New Title';
+      titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'New Title'
+      }));
+    });
+
+    it('should call onChange when privacy toggle changes', () => {
+      const onChange = vi.fn();
+      form = new VideoMetadataForm(container, { onChange });
+
+      const privateCheckbox = container.querySelector('#video-private') as HTMLInputElement;
+      privateCheckbox.checked = true;
+      privateCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+        isPrivate: true
+      }));
+    });
+
+    it('should call onChange when project selection changes', () => {
+      const onChange = vi.fn();
+      form = new VideoMetadataForm(container, {
+        onChange,
+        projects: [{ id: 'proj-1' as any, name: 'Project' }]
+      });
+
+      const select = container.querySelector('#video-project') as HTMLSelectElement;
+      select.value = 'proj-1';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+        projectId: 'proj-1'
+      }));
+    });
+  });

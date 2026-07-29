@@ -179,3 +179,42 @@ describe('AdaptiveVideoPlayer', () => {
       expect(playSpy).toHaveBeenCalled();
     });
   });
+
+  describe('seek', () => {
+    beforeEach(() => {
+      player = new AdaptiveVideoPlayer(container, {}, callbacks);
+      // Simulate a video with known duration
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'duration', { value: 120, writable: true });
+      video.dispatchEvent(new Event('durationchange'));
+    });
+
+    it('seek() sets currentTime clamped to duration', () => {
+      player.seek(60);
+      expect(player.getState().currentTime).toBe(60);
+    });
+
+    it('seek() clamps to 0 for negative values', () => {
+      player.seek(-10);
+      expect(player.getState().currentTime).toBe(0);
+    });
+
+    it('seek() clamps to duration for values exceeding duration', () => {
+      player.seek(999);
+      expect(player.getState().currentTime).toBe(120);
+    });
+
+    it('seekRelative() seeks forward', () => {
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'currentTime', { value: 30, writable: true });
+      player.seekRelative(SEEK_STEP_SECONDS);
+      expect(player.getState().currentTime).toBe(35);
+    });
+
+    it('seekRelative() seeks backward', () => {
+      const video = player.getVideoElement();
+      Object.defineProperty(video, 'currentTime', { value: 30, writable: true });
+      player.seekRelative(-SEEK_STEP_SECONDS);
+      expect(player.getState().currentTime).toBe(25);
+    });
+  });
