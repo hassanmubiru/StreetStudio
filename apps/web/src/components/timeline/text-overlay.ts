@@ -96,3 +96,42 @@ export interface TextOverlayManagerOptions {
   captionColor?: string;
   enableSpeechToText?: boolean;
 }
+
+export interface TextOverlayCallbacks {
+  onOverlayAdd?: (overlay: TextOverlay) => void;
+  onOverlayUpdate?: (overlay: TextOverlay) => void;
+  onOverlayRemove?: (overlayId: string) => void;
+  onCaptionAdd?: (caption: CaptionCue) => void;
+  onCaptionUpdate?: (caption: CaptionCue) => void;
+  onCaptionRemove?: (captionId: string) => void;
+  onSpeechToTextStart?: () => void;
+  onSpeechToTextComplete?: (results: SpeechToTextResult[]) => void;
+  onSpeechToTextError?: (error: Error) => void;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+export const DEFAULT_FONT_FAMILY = 'Arial, sans-serif';
+export const DEFAULT_FONT_SIZE = 24;
+export const DEFAULT_COLOR = '#ffffff';
+export const DEFAULT_BACKGROUND_COLOR = 'transparent';
+export const DEFAULT_CAPTION_FONT_SIZE = 18;
+export const DEFAULT_CAPTION_BG = 'rgba(0, 0, 0, 0.75)';
+export const DEFAULT_CAPTION_COLOR = '#ffffff';
+export const MIN_FONT_SIZE = 8;
+export const MAX_FONT_SIZE = 200;
+export const MIN_OVERLAY_DURATION_FRAMES = 1;
+export const CAPTION_MIN_CONTRAST_RATIO = 4.5; // WCAG AA
+
+export const AVAILABLE_FONTS = [
+  'Arial, sans-serif',
+  'Helvetica, sans-serif',
+  'Georgia, serif',
+  'Times New Roman, serif',
+  'Courier New, monospace',
+  'Verdana, sans-serif',
+  'Impact, sans-serif',
+  'Comic Sans MS, cursive',
+  'Trebuchet MS, sans-serif',
+  'Roboto, sans-serif',
+];
