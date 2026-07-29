@@ -415,7 +415,7 @@ describe('AdvancedSearchService', () => {
 
       const searches = service.getSavedSearches();
       expect(searches).toHaveLength(1);
-      expect(searches[0].query).toBe('second');
+      expect(searches[0]!.query).toBe('second');
     });
 
     test('should throw for empty name', () => {
@@ -515,7 +515,7 @@ describe('AdvancedSearchService', () => {
       const facets = await service.getFacets('test');
 
       expect(facets.contentTypes).toHaveLength(1);
-      expect(facets.contentTypes[0].value).toBe('video');
+      expect(facets.contentTypes[0]!.value).toBe('video');
       expect(facets.creators).toHaveLength(1);
     });
 
