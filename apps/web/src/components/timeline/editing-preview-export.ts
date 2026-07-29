@@ -253,3 +253,52 @@ export class EditingPreviewSystem {
       previewVideoUrl: undefined,
     };
   }
+
+  /** Activate the preview system */
+  public activate(mode: PreviewMode = 'realtime'): void {
+    if (this.isDestroyed) return;
+    this.state.isActive = true;
+    this.state.mode = mode;
+    this.callbacks.onPreviewReady?.();
+  }
+
+  /** Deactivate the preview without clearing edits */
+  public deactivate(): void {
+    this.state.isActive = false;
+  }
+
+  /** Add an edit operation to the preview pipeline */
+  public addEditOperation(operation: EditOperation): void {
+    if (this.isDestroyed) return;
+    this.state.editOperations.push(operation);
+    this.schedulePreviewUpdate();
+  }
+
+  /** Remove the last edit operation (undo support) */
+  public removeLastOperation(): EditOperation | undefined {
+    const removed = this.state.editOperations.pop();
+    if (removed) {
+      this.schedulePreviewUpdate();
+    }
+    return removed;
+  }
+
+  /** Clear all edit operations */
+  public clearOperations(): void {
+    this.state.editOperations = [];
+    this.schedulePreviewUpdate();
+  }
+
+  /** Set current preview time */
+  public setCurrentTime(time: number): void {
+    if (this.isDestroyed) return;
+    this.state.currentTime = Math.max(0, Math.min(time, this.state.duration));
+    this.callbacks.onPreviewUpdate?.(this.state.currentTime);
+  }
+
+  /** Set total duration */
+  public setDuration(duration: number): void {
+    if (duration >= 0) {
+      this.state.duration = duration;
+    }
+  }

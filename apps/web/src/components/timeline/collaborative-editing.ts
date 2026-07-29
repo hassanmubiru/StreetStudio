@@ -71,3 +71,36 @@ export interface EditConflict {
   /** Resolution status. */
   resolution: ConflictResolution;
 }
+
+/** How a conflict was resolved. */
+export type ConflictResolution = 'pending' | 'accept-initiator' | 'accept-conflicting' | 'merge' | 'dismissed';
+
+/** A collaborative editing session. */
+export interface EditSession {
+  id: Uuid;
+  videoId: Uuid;
+  /** Users currently participating in this session. */
+  participants: EditorPresence[];
+  /** When the session started. */
+  startedAt: IsoTimestamp;
+  /** Whether the session is active. */
+  isActive: boolean;
+  /** Current version number. */
+  version: number;
+}
+
+/** Options for the collaborative editing manager. */
+export interface CollaborativeEditingOptions {
+  /** Current user ID. */
+  currentUserId: Uuid;
+  /** Current user display name. */
+  currentUserName: string;
+  /** Current user avatar URL. */
+  currentUserAvatar?: string;
+  /** Video ID being edited. */
+  videoId: Uuid;
+  /** Presence timeout in ms (default: 30000). */
+  presenceTimeoutMs?: number;
+  /** Max edit history entries to retain (default: 100). */
+  maxHistorySize?: number;
+}
