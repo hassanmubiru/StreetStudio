@@ -515,3 +515,71 @@ describe('AccessibilitySettingsPage', () => {
     });
   });
 });
+
+describe('createDefaultAccessibilityPreferences', () => {
+  it('should return correct default preferences', () => {
+    const prefs = createDefaultAccessibilityPreferences();
+    expect(prefs.highContrast).toBe(false);
+    expect(prefs.screenReaderOptimizations).toBe(false);
+    expect(prefs.theme).toBe('system');
+    expect(prefs.keyboardNavigation.enabled).toBe(true);
+    expect(prefs.keyboardNavigation.showFocusIndicators).toBe(true);
+    expect(prefs.keyboardNavigation.skipLinkEnabled).toBe(true);
+    expect(prefs.keyboardNavigation.arrowKeyNavigation).toBe(true);
+  });
+});
+
+describe('resolveTheme', () => {
+  it('should return light for light theme', () => {
+    expect(resolveTheme('light')).toBe('light');
+  });
+
+  it('should return dark for dark theme', () => {
+    expect(resolveTheme('dark')).toBe('dark');
+  });
+
+  it('should resolve system theme based on media query', () => {
+    const result = resolveTheme('system');
+    expect(['light', 'dark']).toContain(result);
+  });
+});
+
+describe('loadAccessibilityPreferences', () => {
+  it('should return defaults when nothing stored', () => {
+    (localStorage.getItem as any).mockReturnValue(null);
+    const prefs = loadAccessibilityPreferences();
+    expect(prefs.theme).toBe('system');
+    expect(prefs.highContrast).toBe(false);
+  });
+
+  it('should parse stored preferences', () => {
+    const stored: AccessibilityPreferences = {
+      ...createDefaultAccessibilityPreferences(),
+      highContrast: true,
+      theme: 'dark',
+    };
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(stored));
+    const prefs = loadAccessibilityPreferences();
+    expect(prefs.highContrast).toBe(true);
+    expect(prefs.theme).toBe('dark');
+  });
+
+  it('should handle invalid JSON gracefully', () => {
+    (localStorage.getItem as any).mockReturnValue('invalid json{');
+    const prefs = loadAccessibilityPreferences();
+    expect(prefs.theme).toBe('system');
+  });
+});
+
+describe('saveAccessibilityPreferences', () => {
+  it('should save preferences to localStorage', () => {
+    const prefs = createDefaultAccessibilityPreferences();
+    prefs.highContrast = true;
+    saveAccessibilityPreferences(prefs);
+
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      STORAGE_KEY,
+      JSON.stringify(prefs)
+    );
+  });
+});

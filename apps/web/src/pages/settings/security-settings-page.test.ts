@@ -229,3 +229,61 @@ describe('SecuritySettingsPage', () => {
       expect(error?.textContent).toContain('required');
     });
   });
+
+  describe('Two-Factor Authentication Section', () => {
+    it('should show disabled state when 2FA is not enabled', () => {
+      page = new SecuritySettingsPage({ twoFactor: { isEnabled: false } });
+      const el = page.getElement();
+
+      expect(el.querySelector('#enable-2fa-btn')).toBeTruthy();
+      expect(el.textContent).toContain('not enabled');
+    });
+
+    it('should show enabled state when 2FA is active', () => {
+      page = new SecuritySettingsPage({ twoFactor: { isEnabled: true } });
+      const el = page.getElement();
+
+      expect(el.querySelector('#disable-2fa-btn')).toBeTruthy();
+      expect(el.textContent).toContain('is enabled');
+    });
+
+    it('should show setup flow when enable button is clicked', () => {
+      page = new SecuritySettingsPage({ twoFactor: { isEnabled: false } });
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const enableBtn = el.querySelector('#enable-2fa-btn') as HTMLButtonElement;
+      enableBtn.click();
+
+      expect(el.querySelector('#qr-code-display')).toBeTruthy();
+      expect(el.querySelector('#verification-code')).toBeTruthy();
+      expect(el.querySelector('#verify-2fa-btn')).toBeTruthy();
+      expect(el.querySelector('#totp-secret')).toBeTruthy();
+    });
+
+    it('should cancel setup flow when cancel is clicked', () => {
+      page = new SecuritySettingsPage({ twoFactor: { isEnabled: false } });
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      // Start setup
+      (el.querySelector('#enable-2fa-btn') as HTMLButtonElement).click();
+      expect(el.querySelector('#qr-code-display')).toBeTruthy();
+
+      // Cancel
+      (el.querySelector('#cancel-2fa-btn') as HTMLButtonElement).click();
+      expect(el.querySelector('#qr-code-display')).toBeFalsy();
+      expect(el.querySelector('#enable-2fa-btn')).toBeTruthy();
+    });
+
+    it('should restrict verification code to 6 digits', () => {
+      page = new SecuritySettingsPage({ twoFactor: { isEnabled: false } });
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      (el.querySelector('#enable-2fa-btn') as HTMLButtonElement).click();
+
+      const input = el.querySelector('#verification-code') as HTMLInputElement;
+      expect(input.getAttribute('maxlength')).toBe('6');
+      expect(input.getAttribute('inputmode')).toBe('numeric');
+    });
