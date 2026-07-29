@@ -1010,3 +1010,59 @@ export class TimelineEditor {
     }
     this.rulerElement.innerHTML = html;
   }
+
+  private renderClips(): void {
+    // Remove existing clip elements (keep playhead and split preview)
+    const existingClipEls = this.trackElement.querySelectorAll('.timeline-clip');
+    existingClipEls.forEach(el => el.remove());
+
+    for (const clip of this.state.clips) {
+      const clipEl = document.createElement('div');
+      clipEl.className = 'timeline-clip';
+      clipEl.dataset.clipId = clip.id;
+      if (clip.id === this.state.selectedClipId) {
+        clipEl.classList.add('selected');
+      }
+
+      const inPixel = frameToPixel(clip.inPoint - this.state.scrollOffset, this.state.zoomLevel);
+      const outPixel = frameToPixel(clip.outPoint - this.state.scrollOffset, this.state.zoomLevel);
+      const width = outPixel - inPixel;
+
+      clipEl.style.left = `${inPixel}px`;
+      clipEl.style.width = `${Math.max(width, 1)}px`;
+      clipEl.setAttribute('role', 'listitem');
+      clipEl.setAttribute('aria-label', `Clip ${clip.id}, ${clip.duration} frames`);
+
+      // In handle
+      const inHandle = document.createElement('div');
+      inHandle.className = 'trim-handle trim-handle-in';
+      inHandle.style.backgroundColor = this.options.trimHandleColor;
+      inHandle.style.width = `${TRIM_HANDLE_WIDTH}px`;
+      inHandle.setAttribute('role', 'slider');
+      inHandle.setAttribute('aria-label', 'In point handle');
+      inHandle.setAttribute('aria-valuemin', String(clip.startFrame));
+      inHandle.setAttribute('aria-valuemax', String(clip.outPoint - MIN_CLIP_FRAMES));
+      inHandle.setAttribute('aria-valuenow', String(clip.inPoint));
+      clipEl.appendChild(inHandle);
+
+      // Out handle
+      const outHandle = document.createElement('div');
+      outHandle.className = 'trim-handle trim-handle-out';
+      outHandle.style.backgroundColor = this.options.trimHandleColor;
+      outHandle.style.width = `${TRIM_HANDLE_WIDTH}px`;
+      outHandle.setAttribute('role', 'slider');
+      outHandle.setAttribute('aria-label', 'Out point handle');
+      outHandle.setAttribute('aria-valuemin', String(clip.inPoint + MIN_CLIP_FRAMES));
+      outHandle.setAttribute('aria-valuemax', String(clip.endFrame));
+      outHandle.setAttribute('aria-valuenow', String(clip.outPoint));
+      clipEl.appendChild(outHandle);
+
+      // Click to select
+      clipEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.selectClip(clip.id);
+      });
+
+      this.trackElement.appendChild(clipEl);
+    }
+  }

@@ -765,3 +765,97 @@ export class CommentModerationTools {
     this.stats = stats;
     this.render();
   }
+
+  private render(): void {
+    this.container.innerHTML = '';
+
+    // Stats display
+    const statsEl = document.createElement('div');
+    statsEl.className = 'moderation-stats';
+    statsEl.setAttribute('aria-label', 'Comment statistics');
+    statsEl.innerHTML = `
+      <span class="stat-item" data-status="all">All: ${this.stats.total}</span>
+      <span class="stat-item" data-status="visible">Visible: ${this.stats.visible}</span>
+      <span class="stat-item" data-status="hidden">Hidden: ${this.stats.hidden}</span>
+      <span class="stat-item" data-status="pinned">Pinned: ${this.stats.pinned}</span>
+    `;
+    this.container.appendChild(statsEl);
+
+    // Filter controls
+    const filterRow = document.createElement('div');
+    filterRow.className = 'moderation-filters';
+    filterRow.setAttribute('role', 'radiogroup');
+    filterRow.setAttribute('aria-label', 'Filter comments by status');
+
+    const statuses: Array<{ value: CommentStatus | 'all'; label: string }> = [
+      { value: 'all', label: 'All' },
+      { value: 'visible', label: 'Visible' },
+      { value: 'hidden', label: 'Hidden' },
+      { value: 'pinned', label: 'Pinned' },
+    ];
+
+    for (const { value, label } of statuses) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `filter-btn${this.filterStatus === value ? ' active' : ''}`;
+      btn.setAttribute('role', 'radio');
+      btn.setAttribute('aria-checked', String(this.filterStatus === value));
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        this.filterStatus = value;
+        this.onFilterChange?.(value);
+        this.render();
+      });
+      filterRow.appendChild(btn);
+    }
+
+    this.container.appendChild(filterRow);
+  }
+
+  public getElement(): HTMLElement {
+    return this.container;
+  }
+}
+
+// --------------------------------------------------------------------------
+// CommentSystem - Orchestrating component
+// --------------------------------------------------------------------------
+
+/**
+ * CommentSystem is the top-level orchestrator that composes
+ * CommentInput, ThreadedCommentDisplay, TimelineCommentMarkers,
+ * and CommentModerationTools into a cohesive comment experience.
+ */
+export class CommentSystem {
+  private container: HTMLElement;
+  private options: CommentSystemOptions;
+  private callbacks: CommentSystemCallbacks;
+
+  private commentInput: CommentInput;
+  private threadedDisplay: ThreadedCommentDisplay;
+  private timelineMarkers: TimelineCommentMarkers;
+  private moderationTools: CommentModerationTools | null = null;
+
+  private comments: Comment[] = [];
+  private authors: Map<Uuid, CommentAuthor> = new Map();
+
+  constructor(
+    container: HTMLElement,
+    options: CommentSystemOptions,
+    callbacks: CommentSystemCallbacks
+  ) {
+    this.container = container;
+    this.options = options;
+    this.callbacks = callbacks;
+
+    this.container.className = 'comment-system';
+    this.container.setAttribute('role', 'region');
+    this.container.setAttribute('aria-label', 'Comments and discussion');
+
+    // Create sub-containers
+    const markersContainer = document.createElement('div');
+    const inputContainer = document.createElement('div');
+    const moderationContainer = document.createElement('div');
+    const threadContainer = document.createElement('div');
+
+    this.container.appendChild(markersContainer);
