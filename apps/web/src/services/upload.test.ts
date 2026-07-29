@@ -99,3 +99,34 @@ describe('UploadManager', () => {
       expect(status.canAcceptMore).toBe(true);
     });
   });
+
+  describe('Chunked Upload Logic', () => {
+    it('should split file into chunks based on configured chunk size', async () => {
+      const { apiClient } = await import('./api.js');
+      const file = createMockFile('video.mp4', 15 * 1024 * 1024, 'video/mp4'); // 15MB
+
+      // Mock init response
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { uploadId: 'upload-123', uploadUrl: '/uploads/upload-123/chunks' }
+      });
+
+      // Mock chunk uploads (15MB / 5MB = 3 chunks)
+      mockFetch.mockResolvedValue({ ok: true, json: async () => ({}) });
+
+      // Mock complete
+      (apiClient.post as any).mockResolvedValueOnce({
+        data: { id: 'result-id', url: '/videos/result-id' }
+      });
+
+      const onChunkComplete = vi.fn();
+      const result = await manager.uploadFile(file, {
+        chunkSize: 5 * 1024 * 1024,
+        onChunkComplete
+      });
+
+      expect(onChunkComplete).toHaveBeenCalledTimes(3);
+      expect(onChunkComplete).toHaveBeenCalledWith(0, 3);
+      expect(onChunkComplete).toHaveBeenCalledWith(1, 3);
+      expect(onChunkComplete).toHaveBeenCalledWith(2, 3);
+      expect(result.id).toBe('result-id');
+    });
