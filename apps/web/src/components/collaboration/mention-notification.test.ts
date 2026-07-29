@@ -126,3 +126,37 @@ describe('insertMentionIntoText', () => {
   });
 });
 
+// --------------------------------------------------------------------------
+// filterCandidates
+// --------------------------------------------------------------------------
+
+describe('filterCandidates', () => {
+  it('filters by display name (case-insensitive)', () => {
+    const results = filterCandidates(mockMembers, 'alice', 10);
+    expect(results.length).toBe(2);
+    expect(results[0].displayName).toBe('Alice Johnson');
+    expect(results[1].displayName).toBe('Alice Williams');
+  });
+
+  it('filters by email', () => {
+    const results = filterCandidates(mockMembers, 'bob@', 10);
+    expect(results.length).toBe(1);
+    expect(results[0].id).toBe('u2');
+  });
+
+  it('returns all candidates with empty query', () => {
+    const results = filterCandidates(mockMembers, '', 10);
+    expect(results.length).toBe(4);
+  });
+
+  it('limits results to maxResults', () => {
+    const results = filterCandidates(mockMembers, '', 2);
+    expect(results.length).toBe(2);
+  });
+
+  it('returns empty array when no matches', () => {
+    const results = filterCandidates(mockMembers, 'zzz', 10);
+    expect(results.length).toBe(0);
+  });
+});
+
