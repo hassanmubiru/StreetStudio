@@ -757,7 +757,7 @@ describe('OrganizationSettingsPage', () => {
       saveBtn.click();
 
       expect(saveSpy).toHaveBeenCalled();
-      const detail = saveSpy.mock.calls[0][0].detail;
+      const detail = (saveSpy.mock.calls[0]![0] as CustomEvent).detail;
       expect(detail.settings.branding.primaryColor).toBe('#111111');
     });
 
