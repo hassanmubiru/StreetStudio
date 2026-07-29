@@ -38,3 +38,35 @@ vi.mock('../../app/client-logger.js', () => ({
     error: vi.fn()
   }
 }));
+
+// Mock localStorage
+Object.defineProperty(window, 'localStorage', {
+  value: {
+    getItem: vi.fn(() => null),
+    setItem: vi.fn(),
+    clear: vi.fn(),
+    removeItem: vi.fn()
+  },
+  writable: true
+});
+
+// ============================================================
+// Section 1: Project Creation and Member Invitation Workflows
+// Validates: Requirements 4.1, 4.4
+// ============================================================
+
+describe('Project Creation and Member Invitation', () => {
+  let container: HTMLElement;
+  let mockApiClient: any;
+
+  beforeEach(async () => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    const { apiClient } = await import('../../services/api.js');
+    mockApiClient = apiClient;
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    document.body.removeChild(container);
+  });
