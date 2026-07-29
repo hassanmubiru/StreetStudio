@@ -796,3 +796,76 @@ describe('ExportHistoryManager', () => {
       expect(mgr.getCount()).toBe(maxItems);
     });
   });
+
+  describe('filtering', () => {
+    it('filters by status', () => {
+      historyManager.addEntry(createTestJob({ status: 'completed' }));
+      historyManager.addEntry(createTestJob({ status: 'failed' }));
+      historyManager.addEntry(createTestJob({ status: 'completed' }));
+      expect(historyManager.getByStatus('completed')).toHaveLength(2);
+      expect(historyManager.getByStatus('failed')).toHaveLength(1);
+    });
+
+    it('gets downloadable entries', () => {
+      historyManager.addEntry(
+        createTestJob({ status: 'completed', downloadUrl: 'https://a.com/f.mp4' })
+      );
+      historyManager.addEntry(createTestJob({ status: 'failed', downloadUrl: undefined }));
+      historyManager.addEntry(
+        createTestJob({ status: 'completed', downloadUrl: 'https://b.com/f.mp4' })
+      );
+      expect(historyManager.getDownloadable()).toHaveLength(2);
+    });
+  });
+
+  describe('entry management', () => {
+    it('gets a specific entry by ID', () => {
+      const job = createTestJob({ id: 'target' });
+      historyManager.addEntry(job);
+      expect(historyManager.getEntry('target')).toBeDefined();
+      expect(historyManager.getEntry('target')?.id).toBe('target');
+    });
+
+    it('returns undefined for unknown ID', () => {
+      expect(historyManager.getEntry('unknown')).toBeUndefined();
+    });
+
+    it('removes a specific entry', () => {
+      const job = createTestJob({ id: 'to-remove' });
+      historyManager.addEntry(job);
+      expect(historyManager.removeEntry('to-remove')).toBe(true);
+      expect(historyManager.getCount()).toBe(0);
+    });
+
+    it('returns false removing non-existent entry', () => {
+      expect(historyManager.removeEntry('nope')).toBe(false);
+    });
+
+    it('clears all entries', () => {
+      historyManager.addEntry(createTestJob());
+      historyManager.addEntry(createTestJob());
+      historyManager.clear();
+      expect(historyManager.getCount()).toBe(0);
+    });
+  });
+
+  describe('total download size', () => {
+    it('calculates total size of completed exports', () => {
+      historyManager.addEntry(
+        createTestJob({ status: 'completed', fileSizeBytes: 1000 })
+      );
+      historyManager.addEntry(
+        createTestJob({ status: 'completed', fileSizeBytes: 2000 })
+      );
+      historyManager.addEntry(
+        createTestJob({ status: 'failed', fileSizeBytes: 5000 })
+      );
+      expect(historyManager.getTotalDownloadSize()).toBe(3000);
+    });
+
+    it('returns 0 when no completed exports', () => {
+      historyManager.addEntry(createTestJob({ status: 'failed' }));
+      expect(historyManager.getTotalDownloadSize()).toBe(0);
+    });
+  });
+});
