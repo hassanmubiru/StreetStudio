@@ -291,3 +291,147 @@ describe('MemberManagement', () => {
       expect(activitySort).toBeTruthy();
     });
   });
+
+  // ============================================================
+  // Section 3: Member Invitation Form with Role Selection
+  // Validates: Requirement 8.2
+  // ============================================================
+
+  describe('Invitation Form (Requirement 8.2)', () => {
+    it('should have invite member button', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const inviteBtn = element.querySelector('[data-action="invite-member"]');
+      expect(inviteBtn).toBeTruthy();
+      expect(inviteBtn?.textContent).toContain('Invite Member');
+    });
+
+    it('should show invitation modal on invite button click', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const inviteBtn = element.querySelector('[data-action="invite-member"]') as HTMLElement;
+      inviteBtn.click();
+
+      const modal = element.querySelector('[data-invitation-modal]');
+      expect(modal?.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should have email input in invitation form', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const emailInput = element.querySelector('#invite-email');
+      expect(emailInput).toBeTruthy();
+      expect(emailInput?.getAttribute('type')).toBe('email');
+      expect(emailInput?.getAttribute('required')).toBe('');
+    });
+
+    it('should have role selection dropdown with all roles', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const roleSelect = element.querySelector('#invite-role') as HTMLSelectElement;
+      expect(roleSelect).toBeTruthy();
+
+      // Should have placeholder + 3 roles
+      const options = roleSelect.querySelectorAll('option');
+      expect(options.length).toBe(4); // placeholder + Admin + Editor + Viewer
+    });
+
+    it('should have optional welcome message field', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      const messageField = element.querySelector('#invite-message');
+      expect(messageField).toBeTruthy();
+      expect(messageField?.tagName.toLowerCase()).toBe('textarea');
+    });
+
+    it('should hide modal on cancel', async () => {
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1'
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      // Open modal
+      const inviteBtn = element.querySelector('[data-action="invite-member"]') as HTMLElement;
+      inviteBtn.click();
+
+      // Click cancel
+      const cancelBtn = element.querySelector('[data-action="cancel-invite"]') as HTMLElement;
+      cancelBtn.click();
+
+      const modal = element.querySelector('[data-invitation-modal]');
+      expect(modal?.classList.contains('hidden')).toBe(true);
+    });
+
+    it('should submit invitation and call API', async () => {
+      const onMemberInvited = vi.fn();
+      const newInvitation: InvitationDto = {
+        id: 'inv-new',
+        organizationId: 'org-1',
+        email: 'newmember@example.com',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 86400000 * 7).toISOString()
+      };
+      mockApiClient.post.mockResolvedValue({ data: newInvitation });
+
+      const management = new MemberManagement({
+        organizationId: 'org-1',
+        currentUserId: 'member-1',
+        onMemberInvited
+      });
+      const element = await management.getElement();
+      container.appendChild(element);
+
+      // Open modal and fill form
+      const inviteBtn = element.querySelector('[data-action="invite-member"]') as HTMLElement;
+      inviteBtn.click();
+
+      const emailInput = element.querySelector('#invite-email') as HTMLInputElement;
+      emailInput.value = 'newmember@example.com';
+
+      const roleSelect = element.querySelector('#invite-role') as HTMLSelectElement;
+      roleSelect.value = 'role-editor';
+
+      // Submit form
+      const form = element.querySelector('[data-invitation-form]') as HTMLFormElement;
+      form.dispatchEvent(new Event('submit', { cancelable: true }));
+
+      // Wait for async operation
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/organizations/org-1/invitations',
+        expect.objectContaining({
+          email: 'newmember@example.com',
+          roleId: 'role-editor'
+        })
+      );
+    });
+  });

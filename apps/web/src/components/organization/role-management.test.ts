@@ -618,3 +618,44 @@ describe('validateTeamName', () => {
     expect(result.valid).toBe(false);
   });
 });
+
+describe('getTeamMembers', () => {
+  it('returns members that belong to the team', () => {
+    const team = makeTeam({ memberIds: ['user-1', 'user-2'] });
+    const allMembers = [
+      makeTeamMember({ id: 'user-1', displayName: 'Alice' }),
+      makeTeamMember({ id: 'user-2', displayName: 'Bob' }),
+      makeTeamMember({ id: 'user-3', displayName: 'Charlie' }),
+    ];
+    const result = getTeamMembers(team, allMembers);
+    expect(result.length).toBe(2);
+    expect(result.map(m => m.displayName)).toEqual(['Alice', 'Bob']);
+  });
+
+  it('returns empty array for team with no members', () => {
+    const team = makeTeam({ memberIds: [] });
+    const result = getTeamMembers(team, [makeTeamMember()]);
+    expect(result.length).toBe(0);
+  });
+});
+
+describe('getAvailableMembers', () => {
+  it('returns members not in the team', () => {
+    const team = makeTeam({ memberIds: ['user-1'] });
+    const allMembers = [
+      makeTeamMember({ id: 'user-1', displayName: 'Alice' }),
+      makeTeamMember({ id: 'user-2', displayName: 'Bob' }),
+      makeTeamMember({ id: 'user-3', displayName: 'Charlie' }),
+    ];
+    const result = getAvailableMembers(team, allMembers);
+    expect(result.length).toBe(2);
+    expect(result.map(m => m.displayName)).toEqual(['Bob', 'Charlie']);
+  });
+
+  it('returns all members when team has none', () => {
+    const team = makeTeam({ memberIds: [] });
+    const allMembers = [makeTeamMember({ id: 'user-1' })];
+    const result = getAvailableMembers(team, allMembers);
+    expect(result.length).toBe(1);
+  });
+});
