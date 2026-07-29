@@ -194,3 +194,39 @@ describe('isResourceFullyGranted', () => {
     expect(isResourceFullyGranted(entries, 'projects', actions)).toBe(false);
   });
 });
+
+describe('isActionFullyGranted', () => {
+  const resources = [
+    { id: 'projects', name: 'Projects', description: '' },
+    { id: 'videos', name: 'Videos', description: '' },
+  ];
+
+  it('returns true when action is granted across all resources', () => {
+    const entries: PermissionEntry[] = [
+      { resourceId: 'projects', actionId: 'view', granted: true },
+      { resourceId: 'videos', actionId: 'view', granted: true },
+    ];
+    expect(isActionFullyGranted(entries, 'view', resources)).toBe(true);
+  });
+
+  it('returns false when action is not granted for all resources', () => {
+    const entries: PermissionEntry[] = [
+      { resourceId: 'projects', actionId: 'view', granted: true },
+      { resourceId: 'videos', actionId: 'view', granted: false },
+    ];
+    expect(isActionFullyGranted(entries, 'view', resources)).toBe(false);
+  });
+});
+
+// --------------------------------------------------------------------------
+// Permission Matrix - Component
+// --------------------------------------------------------------------------
+
+describe('PermissionMatrix', () => {
+  let container: HTMLElement;
+  let callbacks: PermissionMatrixCallbacks;
+
+  beforeEach(() => {
+    container = createContainer();
+    callbacks = { onPermissionToggle: vi.fn() };
+  });

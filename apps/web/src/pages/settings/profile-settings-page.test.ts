@@ -304,3 +304,59 @@ describe('ProfileSettingsPage', () => {
       expect(detectBtn?.getAttribute('aria-label')).toBe('Automatically detect my timezone');
     });
   });
+
+  describe('Notification Preferences', () => {
+    it('should render notification table with all categories', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const toggles = el.querySelectorAll('.notification-toggle');
+      // 8 categories * 3 channels = 24 toggles
+      expect(toggles.length).toBe(24);
+    });
+
+    it('should render channel headers', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const headers = el.querySelectorAll('table th');
+      const headerTexts = Array.from(headers).map(h => h.textContent?.trim());
+      expect(headerTexts).toContain('Email');
+      expect(headerTexts).toContain('Push');
+      expect(headerTexts).toContain('In-App');
+    });
+
+    it('should reflect initial preference state in checkboxes', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const emailComments = el.querySelector('#notif-email-comments') as HTMLInputElement;
+      expect(emailComments.checked).toBe(mockProfileData.notificationPreferences.email.comments);
+
+      // reactions is false for email in default preferences
+      const emailReactions = el.querySelector('#notif-email-reactions') as HTMLInputElement;
+      expect(emailReactions.checked).toBe(mockProfileData.notificationPreferences.email.reactions);
+    });
+
+    it('should update notification preferences on toggle', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+      document.body.appendChild(el);
+
+      const toggle = el.querySelector('#notif-push-comments') as HTMLInputElement;
+      const wasChecked = toggle.checked;
+      toggle.checked = !wasChecked;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getProfileData().notificationPreferences.push.comments).toBe(!wasChecked);
+      expect(page.isDirtyState()).toBe(true);
+    });
+
+    it('should have accessible labels on toggles', () => {
+      page = new ProfileSettingsPage(mockProfileData);
+      const el = page.getElement();
+
+      const toggle = el.querySelector('#notif-email-comments') as HTMLInputElement;
+      expect(toggle.getAttribute('aria-label')).toBe('Comments via Email');
+    });
+  });
