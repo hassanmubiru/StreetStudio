@@ -729,3 +729,108 @@ describe('TextOverlayManager', () => {
       expect(callbacks.onSpeechToTextError).toHaveBeenCalledWith(error);
     });
   });
+
+  // ─── Timeline Synchronization Tests ─────────────────────────────────────
+
+  describe('timeline synchronization', () => {
+    it('sets and gets current frame', () => {
+      manager.setCurrentFrame(100);
+      expect(manager.getCurrentFrame()).toBe(100);
+    });
+
+    it('clamps negative frames to 0', () => {
+      manager.setCurrentFrame(-5);
+      expect(manager.getCurrentFrame()).toBe(0);
+    });
+
+    it('rounds frame values', () => {
+      manager.setCurrentFrame(10.7);
+      expect(manager.getCurrentFrame()).toBe(11);
+    });
+
+    it('gets visible items at current frame', () => {
+      manager.addOverlay('Overlay', 0, 60);
+      manager.addCaption('Caption', 0, 60);
+      manager.setCurrentFrame(30);
+
+      const items = manager.getVisibleItemsAtCurrentFrame();
+      expect(items.overlays).toHaveLength(1);
+      expect(items.captions).toHaveLength(1);
+    });
+
+    it('returns empty arrays when nothing visible', () => {
+      manager.addOverlay('Later', 100, 200);
+      manager.setCurrentFrame(0);
+
+      const items = manager.getVisibleItemsAtCurrentFrame();
+      expect(items.overlays).toHaveLength(0);
+      expect(items.captions).toHaveLength(0);
+    });
+  });
+
+  // ─── WebVTT Import/Export Tests ─────────────────────────────────────────
+
+  describe('WebVTT export', () => {
+    it('exports captions as valid WebVTT', () => {
+      manager.addCaption('Hello world', 0, 90); // 0s-3s at 30fps
+      manager.addCaption('Goodbye', 90, 150); // 3s-5s at 30fps
+
+      const vtt = manager.exportCaptionsAsVTT();
+      expect(vtt).toContain('WEBVTT');
+      expect(vtt).toContain('00:00:00.000 --> 00:00:03.000');
+      expect(vtt).toContain('Hello world');
+      expect(vtt).toContain('00:00:03.000 --> 00:00:05.000');
+      expect(vtt).toContain('Goodbye');
+    });
+
+    it('includes speaker tags in VTT', () => {
+      manager.addCaption('Hi there', 0, 30, undefined, 'Alice');
+      const vtt = manager.exportCaptionsAsVTT();
+      expect(vtt).toContain('<v Alice>Hi there');
+    });
+
+    it('exports empty VTT header when no captions', () => {
+      const vtt = manager.exportCaptionsAsVTT();
+      expect(vtt).toBe('WEBVTT\n\n');
+    });
+  });
+
+  describe('WebVTT import', () => {
+    it('imports valid WebVTT content', () => {
+      const vtt = `WEBVTT
+
+1
+00:00:00.000 --> 00:00:03.000
+Hello world
+
+2
+00:00:03.000 --> 00:00:05.000
+Goodbye
+`;
+      const captions = manager.importCaptionsFromVTT(vtt);
+      expect(captions).toHaveLength(2);
+      expect(captions[0].text).toBe('Hello world');
+      expect(captions[0].startFrame).toBe(0);
+      expect(captions[0].endFrame).toBe(90);
+      expect(captions[1].text).toBe('Goodbye');
+      expect(captions[1].startFrame).toBe(90);
+      expect(captions[1].endFrame).toBe(150);
+    });
+
+    it('imports VTT with speaker tags', () => {
+      const vtt = `WEBVTT
+
+00:00:00.000 --> 00:00:02.000
+<v Alice>Hello from Alice
+`;
+      const captions = manager.importCaptionsFromVTT(vtt);
+      expect(captions).toHaveLength(1);
+      expect(captions[0].speaker).toBe('Alice');
+      expect(captions[0].text).toBe('Hello from Alice');
+    });
+
+    it('handles empty VTT gracefully', () => {
+      const captions = manager.importCaptionsFromVTT('WEBVTT\n\n');
+      expect(captions).toHaveLength(0);
+    });
+  });
