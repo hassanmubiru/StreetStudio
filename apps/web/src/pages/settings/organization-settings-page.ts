@@ -456,3 +456,46 @@ export class OrganizationSettingsPage {
           </label>
         </div>
       </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="security-session-heading">
+        <h2 id="security-session-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">Session &amp; Compliance</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label for="session-timeout" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Session Timeout (minutes)</label>
+            <input id="session-timeout" type="number" min="5" max="10080" value="${sec.sessionTimeoutMinutes}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label for="data-retention" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data Retention (days)</label>
+            <input id="data-retention" type="number" min="30" max="3650" value="${sec.dataRetentionDays}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500" />
+          </div>
+        </div>
+        <div class="mt-4">
+          <label for="compliance-mode" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Compliance Mode</label>
+          <select id="compliance-mode" class="w-full sm:w-64 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500">
+            <option value="none" ${sec.complianceMode === 'none' ? 'selected' : ''}>None</option>
+            <option value="gdpr" ${sec.complianceMode === 'gdpr' ? 'selected' : ''}>GDPR</option>
+            <option value="hipaa" ${sec.complianceMode === 'hipaa' ? 'selected' : ''}>HIPAA</option>
+            <option value="soc2" ${sec.complianceMode === 'soc2' ? 'selected' : ''}>SOC 2</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6" aria-labelledby="security-ip-heading">
+        <h2 id="security-ip-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-4">IP Allowlist</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Restrict access to specific IP addresses or CIDR ranges.</p>
+        <div id="ip-allowlist-container" class="space-y-2">
+          ${sec.ipAllowlist.map((ip, i) => `
+            <div class="flex items-center gap-2" data-ip-index="${i}">
+              <input type="text" value="${ip}" class="ip-input flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700" placeholder="192.168.1.0/24" />
+              <button type="button" class="remove-ip text-red-500 hover:text-red-700 p-1" aria-label="Remove IP ${ip}">✕</button>
+            </div>
+          `).join('')}
+        </div>
+        <button id="add-ip" type="button" class="mt-3 inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 bg-blue-50 dark:bg-blue-900/30 rounded-md transition-colors">
+          + Add IP Address
+        </button>
+        <div id="ip-error" class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert" aria-live="polite"></div>
+      </section>
+    `;
+    return section;
+  }

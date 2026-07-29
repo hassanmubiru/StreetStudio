@@ -671,3 +671,67 @@ export class AccessibilitySettingsPage {
       discardBtn.disabled = !this.isDirty;
     }
   }
+
+  private handleSave(): void {
+    this.isSaving = true;
+    this.updateSaveBar();
+
+    // Persist to storage
+    saveAccessibilityPreferences(this.preferences);
+
+    // Dispatch save event for external handling
+    this.element.dispatchEvent(new CustomEvent('accessibility-settings-save', {
+      bubbles: true,
+      detail: { preferences: this.getPreferences() },
+    }));
+
+    // Complete save
+    setTimeout(() => {
+      this.isSaving = false;
+      this.isDirty = false;
+      this.updateSaveBar();
+      this.announceChange('Settings saved successfully');
+    }, 300);
+  }
+
+  private handleDiscard(): void {
+    // Reload from storage
+    this.preferences = loadAccessibilityPreferences();
+    this.isDirty = false;
+    applyAccessibilityPreferences(this.preferences);
+    this.render();
+    this.announceChange('Changes discarded');
+  }
+
+  private announceChange(message: string): void {
+    // Create or reuse a live region for announcements
+    let liveRegion = document.getElementById('a11y-announcements');
+    if (!liveRegion) {
+      liveRegion = document.createElement('div');
+      liveRegion.id = 'a11y-announcements';
+      liveRegion.setAttribute('role', 'status');
+      liveRegion.setAttribute('aria-live', 'polite');
+      liveRegion.setAttribute('aria-atomic', 'true');
+      liveRegion.className = 'sr-only';
+      document.body.appendChild(liveRegion);
+    }
+    liveRegion.textContent = message;
+  }
+
+  /**
+   * Cleanup resources and listeners
+   */
+  public destroy(): void {
+    if (this.systemThemeListener) {
+      window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', this.systemThemeListener);
+    }
+    if (this.systemMotionListener) {
+      window.matchMedia('(prefers-reduced-motion: reduce)').removeEventListener('change', this.systemMotionListener);
+    }
+    const announcements = document.getElementById('a11y-announcements');
+    announcements?.remove();
+    const styles = document.getElementById('accessibility-settings-styles');
+    styles?.remove();
+    this.element.innerHTML = '';
+  }
+}
