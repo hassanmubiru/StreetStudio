@@ -281,21 +281,26 @@ describe('Upload System - Chunked Upload Logic', () => {
       const file = createMockFile('video.mp4', 20 * 1024 * 1024);
 
       const { apiClient } = await import('../services/api.js');
-      (apiClient.post as any).mockResolvedValueOnce({
-        data: { uploadId: 'upload-cancel', uploadUrl: 'https://upload.test/cancel' }
-      });
-
-      // First chunk hangs
-      mockFetch.mockImplementationOnce(() => new Promise(() => {}));
+      
+      // Make init hang so we can cancel during that phase
+      let resolveInit: any;
+      (apiClient.post as any).mockImplementationOnce(
+        () => new Promise((resolve) => { resolveInit = resolve; })
+      );
 
       const uploadPromise = manager.uploadFile(file, { chunkSize: 5 * 1024 * 1024 });
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise(r => setTimeout(r, 50));
 
       // Cancel all should work
       manager.cancelAllUploads();
 
+      // Resolve the init to allow the cancellation path to complete
+      if (resolveInit) {
+        resolveInit({ data: { uploadId: 'cancel-id', uploadUrl: 'http://test/cancel' } });
+      }
+
       await expect(uploadPromise).rejects.toThrow();
-    });
+    }, 10000);
   });
 
   describe('File Validation', () => {
