@@ -115,7 +115,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Build cursor highlighting options with customizable colors and effects
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-  - [-] 4.2 Write property tests for recording controls accessibility
+  - [x] 4.2 Write property tests for recording controls accessibility
     - **Property 4: Recording Control Accessibility**
     - **Validates: Requirements 3.2**
 
@@ -126,21 +126,21 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Implement drawing tool persistence across recording sessions
     - _Requirements: 3.5_
 
-  - [-] 4.4 Create recording state management and controls
+  - [x] 4.4 Create recording state management and controls
     - Implement record/pause/stop functionality with state transitions
     - Add keyboard shortcuts for recording control (space, esc, etc.)
     - Build recording session persistence for interrupted recordings
     - Create permission handling with clear user guidance
     - _Requirements: 3.3, 3.6, 3.10_
 
-  - [ ] 4.5 Write unit tests for recording functionality
+  - [-] 4.5 Write unit tests for recording functionality
     - Test screen capture initialization and permission handling
     - Test recording control state transitions and keyboard shortcuts
     - Test drawing tool functionality and overlay rendering
     - _Requirements: 3.1, 3.4, 3.5_
 
 - [ ] 5. Upload System Implementation
-  - [-] 5.1 Build chunked upload manager
+  - [x] 5.1 Build chunked upload manager
     - Implement chunked file upload with configurable chunk size
     - Create upload queue management with concurrent upload limits
     - Add automatic retry logic with exponential backoff for failed chunks
@@ -175,7 +175,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Add drag-and-drop organization with real-time updates
     - _Requirements: 4.1, 4.2, 4.4, 4.6_
 
-  - [-] 6.2 Write property tests for project organization
+  - [x] 6.2 Write property tests for project organization
     - **Property 5: Project Organization Consistency**
     - **Validates: Requirements 4.2**
 
@@ -186,14 +186,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Add video metadata display with processing status indicators
     - _Requirements: 4.3, 4.7, 4.9, 4.10_
 
-  - [-] 6.4 Create folder management system
+  - [x] 6.4 Create folder management system
     - Implement folder creation, renaming, and nesting up to 10 levels
     - Build visual hierarchy indicators with expand/collapse functionality
     - Add folder permissions and access control display
     - Create folder navigation breadcrumbs and quick access
     - _Requirements: 4.5_
 
-  - [ ] 6.5 Write unit tests for video management
+  - [-] 6.5 Write unit tests for video management
     - Test project creation and member invitation workflows
     - Test video organization and bulk operations
     - Test folder management and hierarchy display
