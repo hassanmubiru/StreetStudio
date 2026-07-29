@@ -36,3 +36,40 @@ import {
   type IntegrationSettings,
   type WebhookEndpoint,
 } from './organization-settings-page.js';
+
+// Mock crypto.randomUUID for test environment
+if (!globalThis.crypto) {
+  (globalThis as any).crypto = { randomUUID: () => 'test-uuid-1234' };
+}
+
+function createTestConfig(overrides?: Partial<OrganizationSettingsPageConfig>): OrganizationSettingsPageConfig {
+  return {
+    organizationId: 'org-123' as any,
+    organizationName: 'Test Organization',
+    isAdmin: true,
+    ...overrides,
+  };
+}
+
+function createTestConfigWithSettings(settings?: Partial<OrganizationSettingsData>): OrganizationSettingsPageConfig {
+  return {
+    organizationId: 'org-123' as any,
+    organizationName: 'Test Organization',
+    isAdmin: true,
+    initialSettings: settings,
+  };
+}
+
+describe('OrganizationSettingsPage', () => {
+  let page: OrganizationSettingsPage;
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    page?.destroy();
+    document.body.removeChild(container);
+  });

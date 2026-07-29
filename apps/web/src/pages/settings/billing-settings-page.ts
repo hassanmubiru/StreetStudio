@@ -193,11 +193,13 @@ export class BillingSettingsPage {
 
     if (this.error) {
       this.element.appendChild(this.renderError());
+      this.setupRetryListener();
       return;
     }
 
     if (!this.billingData) {
       this.element.appendChild(this.renderError());
+      this.setupRetryListener();
       return;
     }
 
