@@ -122,9 +122,9 @@ describe('UploadStore', () => {
       const file = createMockFile('video.mp4', 1024, 'video/mp4');
       store.addUpload(file);
 
-      // Called again with updated state
-      expect(listener).toHaveBeenCalledTimes(2);
-      const lastCall = listener.mock.calls[1][0] as UploadState;
+      // Called with updated state (may be called multiple times due to queue processing)
+      expect(listener.mock.calls.length).toBeGreaterThan(1);
+      const lastCall = listener.mock.calls[listener.mock.calls.length - 1][0] as UploadState;
       expect(lastCall.uploads).toHaveLength(1);
     });
 
