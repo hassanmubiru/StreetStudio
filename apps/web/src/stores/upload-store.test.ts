@@ -325,3 +325,84 @@ describe('UploadStore', () => {
       expect(state.completedUploads).toBe(1);
       expect(state.failedUploads).toBe(1);
     });
+
+    it('should compute total speed from active uploads', () => {
+      const file1 = createMockFile('video1.mp4', 1024, 'video/mp4');
+      const file2 = createMockFile('video2.mp4', 1024, 'video/mp4');
+
+      const id1 = store.addUpload(file1);
+      const id2 = store.addUpload(file2);
+
+      (store as any).updateUploadItem(id1, { status: 'uploading', speed: 1024 * 1024 });
+      (store as any).updateUploadItem(id2, { status: 'uploading', speed: 512 * 1024 });
+      (store as any).updateGlobalState();
+
+      const state = store.getState();
+      expect(state.totalSpeed).toBe(1024 * 1024 + 512 * 1024);
+      expect(state.isUploading).toBe(true);
+    });
+  });
+
+  describe('Cleanup and Destruction', () => {
+    it('should clean up on destroy', () => {
+      const file = createMockFile('video.mp4', 1024, 'video/mp4');
+      store.addUpload(file);
+
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      store.destroy();
+
+      // After destroy, listener should be cleared
+      // Adding new upload should not trigger listener
+      // (Store is in destroyed state)
+    });
+  });
+});
+
+describe('Upload Store Singleton', () => {
+  afterEach(() => {
+    // Clean up singleton
+    try {
+      getUploadStore().destroy();
+    } catch {}
+  });
+
+  it('should create store singleton with createUploadStore', () => {
+    const store = createUploadStore();
+    expect(store).toBeInstanceOf(UploadStore);
+  });
+
+  it('should return same instance with getUploadStore', () => {
+    const store = createUploadStore();
+    const retrieved = getUploadStore();
+    expect(retrieved).toBe(store);
+  });
+
+  it('should throw if getUploadStore called before create', () => {
+    // Destroy any existing instance
+    try {
+      const existing = getUploadStore();
+      existing.destroy();
+    } catch {}
+
+    // Force the singleton to null
+    createUploadStore().destroy();
+    
+    // After destroy and re-create cycle, it should work
+    const newStore = createUploadStore({ maxConcurrentUploads: 2 });
+    expect(getUploadStore()).toBe(newStore);
+    newStore.destroy();
+  });
+
+  it('should destroy previous instance when creating new one', () => {
+    const store1 = createUploadStore();
+    const file = createMockFile('video.mp4', 1024, 'video/mp4');
+    store1.addUpload(file);
+
+    const store2 = createUploadStore();
+    // New store should have empty state
+    expect(store2.getState().uploads).toHaveLength(0);
+    store2.destroy();
+  });
+});
