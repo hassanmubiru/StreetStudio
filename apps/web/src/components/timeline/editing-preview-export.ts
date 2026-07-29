@@ -668,3 +668,45 @@ export class BackgroundProcessingManager {
   public getTrackedJobs(): string[] {
     return Array.from(this.trackedJobs);
   }
+
+  /** Check if currently connected/polling */
+  public isPolling(): boolean {
+    return this.isConnected && this.pollInterval !== null;
+  }
+
+  /** Simulate receiving a status update from the backend */
+  public receiveStatusUpdate(jobId: string, status: ExportStatus): void {
+    if (!this.trackedJobs.has(jobId)) return;
+    this.callbacks.onStatusUpdate?.(jobId, status);
+
+    // If job completed or failed, stop tracking
+    if (status === 'completed' || status === 'failed' || status === 'cancelled') {
+      this.trackedJobs.delete(jobId);
+    }
+  }
+
+  /** Poll for updates on tracked jobs */
+  private pollStatus(): void {
+    if (this.isDestroyed) return;
+    for (const jobId of this.trackedJobs) {
+      const job = this.exportManager.getJob(jobId);
+      if (job) {
+        this.callbacks.onStatusUpdate?.(jobId, job.status);
+        if (
+          job.status === 'completed' ||
+          job.status === 'failed' ||
+          job.status === 'cancelled'
+        ) {
+          this.trackedJobs.delete(jobId);
+        }
+      }
+    }
+  }
+
+  /** Destroy and clean up */
+  public destroy(): void {
+    this.isDestroyed = true;
+    this.stopPolling();
+    this.trackedJobs.clear();
+  }
+}

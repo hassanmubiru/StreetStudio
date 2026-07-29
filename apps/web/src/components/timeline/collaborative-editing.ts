@@ -463,3 +463,57 @@ export class EditHistoryManager {
     this.onVersionChange?.(0);
   }
 }
+
+// ─── Collaborative Editing Session Manager ────────────────────────────────────
+
+/**
+ * Manages the full collaborative editing session, orchestrating presence,
+ * conflict detection, and edit history into a cohesive experience.
+ */
+export class CollaborativeEditingManager {
+  private options: Required<CollaborativeEditingOptions>;
+  private callbacks: CollaborativeEditingCallbacks;
+  private session: EditSession | null = null;
+  private presenceManager: PresenceManager;
+  private conflictDetector: ConflictDetector;
+  private historyManager: EditHistoryManager;
+  private presenceInterval: ReturnType<typeof setInterval> | null = null;
+  private isActive = false;
+
+  constructor(
+    options: CollaborativeEditingOptions,
+    callbacks: CollaborativeEditingCallbacks = {}
+  ) {
+    this.options = {
+      presenceTimeoutMs: DEFAULT_PRESENCE_TIMEOUT_MS,
+      maxHistorySize: DEFAULT_MAX_HISTORY_SIZE,
+      currentUserAvatar: undefined,
+      ...options,
+    } as Required<CollaborativeEditingOptions>;
+
+    this.callbacks = callbacks;
+
+    this.presenceManager = new PresenceManager(
+      options.currentUserId,
+      this.options.presenceTimeoutMs
+    );
+    this.conflictDetector = new ConflictDetector();
+    this.historyManager = new EditHistoryManager(this.options.maxHistorySize);
+
+    // Wire up callbacks
+    this.presenceManager.setOnUpdate((participants) => {
+      this.callbacks.onPresenceUpdate?.(participants);
+    });
+    this.conflictDetector.setOnConflictDetected((conflict) => {
+      this.callbacks.onConflictDetected?.(conflict);
+    });
+    this.conflictDetector.setOnConflictResolved((conflict) => {
+      this.callbacks.onConflictResolved?.(conflict);
+    });
+    this.historyManager.setOnVersionChange((version) => {
+      if (this.session) {
+        this.session.version = version;
+      }
+      this.callbacks.onVersionChange?.(version);
+    });
+  }
