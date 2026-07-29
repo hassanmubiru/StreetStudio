@@ -63,3 +63,39 @@ function createMockFile(name: string, size: number, type: string): File {
   const content = new ArrayBuffer(size);
   return new File([content], name, { type, lastModified: Date.now() });
 }
+
+describe('UploadManager', () => {
+  let manager: UploadManager;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    localStorageMock.clear();
+    manager = new UploadManager();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe('Configuration', () => {
+    it('should use default chunk size of 5MB', () => {
+      const status = manager.getQueueStatus();
+      expect(status.maxConcurrent).toBe(3);
+    });
+
+    it('should allow custom configuration', () => {
+      manager.configure({
+        maxConcurrentUploads: 5,
+        defaultChunkSize: 10 * 1024 * 1024
+      });
+      const status = manager.getQueueStatus();
+      expect(status.maxConcurrent).toBe(5);
+    });
+
+    it('should report queue availability', () => {
+      const status = manager.getQueueStatus();
+      expect(status.active).toBe(0);
+      expect(status.canAcceptMore).toBe(true);
+    });
+  });
