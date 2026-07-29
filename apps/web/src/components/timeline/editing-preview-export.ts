@@ -404,3 +404,58 @@ export class ExportManager {
   constructor(callbacks: ExportCallbacks = {}) {
     this.callbacks = callbacks;
   }
+
+  /** Start a new export job */
+  public startExport(options: ExportOptions): ExportJob {
+    const qualityOption = getQualityOption(options.quality);
+    const id = generateExportId();
+    const job: ExportJob = {
+      id,
+      videoId: options.videoId,
+      quality: options.quality,
+      format: options.format,
+      resolution: qualityOption?.resolution ?? { width: 1920, height: 1080 },
+      bitrate: qualityOption?.bitrate ?? 6000,
+      status: 'queued',
+      progress: 0,
+      createdAt: new Date().toISOString(),
+    };
+
+    this.jobs.set(id, job);
+
+    if (this.activeExports < MAX_CONCURRENT_EXPORTS) {
+      this.processJob(job);
+    } else {
+      this.queue.push(options);
+    }
+
+    this.callbacks.onExportStart?.(job);
+    return job;
+  }
+
+  /** Cancel an in-progress or queued export */
+  public cancelExport(exportId: string): boolean {
+    const job = this.jobs.get(exportId);
+    if (!job) return false;
+
+    if (job.status === 'completed' || job.status === 'failed') {
+      return false;
+    }
+
+    job.status = 'cancelled';
+    job.progress = 0;
+
+    if (job.status !== 'queued') {
+      this.activeExports = Math.max(0, this.activeExports - 1);
+    }
+
+    // Remove from queue if queued
+    this.queue = this.queue.filter(
+      (opts) => !this.isJobForOptions(job, opts)
+    );
+
+    this.addToHistory(job);
+    this.callbacks.onExportCancelled?.(job);
+    this.processNextInQueue();
+    return true;
+  }

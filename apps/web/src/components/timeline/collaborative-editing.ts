@@ -181,3 +181,89 @@ export class PresenceManager {
       this.cleanupTimer = null;
     }
   }
+
+  /** Set the callback for presence updates. */
+  public setOnUpdate(callback: ((participants: EditorPresence[]) => void) | null): void {
+    this.onUpdate = callback;
+  }
+
+  /** Update or add a user's presence. */
+  public updatePresence(presence: EditorPresence): void {
+    this.participants.set(presence.userId, {
+      ...presence,
+      lastActiveAt: now(),
+    });
+    this.notifyUpdate();
+  }
+
+  /** Remove a user's presence (e.g., they disconnected). */
+  public removePresence(userId: Uuid): boolean {
+    const removed = this.participants.delete(userId);
+    if (removed) {
+      this.notifyUpdate();
+    }
+    return removed;
+  }
+
+  /** Get all current participants (excluding the current user). */
+  public getOtherParticipants(): EditorPresence[] {
+    return Array.from(this.participants.values()).filter(
+      (p) => p.userId !== this.currentUserId && p.isConnected
+    );
+  }
+
+  /** Get all participants including the current user. */
+  public getAllParticipants(): EditorPresence[] {
+    return Array.from(this.participants.values()).filter((p) => p.isConnected);
+  }
+
+  /** Get a specific participant. */
+  public getParticipant(userId: Uuid): EditorPresence | undefined {
+    return this.participants.get(userId);
+  }
+
+  /** Get the number of active participants. */
+  public getParticipantCount(): number {
+    return this.getAllParticipants().length;
+  }
+
+  /** Check if a specific clip is being edited by another user. */
+  public isClipBeingEdited(clipId: string): EditorPresence | undefined {
+    return this.getOtherParticipants().find(
+      (p) => p.activeClipId === clipId && p.activeOperation !== undefined
+    );
+  }
+
+  /** Remove stale presence entries that haven't been updated within the timeout. */
+  private removeStalePresences(): void {
+    const cutoff = Date.now() - this.presenceTimeoutMs;
+    let changed = false;
+    for (const [userId, presence] of this.participants.entries()) {
+      const lastActive = new Date(presence.lastActiveAt).getTime();
+      if (lastActive < cutoff) {
+        this.participants.set(userId, { ...presence, isConnected: false });
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.notifyUpdate();
+    }
+  }
+
+  private notifyUpdate(): void {
+    this.onUpdate?.(this.getAllParticipants());
+  }
+
+  /** Clear all presence data. */
+  public clear(): void {
+    this.participants.clear();
+    this.notifyUpdate();
+  }
+
+  /** Destroy the manager and release resources. */
+  public destroy(): void {
+    this.stopCleanup();
+    this.participants.clear();
+    this.onUpdate = null;
+  }
+}
