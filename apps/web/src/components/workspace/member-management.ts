@@ -555,3 +555,84 @@ export class MemberManagement {
     const transferSection = this.element.querySelector('[data-transfer-target-section]');
     transferSection?.classList.add('hidden');
   }
+
+  private async handleInvitationSubmit(): Promise<void> {
+    const form = this.element.querySelector('[data-invitation-form]') as HTMLFormElement;
+    const formData = new FormData(form);
+    const email = formData.get('email') as string;
+    const roleId = formData.get('roleId') as string;
+    const message = formData.get('message') as string;
+
+    // Validate
+    if (!this.validateEmail(email)) {
+      this.showFieldError('email', 'Please enter a valid email address');
+      return;
+    }
+    if (!roleId) {
+      return;
+    }
+
+    const submitBtn = this.element.querySelector('[data-submit-invite]') as HTMLButtonElement;
+    if (submitBtn) submitBtn.disabled = true;
+
+    try {
+      const response = await apiClient.post<InvitationDto>(
+        `/organizations/${this.config.organizationId}/invitations`,
+        { email, roleId, message: message || undefined }
+      );
+
+      this.pendingInvitations.push(response.data);
+      this.hideInvitationModal();
+      this.render();
+      this.setupEventListeners();
+
+      if (this.config.onMemberInvited) {
+        this.config.onMemberInvited(response.data);
+      }
+
+      logger.info('Member invited successfully', { email, roleId });
+    } catch (error) {
+      logger.error('Failed to send invitation', { error, email });
+      this.showFieldError('email', 'Failed to send invitation. Please try again.');
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  }
+
+  private async handleRemovalSubmit(): Promise<void> {
+    const form = this.element.querySelector('[data-removal-form]') as HTMLFormElement;
+    const formData = new FormData(form);
+    const memberId = formData.get('memberId') as Uuid;
+    const contentHandling = formData.get('contentHandling') as string;
+    const transferTo = formData.get('transferTo') as string;
+
+    const options: MemberRemovalOptions = {
+      retainContent: contentHandling === 'retain',
+      transferContentTo: contentHandling === 'transfer' ? transferTo as Uuid : undefined
+    };
+
+    const confirmBtn = this.element.querySelector('[data-confirm-removal]') as HTMLButtonElement;
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    try {
+      await apiClient.delete(
+        `/organizations/${this.config.organizationId}/members/${memberId}`,
+        { body: options } as any
+      );
+
+      this.members = this.members.filter(m => m.id !== memberId);
+      this.hideRemovalModal();
+      this.render();
+      this.setupEventListeners();
+
+      if (this.config.onMemberRemoved) {
+        this.config.onMemberRemoved(memberId);
+      }
+
+      logger.info('Member removed successfully', { memberId });
+    } catch (error) {
+      logger.error('Failed to remove member', { error, memberId });
+    } finally {
+      if (confirmBtn) confirmBtn.disabled = false;
+    }
+  }
