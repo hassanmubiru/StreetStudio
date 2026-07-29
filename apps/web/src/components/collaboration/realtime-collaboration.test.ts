@@ -547,3 +547,149 @@ describe('Collaborative Viewing', () => {
       const hostBtn = container.querySelector('.collab-host-btn');
       expect(hostBtn).not.toBeNull();
     });
+
+    it('switches to host mode when host button is clicked', () => {
+      const collab = new CollaborativeViewing(container, {
+        videoId: 'v1',
+        currentUserId: 'me',
+        videoDuration: 120,
+      });
+
+      const syncBtn = container.querySelector('.collab-sync-btn') as HTMLButtonElement;
+      syncBtn.click();
+      const hostBtn = container.querySelector('.collab-host-btn') as HTMLButtonElement;
+      hostBtn.click();
+
+      expect(collab.getSyncMode()).toBe('host');
+      expect(collab.getHostId()).toBe('me');
+    });
+
+    it('syncs playback when remote state differs beyond tolerance', () => {
+      const onSeek = vi.fn();
+      const collab = new CollaborativeViewing(
+        container,
+        { videoId: 'v1', currentUserId: 'me', videoDuration: 120, syncToleranceSeconds: 2 },
+        { onSeek }
+      );
+
+      const syncBtn = container.querySelector('.collab-sync-btn') as HTMLButtonElement;
+      syncBtn.click();
+      collab.updateParticipant({
+        id: 'host-1',
+        displayName: 'Host',
+        syncMode: 'host',
+        currentTime: 0,
+        isPlaying: false,
+      });
+
+      collab.updateLocalPlayback({ currentTime: 10 });
+      collab.handleRemotePlaybackState('host-1', {
+        currentTime: 50,
+        isPlaying: false,
+        playbackRate: 1,
+        timestamp: new Date().toISOString(),
+      });
+
+      expect(onSeek).toHaveBeenCalledWith(50);
+    });
+
+    it('does not seek when within sync tolerance', () => {
+      const onSeek = vi.fn();
+      const collab = new CollaborativeViewing(
+        container,
+        { videoId: 'v1', currentUserId: 'me', videoDuration: 120, syncToleranceSeconds: 2 },
+        { onSeek }
+      );
+
+      const syncBtn = container.querySelector('.collab-sync-btn') as HTMLButtonElement;
+      syncBtn.click();
+      collab.updateParticipant({
+        id: 'host-1',
+        displayName: 'Host',
+        syncMode: 'host',
+        currentTime: 0,
+        isPlaying: false,
+      });
+
+      collab.updateLocalPlayback({ currentTime: 10 });
+      collab.handleRemotePlaybackState('host-1', {
+        currentTime: 11,
+        isPlaying: false,
+        playbackRate: 1,
+        timestamp: new Date().toISOString(),
+      });
+
+      expect(onSeek).not.toHaveBeenCalled();
+    });
+
+    it('reverts to independent when host leaves', () => {
+      const onSyncModeChange = vi.fn();
+      const collab = new CollaborativeViewing(
+        container,
+        { videoId: 'v1', currentUserId: 'me', videoDuration: 120 },
+        { onSyncModeChange }
+      );
+
+      const syncBtn = container.querySelector('.collab-sync-btn') as HTMLButtonElement;
+      syncBtn.click();
+      collab.updateParticipant({
+        id: 'host-1',
+        displayName: 'Host',
+        syncMode: 'host',
+        currentTime: 0,
+        isPlaying: false,
+      });
+
+      collab.removeParticipant('host-1');
+      expect(collab.getSyncMode()).toBe('independent');
+    });
+  });
+});
+
+// ==========================================================================
+// Activity Feed Tests
+// ==========================================================================
+
+describe('Activity Feed', () => {
+  describe('getActivityIcon', () => {
+    it('returns comment icon for comment_added', () => {
+      expect(getActivityIcon('comment_added')).toBe('💬');
+    });
+
+    it('returns reply icon for comment_reply', () => {
+      expect(getActivityIcon('comment_reply')).toBe('↩️');
+    });
+
+    it('returns video icon for video_uploaded', () => {
+      expect(getActivityIcon('video_uploaded')).toBe('📹');
+    });
+
+    it('returns folder icon for project_created', () => {
+      expect(getActivityIcon('project_created')).toBe('📁');
+    });
+  });
+
+  describe('formatRelativeTime', () => {
+    it('formats recent time as "just now"', () => {
+      const now = new Date();
+      expect(formatRelativeTime(now.toISOString(), now)).toBe('just now');
+    });
+
+    it('formats minutes ago', () => {
+      const now = new Date();
+      const past = new Date(now.getTime() - 5 * 60000).toISOString();
+      expect(formatRelativeTime(past, now)).toBe('5m ago');
+    });
+
+    it('formats hours ago', () => {
+      const now = new Date();
+      const past = new Date(now.getTime() - 3 * 3600000).toISOString();
+      expect(formatRelativeTime(past, now)).toBe('3h ago');
+    });
+
+    it('formats days ago', () => {
+      const now = new Date();
+      const past = new Date(now.getTime() - 2 * 86400000).toISOString();
+      expect(formatRelativeTime(past, now)).toBe('2d ago');
+    });
+  });
