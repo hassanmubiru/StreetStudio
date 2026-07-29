@@ -144,3 +144,40 @@ export function getUserColor(userId: string): string {
   }
   return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
 }
+
+/** Get current time as ISO timestamp. */
+function now(): IsoTimestamp {
+  return new Date().toISOString();
+}
+
+// ─── Presence Manager ─────────────────────────────────────────────────────────
+
+/**
+ * Manages user presence indicators in the timeline editor.
+ * Tracks which users are active, their cursor positions, and their current operations.
+ */
+export class PresenceManager {
+  private participants: Map<Uuid, EditorPresence> = new Map();
+  private currentUserId: Uuid;
+  private presenceTimeoutMs: number;
+  private cleanupTimer: ReturnType<typeof setInterval> | null = null;
+  private onUpdate: ((participants: EditorPresence[]) => void) | null = null;
+
+  constructor(currentUserId: Uuid, presenceTimeoutMs = DEFAULT_PRESENCE_TIMEOUT_MS) {
+    this.currentUserId = currentUserId;
+    this.presenceTimeoutMs = presenceTimeoutMs;
+  }
+
+  /** Start periodic cleanup of stale presence entries. */
+  public startCleanup(): void {
+    if (this.cleanupTimer) return;
+    this.cleanupTimer = setInterval(() => this.removeStalePresences(), this.presenceTimeoutMs);
+  }
+
+  /** Stop periodic cleanup. */
+  public stopCleanup(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+  }

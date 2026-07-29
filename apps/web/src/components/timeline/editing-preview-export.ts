@@ -352,3 +352,55 @@ export class EditingPreviewSystem {
     }
     return duration;
   }
+
+  /** Debounced preview update to avoid excessive redraws */
+  private schedulePreviewUpdate(): void {
+    if (this.debounceTimer !== null) {
+      clearTimeout(this.debounceTimer);
+    }
+    this.debounceTimer = setTimeout(() => {
+      if (!this.isDestroyed) {
+        this.applyPreview();
+      }
+    }, PREVIEW_DEBOUNCE_MS);
+  }
+
+  /** Apply current edits to produce preview (simulated) */
+  private applyPreview(): void {
+    if (!this.state.isActive) return;
+    // In a real implementation, this would construct a preview URL
+    // from the edit decision list. Here we signal readiness.
+    this.state.previewVideoUrl = `${this.state.originalVideoUrl}?preview=true&ops=${this.state.editOperations.length}`;
+    this.callbacks.onPreviewReady?.();
+  }
+
+  /** Clean up resources */
+  public destroy(): void {
+    this.isDestroyed = true;
+    if (this.debounceTimer !== null) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+    this.state.isActive = false;
+    this.state.editOperations = [];
+  }
+}
+
+// ─── ExportManager ────────────────────────────────────────────────────────────
+
+/**
+ * Manages video exports with multiple quality options, progress tracking,
+ * and export history. Handles queuing, concurrent export limits, and
+ * integrates with background processing for status updates.
+ */
+export class ExportManager {
+  private jobs: Map<string, ExportJob> = new Map();
+  private history: ExportJob[] = [];
+  private callbacks: ExportCallbacks;
+  private activeExports = 0;
+  private queue: ExportOptions[] = [];
+  private isDestroyed = false;
+
+  constructor(callbacks: ExportCallbacks = {}) {
+    this.callbacks = callbacks;
+  }
