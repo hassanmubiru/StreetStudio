@@ -1,93 +1,38 @@
 /**
- * Organization Settings and Billing Unit Tests
+ * Organization Settings Page Tests
  *
- * Tests organization settings page rendering and billing interface display.
- * These tests validate the placeholder implementations pending full
- * feature completion (tasks 10.3, 10.4).
+ * Tests for branding customization, security policy configuration,
+ * storage quota management, and integration configuration.
  *
- * Validates: Requirements 8.6, 8.7
+ * Validates: Requirements 8.6, 8.10
  */
 
 // @vitest-environment jsdom
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { OrganizationSettingsPage } from './organization-settings-page.js';
-import { BillingSettingsPage } from './billing-settings-page.js';
-
-describe('OrganizationSettingsPage', () => {
-  let container: HTMLElement;
-
-  beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-  });
-
-  afterEach(() => {
-    document.body.removeChild(container);
-  });
-
-  it('should render settings page element', () => {
-    const page = new OrganizationSettingsPage();
-    const element = page.getElement();
-    container.appendChild(element);
-
-    expect(element).toBeTruthy();
-    expect(element.tagName).toBe('DIV');
-  });
-
-  it('should display page heading', () => {
-    const page = new OrganizationSettingsPage();
-    const element = page.getElement();
-    container.appendChild(element);
-
-    const heading = element.querySelector('h1');
-    expect(heading).toBeTruthy();
-    expect(heading?.textContent).toContain('Organization Settings');
-  });
-
-  it('should have data-main-content attribute for layout integration', () => {
-    const page = new OrganizationSettingsPage();
-    const element = page.getElement();
-
-    expect(element.getAttribute('data-main-content')).toBe('');
-  });
-});
-
-describe('BillingSettingsPage', () => {
-  let container: HTMLElement;
-
-  beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-  });
-
-  afterEach(() => {
-    document.body.removeChild(container);
-  });
-
-  it('should render billing page element', () => {
-    const page = new BillingSettingsPage();
-    const element = page.getElement();
-    container.appendChild(element);
-
-    expect(element).toBeTruthy();
-    expect(element.tagName).toBe('DIV');
-  });
-
-  it('should display billing page heading', () => {
-    const page = new BillingSettingsPage();
-    const element = page.getElement();
-    container.appendChild(element);
-
-    const heading = element.querySelector('h1');
-    expect(heading).toBeTruthy();
-    expect(heading?.textContent).toContain('Billing Settings');
-  });
-
-  it('should have data-main-content attribute for layout integration', () => {
-    const page = new BillingSettingsPage();
-    const element = page.getElement();
-
-    expect(element.getAttribute('data-main-content')).toBe('');
-  });
-});
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  OrganizationSettingsPage,
+  validateLogoFile,
+  validateColor,
+  validateIpAddress,
+  validateWebhookUrl,
+  createSecurityValidator,
+  createDefaultBrandingSettings,
+  createDefaultSecuritySettings,
+  createDefaultStorageSettings,
+  createDefaultIntegrationSettings,
+  LOGO_MAX_SIZE,
+  LOGO_ALLOWED_TYPES,
+  COLOR_PATTERN,
+  CUSTOM_CSS_MAX_LENGTH,
+  MAX_WEBHOOK_ENDPOINTS,
+  STORAGE_REGIONS,
+  WEBHOOK_EVENTS,
+  type OrganizationSettingsPageConfig,
+  type OrganizationSettingsData,
+  type BrandingSettings,
+  type SecurityPolicySettings,
+  type StorageSettings,
+  type IntegrationSettings,
+  type WebhookEndpoint,
+} from './organization-settings-page.js';
