@@ -303,7 +303,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Build edit history and version control display
     - _Requirements: 6.10_
 
-  - [ ] 9.6 Write unit tests for timeline editor
+  - [-] 9.6 Write unit tests for timeline editor
     - Test timeline navigation and frame accuracy
     - Test trim, split, and editing operations
     - Test text overlay and caption functionality
