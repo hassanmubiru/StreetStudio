@@ -251,3 +251,67 @@ export class OrganizationSettingsPage {
     this.activeTab = tab;
     this.render();
   }
+
+  private render(): void {
+    this.element.innerHTML = '';
+    this.element.appendChild(this.renderHeader());
+    this.element.appendChild(this.renderTabs());
+    this.element.appendChild(this.renderActiveSection());
+    this.element.appendChild(this.renderSaveBar());
+    this.setupEventListeners();
+  }
+
+  private renderHeader(): HTMLElement {
+    const header = document.createElement('div');
+    header.className = 'mb-6';
+    header.innerHTML = `
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Organization Settings</h1>
+      <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        Manage settings for <strong>${this.escapeHtml(this.config.organizationName)}</strong>.
+      </p>
+    `;
+    return header;
+  }
+
+  private renderTabs(): HTMLElement {
+    const nav = document.createElement('nav');
+    nav.className = 'border-b border-gray-200 dark:border-gray-700 mb-6';
+    nav.setAttribute('aria-label', 'Settings tabs');
+
+    const tabs: { key: SettingsTab; label: string; icon: string }[] = [
+      { key: 'branding', label: 'Branding', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01' },
+      { key: 'security', label: 'Security', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
+      { key: 'storage', label: 'Storage', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4' },
+      { key: 'integrations', label: 'Integrations', icon: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1' },
+    ];
+
+    const tabList = document.createElement('div');
+    tabList.className = 'flex -mb-px space-x-6 overflow-x-auto';
+    tabList.setAttribute('role', 'tablist');
+
+    for (const tab of tabs) {
+      const isActive = this.activeTab === tab.key;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('role', 'tab');
+      button.setAttribute('aria-selected', String(isActive));
+      button.setAttribute('aria-controls', `panel-${tab.key}`);
+      button.id = `tab-${tab.key}`;
+      button.dataset.tab = tab.key;
+      button.className = `flex items-center gap-2 px-1 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+        isActive
+          ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+          : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+      }`;
+      button.innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${tab.icon}"></path>
+        </svg>
+        ${tab.label}
+      `;
+      tabList.appendChild(button);
+    }
+
+    nav.appendChild(tabList);
+    return nav;
+  }

@@ -442,3 +442,72 @@ export class SecuritySettingsPage {
       </button>
     `;
   }
+
+  private renderTwoFactorSetupFlow(): string {
+    const secret = this.twoFactorData.secret || generateTotpSecret();
+    if (!this.twoFactorData.secret) {
+      this.twoFactorData.secret = secret;
+    }
+    const otpUrl = generateOtpAuthUrl(secret, 'user@example.com');
+    this.twoFactorData.qrCodeUrl = otpUrl;
+
+    // Format secret with spaces for readability
+    const formattedSecret = secret.match(/.{1,4}/g)?.join(' ') || secret;
+
+    return `
+      <div class="space-y-6">
+        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">Step 1: Scan QR Code</h3>
+          <p class="text-xs text-blue-700 dark:text-blue-300 mb-3">
+            Scan this QR code with your authenticator app (Google Authenticator, Authy, 1Password, etc.)
+          </p>
+          <div id="qr-code-display" class="flex justify-center p-4 bg-white rounded-lg mb-3" aria-label="QR code for two-factor authentication setup" role="img">
+            <div class="w-48 h-48 bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs text-center">
+              QR Code<br/>${otpUrl.substring(0, 30)}...
+            </div>
+          </div>
+          <details class="text-xs">
+            <summary class="cursor-pointer text-blue-600 dark:text-blue-400 hover:underline">Can't scan? Enter manually</summary>
+            <div class="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded">
+              <p class="text-gray-600 dark:text-gray-300 mb-1">Secret key:</p>
+              <code id="totp-secret" class="text-sm font-mono text-gray-900 dark:text-white select-all">${formattedSecret}</code>
+            </div>
+          </details>
+        </div>
+        <div>
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Step 2: Enter Verification Code</h3>
+          <div class="flex items-center gap-3">
+            <input
+              id="verification-code"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]{6}"
+              maxlength="6"
+              placeholder="000000"
+              class="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-mono text-lg tracking-widest"
+              aria-label="Six-digit verification code"
+              aria-describedby="verification-code-help"
+            />
+            <button
+              id="verify-2fa-btn"
+              type="button"
+              class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+            >
+              Verify & Enable
+            </button>
+          </div>
+          <p id="verification-code-help" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Enter the 6-digit code from your authenticator app.
+          </p>
+          <div id="verification-error" class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert" aria-live="polite"></div>
+        </div>
+        <button
+          id="cancel-2fa-btn"
+          type="button"
+          class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-500 transition-colors"
+        >
+          Cancel setup
+        </button>
+      </div>
+    `;
+  }

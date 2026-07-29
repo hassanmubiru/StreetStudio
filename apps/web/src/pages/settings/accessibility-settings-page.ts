@@ -374,3 +374,74 @@ export class AccessibilitySettingsPage {
     `;
     return section;
   }
+
+  private renderReducedMotionSection(): HTMLElement {
+    const section = document.createElement('section');
+    section.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6';
+    section.setAttribute('aria-labelledby', 'motion-heading');
+
+    const systemMotion = getSystemReducedMotion();
+
+    section.innerHTML = `
+      <h2 id="motion-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        Reduced Motion
+      </h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Minimize animations and transitions throughout the application.
+        ${systemMotion ? '<span class="text-amber-600 dark:text-amber-400">(Your system prefers reduced motion)</span>' : ''}
+      </p>
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-sm font-medium text-gray-900 dark:text-white">Enable reduced motion</span>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Disables animations, transitions, and auto-playing content.
+          </p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer" aria-label="Toggle reduced motion">
+          <input
+            type="checkbox"
+            id="reduced-motion-toggle"
+            class="sr-only peer"
+            ${this.preferences.reducedMotion ? 'checked' : ''}
+            aria-describedby="motion-heading"
+          />
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+    `;
+    return section;
+  }
+
+  private renderScreenReaderSection(): HTMLElement {
+    const section = document.createElement('section');
+    section.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6';
+    section.setAttribute('aria-labelledby', 'screenreader-heading');
+
+    section.innerHTML = `
+      <h2 id="screenreader-heading" class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        Screen Reader Optimizations
+      </h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Enhance the experience for screen reader users with additional context and announcements.
+      </p>
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-sm font-medium text-gray-900 dark:text-white">Enable screen reader optimizations</span>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Adds extra ARIA descriptions, live region announcements, and landmark hints.
+          </p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer" aria-label="Toggle screen reader optimizations">
+          <input
+            type="checkbox"
+            id="screen-reader-toggle"
+            class="sr-only peer"
+            ${this.preferences.screenReaderOptimizations ? 'checked' : ''}
+            aria-describedby="screenreader-heading"
+          />
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+    `;
+    return section;
+  }
