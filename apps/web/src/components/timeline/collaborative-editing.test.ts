@@ -174,3 +174,52 @@ describe('PresenceManager', () => {
     expect(manager.getAllParticipants()).toHaveLength(0);
   });
 });
+
+// ─── ConflictDetector ─────────────────────────────────────────────────────────
+
+describe('ConflictDetector', () => {
+  let detector: ConflictDetector;
+
+  beforeEach(() => {
+    detector = new ConflictDetector();
+  });
+
+  it('allows a user to register an edit without conflict', () => {
+    const conflict = detector.registerEdit('user-1', 'clip-A', 'trim');
+    expect(conflict).toBeNull();
+  });
+
+  it('same user can re-register the same clip without conflict', () => {
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    const conflict = detector.registerEdit('user-1', 'clip-A', 'split');
+    expect(conflict).toBeNull();
+  });
+
+  it('detects conflict when a second user edits the same clip', () => {
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    const conflict = detector.registerEdit('user-2', 'clip-A', 'split');
+
+    expect(conflict).not.toBeNull();
+    expect(conflict!.initiatorUserId).toBe('user-1');
+    expect(conflict!.conflictingUserId).toBe('user-2');
+    expect(conflict!.clipId).toBe('clip-A');
+    expect(conflict!.resolution).toBe('pending');
+  });
+
+  it('no conflict for different clips', () => {
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    const conflict = detector.registerEdit('user-2', 'clip-B', 'trim');
+    expect(conflict).toBeNull();
+  });
+
+  it('completeEdit releases the lock', () => {
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    detector.completeEdit('user-1', 'clip-A');
+    expect(detector.hasActiveLock('clip-A')).toBe(false);
+  });
+
+  it('completeEdit only releases if the user matches', () => {
+    detector.registerEdit('user-1', 'clip-A', 'trim');
+    detector.completeEdit('user-2', 'clip-A'); // wrong user
+    expect(detector.hasActiveLock('clip-A')).toBe(true);
+  });

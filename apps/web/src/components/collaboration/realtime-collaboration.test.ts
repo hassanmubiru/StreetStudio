@@ -396,3 +396,64 @@ describe('Typing Indicators', () => {
       expect(container.style.display).toBe('flex');
       expect(container.textContent).toContain('Alice is typing...');
     });
+
+    it('hides when user stops typing', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1', displayName: 'Alice' }));
+      indicators.clearUserTyping('u1');
+      expect(container.style.display).toBe('none');
+    });
+
+    it('excludes current user from display', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'me', displayName: 'Me' }));
+      expect(container.style.display).toBe('none');
+    });
+
+    it('shows multiple typing users', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1', displayName: 'Alice' }));
+      indicators.setUserTyping(makeTypingUser({ id: 'u2', displayName: 'Bob' }));
+      expect(container.textContent).toContain('Alice and Bob are typing...');
+    });
+
+    it('renders animated dots', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1', displayName: 'Alice' }));
+      const dots = container.querySelectorAll('.dot');
+      expect(dots.length).toBe(3);
+    });
+
+    it('emits onTypingStart and onTypingStop for local typing', () => {
+      const onTypingStart = vi.fn();
+      const onTypingStop = vi.fn();
+      const indicators = new TypingIndicators(
+        container,
+        { currentUserId: 'me', expiryMs: 3000 },
+        { onTypingStart, onTypingStop }
+      );
+
+      indicators.handleLocalTyping();
+      expect(onTypingStart).toHaveBeenCalledOnce();
+
+      vi.advanceTimersByTime(3100);
+      expect(onTypingStop).toHaveBeenCalledOnce();
+    });
+
+    it('expires typing users after timeout', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me', expiryMs: 3000 });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1', displayName: 'Alice' }));
+      expect(indicators.hasTypingUsers()).toBe(true);
+
+      vi.advanceTimersByTime(4000);
+      expect(indicators.hasTypingUsers()).toBe(false);
+    });
+
+    it('cleans up on destroy', () => {
+      const indicators = new TypingIndicators(container, { currentUserId: 'me' });
+      indicators.setUserTyping(makeTypingUser({ id: 'u1' }));
+      indicators.destroy();
+      expect(indicators.getTypingUsers()).toEqual([]);
+    });
+  });
+});

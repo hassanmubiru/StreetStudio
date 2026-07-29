@@ -301,3 +301,82 @@ describe('EditingPreviewSystem', () => {
       expect(preview.getState().duration).toBe(100);
     });
   });
+
+  describe('buffering state', () => {
+    it('toggles buffering and fires callback', () => {
+      preview.setBuffering(true);
+      expect(preview.getState().isBuffering).toBe(true);
+      expect(callbacks.onBufferingChange).toHaveBeenCalledWith(true);
+    });
+
+    it('does not fire callback if state unchanged', () => {
+      preview.setBuffering(false);
+      (callbacks.onBufferingChange as ReturnType<typeof vi.fn>).mockClear();
+      preview.setBuffering(false);
+      expect(callbacks.onBufferingChange).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('effective duration', () => {
+    it('returns full duration with no edits', () => {
+      preview.setDuration(300);
+      expect(preview.getEffectiveDuration()).toBe(300);
+    });
+
+    it('reduces duration with trim operations', () => {
+      preview.setDuration(300);
+      preview.addEditOperation({
+        type: 'trim',
+        timestamp: 1,
+        data: { clipId: 'c1', mode: 'in', originalFrame: 0, newFrame: 30 },
+      });
+      expect(preview.getEffectiveDuration()).toBe(270);
+    });
+
+    it('does not go below zero', () => {
+      preview.setDuration(10);
+      preview.addEditOperation({
+        type: 'trim',
+        timestamp: 1,
+        data: { clipId: 'c1', mode: 'in', originalFrame: 0, newFrame: 50 },
+      });
+      expect(preview.getEffectiveDuration()).toBe(0);
+    });
+  });
+
+  describe('original video preservation', () => {
+    it('original URL never changes after edit operations', () => {
+      preview.activate();
+      preview.addEditOperation({
+        type: 'trim',
+        timestamp: 1,
+        data: { clipId: 'c1', mode: 'in', originalFrame: 0, newFrame: 30 },
+      });
+      expect(preview.getOriginalUrl()).toBe('https://example.com/video.mp4');
+    });
+  });
+
+  describe('destroy', () => {
+    it('deactivates and clears operations', () => {
+      preview.activate();
+      preview.addEditOperation({
+        type: 'trim',
+        timestamp: 1,
+        data: { clipId: 'c1', mode: 'in', originalFrame: 0, newFrame: 10 },
+      });
+      preview.destroy();
+      expect(preview.isActive()).toBe(false);
+      expect(preview.getOperationCount()).toBe(0);
+    });
+
+    it('does not respond to operations after destroy', () => {
+      preview.destroy();
+      preview.addEditOperation({
+        type: 'split',
+        timestamp: 1,
+        data: { clipId: 'c1', splitFrame: 50, leftClipId: 'l', rightClipId: 'r' },
+      });
+      expect(preview.getOperationCount()).toBe(0);
+    });
+  });
+});
