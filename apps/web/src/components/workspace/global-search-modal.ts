@@ -277,8 +277,8 @@ export class GlobalSearchModal {
 
   private scrollSelectedIntoView(): void {
     const selected = this.element.querySelector('[data-selected="true"]');
-    if (selected) {
-      selected.scrollIntoView({ block: 'nearest' });
+    if (selected && typeof (selected as HTMLElement).scrollIntoView === 'function') {
+      (selected as HTMLElement).scrollIntoView({ block: 'nearest' });
     }
   }
 

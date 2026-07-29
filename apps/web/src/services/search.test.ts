@@ -7,6 +7,8 @@
  * Requirements: 14.1, 14.3, 14.5
  */
 
+// @vitest-environment jsdom
+
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SearchService } from './search';
 

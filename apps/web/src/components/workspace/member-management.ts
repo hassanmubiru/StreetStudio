@@ -698,3 +698,73 @@ export class MemberManagement {
 
     return filtered;
   }
+
+  private showFieldError(field: string, message: string): void {
+    const errorEl = this.element.querySelector(`[data-field-error="${field}"]`);
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.classList.remove('hidden');
+    }
+  }
+
+  private validateEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  private getStatusBadge(status: string): string {
+    const styles: Record<string, string> = {
+      active: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+      inactive: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400',
+      suspended: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+    };
+    const style = styles[status] || styles.inactive;
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${style}">${status}</span>`;
+  }
+
+  private getInitials(name: string): string {
+    return name
+      .split(' ')
+      .map(part => part.charAt(0))
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  }
+
+  private formatRelativeTime(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMinutes < 1) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  }
+
+  /** Get members list (for testing) */
+  public getMembers(): OrganizationMember[] {
+    return [...this.members];
+  }
+
+  /** Get roles list (for testing) */
+  public getRoles(): RoleDto[] {
+    return [...this.roles];
+  }
+
+  /** Get pending invitations (for testing) */
+  public getPendingInvitations(): InvitationDto[] {
+    return [...this.pendingInvitations];
+  }
+
+  public destroy(): void {
+    this.element.innerHTML = '';
+    this.members = [];
+    this.roles = [];
+    this.pendingInvitations = [];
+  }
+}

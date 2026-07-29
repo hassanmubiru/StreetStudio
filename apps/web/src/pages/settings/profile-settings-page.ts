@@ -629,3 +629,86 @@ export class ProfileSettingsPage {
       this.updateSaveBar();
     }
   }
+
+  private updateSaveBar(): void {
+    const statusEl = this.element.querySelector('#save-status');
+    const saveBtn = this.element.querySelector('#save-profile') as HTMLButtonElement;
+    const discardBtn = this.element.querySelector('#discard-changes') as HTMLButtonElement;
+
+    if (statusEl) {
+      if (this.isSaving) {
+        statusEl.textContent = 'Saving...';
+        statusEl.className = 'text-sm text-blue-600 dark:text-blue-400';
+      } else if (this.isDirty) {
+        statusEl.textContent = 'Unsaved changes';
+        statusEl.className = 'text-sm text-amber-600 dark:text-amber-400';
+      } else {
+        statusEl.textContent = 'All changes saved';
+        statusEl.className = 'text-sm text-green-600 dark:text-green-400';
+      }
+    }
+
+    if (saveBtn) {
+      saveBtn.disabled = !this.isDirty || this.isSaving;
+      saveBtn.textContent = this.isSaving ? 'Saving...' : 'Save Changes';
+    }
+
+    if (discardBtn) {
+      discardBtn.disabled = !this.isDirty;
+    }
+  }
+
+  private validateDisplayName(value: string): void {
+    const errorEl = this.element.querySelector('#display-name-error');
+    if (!errorEl) return;
+
+    const result = this.validator.validateField('displayName', value);
+    errorEl.textContent = result.isValid ? '' : (result.firstError || '');
+  }
+
+  private updateBioCounter(value: string): void {
+    const counter = this.element.querySelector('#bio-counter');
+    if (!counter) return;
+
+    const length = value.length;
+    counter.textContent = `${length}/${BIO_MAX_LENGTH}`;
+    counter.className = length > BIO_MAX_LENGTH
+      ? 'text-xs text-red-600 dark:text-red-400'
+      : 'text-xs text-gray-500 dark:text-gray-400';
+  }
+
+  private showValidationErrors(result: ValidationResult): void {
+    for (const [field, errors] of Object.entries(result.errors)) {
+      const errorEl = this.element.querySelector(`#${field === 'displayName' ? 'display-name' : field}-error`);
+      if (errorEl && errors.length > 0) {
+        errorEl.textContent = errors[0];
+      }
+    }
+  }
+
+  private getInitials(): string {
+    const name = this.profileData.displayName.trim();
+    if (!name) return '?';
+    const parts = name.split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  /**
+   * Cleanup resources
+   */
+  public destroy(): void {
+    if (this.avatarPreviewUrl) {
+      URL.revokeObjectURL(this.avatarPreviewUrl);
+    }
+    this.element.innerHTML = '';
+  }
+}
