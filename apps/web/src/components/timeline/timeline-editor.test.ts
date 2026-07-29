@@ -228,7 +228,7 @@ describe('TimelineEditor', () => {
 
   describe('initialization', () => {
     it('creates timeline DOM structure', () => {
-      expect(container.querySelector('.timeline-editor')).not.toBeNull();
+      expect(container.classList.contains('timeline-editor')).toBe(true);
       expect(container.querySelector('.timeline-controls')).not.toBeNull();
       expect(container.querySelector('.timeline-area')).not.toBeNull();
       expect(container.querySelector('.timeline-ruler')).not.toBeNull();
