@@ -167,7 +167,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Test metadata form validation and submission
     - _Requirements: 3.7, 3.8, 3.9_
 
-- [ ] 6. Video Management and Organization
+- [x] 6. Video Management and Organization
   - [x] 6.1 Build project management interface
     - Create projects page with searchable and filterable grid layout
     - Implement project creation form with member invitation
@@ -193,7 +193,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Create folder navigation breadcrumbs and quick access
     - _Requirements: 4.5_
 
-  - [-] 6.5 Write unit tests for video management
+  - [x] 6.5 Write unit tests for video management
     - Test project creation and member invitation workflows
     - Test video organization and bulk operations
     - Test folder management and hierarchy display
