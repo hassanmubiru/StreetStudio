@@ -168,3 +168,39 @@ export class AdaptiveVideoPlayer {
       availableQualities: [],
     };
   }
+
+  private createPlayerDOM(): void {
+    this.container.classList.add('video-player-container');
+    this.container.setAttribute('role', 'region');
+    this.container.setAttribute('aria-label', 'Video player');
+    this.container.style.position = 'relative';
+    this.container.innerHTML = '';
+
+    // Create video element
+    this.videoElement = document.createElement('video');
+    this.videoElement.className = 'video-player-element';
+    this.videoElement.style.width = '100%';
+    this.videoElement.style.height = '100%';
+    this.videoElement.style.display = 'block';
+    this.videoElement.style.backgroundColor = '#000';
+    this.videoElement.setAttribute('playsinline', '');
+    this.videoElement.preload = this.options.preload;
+    this.videoElement.muted = this.options.muted;
+    this.videoElement.volume = this.options.volume;
+    this.videoElement.playbackRate = this.options.playbackRate;
+    this.videoElement.loop = this.options.loop;
+
+    if (this.options.enablePictureInPicture) {
+      this.videoElement.setAttribute('disablepictureinpicture', 'false');
+    }
+
+    this.container.appendChild(this.videoElement);
+
+    // Create controls overlay
+    this.controlsElement = document.createElement('div');
+    this.controlsElement.className = 'video-player-controls';
+    this.controlsElement.setAttribute('role', 'toolbar');
+    this.controlsElement.setAttribute('aria-label', 'Video playback controls');
+    this.controlsElement.innerHTML = this.getControlsHTML();
+    this.container.appendChild(this.controlsElement);
+  }
