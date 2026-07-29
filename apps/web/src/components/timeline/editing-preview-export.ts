@@ -200,3 +200,56 @@ export function formatDuration(ms: number): string {
   const remainingMinutes = minutes % 60;
   return `${hours}h ${remainingMinutes}m`;
 }
+
+/** Get quality option details for a given quality level */
+export function getQualityOption(
+  quality: ExportQuality
+): ExportQualityOption | undefined {
+  return QUALITY_OPTIONS.find((opt) => opt.quality === quality);
+}
+
+/** Calculate estimated export time based on duration and quality */
+export function estimateExportTime(
+  durationSeconds: number,
+  quality: ExportQuality
+): number {
+  // Rough estimate: higher quality takes longer
+  const multipliers: Record<ExportQuality, number> = {
+    low: 0.5,
+    medium: 1.0,
+    high: 2.0,
+    original: 2.5,
+  };
+  const multiplier = multipliers[quality] ?? 1.0;
+  return Math.round(durationSeconds * multiplier * 1000);
+}
+
+// ─── EditingPreviewSystem ─────────────────────────────────────────────────────
+
+/**
+ * Real-time preview system that applies edit operations without affecting
+ * the original video. Maintains a virtual edit decision list (EDL) and
+ * renders preview frames on demand.
+ */
+export class EditingPreviewSystem {
+  private state: PreviewState;
+  private callbacks: PreviewCallbacks;
+  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private isDestroyed = false;
+
+  constructor(
+    originalVideoUrl: string,
+    callbacks: PreviewCallbacks = {}
+  ) {
+    this.callbacks = callbacks;
+    this.state = {
+      isActive: false,
+      mode: 'realtime',
+      currentTime: 0,
+      duration: 0,
+      editOperations: [],
+      isBuffering: false,
+      originalVideoUrl,
+      previewVideoUrl: undefined,
+    };
+  }

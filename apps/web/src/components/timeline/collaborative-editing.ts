@@ -33,3 +33,41 @@ export interface EditorPresence {
   /** Whether the user is currently connected. */
   isConnected: boolean;
 }
+
+/** Types of edit operations that can be tracked. */
+export type EditOperationType = 'trim' | 'split' | 'move' | 'delete' | 'add' | 'text-overlay' | 'caption';
+
+/** A recorded edit operation for version history. */
+export interface EditOperation {
+  id: Uuid;
+  userId: Uuid;
+  type: EditOperationType;
+  timestamp: IsoTimestamp;
+  /** The clip affected by this operation. */
+  clipId: string;
+  /** Description of the change. */
+  description: string;
+  /** Serialized before-state for undo. */
+  previousState: string;
+  /** Serialized after-state for redo. */
+  newState: string;
+}
+
+/** An edit conflict between two users. */
+export interface EditConflict {
+  id: Uuid;
+  /** The clip being edited by multiple users. */
+  clipId: string;
+  /** The user who initiated the first edit. */
+  initiatorUserId: Uuid;
+  /** The user whose edit conflicts. */
+  conflictingUserId: Uuid;
+  /** The type of the initiator's operation. */
+  initiatorOperation: EditOperationType;
+  /** The type of the conflicting operation. */
+  conflictingOperation: EditOperationType;
+  /** When the conflict was detected. */
+  detectedAt: IsoTimestamp;
+  /** Resolution status. */
+  resolution: ConflictResolution;
+}
