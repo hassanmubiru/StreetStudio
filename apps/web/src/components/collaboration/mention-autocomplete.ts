@@ -137,9 +137,10 @@ export function filterCandidates(
 /**
  * Extracts all mentioned member display names from a text body.
  * Returns unique display names found in @mentions.
+ * A mention is defined as "@" followed by word characters (letters, digits, dots, underscores).
  */
 export function extractMentionsFromText(text: string): string[] {
-  const mentionPattern = /@([\w.]+(?:\s[\w.]+)?)/g;
+  const mentionPattern = /@([\w.]+)/g;
   const mentions: string[] = [];
   let match: RegExpExecArray | null;
 
