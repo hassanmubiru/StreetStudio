@@ -338,7 +338,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Add billing history and invoice download functionality
     - _Requirements: 8.7_
 
-  - [-] 10.5 Write unit tests for organization management
+  - [x] 10.5 Write unit tests for organization management
     - Test member invitation and role assignment
     - Test permission configuration and team management
     - Test organization settings and billing interfaces
@@ -352,14 +352,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Build notification preference controls with granular categories
     - _Requirements: 9.1, 9.3_
 
-  - [-] 11.2 Implement security settings
+  - [x] 11.2 Implement security settings
     - Create password change interface with strength validation
     - Build two-factor authentication setup with QR code generation
     - Add active session management with device information display
     - Implement login history with suspicious activity alerts
     - _Requirements: 9.2, 9.6_
 
-  - [-] 11.3 Create accessibility and preference settings
+  - [x] 11.3 Create accessibility and preference settings
     - Build accessibility preference controls (high contrast, reduced motion)
     - Implement screen reader optimization settings
     - Add keyboard navigation preference configuration
