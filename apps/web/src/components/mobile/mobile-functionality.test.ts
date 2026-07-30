@@ -205,3 +205,37 @@ describe('Responsive Layout Behavior Across Breakpoints', () => {
       expect(listener2).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('responsive CSS includes correct mobile-first structure', () => {
+    it('mobile navigation is visible by default (bottom bar)', () => {
+      expect(ResponsiveCSS).toContain('.responsive-nav--mobile');
+      expect(ResponsiveCSS).toContain('position: fixed');
+      expect(ResponsiveCSS).toContain('bottom: 0');
+    });
+
+    it('sidebar navigation appears on tablet and up', () => {
+      expect(ResponsiveCSS).toContain('.responsive-nav--sidebar');
+      expect(ResponsiveCSS).toContain('min-height: 100vh');
+    });
+
+    it('mobile layout has padding-bottom for fixed nav', () => {
+      expect(ResponsiveCSS).toContain('padding-bottom: 72px');
+    });
+
+    it('responsive grid uses single column on mobile', () => {
+      expect(ResponsiveCSS).toContain('grid-template-columns: 1fr');
+    });
+
+    it('responsive grid uses two columns on tablet', () => {
+      expect(ResponsiveCSS).toContain('grid-template-columns: repeat(2, 1fr)');
+    });
+
+    it('responsive grid uses three columns on desktop', () => {
+      expect(ResponsiveCSS).toContain('grid-template-columns: repeat(3, 1fr)');
+    });
+
+    it('touch targets enforce 44px minimum on touch devices', () => {
+      expect(ResponsiveCSS).toContain(`min-width: ${MIN_TOUCH_TARGET}px`);
+      expect(ResponsiveCSS).toContain(`min-height: ${MIN_TOUCH_TARGET}px`);
+    });
+  });
