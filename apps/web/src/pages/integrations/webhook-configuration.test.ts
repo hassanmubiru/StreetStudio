@@ -193,3 +193,55 @@ describe('Utility Functions', () => {
     });
   });
 });
+
+describe('WebhookConfigurationPage', () => {
+  let page: WebhookConfigurationPage;
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    page?.destroy();
+    if (container.parentNode) {
+      document.body.removeChild(container);
+    }
+  });
+
+  describe('Initialization', () => {
+    it('should create page element with correct attributes', () => {
+      page = new WebhookConfigurationPage();
+      const el = page.getElement();
+
+      expect(el).toBeInstanceOf(HTMLElement);
+      expect(el.getAttribute('data-page')).toBe('webhook-configuration');
+      expect(el.getAttribute('data-main-content')).toBe('');
+    });
+
+    it('should display heading and description', () => {
+      page = new WebhookConfigurationPage();
+      const el = page.getElement();
+
+      expect(el.querySelector('h1')?.textContent).toContain('Webhooks');
+      expect(el.textContent).toContain('event notifications');
+    });
+
+    it('should render Add Webhook button', () => {
+      page = new WebhookConfigurationPage();
+      const el = page.getElement();
+
+      const btn = el.querySelector('#btn-add-webhook') as HTMLButtonElement;
+      expect(btn).toBeTruthy();
+      expect(btn.textContent).toContain('Add Webhook');
+      expect(btn.getAttribute('aria-label')).toContain('Add new webhook');
+    });
+
+    it('should show empty state when no webhooks', () => {
+      page = new WebhookConfigurationPage({ webhooks: [] });
+      const el = page.getElement();
+
+      expect(el.textContent).toContain('No webhooks configured');
+      expect(el.textContent).toContain('Add a webhook');
+    });

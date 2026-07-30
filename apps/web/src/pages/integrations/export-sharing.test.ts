@@ -156,3 +156,63 @@ describe('Utility Functions', () => {
       expect(getFailedCount(jobs)).toBe(2);
     });
   });
+
+  describe('generateIframeEmbed', () => {
+    it('should generate responsive iframe by default', () => {
+      const code = generateIframeEmbed('vid-1', DEFAULT_EMBED_OPTIONS);
+      expect(code).toContain('position:relative');
+      expect(code).toContain('padding-bottom:56.25%');
+      expect(code).toContain('src="https://embed.streetstudio.io/v/vid-1"');
+      expect(code).toContain('allowfullscreen');
+      expect(code).toContain('title="StreetStudio Video"');
+    });
+
+    it('should generate fixed-size iframe when not responsive', () => {
+      const opts: EmbedOptions = { ...DEFAULT_EMBED_OPTIONS, responsive: false, width: 800, height: 450 };
+      const code = generateIframeEmbed('vid-1', opts);
+      expect(code).toContain('width="800"');
+      expect(code).toContain('height="450"');
+      expect(code).not.toContain('position:relative');
+    });
+
+    it('should include autoplay param', () => {
+      const opts: EmbedOptions = { ...DEFAULT_EMBED_OPTIONS, autoplay: true };
+      const code = generateIframeEmbed('vid-1', opts);
+      expect(code).toContain('autoplay=1');
+    });
+
+    it('should include controls=0 when disabled', () => {
+      const opts: EmbedOptions = { ...DEFAULT_EMBED_OPTIONS, controls: false };
+      const code = generateIframeEmbed('vid-1', opts);
+      expect(code).toContain('controls=0');
+    });
+
+    it('should include loop param', () => {
+      const opts: EmbedOptions = { ...DEFAULT_EMBED_OPTIONS, loop: true };
+      const code = generateIframeEmbed('vid-1', opts);
+      expect(code).toContain('loop=1');
+    });
+
+    it('should include muted param', () => {
+      const opts: EmbedOptions = { ...DEFAULT_EMBED_OPTIONS, muted: true };
+      const code = generateIframeEmbed('vid-1', opts);
+      expect(code).toContain('muted=1');
+    });
+
+    it('should include branding=0 when disabled', () => {
+      const opts: EmbedOptions = { ...DEFAULT_EMBED_OPTIONS, showBranding: false };
+      const code = generateIframeEmbed('vid-1', opts);
+      expect(code).toContain('branding=0');
+    });
+
+    it('should include start time', () => {
+      const opts: EmbedOptions = { ...DEFAULT_EMBED_OPTIONS, startTime: 30 };
+      const code = generateIframeEmbed('vid-1', opts);
+      expect(code).toContain('t=30');
+    });
+
+    it('should use custom base URL', () => {
+      const code = generateIframeEmbed('vid-1', DEFAULT_EMBED_OPTIONS, 'https://custom.embed.com');
+      expect(code).toContain('https://custom.embed.com/v/vid-1');
+    });
+  });
