@@ -434,7 +434,8 @@ export class CollaborationSyncService {
   private startPresenceCleanup(): void {
     this.cleanupTimer = setInterval(() => {
       const now = Date.now();
-      for (const [userId, user] of this.presenceMap) {
+      const presenceEntries = Array.from(this.presenceMap.entries());
+      for (const [userId, user] of presenceEntries) {
         if (now - user.lastActivity > this.options.presenceTimeout) {
           this.presenceMap.delete(userId);
           this.typingMap.delete(userId);
@@ -442,7 +443,8 @@ export class CollaborationSyncService {
         }
       }
       // Clean stale typing indicators
-      for (const [userId, indicator] of this.typingMap) {
+      const typingEntries = Array.from(this.typingMap.entries());
+      for (const [userId, indicator] of typingEntries) {
         if (now - indicator.startedAt > this.options.typingDebounce * 3) {
           this.typingMap.delete(userId);
           this.emit('typingStop', indicator);
