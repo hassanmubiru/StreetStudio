@@ -398,7 +398,7 @@ export class VideoSessionMemoryManager {
 
   private moderateCleanup(): number {
     // Release oldest half of video buffers
-    const buffers = [...this.resources.entries()]
+    const buffers = Array.from(this.resources.entries())
       .filter(([, r]) => r.type === 'video-buffer')
       .sort(([, a], [, b]) => a.lastAccessedAt - b.lastAccessedAt);
 

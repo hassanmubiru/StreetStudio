@@ -367,3 +367,82 @@ describe('ExportSharingPage', () => {
       expect(btn.getAttribute('aria-label')).toContain('export');
     });
   });
+
+  describe('Export Form - Video Selection', () => {
+    it('should show export form when New Export is clicked', () => {
+      const videos = [createTestVideo()];
+      page = new ExportSharingPage({ videos });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      el.querySelector('#btn-new-export')!.dispatchEvent(new Event('click'));
+      expect(page.isExportFormVisible()).toBe(true);
+      expect(el.querySelector('#export-form')).toBeTruthy();
+    });
+
+    it('should display video list with checkboxes', () => {
+      const videos = [
+        createTestVideo({ id: 'v1', title: 'Video One' }),
+        createTestVideo({ id: 'v2', title: 'Video Two' }),
+      ];
+      page = new ExportSharingPage({ videos });
+      page.showExport();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const checkboxes = el.querySelectorAll('.video-select-checkbox');
+      expect(checkboxes.length).toBe(2);
+      expect(el.textContent).toContain('Video One');
+      expect(el.textContent).toContain('Video Two');
+    });
+
+    it('should show video duration formatted', () => {
+      const videos = [createTestVideo({ duration: 125 })];
+      page = new ExportSharingPage({ videos });
+      page.showExport();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('2:05');
+    });
+
+    it('should select and deselect videos', () => {
+      const videos = [createTestVideo({ id: 'v1' }), createTestVideo({ id: 'v2' })];
+      page = new ExportSharingPage({ videos });
+      page.showExport();
+
+      page.selectVideo('v1');
+      expect(page.getSelectedVideoIds()).toContain('v1');
+
+      page.deselectVideo('v1');
+      expect(page.getSelectedVideoIds()).not.toContain('v1');
+    });
+
+    it('should select all videos', () => {
+      const videos = [createTestVideo({ id: 'v1' }), createTestVideo({ id: 'v2' }), createTestVideo({ id: 'v3' })];
+      page = new ExportSharingPage({ videos });
+      page.showExport();
+
+      page.selectAllVideos();
+      expect(page.getSelectedVideoIds().length).toBe(3);
+    });
+
+    it('should deselect all videos', () => {
+      const videos = [createTestVideo({ id: 'v1' }), createTestVideo({ id: 'v2' })];
+      page = new ExportSharingPage({ videos });
+      page.showExport();
+      page.selectAllVideos();
+      page.deselectAllVideos();
+      expect(page.getSelectedVideoIds().length).toBe(0);
+    });
+
+    it('should hide form when Cancel is clicked', () => {
+      page = new ExportSharingPage({ videos: [createTestVideo()] });
+      page.showExport();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      el.querySelector('#btn-cancel-export')!.dispatchEvent(new Event('click'));
+      expect(page.isExportFormVisible()).toBe(false);
+    });
+  });
