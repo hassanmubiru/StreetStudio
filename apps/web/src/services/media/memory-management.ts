@@ -272,7 +272,8 @@ export class VideoSessionMemoryManager {
       worker: 0,
     };
 
-    for (const resource of this.resources.values()) {
+    const values = Array.from(this.resources.values());
+    for (const resource of values) {
       counts[resource.type]++;
     }
     return counts;
