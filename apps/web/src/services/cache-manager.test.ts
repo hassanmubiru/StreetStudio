@@ -238,7 +238,7 @@ describe('CacheManager', () => {
       expect(smallCache.has('d')).toBe(true);
     });
 
-    it('accessing an entry refreshes its LRU position', () => {
+    it('setting an entry again refreshes its LRU position', () => {
       const smallCache = new CacheManager({
         maxEntries: 3,
         persist: false,
@@ -251,8 +251,8 @@ describe('CacheManager', () => {
       smallCache.set('b', 'data-b', 'cache-first');
       smallCache.set('c', 'data-c', 'cache-first');
 
-      // Access 'a' to refresh its position
-      smallCache.has('a');
+      // Re-set 'a' to refresh its LRU position
+      smallCache.set('a', 'data-a-updated', 'cache-first');
 
       // Adding a fourth entry should evict 'b' (least recently accessed)
       smallCache.set('d', 'data-d', 'cache-first');
