@@ -5,7 +5,7 @@
  * Tests Requirements 13.1, 13.2, 13.6, and 13.8.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { 
   setupErrorHandling, 
   handleError, 
@@ -19,34 +19,23 @@ import { initializeClientLogger, logger } from './client-logger.js';
 describe('Error System - Requirements Validation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Setup required globals
-    Object.defineProperty(global, 'crypto', {
-      value: { randomUUID: vi.fn(() => 'test-uuid') },
-      configurable: true,
-    });
-    
-    Object.defineProperty(global, 'window', {
-      value: {
-        location: { href: 'https://test.com', pathname: '/test' },
-        addEventListener: vi.fn(),
-      },
-      configurable: true,
-    });
-    
-    Object.defineProperty(global, 'navigator', {
-      value: { userAgent: 'test-agent', onLine: true },
-      configurable: true,
-    });
-    
-    Object.defineProperty(global, 'localStorage', {
-      value: {
-        getItem: vi.fn(),
-        setItem: vi.fn(),
-        removeItem: vi.fn(),
-      },
-      configurable: true,
-    });
+
+    // Use the REAL jsdom window/navigator/localStorage (which provide timers,
+    // event listeners, onLine, storage, etc.). Only override the specific
+    // behaviours the tests need to control:
+
+    // Deterministic UUIDs without reassigning the read-only global.crypto getter.
+    vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
+      'test-uuid' as `${string}-${string}-${string}-${string}-${string}`
+    );
+
+    // Spy on localStorage.getItem so individual tests can control consent lookups
+    // via vi.mocked(localStorage.getItem) while keeping the real storage otherwise.
+    vi.spyOn(Storage.prototype, 'getItem');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('Requirement 13.1: Categorized Error Handling', () => {

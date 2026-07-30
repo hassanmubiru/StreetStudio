@@ -349,15 +349,14 @@ describe('Error Handler System', () => {
       // Mock window.open to fail and trigger support modal
       const originalOpen = window.open;
       window.open = vi.fn(() => null);
-      
+
       const error = new Error('Test error for support');
       handleError(error, 'fatal');
-      
-      // Look for support modal elements after error handling
-      setTimeout(() => {
-        expect(document.body.innerHTML).toContain('Get Help');
-      }, 100);
-      
+
+      // Fatal errors render a full-screen error surface offering support/help.
+      // Assert synchronously so the expectation actually gates the test.
+      expect(document.body.innerHTML).toContain('Get Help');
+
       window.open = originalOpen;
     });
 
@@ -419,48 +418,46 @@ describe('Error Handler System', () => {
     it('should provide re-login action for authentication errors', () => {
       const authError = new Error('Authentication expired');
       handleError(authError, 'authentication');
-      
-      // Should show full screen error with re-login option for auth failures
-      setTimeout(() => {
-        expect(document.body.innerHTML).toContain('Re-login');
-      }, 100);
+
+      // Authentication errors surface a persistent notice offering a re-login
+      // recovery action. Assert synchronously so the expectation gates the test.
+      expect(document.body.innerHTML).toContain('Re-login');
     });
   });
 
   describe('Development vs Production Behavior', () => {
     it('should show detailed error information in development', () => {
-      // Mock development environment
-      const originalEnv = import.meta.env;
-      (import.meta as any).env = { MODE: 'development' };
-      
+      // Use vi.stubEnv so the override is visible to the product module's
+      // import.meta.env (reassigning this test module's import.meta.env would
+      // not affect the error-handler module).
+      vi.stubEnv('MODE', 'development');
+
       setupErrorHandling();
-      
+
       const error = new Error('Development error with stack');
       error.stack = 'Error: Development error\n    at test.js:123:45';
-      
+
       handleError(error, 'fatal');
-      
+
       expect(document.body.innerHTML).toContain('Error Details (Development)');
       expect(document.body.innerHTML).toContain('test.js:123:45');
-      
+
       // Restore environment
-      (import.meta as any).env = originalEnv;
+      vi.unstubAllEnvs();
     });
 
     it('should hide detailed error information in production', () => {
-      // Mock production environment
-      const originalEnv = import.meta.env;
-      (import.meta as any).env = { MODE: 'production' };
-      
+      vi.stubEnv('MODE', 'production');
+
       setupErrorHandling();
-      
+
       const error = new Error('Production error');
       handleError(error, 'fatal');
-      
+
       expect(document.body.innerHTML).not.toContain('Error Details (Development)');
-      
+
       // Restore environment
-      (import.meta as any).env = originalEnv;
+      vi.unstubAllEnvs();
     });
   });
 

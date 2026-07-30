@@ -63,6 +63,7 @@ class ErrorCategorizer {
       message.includes('maximum call stack') ||
       message.includes('webassembly') ||
       context === 'initialization' ||
+      context === 'fatal' ||
       stack.includes('main.js') && !message.includes('network')
     ) {
       return { severity: 'fatal', category: 'javascript', recoverable: false };
@@ -612,13 +613,15 @@ class GracefulDegradationManager {
     if (fallback) {
       try {
         fallback();
-        toast.info(`${feature} is temporarily unavailable. Using simplified version.`);
+        toast.info(`${feature} is temporarily unavailable. Using simplified version.`, {
+          duration: 5000,
+        });
       } catch (fallbackError) {
         console.error(`Fallback for ${feature} also failed:`, fallbackError);
-        toast.warning(`${feature} is currently unavailable.`);
+        toast.warning(`${feature} is currently unavailable.`, { duration: 5000 });
       }
     } else {
-      toast.warning(`${feature} is temporarily unavailable.`);
+      toast.warning(`${feature} is temporarily unavailable.`, { duration: 5000 });
     }
   }
 
@@ -1060,6 +1063,65 @@ function showSupportModal(errorDetails: ErrorDetails): void {
   document.body.appendChild(modal);
 }
 
+/**
+ * Build the toast message and options for an error based on its category so
+ * that users receive actionable, category-specific feedback.
+ */
+function getToastContentForError(errorDetails: ErrorDetails): {
+  message: string;
+  options: { duration?: number; action?: { label: string; onClick: () => void } };
+} {
+  const reload = () => window.location.reload();
+
+  switch (errorDetails.category) {
+    case 'network':
+      return {
+        message: 'Network error. Please check your connection and try again.',
+        options: { duration: 5000, action: { label: 'Retry', onClick: reload } },
+      };
+    case 'chunk':
+      return {
+        message: 'A new update available. Please refresh the page to continue.',
+        options: { duration: 0, action: { label: 'Refresh', onClick: reload } },
+      };
+    case 'authentication':
+      return {
+        message: 'Your session has expired. Please re-login to continue.',
+        options: {
+          duration: 0,
+          action: {
+            label: 'Re-login',
+            onClick: () => {
+              localStorage.removeItem('streetstudio_auth');
+              window.location.href = '/auth/login';
+            },
+          },
+        },
+      };
+    case 'permission':
+      return {
+        message: 'Permission denied. Please check your access rights.',
+        options: {
+          duration: 5000,
+          action: { label: 'Get Help', onClick: () => openSupportContact(errorDetails) },
+        },
+      };
+    case 'api':
+      return {
+        message: 'Server error. Please try again later.',
+        options: { duration: 5000, action: { label: 'Retry', onClick: reload } },
+      };
+    default:
+      return {
+        message: 'Something went wrong. Please try again.',
+        options: {
+          duration: 5000,
+          action: { label: 'Get Help', onClick: () => openSupportContact(errorDetails) },
+        },
+      };
+  }
+}
+
 function showErrorToUser(errorDetails: ErrorDetails, options: ErrorDisplayOptions): void {
   if (!options.showToUser) return;
 
@@ -1068,31 +1130,72 @@ function showErrorToUser(errorDetails: ErrorDetails, options: ErrorDisplayOption
     degradationManager.handleFeatureFailure(errorDetails.context.feature, new Error(errorDetails.message));
   }
 
-  // Show toast for minor errors
-  if (options.toastMessage) {
-    toast.error(options.toastMessage, {
-      duration: 5000,
-      action: options.supportContact ? {
-        label: 'Get Help',
-        onClick: () => openSupportContact(errorDetails),
-      } : undefined,
-    });
-    return;
-  }
-
-  // Show full screen error for severe cases
+  // Show full screen error for severe/fatal cases
   if (options.fullScreenError) {
     showFullScreenError(errorDetails, options);
     return;
   }
 
-  // Default toast notification
-  toast.error('Something went wrong. Please try again.', {
-    action: {
-      label: 'Get Help',
-      onClick: () => openSupportContact(errorDetails),
-    },
+  // Category-specific toast notification for recoverable/minor errors
+  const { message, options: toastOptions } = getToastContentForError(errorDetails);
+  toast.error(message, toastOptions);
+
+  // Surface the error id, recovery actions and (when appropriate) support
+  // contact in the DOM so users can act on and report the problem. Toasts are
+  // transient, so this persistent notice is what carries the support details.
+  renderErrorNotice(errorDetails, options);
+}
+
+/**
+ * Render a small, dismissible error notice into the DOM containing the error
+ * id, available recovery actions, and support contact details. This complements
+ * the transient toast so users always have a way to reference and report an error.
+ */
+function renderErrorNotice(errorDetails: ErrorDetails, options: ErrorDisplayOptions): void {
+  const container = document.createElement('div');
+  container.className = 'error-notice fixed bottom-4 left-4 z-40 max-w-sm bg-white border border-red-200 rounded-lg shadow-lg p-4';
+  container.setAttribute('role', 'alert');
+  container.setAttribute('data-error-id', errorDetails.id);
+
+  const showSupport = options.supportContact !== false;
+
+  container.innerHTML = `
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-sm font-medium text-gray-900">${getToastContentForError(errorDetails).message}</p>
+        <p class="mt-1 text-xs text-gray-500">Error ID: <span class="font-mono">${errorDetails.id}</span></p>
+      </div>
+      <button class="error-notice-close ml-3 text-gray-400 hover:text-gray-600" title="Dismiss" aria-label="Dismiss">×</button>
+    </div>
+    <div class="error-notice-actions mt-3 flex flex-wrap gap-2"></div>
+    ${showSupport ? `
+      <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-600">
+        Need help? <a href="mailto:support@streetstudio.com" class="text-blue-600 hover:underline">support@streetstudio.com</a>
+      </div>
+    ` : ''}
+  `;
+
+  const actionsContainer = container.querySelector('.error-notice-actions') as HTMLElement;
+  if (options.recoveryActions && actionsContainer) {
+    options.recoveryActions.forEach(action => {
+      const button = document.createElement('button');
+      button.className = action.type === 'primary'
+        ? 'bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700'
+        : 'bg-gray-200 text-gray-900 text-xs px-3 py-1 rounded hover:bg-gray-300';
+      button.textContent = action.label;
+      button.addEventListener('click', () => action.action());
+      actionsContainer.appendChild(button);
+    });
+  }
+
+  const closeBtn = container.querySelector('.error-notice-close') as HTMLButtonElement;
+  closeBtn?.addEventListener('click', () => {
+    if (container.parentNode) {
+      container.parentNode.removeChild(container);
+    }
   });
+
+  document.body.appendChild(container);
 }
 
 function showFullScreenError(errorDetails: ErrorDetails, options: ErrorDisplayOptions): void {
@@ -1123,7 +1226,7 @@ function showFullScreenError(errorDetails: ErrorDetails, options: ErrorDisplayOp
       
       ${options.supportContact ? `
         <div class="mt-6 pt-6 border-t border-gray-200">
-          <p class="text-sm text-gray-600 mb-3">Need help? Contact our support team</p>
+          <p class="text-sm text-gray-600 mb-3">Get Help — contact our support team</p>
           <div class="text-sm">
             <p class="text-gray-600">Error ID: <span class="font-mono text-gray-800">${errorDetails.id}</span></p>
             <p class="mt-1">

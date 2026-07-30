@@ -5,8 +5,6 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-// @ts-ignore -- jsdom types not installed
-import { JSDOM } from 'jsdom';
 
 // Mock dependencies first
 vi.mock('./error-handler.js', () => ({
@@ -32,38 +30,20 @@ vi.mock('./client-logger.js', () => ({
 }));
 
 describe('Error Boundary System Integration', () => {
-  let dom: JSDOM;
-
   beforeEach(() => {
-    // Set up DOM environment
-    dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
-      url: 'http://localhost:3000',
-      pretendToBeVisual: true,
-      resources: 'usable'
-    });
+    // Rely on the real jsdom environment provided by vitest (full window,
+    // document, HTMLElement, Event, CustomEvent, navigator, timers, etc.).
+    // Start each test from a clean document body.
+    document.body.innerHTML = '';
 
-    // Set globals
-    global.window = dom.window as any;
-    global.document = dom.window.document;
-    global.HTMLElement = dom.window.HTMLElement;
-    global.Event = dom.window.Event;
-    global.CustomEvent = dom.window.CustomEvent;
-    
-    // Mock crypto
-    global.crypto = {
-      randomUUID: vi.fn(() => 'test-uuid-123')
-    } as any;
-
-    // Mock navigator
-    global.navigator = {
-      userAgent: 'test-browser',
-      onLine: true
-    } as any;
+    // Deterministic UUIDs without reassigning the read-only global.crypto getter.
+    vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
+      'test-uuid-123' as `${string}-${string}-${string}-${string}-${string}`
+    );
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
-    vi.resetAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('should be able to create error boundary with working DOM', async () => {

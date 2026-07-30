@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ErrorBoundary } from './error-boundary.js';
-import { setupErrorHandling } from './error-handler.js';
+import { setupErrorHandling, getDegradationManager } from './error-handler.js';
 
 // Mock dependencies
 vi.mock('@streetstudio/ui', () => ({
@@ -42,12 +42,11 @@ describe('Error System Integration', () => {
     container.innerHTML = '<p>Test content</p>';
     document.body.appendChild(container);
     
-    // Setup globals
-    Object.defineProperty(global, 'crypto', {
-      value: { randomUUID: vi.fn(() => 'test-id') },
-      configurable: true,
-    });
-    
+    // Deterministic UUIDs without reassigning the read-only global.crypto getter.
+    vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
+      'test-id' as `${string}-${string}-${string}-${string}-${string}`
+    );
+
     // Initialize error handling
     setupErrorHandling();
   });
@@ -56,6 +55,7 @@ describe('Error System Integration', () => {
     if (errorBoundary) {
       errorBoundary.destroy();
     }
+    vi.restoreAllMocks();
   });
 
   it('should integrate error boundary with error handler', () => {
@@ -96,7 +96,7 @@ describe('Error System Integration', () => {
   });
 
   it('should handle graceful degradation', () => {
-    const degradationManager = require('./error-handler.js').getDegradationManager();
+    const degradationManager = getDegradationManager();
     
     if (degradationManager) {
       let fallbackCalled = false;
