@@ -299,3 +299,39 @@ describe('Touch Gestures and Mobile-Specific Interactions', () => {
     document.body.innerHTML = '';
     vi.useRealTimers();
   });
+
+  describe('vertical swipe detection', () => {
+    it('detects upward swipe', () => {
+      const onSwipeUp = vi.fn();
+      const handler = new TouchGestureHandler(
+        container,
+        { onSwipeUp },
+        { swipeThreshold: 50, swipeMinVelocity: 0.1 }
+      );
+
+      container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 200, clientY: 400 }]));
+      vi.advanceTimersByTime(100);
+      container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 200, clientY: 300 }]));
+
+      expect(onSwipeUp).toHaveBeenCalledTimes(1);
+      expect(onSwipeUp.mock.calls[0][0].direction).toBe('up');
+      handler.destroy();
+    });
+
+    it('detects downward swipe', () => {
+      const onSwipeDown = vi.fn();
+      const handler = new TouchGestureHandler(
+        container,
+        { onSwipeDown },
+        { swipeThreshold: 50, swipeMinVelocity: 0.1 }
+      );
+
+      container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 200, clientY: 200 }]));
+      vi.advanceTimersByTime(100);
+      container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 200, clientY: 320 }]));
+
+      expect(onSwipeDown).toHaveBeenCalledTimes(1);
+      expect(onSwipeDown.mock.calls[0][0].direction).toBe('down');
+      handler.destroy();
+    });
+  });

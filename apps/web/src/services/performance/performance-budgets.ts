@@ -136,7 +136,7 @@ export class PerformanceBudgetMonitor {
    * Get all configured budgets.
    */
   public getAllBudgets(): PerformanceBudget[] {
-    return [...this.budgets.values()];
+    return Array.from(this.budgets.values());
   }
 
   /**

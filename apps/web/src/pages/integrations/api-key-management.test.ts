@@ -286,3 +286,54 @@ describe('ApiKeyManagementPage', () => {
       expect(el.textContent).toContain('Revoked');
     });
   });
+
+  describe('Usage Analytics and Rate Limiting', () => {
+    it('should display request count', () => {
+      const key = createTestKey({ requestCount: 5000 });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('5,000 requests');
+    });
+
+    it('should display rate limit progress bar', () => {
+      const key = createTestKey({ rateLimitPerHour: 1000, rateLimitRemaining: 600 });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const progressbar = el.querySelector('[role="progressbar"]');
+      expect(progressbar).toBeTruthy();
+      expect(progressbar?.getAttribute('aria-valuenow')).toBe('40');
+      expect(progressbar?.getAttribute('aria-label')).toContain('Rate limit');
+    });
+
+    it('should display remaining/total rate limit', () => {
+      const key = createTestKey({ rateLimitPerHour: 1000, rateLimitRemaining: 750 });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('750/1000 remaining/hr');
+    });
+
+    it('should display last used time', () => {
+      const recentDate = new Date(Date.now() - 2 * 3600000).toISOString();
+      const key = createTestKey({ lastUsedAt: recentDate });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('2h ago');
+    });
+
+    it('should display Never for unused keys', () => {
+      const key = createTestKey({ lastUsedAt: undefined });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('Never');
+    });
+  });
