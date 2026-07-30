@@ -869,7 +869,8 @@ describe('WebhookConfigurationPage', () => {
       ];
       page.updateWebhooks(newWebhooks);
 
-      expect(page.getWebhooks()[0].url).toBe('https://updated.com/hook');
+      const updatedWebhooks = page.getWebhooks();
+      expect(updatedWebhooks[0]!.url).toBe('https://updated.com/hook');
     });
   });
 });
