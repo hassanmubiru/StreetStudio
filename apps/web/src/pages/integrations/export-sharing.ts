@@ -282,3 +282,48 @@ export function formatExpiration(expiresAt: string | undefined): string {
   if (diffDays <= 7) return `Expires in ${diffDays} days`;
   return `Expires ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 }
+
+// --- Component ---
+
+export class ExportSharingPage {
+  private element: HTMLElement;
+  private videos: VideoForExport[];
+  private exportJobs: ExportJob[];
+  private shareLinks: ShareLink[];
+  private callbacks: Partial<ExportSharingCallbacks>;
+  private baseEmbedUrl: string;
+
+  // Export form state
+  private showExportForm = false;
+  private selectedVideoIds: Set<Uuid> = new Set();
+  private exportOptions: ExportOptions = {
+    format: 'mp4',
+    quality: 'high',
+    resolution: '1080p',
+  };
+
+  // Embed state
+  private showEmbedPanel = false;
+  private embedVideoId: Uuid | null = null;
+  private embedOptions: EmbedOptions = { ...DEFAULT_EMBED_OPTIONS };
+  private embedType: 'iframe' | 'script' = 'iframe';
+
+  // Share state
+  private showShareForm = false;
+  private shareVideoId: Uuid | null = null;
+  private sharePermission: SharePermission = 'public';
+  private sharePassword = '';
+  private shareMembers: string[] = [];
+  private shareExpiration = '';
+
+  constructor(options: ExportSharingOptions = {}) {
+    this.videos = options.videos ?? [];
+    this.exportJobs = options.exportJobs ?? [];
+    this.shareLinks = options.shareLinks ?? [];
+    this.callbacks = options.callbacks ?? {};
+    this.baseEmbedUrl = options.baseEmbedUrl ?? DEFAULT_BASE_EMBED_URL;
+    this.element = document.createElement('div');
+    this.element.setAttribute('data-page', 'export-sharing');
+    this.element.setAttribute('data-main-content', '');
+    this.render();
+  }

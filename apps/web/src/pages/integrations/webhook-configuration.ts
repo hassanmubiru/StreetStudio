@@ -233,3 +233,94 @@ export class WebhookConfigurationPage {
   private confirmDeleteId: Uuid | null = null;
   private testResult: TestWebhookResponse | null = null;
   private testingWebhookId: Uuid | null = null;
+  private eventFilter: string = '';
+  private createFormData: {
+    url: string;
+    description: string;
+    events: Set<WebhookEventType>;
+    maxRetries: number;
+    retryIntervalSeconds: number;
+  } = {
+    url: '',
+    description: '',
+    events: new Set(),
+    maxRetries: 5,
+    retryIntervalSeconds: 60,
+  };
+
+  constructor(options: WebhookConfigurationOptions = {}) {
+    this.webhooks = options.webhooks ?? [];
+    this.deliveries = options.deliveries ?? [];
+    this.callbacks = options.callbacks ?? {};
+    this.element = document.createElement('div');
+    this.element.setAttribute('data-page', 'webhook-configuration');
+    this.element.setAttribute('data-main-content', '');
+    this.render();
+  }
+
+  public getElement(): HTMLElement {
+    return this.element;
+  }
+
+  public getWebhooks(): WebhookEndpoint[] {
+    return [...this.webhooks];
+  }
+
+  public getDeliveries(): WebhookDelivery[] {
+    return [...this.deliveries];
+  }
+
+  public isCreateFormVisible(): boolean {
+    return this.showCreateForm;
+  }
+
+  public getEditingWebhookId(): Uuid | null {
+    return this.editingWebhookId;
+  }
+
+  public getViewingDeliveriesId(): Uuid | null {
+    return this.viewingDeliveriesId;
+  }
+
+  public getTestResult(): TestWebhookResponse | null {
+    return this.testResult;
+  }
+
+  public getCreateFormData(): {
+    url: string;
+    description: string;
+    events: WebhookEventType[];
+    maxRetries: number;
+    retryIntervalSeconds: number;
+  } {
+    return {
+      url: this.createFormData.url,
+      description: this.createFormData.description,
+      events: Array.from(this.createFormData.events),
+      maxRetries: this.createFormData.maxRetries,
+      retryIntervalSeconds: this.createFormData.retryIntervalSeconds,
+    };
+  }
+
+  public updateWebhooks(webhooks: WebhookEndpoint[]): void {
+    this.webhooks = webhooks;
+    this.render();
+  }
+
+  public updateDeliveries(deliveries: WebhookDelivery[]): void {
+    this.deliveries = deliveries;
+    this.render();
+  }
+
+  public showCreate(): void {
+    this.showCreateForm = true;
+    this.editingWebhookId = null;
+    this.createFormData = {
+      url: '',
+      description: '',
+      events: new Set(),
+      maxRetries: 5,
+      retryIntervalSeconds: 60,
+    };
+    this.render();
+  }
