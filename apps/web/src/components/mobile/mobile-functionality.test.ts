@@ -512,3 +512,33 @@ describe('Offline Capabilities and Background Sync', () => {
       const result = storage.getItem('nonexistent', { fallback: true });
       expect(result).toEqual({ fallback: true });
     });
+
+    it('supports item expiration for cache invalidation', async () => {
+      vi.useFakeTimers();
+      storage.setItem('cached_data', { key: 'value' }, { expiration: 1000 });
+
+      // Available before expiration
+      expect(storage.getItem('cached_data')).toEqual({ key: 'value' });
+
+      // Expired after time passes
+      vi.advanceTimersByTime(1500);
+      expect(storage.getItem('cached_data')).toBeUndefined();
+      vi.useRealTimers();
+    });
+
+    it('removes items from storage', () => {
+      storage.setItem('to_remove', 'data');
+      expect(storage.hasItem('to_remove')).toBe(true);
+
+      storage.removeItem('to_remove');
+      expect(storage.hasItem('to_remove')).toBe(false);
+    });
+
+    it('clears all items with prefix', () => {
+      storage.setItem('item1', 'a');
+      storage.setItem('item2', 'b');
+      storage.setItem('item3', 'c');
+
+      storage.clear();
+      expect(storage.getKeys()).toHaveLength(0);
+    });
