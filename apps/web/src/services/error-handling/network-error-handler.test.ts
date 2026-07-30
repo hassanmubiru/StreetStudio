@@ -259,6 +259,9 @@ describe('NetworkErrorHandler', () => {
 
       await expect(responsePromise).rejects.toThrow('HTTP 500');
       expect(mockFetch).toHaveBeenCalledTimes(3); // initial + 2 retries
+
+      // Allow any pending microtasks to flush to avoid unhandled rejection
+      await vi.advanceTimersByTimeAsync(0);
     });
 
     it('does not retry non-retryable errors (401)', async () => {
