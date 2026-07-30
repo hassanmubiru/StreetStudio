@@ -801,3 +801,75 @@ describe('WebhookConfigurationPage', () => {
       const deleteBtn = el.querySelector('.btn-delete-webhook');
       expect(deleteBtn?.getAttribute('aria-label')).toContain('https://test.com/hook');
     });
+
+    it('should have role=alert on test result banner', async () => {
+      const webhook = createTestWebhook();
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.testWebhook(webhook.id);
+
+      const el = page.getElement();
+      const banner = el.querySelector('#test-result-banner');
+      expect(banner?.getAttribute('role')).toBe('alert');
+    });
+
+    it('should have role=group on event selection area', () => {
+      page = new WebhookConfigurationPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const eventGroup = el.querySelector('#event-selection');
+      expect(eventGroup?.getAttribute('role')).toBe('group');
+      expect(eventGroup?.getAttribute('aria-label')).toContain('event types');
+    });
+
+    it('should have aria-label on webhook list section', () => {
+      page = new WebhookConfigurationPage({ webhooks: [createTestWebhook()] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const list = el.querySelector('#webhook-list');
+      expect(list?.getAttribute('aria-label')).toContain('Webhook endpoints');
+    });
+
+    it('should have aria-label on delivery table', async () => {
+      const webhook = createTestWebhook();
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.viewDeliveries(webhook.id);
+
+      const el = page.getElement();
+      const table = el.querySelector('#delivery-monitor table');
+      expect(table?.getAttribute('aria-label')).toContain('deliveries');
+    });
+  });
+
+  describe('Multiple Webhooks', () => {
+    it('should render all webhooks', () => {
+      const webhooks = [
+        createTestWebhook({ id: 'wh-1', url: 'https://one.com/hook' }),
+        createTestWebhook({ id: 'wh-2', url: 'https://two.com/hook' }),
+        createTestWebhook({ id: 'wh-3', url: 'https://three.com/hook' }),
+      ];
+      page = new WebhookConfigurationPage({ webhooks });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const cards = el.querySelectorAll('[data-webhook-id]');
+      expect(cards.length).toBe(3);
+    });
+
+    it('should update webhooks via updateWebhooks method', () => {
+      page = new WebhookConfigurationPage({ webhooks: [createTestWebhook()] });
+      const newWebhooks = [
+        createTestWebhook({ id: 'updated-1', url: 'https://updated.com/hook' }),
+      ];
+      page.updateWebhooks(newWebhooks);
+
+      expect(page.getWebhooks()[0].url).toBe('https://updated.com/hook');
+    });
+  });
+});
