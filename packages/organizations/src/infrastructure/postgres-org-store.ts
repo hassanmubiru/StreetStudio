@@ -61,8 +61,14 @@ export async function ensureOrganizationsSchema(pool: PgPool): Promise<void> {
   await pool.query(ORGANIZATIONS_TABLE_DDL);
 }
 
-function parseJson<T>(value: string | null, fallback: T): T {
-  if (!value) return fallback;
+function parseJson<T>(value: unknown, fallback: T): T {
+  if (value === null || value === undefined) return fallback;
+  // A `jsonb` column may arrive already-parsed (node-postgres auto-parses
+  // json/jsonb) or as a raw JSON string (some client adapters). Only parse
+  // when it is still a string; otherwise use the value as-is.
+  if (typeof value !== "string") {
+    return value as T;
+  }
   try {
     return JSON.parse(value) as T;
   } catch {

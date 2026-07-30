@@ -61,7 +61,7 @@ import type {
 } from "@streetstudio/database";
 import { AppError } from "@streetstudio/shared";
 import type { InvitationStatus, IsoTimestamp, Uuid } from "@streetstudio/shared";
-import { ROLE_MANAGEMENT_PERMISSION } from "@streetstudio/auth";
+import { ROLE_MANAGEMENT_PERMISSION, WILDCARD_PERMISSION } from "@streetstudio/auth";
 import { systemClock, type Clock } from "@streetstudio/auth";
 import type { AuthContext } from "@streetstudio/auth";
 import { toIsoTimestamp } from "@streetstudio/auth";
@@ -90,11 +90,15 @@ export const ADMIN_ACTION_SETTINGS_UPDATED = "org.settings.updated";
 /** Audit `action` recorded when a Member is removed from an Organization (R26.7). */
 export const ADMIN_ACTION_MEMBER_REMOVED = "org.member.removed";
 
-/** Permissions seeded on the Administrator Role. Includes the role-management
- * permission the RBAC evaluator gates role assignment on, so the creator can
- * administer the Organization from the outset.
+/** Permissions seeded on the Administrator Role. The grant-all wildcard lets
+ * an organization's creator administer ALL of that organization's resources
+ * (every RBAC action in the public operation catalog) from the outset, while
+ * cross-organization isolation is still enforced by the RBAC evaluator's
+ * membership scoping. The explicit role-management permission is retained so
+ * the org-service admin gates that check for it literally keep working.
  */
 const ADMINISTRATOR_PERMISSIONS: readonly string[] = [
+  WILDCARD_PERMISSION,
   ROLE_MANAGEMENT_PERMISSION,
 ];
 

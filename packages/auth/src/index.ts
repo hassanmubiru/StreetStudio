@@ -104,6 +104,7 @@ export type {
 export {
   RbacAccessControl,
   ROLE_MANAGEMENT_PERMISSION,
+  WILDCARD_PERMISSION,
   repositoryRbacStore,
 } from "./access-control.js";
 export type {

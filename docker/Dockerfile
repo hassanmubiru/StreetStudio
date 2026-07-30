@@ -103,7 +103,9 @@ FROM runtime AS api
 ENV STREETSTUDIO_ROLE=api
 # http.port default (overridable via HTTP_PORT env → config mapping).
 EXPOSE 8080
-CMD ["node", "apps/api/dist/index.js"]
+# Runnable composition root: validates config, connects PostgreSQL, ensures the
+# auth/RBAC/org schemas, and serves the REST surface (see runtime/main.ts).
+CMD ["node", "apps/api/dist/runtime/main.js"]
 
 # -----------------------------------------------------------------------------
 # worker: background workers — media pipeline, delivery retries, scheduler.

@@ -99,6 +99,16 @@ export interface AccessControl {
 export const ROLE_MANAGEMENT_PERMISSION: Action = "org:manage_roles";
 
 /**
+ * Grant-all wildcard permission. A Role holding this token is granted EVERY
+ * action within its organization's scope (still deny-by-default across
+ * organizations, since {@link RbacAccessControl.can} first requires a
+ * Membership in the resource's owning organization). Seeded on the
+ * Administrator Role so an organization's creator can administer all of that
+ * organization's resources without enumerating every action token.
+ */
+export const WILDCARD_PERMISSION: Action = "*";
+
+/**
  * Persistence port for RBAC. Deliberately narrow: the evaluator resolves a
  * Member's Membership and Role within a single organization and reassigns a
  * Membership's Role. Every method is organization-scoped so no query can reach
@@ -186,7 +196,13 @@ export class RbacAccessControl implements AccessControl {
       return false;
     }
 
-    return role.permissions.includes(action);
+    // Grant-all wildcard: a Role holding "*" is permitted every action within
+    // this (already membership-scoped) organization. Otherwise the Role must
+    // explicitly grant the action (deny-by-default).
+    return (
+      role.permissions.includes(WILDCARD_PERMISSION) ||
+      role.permissions.includes(action)
+    );
   }
 
   /**

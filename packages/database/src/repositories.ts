@@ -117,16 +117,39 @@ function mapRow<TRecord>(row: SqlRow, table?: string): TRecord {
   return out as TRecord;
 }
 
+/**
+ * Serialize a JS value for binding, symmetric to {@link coerceValue}. A `jsonb`
+ * column must receive a JSON *string*: node-postgres serializes a bound JS
+ * array/object as a Postgres array/record literal (`{...}`), which a `jsonb`
+ * column rejects with `invalid input syntax for type json`. Stringifying here
+ * makes writes round-trip with the read coercion above regardless of driver.
+ */
+function serializeValue(type: SqlColumnType | undefined, value: unknown): SqlValue {
+  if (value === null || value === undefined) {
+    return value as SqlValue;
+  }
+  if (type === "jsonb") {
+    return (typeof value === "string" ? value : JSON.stringify(value)) as SqlValue;
+  }
+  return value as SqlValue;
+}
+
 /** Split a record into aligned column names and bind values. */
-function toColumnsAndValues(record: Record<string, unknown>): {
+function toColumnsAndValues(
+  record: Record<string, unknown>,
+  table?: string,
+): {
   columns: string[];
   values: SqlValue[];
 } {
+  const definition = table === undefined ? undefined : getTable(table);
   const columns: string[] = [];
   const values: SqlValue[] = [];
   for (const [field, value] of Object.entries(record)) {
-    columns.push(toColumnName(field));
-    values.push(value as SqlValue);
+    const column = toColumnName(field);
+    const columnType = definition?.columns.find((c) => c.name === column)?.type;
+    columns.push(column);
+    values.push(serializeValue(columnType, value));
   }
   return { columns, values };
 }
@@ -146,6 +169,7 @@ class BaseRepository<TRecord extends object> {
   async insert(record: TRecord): Promise<TRecord> {
     const { columns, values } = toColumnsAndValues(
       record as Record<string, unknown>,
+      this.table,
     );
     const placeholders = columns.map((_, i) => `$${i + 1}`);
     await this.client.query(
@@ -197,10 +221,16 @@ export class GlobalRepository<
     const entries = Object.entries(record as Record<string, unknown>).filter(
       ([field]) => toColumnName(field) !== "id",
     );
+    const definition = getTable(this.table);
     const assignments = entries.map(
       ([field], i) => `${toColumnName(field)} = $${i + 1}`,
     );
-    const values = entries.map(([, value]) => value as SqlValue);
+    const values = entries.map(([field, value]) =>
+      serializeValue(
+        definition?.columns.find((c) => c.name === toColumnName(field))?.type,
+        value,
+      ),
+    );
     await this.client.query(
       `UPDATE ${this.table} SET ${assignments.join(", ")} WHERE id = $${
         values.length + 1
@@ -285,10 +315,16 @@ export class TenantRepository<
         return column !== "id" && column !== ORGANIZATION_ID_COLUMN;
       },
     );
+    const definition = getTable(this.table);
     const assignments = entries.map(
       ([field], i) => `${toColumnName(field)} = $${i + 1}`,
     );
-    const values = entries.map(([, value]) => value as SqlValue);
+    const values = entries.map(([field, value]) =>
+      serializeValue(
+        definition?.columns.find((c) => c.name === toColumnName(field))?.type,
+        value,
+      ),
+    );
     await this.client.query(
       `UPDATE ${this.table} SET ${assignments.join(", ")} WHERE organization_id = $${
         values.length + 1

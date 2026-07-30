@@ -11,6 +11,7 @@
     { "path": "../../packages/config" },
     { "path": "../../packages/database" },
     { "path": "../../packages/auth" },
+    { "path": "../../packages/organizations" },
     { "path": "../../packages/media" },
     { "path": "../../packages/comments" },
     { "path": "../../packages/search" },

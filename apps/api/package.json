@@ -14,6 +14,7 @@
     "@streetstudio/config": "*",
     "@streetstudio/database": "*",
     "@streetstudio/auth": "*",
+    "@streetstudio/organizations": "*",
     "@streetstudio/media": "*",
     "@streetstudio/comments": "*",
     "@streetstudio/search": "*",
@@ -23,7 +24,11 @@
     "@streetstudio/realtime": "*",
     "@streetstudio/plugins": "*",
     "@streetstudio/analytics": "*",
-    "streetjs": "^1.2.7"
+    "streetjs": "^1.2.7",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
   },
   "peerDependencies": {
     "@streetjs/core": "^0.1.0"

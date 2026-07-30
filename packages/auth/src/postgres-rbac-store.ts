@@ -45,10 +45,17 @@ export async function ensureRbacSchema(pool: PgPool): Promise<void> {
   await pool.query(RBAC_MEMBERSHIPS_TABLE_DDL);
 }
 
-function parsePermissions(value: string | null): string[] {
-  if (!value) return [];
-  const parsed = JSON.parse(value) as unknown;
-  return Array.isArray(parsed) ? parsed.filter((p): p is string => typeof p === "string") : [];
+function parsePermissions(value: unknown): string[] {
+  if (value === null || value === undefined) return [];
+  // A `jsonb` column may arrive either already-parsed as a JS array (the
+  // node-postgres driver auto-parses json/jsonb) or as a raw JSON string
+  // (some client adapters return it verbatim). Handle both so the store is
+  // correct regardless of the driver's json handling.
+  const parsed: unknown =
+    typeof value === "string" ? (JSON.parse(value) as unknown) : value;
+  return Array.isArray(parsed)
+    ? parsed.filter((p): p is string => typeof p === "string")
+    : [];
 }
 
 function mapMembership(row: Row): MembershipRecord {
