@@ -302,15 +302,14 @@ describe('ActivityFeed', () => {
       expect(console.log).toHaveBeenCalledWith('Marked notification as read:', 'notif-1');
     });
 
-    it('should not navigate when notification has no metadata', () => {
+    it('should not navigate when notification has no target resource', () => {
       const noMetadataNotifications = [{
         id: 'notif-no-meta',
-        message: 'System notification',
-        type: 'system',
-        read: false,
-        createdAt: '2024-01-01T12:00:00Z',
-        metadata: undefined
-      }] as unknown as NotificationDto[];
+        memberId: 'member-1',
+        eventType: 'system',
+        sourceResourceId: '',
+        createdAt: '2024-01-01T12:00:00Z'
+      }] satisfies NotificationDto[];
       
       activityFeed = new ActivityFeed(noMetadataNotifications);
       
