@@ -197,7 +197,7 @@ export class CollaborationSyncService {
    * Get all users present on the current resource.
    */
   public getPresence(): PresenceUser[] {
-    return [...this.presenceMap.values()];
+    return Array.from(this.presenceMap.values());
   }
 
   /**
