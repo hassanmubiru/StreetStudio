@@ -163,3 +163,49 @@ describe('ConnectivityStatusManager', () => {
     expect(onOffline).toHaveBeenCalled();
     manager.destroy();
   });
+
+  it('should show offline banner when showBanner is true', () => {
+    Object.defineProperty(navigator, 'onLine', {
+      writable: true,
+      configurable: true,
+      value: false,
+    });
+    const manager = new ConnectivityStatusManager({ showBanner: true });
+    manager.start();
+    const banner = document.querySelector('[data-testid="offline-banner"]');
+    expect(banner).not.toBeNull();
+    expect(banner!.getAttribute('role')).toBe('alert');
+    manager.destroy();
+  });
+
+  it('should not show banner when showBanner is false', () => {
+    Object.defineProperty(navigator, 'onLine', {
+      writable: true,
+      configurable: true,
+      value: false,
+    });
+    const manager = new ConnectivityStatusManager({ showBanner: false });
+    manager.start();
+    const banner = document.querySelector('[data-testid="offline-banner"]');
+    expect(banner).toBeNull();
+    manager.destroy();
+  });
+
+  it('should return connectivity info with getInfo', () => {
+    const manager = new ConnectivityStatusManager();
+    const info = manager.getInfo();
+    expect(info).toHaveProperty('state');
+    expect(info).toHaveProperty('isOnline');
+    expect(info).toHaveProperty('reconnectAttempts');
+    manager.destroy();
+  });
+
+  it('should clean up on destroy', () => {
+    const manager = new ConnectivityStatusManager();
+    manager.start();
+    manager.destroy();
+    // Verify no banner remains
+    const banner = document.querySelector('[data-testid="offline-banner"]');
+    expect(banner).toBeNull();
+  });
+});

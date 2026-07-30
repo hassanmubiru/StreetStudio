@@ -458,3 +458,31 @@ describe('Touch Gestures and Mobile-Specific Interactions', () => {
       // Second pull should not trigger
       ptrContainer.dispatchEvent(createPtrTouchEvent('touchstart', 100));
       ptrContainer.dispatchEvent(createPtrTouchEvent('touchmove', 200));
+
+      expect(onRefresh).toHaveBeenCalledTimes(1);
+
+      // Complete the refresh
+      resolveRefresh!();
+      await vi.waitFor(() => {
+        expect(ptr.getState()).toBe('idle');
+      });
+
+      ptr.destroy();
+    });
+
+    it('indicator shows accessible status text', () => {
+      const onRefresh = vi.fn().mockResolvedValue(undefined);
+      const ptr = new PullToRefresh({
+        container: ptrContainer,
+        onRefresh,
+        threshold: 40,
+      });
+
+      const indicator = ptrContainer.querySelector('.pull-to-refresh-indicator');
+      expect(indicator?.getAttribute('role')).toBe('status');
+      expect(indicator?.getAttribute('aria-live')).toBe('polite');
+
+      ptr.destroy();
+    });
+  });
+});

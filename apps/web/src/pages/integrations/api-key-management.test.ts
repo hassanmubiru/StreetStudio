@@ -458,3 +458,91 @@ describe('ApiKeyManagementPage', () => {
       expect(scopeError?.textContent).toContain('scope');
     });
   });
+
+  describe('Key Creation', () => {
+    it('should call onCreateKey callback with form data', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ callbacks });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      // Fill name
+      const input = el.querySelector('#key-name-input') as HTMLInputElement;
+      input.value = 'CI Pipeline';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Select scope
+      const checkbox = el.querySelector('.scope-checkbox[value="read:videos"]') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await page.createKey();
+
+      expect(callbacks.onCreateKey).toHaveBeenCalledWith({
+        name: 'CI Pipeline',
+        scopes: ['read:videos'],
+        expiresInDays: undefined,
+      });
+    });
+
+    it('should display new key banner after creation', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ callbacks });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      // Fill form
+      const input = el.querySelector('#key-name-input') as HTMLInputElement;
+      input.value = 'Test';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      const checkbox = el.querySelector('.scope-checkbox[value="read:videos"]') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await page.createKey();
+
+      expect(page.getNewKeyValue()).toBe('sk_test_abc123xyz789fullkey');
+      expect(el.querySelector('#new-key-banner')).toBeTruthy();
+      expect(el.querySelector('#full-key-display')?.textContent).toContain('sk_test_abc123xyz789fullkey');
+    });
+
+    it('should add new key to the keys list', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ keys: [createTestKey()], callbacks });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const input = el.querySelector('#key-name-input') as HTMLInputElement;
+      input.value = 'Another Key';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      const checkbox = el.querySelector('.scope-checkbox[value="read:videos"]') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await page.createKey();
+
+      expect(page.getKeys().length).toBe(2);
+    });
+
+    it('should hide create form after successful creation', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ callbacks });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const input = el.querySelector('#key-name-input') as HTMLInputElement;
+      input.value = 'Key';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      const checkbox = el.querySelector('.scope-checkbox[value="read:videos"]') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await page.createKey();
+
+      expect(page.isCreateFormVisible()).toBe(false);
+    });
+  });
