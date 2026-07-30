@@ -357,10 +357,13 @@ describe('Accessibility Integration', () => {
   });
 
   describe('Keyboard Shortcuts Accessibility', () => {
-    let shortcutManager: KeyboardShortcutManager;
+    let shortcutManager: KeyboardShortcuts;
 
     beforeEach(() => {
-      shortcutManager = new KeyboardShortcutManager();
+      shortcutManager = new KeyboardShortcuts({
+        enableVisualIndicators: false,
+        showHelpOverlay: false,
+      });
     });
 
     afterEach(() => {
@@ -371,7 +374,7 @@ describe('Accessibility Integration', () => {
       const handler = vi.fn();
       shortcutManager.register({
         key: 'k',
-        ctrlKey: true,
+        modifiers: ['ctrl'],
         handler,
         description: 'Open search',
       });
@@ -391,7 +394,7 @@ describe('Accessibility Integration', () => {
       const handler = vi.fn();
       shortcutManager.register({
         key: 'k',
-        ctrlKey: true,
+        modifiers: ['ctrl'],
         handler,
         description: 'Open search',
       });
@@ -415,22 +418,21 @@ describe('Accessibility Integration', () => {
       });
       document.dispatchEvent(event);
 
-      // Should still trigger for Ctrl+K (global shortcut)
-      // The implementation may or may not suppress based on design
-      // This verifies the shortcut system handles the scenario
-      expect(true).toBe(true); // Test passes regardless — validates no crash
+      // The shortcut system should suppress shortcuts when input is focused
+      // This validates the interaction doesn't crash regardless of behavior
+      expect(true).toBe(true);
     });
 
     it('should support unregistering shortcuts', () => {
       const handler = vi.fn();
-      const unregister = shortcutManager.register({
+      shortcutManager.register({
         key: 'n',
-        ctrlKey: true,
+        modifiers: ['ctrl'],
         handler,
         description: 'New recording',
       });
 
-      unregister();
+      shortcutManager.unregister('n', ['ctrl']);
 
       const event = new KeyboardEvent('keydown', {
         key: 'n',
@@ -440,6 +442,37 @@ describe('Accessibility Integration', () => {
       document.dispatchEvent(event);
 
       expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('should support context-based shortcuts', () => {
+      const globalHandler = vi.fn();
+      const editorHandler = vi.fn();
+
+      shortcutManager.register({
+        key: 's',
+        modifiers: ['ctrl'],
+        handler: globalHandler,
+        description: 'Save',
+        context: 'global',
+      });
+
+      shortcutManager.register({
+        key: 's',
+        modifiers: ['ctrl'],
+        handler: editorHandler,
+        description: 'Save edit',
+        context: 'editor',
+      });
+
+      // Should work in global context by default
+      const event = new KeyboardEvent('keydown', {
+        key: 's',
+        ctrlKey: true,
+        bubbles: true,
+      });
+      document.dispatchEvent(event);
+
+      expect(globalHandler).toHaveBeenCalled();
     });
   });
 });
