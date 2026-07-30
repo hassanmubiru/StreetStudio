@@ -5,6 +5,8 @@
  * and help panel rendering.
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ContextualHelpService, type HelpArticle, type ContextualTip } from './contextual-help.js';
 
