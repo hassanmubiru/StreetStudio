@@ -148,7 +148,7 @@ export function observeINP(callback: WebVitalCallback): (() => void) | undefined
     const reportFinalINP = () => {
       if (interactions.size === 0) return;
 
-      const sortedDurations = [...interactions.values()].sort((a, b) => b - a);
+      const sortedDurations = Array.from(interactions.values()).sort((a, b) => b - a);
       // Use the high-percentile interaction (approximation of p98)
       const index = Math.min(
         Math.floor(sortedDurations.length * 0.02),
