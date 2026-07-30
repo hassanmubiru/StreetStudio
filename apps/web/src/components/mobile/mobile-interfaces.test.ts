@@ -296,3 +296,51 @@ describe('MobileVideoPlayer', () => {
     expect(video.src).toContain('test.mp4');
     expect(video.poster).toContain('thumb.jpg');
   });
+
+  it('should have touch-friendly control sizes (min 44px)', () => {
+    player = new MobileVideoPlayer(container);
+
+    const playBtn = container.querySelector('.mobile-play-btn') as HTMLElement;
+    expect(playBtn.style.minWidth).toBe('44px');
+    expect(playBtn.style.minHeight).toBe('44px');
+
+    const fullscreenBtn = container.querySelector('.mobile-fullscreen-btn') as HTMLElement;
+    expect(fullscreenBtn.style.minWidth).toBe('44px');
+    expect(fullscreenBtn.style.minHeight).toBe('44px');
+  });
+
+  it('should have seekable progress bar', () => {
+    player = new MobileVideoPlayer(container);
+
+    const progressBar = container.querySelector('.mobile-progress-bar') as HTMLElement;
+    expect(progressBar).toBeTruthy();
+    expect(progressBar.getAttribute('role')).toBe('slider');
+    expect(progressBar.getAttribute('aria-label')).toBe('Video progress');
+  });
+
+  it('should toggle play/pause state', () => {
+    const onPlay = vi.fn();
+    const onPause = vi.fn();
+    player = new MobileVideoPlayer(container, {}, { onPlay, onPause });
+
+    const state = player.getState();
+    expect(state.isPlaying).toBe(false);
+
+    // Mock play (since jsdom doesn't support video playback)
+    const video = player.getVideoElement();
+    Object.defineProperty(video, 'play', {
+      value: vi.fn(() => {
+        video.dispatchEvent(new Event('play'));
+        return Promise.resolve();
+      }),
+    });
+    Object.defineProperty(video, 'pause', {
+      value: vi.fn(() => { video.dispatchEvent(new Event('pause')); }),
+    });
+
+    player.play();
+    expect(player.getState().isPlaying).toBe(true);
+
+    player.pause();
+    expect(player.getState().isPlaying).toBe(false);
+  });
