@@ -101,7 +101,6 @@ describe('UploadManagerComponent', () => {
       expect(container.querySelector('.upload-manager')).toBeTruthy();
       expect(container.querySelector('.dropzone')).toBeTruthy();
       
-      const { uploadManager } = require('../../services/upload.js');
       expect(uploadManager.configure).toHaveBeenCalledWith({
         maxConcurrentUploads: 3,
         defaultChunkSize: 5 * 1024 * 1024
@@ -123,7 +122,6 @@ describe('UploadManagerComponent', () => {
       expect(fileInput.multiple).toBe(false);
       expect(fileInput.accept).toBe('video/*');
       
-      const { uploadManager } = require('../../services/upload.js');
       expect(uploadManager.configure).toHaveBeenCalledWith({
         maxConcurrentUploads: 5,
         defaultChunkSize: 10 * 1024 * 1024
@@ -374,7 +372,6 @@ describe('UploadManagerComponent', () => {
 
     it('should handle clear completed button', () => {
       const clearButton = container.querySelector('#clear-completed') as HTMLButtonElement;
-      const { getUploadStore } = require('../../stores/upload-store.js');
       const mockStore = getUploadStore();
       
       clearButton.click();
@@ -384,7 +381,6 @@ describe('UploadManagerComponent', () => {
 
     it('should handle pause all button', () => {
       const pauseButton = container.querySelector('#pause-all') as HTMLButtonElement;
-      const { getUploadStore } = require('../../stores/upload-store.js');
       const mockStore = getUploadStore();
       
       pauseButton.click();
@@ -401,10 +397,9 @@ describe('UploadManagerComponent', () => {
     });
 
     it('should load resumeable uploads on initialization', () => {
-      const { uploadManager } = require('../../services/upload.js');
       
       // Mock resumeable uploads
-      uploadManager.getResumeableUploads.mockReturnValue([
+      vi.mocked(uploadManager.getResumeableUploads).mockReturnValue([
         {
           fileName: 'video1.mp4',
           fileSize: 1024 * 1024,
@@ -424,8 +419,7 @@ describe('UploadManagerComponent', () => {
     });
 
     it('should show empty state when no resumeable uploads', () => {
-      const { uploadManager } = require('../../services/upload.js');
-      uploadManager.getResumeableUploads.mockReturnValue([]);
+      vi.mocked(uploadManager.getResumeableUploads).mockReturnValue([]);
       
       component.destroy();
       component = new UploadManagerComponent(container, { enableResume: true });
@@ -502,7 +496,6 @@ describe('UploadManagerComponent', () => {
     });
 
     it('should provide startAllQueued method', () => {
-      const { getUploadStore } = require('../../stores/upload-store.js');
       const mockStore = getUploadStore();
       
       component.startAllQueued();
@@ -511,7 +504,6 @@ describe('UploadManagerComponent', () => {
     });
 
     it('should provide pauseAll method', () => {
-      const { getUploadStore } = require('../../stores/upload-store.js');
       const mockStore = getUploadStore();
       
       component.pauseAll();
@@ -520,7 +512,6 @@ describe('UploadManagerComponent', () => {
     });
 
     it('should provide clearCompleted method', () => {
-      const { getUploadStore } = require('../../stores/upload-store.js');
       const mockStore = getUploadStore();
       
       component.clearCompleted();
@@ -540,7 +531,6 @@ describe('UploadManagerComponent', () => {
     it('should clean up resources on destroy', () => {
       component = new UploadManagerComponent(container);
       
-      const { uploadManager } = require('../../services/upload.js');
       
       component.destroy();
       
@@ -554,8 +544,7 @@ describe('UploadManagerComponent', () => {
     });
 
     it('should start uploads automatically when autoStart is enabled', async () => {
-      const { uploadManager } = require('../../services/upload.js');
-      uploadManager.uploadFile.mockResolvedValue({
+      vi.mocked(uploadManager.uploadFile).mockResolvedValue({
         id: 'success-id',
         url: 'success-url'
       });
@@ -573,9 +562,8 @@ describe('UploadManagerComponent', () => {
     });
 
     it('should handle upload success', async () => {
-      const { uploadManager } = require('../../services/upload.js');
       const mockResult = { id: 'success-id', url: 'success-url' };
-      uploadManager.uploadFile.mockResolvedValue(mockResult);
+      vi.mocked(uploadManager.uploadFile).mockResolvedValue(mockResult);
       
       const onComplete = vi.fn();
       component.onUploadComplete = onComplete;
@@ -586,8 +574,7 @@ describe('UploadManagerComponent', () => {
     });
 
     it('should handle upload errors', async () => {
-      const { uploadManager } = require('../../services/upload.js');
-      uploadManager.uploadFile.mockRejectedValue(new Error('Upload failed'));
+      vi.mocked(uploadManager.uploadFile).mockRejectedValue(new Error('Upload failed'));
       
       const showErrorSpy = vi.spyOn(component as any, 'showError');
       

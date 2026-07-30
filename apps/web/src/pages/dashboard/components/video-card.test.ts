@@ -351,8 +351,12 @@ describe('VideoCard', () => {
     });
 
     it('should have alt text for images', () => {
+      // When a thumbnail is available the card renders an <img>, which must
+      // carry descriptive alt text for screen readers.
+      videoCard = new VideoCard({ ...mockVideo, thumbnailUrl: 'https://example.com/thumb.jpg' });
       const element = videoCard.getElement();
       const img = element.querySelector('img');
+      expect(img).toBeTruthy();
       expect(img?.alt).toBe('Test Video Title thumbnail');
     });
 

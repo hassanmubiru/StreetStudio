@@ -16,6 +16,13 @@ import { QuickActions } from './quick-actions.js';
  * against the rendered notification exercise real behavior.
  */
 function installFileInputMock(fakeInput: Record<string, unknown>) {
+  // A real <input> element always exposes a `style` object and a `click()`
+  // method, both of which the component legitimately uses (it hides the input
+  // via style.display and programmatically clicks it). Ensure the stand-in
+  // provides them so it faithfully behaves like the real element.
+  if (!('style' in fakeInput)) fakeInput.style = { display: '' };
+  if (typeof fakeInput.click !== 'function') fakeInput.click = vi.fn();
+
   const realCreateElement = document.createElement.bind(document);
   const realAppendChild = document.body.appendChild.bind(document.body);
   const realRemoveChild = document.body.removeChild.bind(document.body);
@@ -322,6 +329,8 @@ describe('QuickActions', () => {
       const button = element.querySelector('#upload-video') as HTMLButtonElement;
       
       const mockInput = {
+        style: { display: '' },
+        click: vi.fn(),
         addEventListener: vi.fn((event, callback) => {
           if (event === 'change') {
             callback({ target: { files: null } });

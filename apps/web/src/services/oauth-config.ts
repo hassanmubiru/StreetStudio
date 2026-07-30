@@ -30,6 +30,11 @@ export interface OAuthConfig {
 export class OAuthConfigService {
   private config: OAuthConfig | null = null;
   private configPromise: Promise<OAuthConfig> | null = null;
+  // Tracks whether the currently cached config came from the server (false) or
+  // is the offline fallback used after a failed load (true). Availability
+  // checks treat a failed load as "unavailable" (fail safe) even though the
+  // fallback still provides default providers for rendering.
+  private configLoadFailed = false;
 
   /**
    * Get OAuth configuration from the server
@@ -68,6 +73,7 @@ export class OAuthConfigService {
         enabledProviders: response.data.providers.filter(p => p.enabled).length,
       });
 
+      this.configLoadFailed = false;
       return response.data;
 
     } catch (error) {
@@ -75,7 +81,9 @@ export class OAuthConfigService {
         error: (error as Error).message,
       });
 
-      // Return default configuration with common providers
+      // Return default configuration with common providers, but flag that the
+      // load failed so availability checks can fail safe.
+      this.configLoadFailed = true;
       return this.getDefaultConfig();
     }
   }
@@ -261,13 +269,26 @@ export class OAuthConfigService {
       }
 
       // Exchange authorization code for tokens
-      const response = await apiClient.post('/auth/oauth/callback', {
-        provider: providerId,
-        code,
-        state,
-        redirect_uri: `${window.location.origin}/auth/oauth/callback`,
-        scopes: flowState.scopes,
-      });
+      let response;
+      try {
+        response = await apiClient.post('/auth/oauth/callback', {
+          provider: providerId,
+          code,
+          state,
+          redirect_uri: `${window.location.origin}/auth/oauth/callback`,
+          scopes: flowState.scopes,
+        });
+      } catch (postError) {
+        // A non-OK HTTP status from the token-exchange endpoint means the
+        // authorization code could not be exchanged. Surface a clear,
+        // user-facing message rather than the raw transport error. Network
+        // (statusless) errors are re-thrown so their original message is
+        // preserved by the outer handler.
+        if (typeof (postError as { status?: number }).status === 'number') {
+          throw new Error('OAuth token exchange failed');
+        }
+        throw postError;
+      }
 
       if (response.success) {
         logger.info('OAuth authentication successful', { 
@@ -318,6 +339,11 @@ export class OAuthConfigService {
   public async isOAuthAvailable(): Promise<boolean> {
     try {
       const config = await this.getConfig();
+      // If the configuration could not be loaded from the server, report
+      // OAuth as unavailable even though defaults exist for rendering.
+      if (this.configLoadFailed) {
+        return false;
+      }
       return config.enabled && config.providers.some(p => p.enabled);
     } catch (error) {
       return false;

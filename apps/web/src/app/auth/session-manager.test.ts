@@ -14,7 +14,10 @@ const mockAuthController = {
   isAuthenticated: vi.fn(),
   logout: vi.fn(),
   logoutFromAllSessions: vi.fn(),
-  initializeFromStorage: vi.fn()
+  initializeFromStorage: vi.fn(),
+  // SessionManager.subscribe() reads the current state via getState(); the
+  // real controller provides this, so the mock must too.
+  getState: vi.fn(() => ({ isAuthenticated: false }))
 };
 
 // Mock BroadcastChannel
@@ -38,14 +41,24 @@ Object.defineProperty(window, 'BroadcastChannel', {
 
 describe('SessionManager', () => {
   let sessionManager: SessionManager;
-  let authStateCallback: (state: any) => void;
+  // SessionManager registers MULTIPLE auth-state handlers (state tracking and
+  // security monitoring). Capture them all and dispatch to every one so tests
+  // exercise the same behavior the real controller would trigger.
+  let authStateCallbacks: Array<(state: any) => void>;
+  const authStateCallback = (state: any) => {
+    authStateCallbacks.forEach((cb) => cb(state));
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+    authStateCallbacks = [];
+    mockAuthController.getState.mockReturnValue({ isAuthenticated: false });
+
     mockAuthController.onAuthStateChange.mockImplementation((callback) => {
-      authStateCallback = callback;
-      return () => {};
+      authStateCallbacks.push(callback);
+      return () => {
+        authStateCallbacks = authStateCallbacks.filter((c) => c !== callback);
+      };
     });
 
     sessionManager = new SessionManager(mockAuthController as any);
@@ -123,11 +136,16 @@ describe('SessionManager', () => {
     });
 
     it('should track session end on logout', () => {
+      vi.useFakeTimers();
+      try {
       // Start session first
       authStateCallback({
         isAuthenticated: true,
         currentUser: { id: 'user-1' }
       });
+
+      // Let some measurable session time elapse before ending the session.
+      vi.advanceTimersByTime(1000);
 
       // End session
       authStateCallback({
@@ -147,6 +165,9 @@ describe('SessionManager', () => {
           reason: 'user-initiated'
         }
       });
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('should track error-based session end', () => {
@@ -173,19 +194,23 @@ describe('SessionManager', () => {
     });
 
     it('should calculate session duration correctly', () => {
-      authStateCallback({
-        isAuthenticated: true,
-        currentUser: { id: 'user-1' }
-      });
+      vi.useFakeTimers();
+      try {
+        authStateCallback({
+          isAuthenticated: true,
+          currentUser: { id: 'user-1' }
+        });
 
-      const initialDuration = sessionManager.getSessionDuration();
-      expect(initialDuration).toBeGreaterThanOrEqual(0);
+        const initialDuration = sessionManager.getSessionDuration();
+        expect(initialDuration).toBeGreaterThanOrEqual(0);
 
-      // Wait a bit
-      setTimeout(() => {
+        // Advance the clock deterministically and confirm duration grows.
+        vi.advanceTimersByTime(10);
         const laterDuration = sessionManager.getSessionDuration();
         expect(laterDuration).toBeGreaterThan(initialDuration);
-      }, 10);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
@@ -193,11 +218,12 @@ describe('SessionManager', () => {
     let messageCallback: (event: any) => void;
 
     beforeEach(() => {
-      mockBroadcastChannel.addEventListener.mockImplementation((event, callback) => {
-        if (event === 'message') {
-          messageCallback = callback;
-        }
-      });
+      // The SessionManager registered its 'message' listener during
+      // construction (in the parent beforeEach). Retrieve that actual handler
+      // rather than installing a new implementation after the fact.
+      const messageRegistration = mockBroadcastChannel.addEventListener.mock.calls
+        .find((call) => call[0] === 'message');
+      messageCallback = messageRegistration?.[1];
     });
 
     it('should sync logout from another tab', () => {
@@ -394,28 +420,33 @@ describe('SessionManager', () => {
     });
 
     it('should calculate average session duration correctly', () => {
-      // Simulate two sessions
-      authStateCallback({
-        isAuthenticated: true,
-        currentUser: { id: 'user-1' }
-      });
-      
-      authStateCallback({
-        isAuthenticated: false
-      });
+      vi.useFakeTimers();
+      try {
+        // Simulate two sessions, each with measurable elapsed time.
+        authStateCallback({
+          isAuthenticated: true,
+          currentUser: { id: 'user-1' }
+        });
+        vi.advanceTimersByTime(1000);
+        authStateCallback({
+          isAuthenticated: false
+        });
 
-      authStateCallback({
-        isAuthenticated: true,
-        currentUser: { id: 'user-1' }
-      });
-      
-      authStateCallback({
-        isAuthenticated: false
-      });
+        authStateCallback({
+          isAuthenticated: true,
+          currentUser: { id: 'user-1' }
+        });
+        vi.advanceTimersByTime(2000);
+        authStateCallback({
+          isAuthenticated: false
+        });
 
-      const stats = sessionManager.getStats();
-      expect(stats.loginCount).toBe(2);
-      expect(stats.averageSessionDuration).toBeGreaterThan(0);
+        const stats = sessionManager.getStats();
+        expect(stats.loginCount).toBe(2);
+        expect(stats.averageSessionDuration).toBeGreaterThan(0);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 

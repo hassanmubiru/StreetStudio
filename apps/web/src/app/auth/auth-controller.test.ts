@@ -52,6 +52,9 @@ describe('AuthController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Fully reset fetch so queued mockResolvedValueOnce values from a prior
+    // test (that were never consumed) don't leak into the next test.
+    mockFetch.mockReset();
     
     mockConfig = {
       tokenStorage: {
@@ -230,6 +233,10 @@ describe('AuthController', () => {
         currentUser: mockAuth.user,
         tokenExpiry: new Date(mockAuth.expiry)
       });
+
+      // Persist the auth so the controller has a refresh token to work with
+      // (refresh reads the token from storage, not just in-memory state).
+      (authController as any).storeAuth(mockAuth);
     });
 
     it('should refresh token when approaching expiry', async () => {
@@ -300,6 +307,14 @@ describe('AuthController', () => {
         isAuthenticated: true,
         currentUser: { id: 'user-1', email: 'test@example.com', createdAt: '2024-01-01T00:00:00Z' },
         tokenExpiry: new Date(Date.now() + 60000)
+      });
+
+      // Persist the auth so logout has a token to send to the server.
+      (authController as any).storeAuth({
+        token: 'current-token',
+        refreshToken: 'refresh-token',
+        expiry: new Date(Date.now() + 60000).toISOString(),
+        user: { id: 'user-1', email: 'test@example.com', createdAt: '2024-01-01T00:00:00Z' }
       });
     });
 
@@ -381,6 +396,9 @@ describe('AuthController', () => {
       const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
 
       authController.setState({ isAuthenticated: true });
+      // First call establishes the timeout, the second (simulating renewed
+      // activity) must clear the existing timer and set a fresh one.
+      (authController as any).resetSessionTimeout();
       (authController as any).resetSessionTimeout();
 
       expect(clearTimeoutSpy).toHaveBeenCalled();
@@ -462,7 +480,11 @@ describe('AuthController', () => {
       mockFetch.mockRejectedValueOnce(new Error('Cookie API failed'));
 
       (controller as any).storeTokenSecurely('test-key', 'test-value');
-      
+
+      // The httpOnly cookie fetch rejects asynchronously; wait a tick so the
+      // fallback-to-memory .catch handler has run before we read it back.
+      await new Promise(resolve => setTimeout(resolve, 0));
+
       // Should fallback to memory storage
       const stored = (controller as any).getStoredTokenSecurely('test-key');
       expect(stored).toBe('test-value');
@@ -581,13 +603,11 @@ describe('AuthController', () => {
       expect(window.location.href).toBe('/auth/login');
     });
 
-    it('should save return URL on auth redirect', () => {
-      Object.defineProperty(window, 'location', {
-        value: {
-          pathname: '/projects/123',
-          search: '?tab=videos'
-        }
-      });
+    it('should save return URL on auth redirect', async () => {
+      // Update the existing location object rather than redefining the
+      // (non-configurable) property.
+      (window as any).location.pathname = '/projects/123';
+      (window as any).location.search = '?tab=videos';
 
       const mockEvent = new CustomEvent('api-error', {
         detail: { status: 401 }
@@ -596,6 +616,9 @@ describe('AuthController', () => {
       authController.setState({ isAuthenticated: true });
 
       window.dispatchEvent(mockEvent);
+
+      // The api-error handler processes the auth failure asynchronously.
+      await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(sessionStorageMock.setItem).toHaveBeenCalledWith(
         'auth_return_url',
@@ -653,7 +676,12 @@ describe('AuthController', () => {
   describe('Cleanup', () => {
     it('should destroy controller and cleanup resources', () => {
       const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
-      
+
+      // Establish an active session-timeout timer so destroy() has something
+      // to clean up.
+      authController.setState({ isAuthenticated: true });
+      (authController as any).resetSessionTimeout();
+
       authController.destroy();
 
       expect(clearTimeoutSpy).toHaveBeenCalled();

@@ -8,11 +8,21 @@
 import type { VideoDto } from '@streetstudio/shared';
 import { formatRelativeTime, formatDuration } from '../../../utils/format-time.js';
 
+/**
+ * View-model for a video card. Extends the shared {@link VideoDto} with optional
+ * presentation-only fields (a resolved thumbnail URL and a short description)
+ * that are not part of the persisted DTO.
+ */
+export interface VideoCardData extends VideoDto {
+  thumbnailUrl?: string;
+  description?: string;
+}
+
 export class VideoCard {
   private element: HTMLElement;
-  private video: VideoDto;
+  private video: VideoCardData;
 
-  constructor(video: VideoDto) {
+  constructor(video: VideoCardData) {
     this.video = video;
     this.element = document.createElement('div');
     this.render();
@@ -31,11 +41,20 @@ export class VideoCard {
       <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors group-hover:bg-gray-100 dark:group-hover:bg-gray-600">
         <!-- Video Thumbnail -->
         <div class="flex-shrink-0 w-20 h-12 bg-gray-200 dark:bg-gray-600 rounded overflow-hidden mr-3">
-          <div class="w-full h-full flex items-center justify-center">
-            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-3-9a9 9 0 110 18 9 9 0 010-18z"></path>
-            </svg>
-          </div>
+          ${this.video.thumbnailUrl ? `
+            <img
+              src="${this.escapeHtml(this.video.thumbnailUrl)}"
+              alt="${this.escapeHtml(this.video.title)} thumbnail"
+              class="w-full h-full object-cover"
+              loading="lazy"
+            />
+          ` : `
+            <div class="w-full h-full flex items-center justify-center">
+              <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-3-9a9 9 0 110 18 9 9 0 010-18z"></path>
+              </svg>
+            </div>
+          `}
           
           <!-- Duration overlay -->
           ${this.video.durationSeconds ? `
@@ -53,12 +72,18 @@ export class VideoCard {
             ${this.escapeHtml(this.video.title)}
           </h3>
 
+          ${this.video.description ? `
+            <p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-1 mb-1">
+              ${this.escapeHtml(this.video.description)}
+            </p>
+          ` : ''}
+
           <!-- Video Metadata -->
-          <div class="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
+          <p class="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
             <span>
               ${formatRelativeTime(this.video.createdAt)}
             </span>
-          </div>
+          </p>
         </div>
 
         <!-- Status Indicator -->

@@ -92,8 +92,9 @@ describe('DashboardStatsWidget', () => {
       
       expect(videosIconContainer?.className).toContain('bg-blue-100');
       expect(videosIconContainer?.className).toContain('dark:bg-blue-900');
-      expect(videosIcon?.className).toContain('text-blue-600');
-      expect(videosIcon?.className).toContain('dark:text-blue-400');
+      // SVG elements expose className as an SVGAnimatedString, so read the class attribute directly
+      expect(videosIcon?.getAttribute('class')).toContain('text-blue-600');
+      expect(videosIcon?.getAttribute('class')).toContain('dark:text-blue-400');
     });
   });
 
@@ -125,8 +126,9 @@ describe('DashboardStatsWidget', () => {
       
       expect(commentsIconContainer?.className).toContain('bg-green-100');
       expect(commentsIconContainer?.className).toContain('dark:bg-green-900');
-      expect(commentsIcon?.className).toContain('text-green-600');
-      expect(commentsIcon?.className).toContain('dark:text-green-400');
+      // SVG elements expose className as an SVGAnimatedString, so read the class attribute directly
+      expect(commentsIcon?.getAttribute('class')).toContain('text-green-600');
+      expect(commentsIcon?.getAttribute('class')).toContain('dark:text-green-400');
     });
   });
 
@@ -158,8 +160,9 @@ describe('DashboardStatsWidget', () => {
       
       expect(teamIconContainer?.className).toContain('bg-purple-100');
       expect(teamIconContainer?.className).toContain('dark:bg-purple-900');
-      expect(teamIcon?.className).toContain('text-purple-600');
-      expect(teamIcon?.className).toContain('dark:text-purple-400');
+      // SVG elements expose className as an SVGAnimatedString, so read the class attribute directly
+      expect(teamIcon?.getAttribute('class')).toContain('text-purple-600');
+      expect(teamIcon?.getAttribute('class')).toContain('dark:text-purple-400');
     });
   });
 
@@ -387,17 +390,18 @@ describe('DashboardStatsWidget', () => {
     it('should have dark mode classes for icons', () => {
       const element = statsWidget.getElement();
       
+      // SVG elements expose className as an SVGAnimatedString, so read the class attribute directly
       const blueIcon = element.querySelector('.bg-blue-100');
       expect(blueIcon?.className).toContain('dark:bg-blue-900');
-      expect(blueIcon?.querySelector('svg')?.className).toContain('dark:text-blue-400');
+      expect(blueIcon?.querySelector('svg')?.getAttribute('class')).toContain('dark:text-blue-400');
       
       const greenIcon = element.querySelector('.bg-green-100');
       expect(greenIcon?.className).toContain('dark:bg-green-900');
-      expect(greenIcon?.querySelector('svg')?.className).toContain('dark:text-green-400');
+      expect(greenIcon?.querySelector('svg')?.getAttribute('class')).toContain('dark:text-green-400');
       
       const purpleIcon = element.querySelector('.bg-purple-100');
       expect(purpleIcon?.className).toContain('dark:bg-purple-900');
-      expect(purpleIcon?.querySelector('svg')?.className).toContain('dark:text-purple-400');
+      expect(purpleIcon?.querySelector('svg')?.getAttribute('class')).toContain('dark:text-purple-400');
     });
   });
 

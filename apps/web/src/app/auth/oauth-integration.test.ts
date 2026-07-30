@@ -10,9 +10,28 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { oauthConfigService } from '../../services/oauth-config.js';
 
-// Mock fetch for API calls (fetch is not defined by default in jsdom)
+// Mock fetch for API calls (fetch is not defined by default in jsdom).
+// Tests configure `mockFetch` with bare `{ ok, json }` bodies; the real
+// ApiClient reads `response.headers.get('content-type')`, so we wrap the mock
+// to attach a faithful Headers object (matching what a real fetch Response
+// provides) without altering the bodies the tests assert against.
 const mockFetch = vi.fn();
-vi.stubGlobal('fetch', mockFetch);
+vi.stubGlobal('fetch', (input: any, init?: any) =>
+  Promise.resolve(mockFetch(input, init)).then((res: any) => {
+    if (res && typeof res === 'object' && !('headers' in res)) {
+      const contentType = typeof res.json === 'function'
+        ? 'application/json'
+        : 'text/plain';
+      return {
+        status: res.ok ? 200 : (res.status ?? 500),
+        statusText: '',
+        ...res,
+        headers: new Headers({ 'content-type': contentType }),
+      };
+    }
+    return res;
+  }),
+);
 
 // Stub crypto for secure random generation. crypto is a getter-only global in
 // jsdom, so it must be replaced via stubGlobal rather than direct assignment.
@@ -29,6 +48,13 @@ describe('OAuth Integration', () => {
     
     // Reset fetch mock
     mockFetch.mockClear();
+
+    // The tests share the `oauthConfigService` singleton, which caches its
+    // configuration after the first load. Clear that cache so each test's
+    // mocked API response is actually fetched instead of reusing a prior
+    // test's cached config.
+    (oauthConfigService as any).config = null;
+    (oauthConfigService as any).configPromise = null;
   });
 
   afterEach(() => {

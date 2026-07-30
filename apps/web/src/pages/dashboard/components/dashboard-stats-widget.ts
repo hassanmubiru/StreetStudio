@@ -27,6 +27,14 @@ export class DashboardStatsWidget {
     return this.element;
   }
 
+  /**
+   * Coerce a possibly missing/invalid stat value into a finite number so the
+   * widget renders gracefully (e.g. 0) instead of crashing when data is absent.
+   */
+  private safeStat(value: number): number {
+    return Number.isFinite(value) ? value : 0;
+  }
+
   private render(): void {
     this.element.innerHTML = `
       <div>
@@ -44,7 +52,7 @@ export class DashboardStatsWidget {
               </div>
               <div class="ml-4 flex-1">
                 <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                  ${formatNumber(this.stats.videosCreated)}
+                  ${formatNumber(this.safeStat(this.stats.videosCreated))}
                 </p>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Videos Created</p>
               </div>
@@ -61,7 +69,7 @@ export class DashboardStatsWidget {
               </div>
               <div class="ml-4 flex-1">
                 <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                  ${formatNumber(this.stats.commentsReceived)}
+                  ${formatNumber(this.safeStat(this.stats.commentsReceived))}
                 </p>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Comments Received</p>
               </div>
@@ -78,7 +86,7 @@ export class DashboardStatsWidget {
               </div>
               <div class="ml-4 flex-1">
                 <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                  ${formatNumber(this.stats.teamMembers)}
+                  ${formatNumber(this.safeStat(this.stats.teamMembers))}
                 </p>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Team Members</p>
               </div>

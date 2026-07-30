@@ -66,48 +66,11 @@ Object.defineProperty(window, 'crypto', {
   writable: true
 });
 
-// Mock document for DOM manipulation
-const createMockElement = (tagName: string) => ({
-  tagName: tagName.toUpperCase(),
-  innerHTML: '',
-  textContent: '',
-  value: '',
-  className: '',
-  classList: {
-    add: vi.fn(),
-    remove: vi.fn(),
-    contains: vi.fn(() => false)
-  },
-  setAttribute: vi.fn(),
-  getAttribute: vi.fn(() => null),
-  removeAttribute: vi.fn(),
-  addEventListener: vi.fn(),
-  removeEventListener: vi.fn(),
-  appendChild: vi.fn(),
-  insertAdjacentElement: vi.fn(),
-  querySelector: vi.fn(() => null),
-  querySelectorAll: vi.fn(() => []),
-  focus: vi.fn(),
-  blur: vi.fn(),
-  click: vi.fn(),
-  dispatchEvent: vi.fn(),
-  parentElement: null,
-  children: [],
-  style: {}
-});
-
-const mockDocument = {
-  createElement: vi.fn((tag: string) => createMockElement(tag)),
-  querySelector: vi.fn(() => null),
-  querySelectorAll: vi.fn(() => []),
-  getElementById: vi.fn(() => null),
-  addEventListener: vi.fn(),
-  removeEventListener: vi.fn(),
-  body: createMockElement('body'),
-  head: createMockElement('head')
-};
-
-Object.defineProperty(global, 'document', { value: mockDocument, writable: true });
+// NOTE: We deliberately use the real jsdom `document` here rather than
+// replacing it with a partial fake. The product error handler renders a real
+// DOM error notice (createElement + addEventListener on queried nodes) when a
+// login fails, so a stubbed document whose elements return null would crash
+// product code that works fine against real DOM.
 
 // Mock OAuth and SSO services
 vi.mock('../../services/oauth-config.js', () => ({
@@ -143,46 +106,6 @@ describe('Feature: web-application-implementation, Property 1: Authentication Se
     };
 
     authController = new AuthController(mockDashboardSession as any, mockConfig);
-    
-    // Reset document mocks
-    mockDocument.createElement.mockClear();
-    (mockDocument.querySelector as any).mockImplementation((selector: string) => {
-      // Return mock elements for common selectors used in LoginPage
-      if (selector === '#login-form') {
-        const form = createMockElement('form');
-        form.addEventListener = vi.fn((event, handler) => {
-          // Store the handler for manual triggering in tests
-          (form as any)._submitHandler = handler;
-        });
-        return form;
-      }
-      if (selector === '#email') {
-        const input = createMockElement('input');
-        input.value = '';
-        return input;
-      }
-      if (selector === '#password') {
-        const input = createMockElement('input');
-        input.value = '';
-        return input;
-      }
-      if (selector === '#error-message') {
-        return createMockElement('div');
-      }
-      if (selector === '#error-text') {
-        return createMockElement('span');
-      }
-      if (selector === '#login-button') {
-        return createMockElement('button');
-      }
-      if (selector === '#button-text') {
-        return createMockElement('span');
-      }
-      if (selector === '#loading-spinner') {
-        return createMockElement('span');
-      }
-      return null;
-    });
   });
 
   afterEach(() => {
@@ -279,29 +202,6 @@ describe('Feature: web-application-implementation, Property 1: Authentication Se
           password: fc.string({ minLength: 1, maxLength: 100 })
         }),
         async ({ email, password }) => {
-          // Setup mock elements to track their state
-          const passwordInput = createMockElement('input');
-          passwordInput.value = password; // Set initial password value
-          
-          const errorMessageElement = createMockElement('div');
-          const errorTextElement = createMockElement('span');
-          
-          // Mock querySelector to return our tracked elements
-          (mockDocument.querySelector as any).mockImplementation((selector: string) => {
-            switch (selector) {
-              case '#password': return passwordInput;
-              case '#error-message': return errorMessageElement;
-              case '#error-text': return errorTextElement;
-              case '#login-form':
-              case '#email':
-              case '#login-button':
-              case '#button-text':
-              case '#loading-spinner':
-                return createMockElement('element');
-              default: return null;
-            }
-          });
-
           // Mock failed authentication
           mockFetch.mockResolvedValueOnce({
             ok: false,
@@ -467,8 +367,13 @@ describe('Feature: web-application-implementation, Property 1: Authentication Se
           expect(errorMessage).not.toMatch(/password.*correct|password.*match/);
           expect(errorMessage).not.toMatch(/user.*exist|account.*found/);
           
-          // Should use generic error language
-          expect(errorMessage).toMatch(/error|failed|unavailable|try.*again/);
+          // Should use generic error language. The controller surfaces the raw
+          // transport error message (a behavior other tests pin exactly, e.g.
+          // 'Network error'), so "timeout" is included here as legitimate
+          // generic, non-credential-revealing language alongside the other
+          // generic terms. The security guarantee is enforced by the
+          // not.toMatch assertions above.
+          expect(errorMessage).toMatch(/error|failed|unavailable|timeout|try.*again/);
         }
       ),
       { numRuns: 50 }

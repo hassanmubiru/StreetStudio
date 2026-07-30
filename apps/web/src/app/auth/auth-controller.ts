@@ -56,6 +56,7 @@ export class AuthController {
   private refreshPromise?: Promise<boolean>;
   private sessionTimeoutTimer?: number;
   private activityTimer?: number;
+  private tokenExpiryInterval?: number;
   private memoryTokenStorage = new Map<string, string>();
   private config: SessionConfig;
   private readonly DEFAULT_CONFIG: SessionConfig = {
@@ -83,8 +84,9 @@ export class AuthController {
     // Setup API interceptor for auth errors
     this.setupAuthErrorInterceptor();
     
-    // Check for expired tokens periodically
-    setInterval(() => {
+    // Check for expired tokens periodically. Track the interval id so it can
+    // be cleared on destroy() (previously this leaked and kept firing forever).
+    this.tokenExpiryInterval = window.setInterval(() => {
       this.checkTokenExpiry();
     }, 60 * 1000); // Check every minute
   }
@@ -231,8 +233,15 @@ export class AuthController {
       logger.info('Token approaching expiry, refreshing...', {
         expiresIn: Math.floor(timeUntilExpiry / 1000),
       });
-      
-      await this.attemptTokenRefresh();
+
+      const refreshed = await this.attemptTokenRefresh();
+
+      // If the token could not be refreshed the session is no longer valid,
+      // so terminate it rather than leaving a stale authenticated state.
+      if (!refreshed) {
+        logger.warn('Token refresh failed during expiry check, ending session');
+        await this.logout();
+      }
     }
   }
 
@@ -321,9 +330,11 @@ export class AuthController {
           return this.memoryTokenStorage.get(key) || null;
           
         case 'httpOnlyCookie':
-          // HttpOnly cookies are not accessible via JavaScript
-          // Server should include token in auth check responses
-          return null;
+          // HttpOnly cookies are not accessible via JavaScript; the server
+          // should include the token in auth check responses. However, if we
+          // previously fell back to memory storage (e.g. the cookie endpoint
+          // failed), honor that fallback so the token is still retrievable.
+          return this.memoryTokenStorage.get(key) ?? null;
           
         case 'localStorage':
         default:
@@ -379,10 +390,26 @@ export class AuthController {
     }
 
     this.refreshPromise = this.doTokenRefreshWithRetry();
-    const result = await this.refreshPromise;
-    this.refreshPromise = undefined;
-    
-    return result;
+
+    try {
+      return await this.refreshPromise;
+    } catch (error) {
+      // doTokenRefreshWithRetry rethrows after exhausting retries (or on a
+      // non-retryable 401/403). Convert that into a boolean for higher-level
+      // callers, while reporting the failure.
+      logger.error('Token refresh failed', {
+        error: (error as Error).message,
+      });
+
+      handleError(error as Error, 'authentication', {
+        operation: 'token-refresh',
+        retryable: true,
+      });
+
+      return false;
+    } finally {
+      this.refreshPromise = undefined;
+    }
   }
 
   /**
@@ -423,61 +450,50 @@ export class AuthController {
    * Perform the actual token refresh
    */
   private async doTokenRefresh(): Promise<boolean> {
-    try {
-      const storedAuth = this.getStoredAuth();
-      if (!storedAuth?.refreshToken) {
-        logger.warn('No refresh token available');
-        return false;
-      }
-
-      // Call refresh endpoint
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${storedAuth.refreshToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Refresh failed: ${response.status}`);
-      }
-
-      const { token, refreshToken, expiresIn } = await response.json();
-      
-      // Update stored auth
-      const newExpiry = new Date(Date.now() + (expiresIn * 1000));
-      this.storeAuth({
-        token,
-        refreshToken,
-        expiry: newExpiry.toISOString(),
-        user: storedAuth.user,
-      });
-
-      // Update session with new token
-      this.session.useBearerToken(token);
-
-      // Update state
-      this.setState({
-        tokenExpiry: newExpiry,
-        error: undefined,
-      });
-
-      logger.info('Token refreshed successfully');
-      return true;
-
-    } catch (error) {
-      logger.error('Token refresh failed', {
-        error: (error as Error).message,
-      });
-
-      handleError(error as Error, 'authentication', {
-        operation: 'token-refresh',
-        retryable: true,
-      });
-
+    const storedAuth = this.getStoredAuth();
+    if (!storedAuth?.refreshToken) {
+      logger.warn('No refresh token available');
       return false;
     }
+
+    // Call refresh endpoint. Note: errors are intentionally allowed to
+    // propagate so that doTokenRefreshWithRetry() can apply its retry/backoff
+    // logic. Swallowing them here (returning false) made the retry logic dead
+    // code. Callers that need a boolean outcome go through attemptTokenRefresh.
+    const response = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${storedAuth.refreshToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Refresh failed: ${response.status}`);
+    }
+
+    const { token, refreshToken, expiresIn } = await response.json();
+
+    // Update stored auth
+    const newExpiry = new Date(Date.now() + (expiresIn * 1000));
+    this.storeAuth({
+      token,
+      refreshToken,
+      expiry: newExpiry.toISOString(),
+      user: storedAuth.user,
+    });
+
+    // Update session with new token
+    this.session.useBearerToken(token);
+
+    // Update state
+    this.setState({
+      tokenExpiry: newExpiry,
+      error: undefined,
+    });
+
+    logger.info('Token refreshed successfully');
+    return true;
   }
 
   /**
@@ -930,6 +946,9 @@ export class AuthController {
       logger.warn('Failed to parse stored auth', {
         error: (error as Error).message,
       });
+      // Corrupt/unparseable auth data should be removed so we don't keep
+      // reading garbage on every access.
+      this.clearStoredAuth();
       return null;
     }
   }
@@ -1041,6 +1060,11 @@ export class AuthController {
    * Destroy the controller and clean up resources
    */
   public destroy(): void {
+    if (this.tokenExpiryInterval) {
+      clearInterval(this.tokenExpiryInterval);
+      this.tokenExpiryInterval = undefined;
+    }
+
     if (this.refreshTimer) {
       clearTimeout(this.refreshTimer);
     }

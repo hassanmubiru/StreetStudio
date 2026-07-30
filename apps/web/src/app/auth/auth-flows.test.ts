@@ -25,6 +25,24 @@ const mockDashboardSession = {
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+// Build a Response-like object compatible with the ApiClient, which inspects
+// response.headers.get('content-type') and then calls response.json(). The
+// bare { ok, json } shape used elsewhere is enough for direct fetch callers
+// but not for requests routed through apiClient (e.g. the OAuth service).
+function apiJsonResponse(data: any, ok = true, status = 200): Response {
+  return {
+    ok,
+    status,
+    statusText: ok ? 'OK' : 'Error',
+    headers: {
+      get: (name: string) =>
+        name.toLowerCase() === 'content-type' ? 'application/json' : null,
+    },
+    json: async () => data,
+    text: async () => JSON.stringify(data),
+  } as unknown as Response;
+}
+
 // Mock BroadcastChannel for cross-tab sync
 class MockBroadcastChannel {
   constructor(public name: string) {}
@@ -44,6 +62,9 @@ describe('Authentication Flows', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Fully reset fetch so unconsumed mockResolvedValueOnce values can't leak
+    // between tests.
+    mockFetch.mockReset();
     vi.useFakeTimers();
     
     // Reset localStorage
@@ -59,6 +80,9 @@ describe('Authentication Flows', () => {
     vi.useRealTimers();
     authController.destroy();
     sessionManager.destroy();
+    // Restore any vi.spyOn() spies (e.g. on the OAuth service singleton) so
+    // they don't leak into later tests.
+    vi.restoreAllMocks();
   });
 
   describe('Login/Logout Scenarios', () => {
@@ -348,20 +372,18 @@ describe('Authentication Flows', () => {
     });
 
     test('should handle OAuth callback success', async () => {
-      // Mock successful OAuth callback
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          token: 'oauth-token',
-          refreshToken: 'oauth-refresh',
-          expiresIn: 3600,
-          user: {
-            id: 'oauth-user',
-            email: 'oauth@example.com',
-            provider: 'google'
-          }
-        })
-      });
+      // Mock successful OAuth callback. The OAuth service routes through
+      // apiClient, so the response must be apiClient-compatible.
+      mockFetch.mockResolvedValueOnce(apiJsonResponse({
+        token: 'oauth-token',
+        refreshToken: 'oauth-refresh',
+        expiresIn: 3600,
+        user: {
+          id: 'oauth-user',
+          email: 'oauth@example.com',
+          provider: 'google'
+        }
+      }));
 
       // Set up OAuth flow state
       sessionStorage.setItem('oauth_flow_state', JSON.stringify({
@@ -442,19 +464,22 @@ describe('Authentication Flows', () => {
 
     test('should handle multiple OAuth providers configuration', async () => {
       const { oauthConfigService } = await import('../../services/oauth-config.js');
-      
-      // Mock multiple providers
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          enabled: true,
-          providers: [
-            { id: 'google', enabled: true, displayName: 'Google' },
-            { id: 'github', enabled: true, displayName: 'GitHub' },
-            { id: 'microsoft', enabled: false, displayName: 'Microsoft' }
-          ]
-        })
-      });
+
+      // The service caches config; clear it so this test actually loads from
+      // the (mocked) API rather than a value cached by an earlier test.
+      (oauthConfigService as any).config = null;
+      (oauthConfigService as any).configPromise = null;
+
+      // Mock multiple providers. getConfig() routes through apiClient, so the
+      // response must be apiClient-compatible (headers + json()).
+      mockFetch.mockResolvedValueOnce(apiJsonResponse({
+        enabled: true,
+        providers: [
+          { id: 'google', enabled: true, displayName: 'Google' },
+          { id: 'github', enabled: true, displayName: 'GitHub' },
+          { id: 'microsoft', enabled: false, displayName: 'Microsoft' }
+        ]
+      }));
 
       const config = await oauthConfigService.getConfig();
       const enabledProviders = await oauthConfigService.getEnabledProviders();
@@ -489,11 +514,10 @@ describe('Authentication Flows', () => {
       // Initialize from storage
       await authController.initializeFromStorage();
       
-      // Fast-forward to trigger refresh (default refresh margin is 5 minutes)
-      vi.advanceTimersByTime(2 * 60 * 1000); // 2 minutes
-
-      // Allow async operations to complete
-      await vi.runAllTimersAsync();
+      // Fast-forward to trigger refresh (default refresh margin is 5 minutes).
+      // Use a bounded async advance: runAllTimersAsync() loops forever against
+      // the periodic token-expiry interval.
+      await vi.advanceTimersByTimeAsync(2 * 60 * 1000); // 2 minutes
 
       expect(mockFetch).toHaveBeenCalledWith('/api/auth/refresh', expect.objectContaining({
         method: 'POST',
@@ -527,9 +551,8 @@ describe('Authentication Flows', () => {
 
       await authController.initializeFromStorage();
       
-      // Trigger refresh by advancing time
-      vi.advanceTimersByTime(5 * 60 * 1000);
-      await vi.runAllTimersAsync();
+      // Trigger refresh by advancing time (bounded async advance).
+      await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
 
       // Should succeed on third attempt
       expect(mockFetch).toHaveBeenCalledTimes(3);
@@ -549,9 +572,8 @@ describe('Authentication Flows', () => {
 
       await authController.initializeFromStorage();
       
-      // Trigger refresh
-      vi.advanceTimersByTime(5 * 60 * 1000);
-      await vi.runAllTimersAsync();
+      // Trigger refresh (bounded async advance).
+      await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
 
       // Should eventually logout user
       expect(authController.isAuthenticated()).toBe(false);
@@ -586,8 +608,9 @@ describe('Authentication Flows', () => {
         })
       });
 
-      // Allow auth error handler to run
-      await vi.runAllTimersAsync();
+      // Allow auth error handler to run (bounded async advance covers retry
+      // backoff without looping on the periodic interval).
+      await vi.advanceTimersByTimeAsync(10 * 1000);
 
       // Should attempt token refresh
       expect(mockFetch).toHaveBeenCalledWith('/api/auth/refresh', expect.any(Object));
@@ -622,9 +645,8 @@ describe('Authentication Flows', () => {
         })
       });
 
-      // Advance time past refresh margin
-      vi.advanceTimersByTime(3 * 60 * 1000);
-      await vi.runAllTimersAsync();
+      // Advance time past refresh margin (bounded async advance).
+      await vi.advanceTimersByTimeAsync(3 * 60 * 1000);
 
       expect(mockFetch).toHaveBeenCalledWith('/api/auth/refresh', expect.any(Object));
 
@@ -852,6 +874,13 @@ describe('Authentication Flows', () => {
     });
 
     test('should clear sensitive data on logout', async () => {
+      // This test verifies localStorage persistence/clearing, so use a
+      // controller configured for localStorage storage (the default strategy
+      // is in-memory, which would never touch localStorage).
+      const lsController = new AuthController(mockDashboardSession, {
+        tokenStorage: { strategy: 'localStorage', secure: true, sameSite: 'strict' }
+      });
+
       // Setup authenticated state
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -863,7 +892,7 @@ describe('Authentication Flows', () => {
         })
       });
 
-      await authController.login('test@example.com', 'password123');
+      await lsController.login('test@example.com', 'password123');
 
       // Verify auth data is stored
       expect(localStorage.getItem('streetstudio_auth')).toBeTruthy();
@@ -871,10 +900,12 @@ describe('Authentication Flows', () => {
       // Mock logout response
       mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) });
 
-      await authController.logout();
+      await lsController.logout();
 
       // Verify sensitive data is cleared
       expect(localStorage.getItem('streetstudio_auth')).toBeNull();
+
+      lsController.destroy();
     });
 
     test('should validate session expiry times', async () => {

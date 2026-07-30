@@ -188,8 +188,16 @@ export class SessionManager {
   public subscribe(callback: (state: AuthState) => void): () => void {
     this.subscribers.add(callback);
     
-    // Send current state immediately
-    callback(this.authController.getState());
+    // Send current state immediately. Guard against subscriber errors so a
+    // throwing callback cannot break subscribe() itself (consistent with
+    // notifySubscribers()).
+    try {
+      callback(this.authController.getState());
+    } catch (error) {
+      logger.error('Session subscriber error', {
+        error: (error as Error).message
+      });
+    }
     
     return () => {
       this.subscribers.delete(callback);
@@ -424,7 +432,10 @@ class SecurityMonitor {
     try {
       const stored = localStorage.getItem('streetstudio_location_history');
       if (stored) {
-        this.locationHistory = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // Guard against corrupt/non-array data so downstream array operations
+        // (e.g. saveLocationHistory's .slice) can't throw.
+        this.locationHistory = Array.isArray(parsed) ? parsed : [];
       }
     } catch (error) {
       logger.warn('Failed to load location history', {

@@ -5,87 +5,69 @@
  * forgot password, and reset password pages.
  */
 
-import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// Mock dependencies
-const mockAuthController = {
-  login: vi.fn(),
-  register: vi.fn(),
-  requestPasswordReset: vi.fn(),
-  onAuthStateChange: vi.fn(),
-  getState: vi.fn(),
-};
-
-const mockOAuthConfig = {
-  getEnabledProviders: vi.fn(),
-  initiateOAuth: vi.fn(),
-};
-
-// Mock DOM environment
-Object.defineProperty(global, 'document', {
-  value: {
-    createElement: vi.fn((tag: string) => ({
-      tagName: tag.toUpperCase(),
-      innerHTML: '',
-      className: '',
-      addEventListener: vi.fn(),
-      querySelector: vi.fn(),
-      querySelectorAll: vi.fn(() => []),
-      setAttribute: vi.fn(),
-      appendChild: vi.fn(),
-      classList: {
-        add: vi.fn(),
-        remove: vi.fn(),
-      },
-      focus: vi.fn(),
-    })),
-    querySelector: vi.fn(),
-    body: {
-      appendChild: vi.fn(),
-      removeChild: vi.fn(),
-    },
+// Hoisted mock instances so the vi.mock factories below can reference them.
+// These replace the *service singletons* the auth pages depend on. The real
+// jsdom `window`/`document` from the test environment are used as-is (no
+// wholesale global fakes), so browser APIs like setInterval remain intact.
+const { mockAuthController, mockOAuthConfig, mockSSOConfig, mockLogger } = vi.hoisted(() => ({
+  mockAuthController: {
+    login: vi.fn(),
+    register: vi.fn(),
+    requestPasswordReset: vi.fn(),
+    onAuthStateChange: vi.fn(),
+    getState: vi.fn(),
+    getStoredCallbackError: vi.fn().mockResolvedValue(null),
+    getSSOProviderForDomain: vi.fn().mockResolvedValue(null),
+    loginWithEmailCheck: vi.fn(),
+    initiateOAuth: vi.fn().mockResolvedValue(undefined),
+    initiateSSO: vi.fn().mockResolvedValue(undefined),
   },
-  writable: true,
-});
-
-Object.defineProperty(global, 'window', {
-  value: {
-    location: {
-      search: '',
-      href: '',
-      origin: 'http://localhost:3000',
-    },
-    history: {
-      pushState: vi.fn(),
-    },
-    addEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-    sessionStorage: {
-      getItem: vi.fn(),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-    },
-    crypto: {
-      randomUUID: vi.fn(() => 'mock-uuid'),
-    },
-    URLSearchParams: vi.fn(() => ({
-      get: vi.fn(),
-      set: vi.fn(),
-    })),
-    URL: vi.fn(),
+  mockOAuthConfig: {
+    getEnabledProviders: vi.fn().mockResolvedValue([]),
+    initiateOAuth: vi.fn().mockResolvedValue(undefined),
   },
-  writable: true,
-});
+  mockSSOConfig: {
+    getEnabledProviders: vi.fn().mockResolvedValue([]),
+  },
+  mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+}));
 
-// Mock fetch
-Object.defineProperty(global, 'fetch', {
-  value: vi.fn(),
-  writable: true,
+// Replace the exported singletons the pages consume, while preserving the real
+// classes/types (the "OAuth Configuration Service" tests construct the real
+// OAuthConfigService).
+vi.mock('../../services/oauth-config.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/oauth-config.js')>();
+  return { ...actual, oauthConfigService: mockOAuthConfig };
 });
+vi.mock('../../services/sso-config.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/sso-config.js')>();
+  return { ...actual, ssoConfigService: mockSSOConfig };
+});
+vi.mock('../../app/client-logger.js', () => ({
+  logger: mockLogger,
+  getLogger: () => mockLogger,
+}));
+
+// jsdom does not implement fetch. The real OAuthConfigService tests below drive
+// the real ApiClient, which calls fetch, so provide a mock fetch here.
+vi.stubGlobal('fetch', vi.fn());
 
 describe('Authentication Pages', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Restore default resolved values cleared by clearAllMocks() so each test
+    // starts from a known baseline.
+    mockOAuthConfig.getEnabledProviders.mockResolvedValue([]);
+    mockSSOConfig.getEnabledProviders.mockResolvedValue([]);
+    mockAuthController.getStoredCallbackError.mockResolvedValue(null);
+    mockAuthController.getSSOProviderForDomain.mockResolvedValue(null);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.stubGlobal('fetch', vi.fn());
   });
 
   describe('Login Page', () => {
@@ -349,6 +331,8 @@ describe('Authentication Pages', () => {
 
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
         json: async () => ({
           enabled: true,
           providers: mockProviders,

@@ -231,9 +231,9 @@ describe('Session Management', () => {
 
   describe('Cross-Tab Synchronization', () => {
     test('should broadcast login events to other tabs', async () => {
-      const broadcastSpy = vi.fn();
-      const mockChannel = new MockBroadcastChannel('streetstudio-session');
-      mockChannel.postMessage = broadcastSpy;
+      // Spy on the channel the sessionManager actually broadcasts through,
+      // not an unrelated new channel instance.
+      const broadcastSpy = vi.spyOn((sessionManager as any).crossTabChannel, 'postMessage');
 
       // Mock successful login
       mockFetch.mockResolvedValueOnce({
@@ -273,9 +273,8 @@ describe('Session Management', () => {
 
       await authController.login('test@example.com', 'password123');
 
-      const broadcastSpy = vi.fn();
-      const mockChannel = new MockBroadcastChannel('streetstudio-session');
-      mockChannel.postMessage = broadcastSpy;
+      // Spy on the sessionManager's actual broadcast channel.
+      const broadcastSpy = vi.spyOn((sessionManager as any).crossTabChannel, 'postMessage');
 
       // Mock logout
       mockFetch.mockResolvedValueOnce({
@@ -566,9 +565,8 @@ describe('Session Management', () => {
 
       await authController.login('test@example.com', 'password123');
 
-      const broadcastSpy = vi.fn();
-      const mockChannel = new MockBroadcastChannel('streetstudio-session');
-      mockChannel.postMessage = broadcastSpy;
+      // Spy on the sessionManager's actual broadcast channel.
+      const broadcastSpy = vi.spyOn((sessionManager as any).crossTabChannel, 'postMessage');
 
       // Mock logout all sessions API
       mockFetch.mockResolvedValueOnce({
