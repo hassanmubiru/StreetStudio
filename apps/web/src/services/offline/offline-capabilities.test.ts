@@ -267,3 +267,61 @@ describe('OfflineContentCache', () => {
       })),
       createIndex: vi.fn(),
     };
+
+    mockDb = {
+      transaction: vi.fn(() => ({
+        objectStore: vi.fn(() => mockStore),
+      })),
+      objectStoreNames: { contains: vi.fn(() => false) },
+      createObjectStore: vi.fn(() => mockStore),
+      close: vi.fn(),
+    };
+
+    // Mock indexedDB.open
+    const mockOpen = {
+      result: mockDb,
+      onsuccess: null as any,
+      onerror: null as any,
+      onupgradeneeded: null as any,
+    };
+
+    vi.stubGlobal('indexedDB', {
+      open: vi.fn(() => {
+        setTimeout(() => {
+          if (mockOpen.onupgradeneeded) {
+            mockOpen.onupgradeneeded();
+          }
+          if (mockOpen.onsuccess) {
+            mockOpen.onsuccess();
+          }
+        }, 0);
+        return mockOpen;
+      }),
+    });
+
+    const mod = await import('./offline-content-cache.js');
+    OfflineContentCache = mod.OfflineContentCache;
+  });
+
+  it('should create an instance with default options', () => {
+    const cache = new OfflineContentCache();
+    expect(cache).toBeDefined();
+  });
+
+  it('should throw if indexedDB not available', async () => {
+    vi.stubGlobal('indexedDB', undefined);
+    const cache = new OfflineContentCache();
+    await expect(cache.initialize()).rejects.toThrow('IndexedDB is not available');
+  });
+
+  it('should expose getStats method', () => {
+    const cache = new OfflineContentCache();
+    expect(typeof cache.getStats).toBe('function');
+  });
+
+  it('should expose close method to clean up', () => {
+    const cache = new OfflineContentCache();
+    expect(typeof cache.close).toBe('function');
+    cache.close(); // Should not throw
+  });
+});
