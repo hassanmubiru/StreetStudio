@@ -364,7 +364,7 @@ export class MessagingIntegrationPage {
     this.shareFormData = {
       videoId,
       videoTitle,
-      connectionId: this.connections.length > 0 ? this.connections[0].id : null,
+      connectionId: this.connections.length > 0 ? this.connections[0]!.id : null,
       channelId: null,
       message: '',
     };
