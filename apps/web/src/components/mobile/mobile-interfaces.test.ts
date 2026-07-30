@@ -245,3 +245,54 @@ describe('TouchGestureHandler', () => {
     expect(onTap).not.toHaveBeenCalled();
   });
 });
+
+// ===========================================================================
+// MobileVideoPlayer Tests
+// ===========================================================================
+
+describe('MobileVideoPlayer', () => {
+  let container: HTMLElement;
+  let player: MobileVideoPlayer;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    container = document.createElement('div');
+    container.style.width = '375px';
+    container.style.height = '250px';
+    document.body.appendChild(container);
+    Object.defineProperty(container, 'getBoundingClientRect', {
+      value: () => ({ left: 0, top: 0, width: 375, height: 250, right: 375, bottom: 250, x: 0, y: 0, toJSON: () => {} }),
+    });
+  });
+
+  afterEach(() => {
+    player?.destroy();
+    document.body.innerHTML = '';
+    vi.useRealTimers();
+  });
+
+  it('should create player DOM with accessible controls', () => {
+    player = new MobileVideoPlayer(container);
+
+    expect(container.querySelector('video')).toBeTruthy();
+    expect(container.getAttribute('role')).toBe('region');
+    expect(container.getAttribute('aria-label')).toBe('Video player');
+
+    const playBtn = container.querySelector('.mobile-play-btn');
+    expect(playBtn).toBeTruthy();
+    expect(playBtn?.getAttribute('aria-label')).toBe('Play');
+
+    const fullscreenBtn = container.querySelector('.mobile-fullscreen-btn');
+    expect(fullscreenBtn).toBeTruthy();
+    expect(fullscreenBtn?.getAttribute('aria-label')).toBe('Enter fullscreen');
+  });
+
+  it('should set video attributes for mobile playback', () => {
+    player = new MobileVideoPlayer(container, { src: 'test.mp4', poster: 'thumb.jpg' });
+
+    const video = container.querySelector('video') as HTMLVideoElement;
+    expect(video.getAttribute('playsinline')).toBe('');
+    expect(video.getAttribute('webkit-playsinline')).toBe('');
+    expect(video.src).toContain('test.mp4');
+    expect(video.poster).toContain('thumb.jpg');
+  });
