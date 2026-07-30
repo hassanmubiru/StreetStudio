@@ -216,3 +216,111 @@ describe('Utility Functions', () => {
       expect(code).toContain('https://custom.embed.com/v/vid-1');
     });
   });
+
+  describe('generateScriptEmbed', () => {
+    it('should generate script embed with config', () => {
+      const code = generateScriptEmbed('vid-1', DEFAULT_EMBED_OPTIONS);
+      expect(code).toContain('ss-player-vid-1');
+      expect(code).toContain('player.js');
+      expect(code).toContain('data-config');
+      expect(code).toContain('"videoId"');
+    });
+
+    it('should use responsive style when responsive', () => {
+      const code = generateScriptEmbed('vid-1', DEFAULT_EMBED_OPTIONS);
+      expect(code).toContain('width:100%');
+      expect(code).toContain('aspect-ratio:16/9');
+    });
+
+    it('should use fixed dimensions when not responsive', () => {
+      const opts: EmbedOptions = { ...DEFAULT_EMBED_OPTIONS, responsive: false, width: 800, height: 450 };
+      const code = generateScriptEmbed('vid-1', opts);
+      expect(code).toContain('width:800px');
+      expect(code).toContain('height:450px');
+    });
+  });
+
+  describe('validateExpirationDate', () => {
+    it('should accept undefined (no expiration)', () => {
+      expect(validateExpirationDate(undefined).valid).toBe(true);
+    });
+
+    it('should reject invalid date string', () => {
+      const result = validateExpirationDate('not-a-date');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('Invalid');
+    });
+
+    it('should reject past dates', () => {
+      const past = new Date(Date.now() - 86400000).toISOString();
+      const result = validateExpirationDate(past);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('future');
+    });
+
+    it('should accept future dates', () => {
+      const future = new Date(Date.now() + 86400000).toISOString();
+      expect(validateExpirationDate(future).valid).toBe(true);
+    });
+  });
+
+  describe('validateSharePassword', () => {
+    it('should accept any password for non-password permissions', () => {
+      expect(validateSharePassword(undefined, 'public').valid).toBe(true);
+      expect(validateSharePassword(undefined, 'organization').valid).toBe(true);
+    });
+
+    it('should require password for password permission', () => {
+      const result = validateSharePassword(undefined, 'password');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('required');
+    });
+
+    it('should reject short passwords', () => {
+      const result = validateSharePassword('ab', 'password');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('4 characters');
+    });
+
+    it('should reject overly long passwords', () => {
+      const result = validateSharePassword('a'.repeat(129), 'password');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('128');
+    });
+
+    it('should accept valid passwords', () => {
+      expect(validateSharePassword('mypassword', 'password').valid).toBe(true);
+    });
+  });
+
+  describe('getPermissionLabel', () => {
+    it('should return correct labels', () => {
+      expect(getPermissionLabel('public')).toBe('Anyone with the link');
+      expect(getPermissionLabel('password')).toBe('Password protected');
+      expect(getPermissionLabel('organization')).toBe('Organization members only');
+      expect(getPermissionLabel('members')).toBe('Specific members only');
+    });
+  });
+
+  describe('formatExpiration', () => {
+    it('should return "Never expires" for undefined', () => {
+      expect(formatExpiration(undefined)).toBe('Never expires');
+    });
+
+    it('should return "Expired" for past dates', () => {
+      const past = new Date(Date.now() - 86400000).toISOString();
+      expect(formatExpiration(past)).toBe('Expired');
+    });
+
+    it('should return "Expires today" for date expiring within 24 hours', () => {
+      const soon = new Date(Date.now() + 3600000).toISOString();
+      expect(formatExpiration(soon)).toBe('Expires today');
+    });
+
+    it('should show days for date within a week', () => {
+      const days3 = new Date(Date.now() + 3 * 86400000).toISOString();
+      expect(formatExpiration(days3)).toContain('Expires in');
+      expect(formatExpiration(days3)).toContain('days');
+    });
+  });
+});

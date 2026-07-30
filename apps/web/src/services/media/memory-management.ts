@@ -160,7 +160,8 @@ export class VideoSessionMemoryManager {
    */
   public releaseResourcesByType(type: ResourceHandle['type']): number {
     let freedBytes = 0;
-    for (const [id, resource] of this.resources) {
+    const entries = Array.from(this.resources.entries());
+    for (const [id, resource] of entries) {
       if (resource.type === type) {
         resource.cleanup();
         freedBytes += resource.estimatedSize;
@@ -178,7 +179,8 @@ export class VideoSessionMemoryManager {
     const now = Date.now();
     let freedBytes = 0;
 
-    for (const [id, resource] of this.resources) {
+    const entries = Array.from(this.resources.entries());
+    for (const [id, resource] of entries) {
       if (now - resource.lastAccessedAt > this.config.maxIdleTime) {
         resource.cleanup();
         freedBytes += resource.estimatedSize;
@@ -195,7 +197,8 @@ export class VideoSessionMemoryManager {
    */
   public releaseAll(): number {
     let freedBytes = 0;
-    for (const [, resource] of this.resources) {
+    const entries = Array.from(this.resources.values());
+    for (const resource of entries) {
       resource.cleanup();
       freedBytes += resource.estimatedSize;
     }
@@ -249,7 +252,8 @@ export class VideoSessionMemoryManager {
    */
   public getTrackedMemory(): number {
     let total = 0;
-    for (const resource of this.resources.values()) {
+    const values = Array.from(this.resources.values());
+    for (const resource of values) {
       total += resource.estimatedSize;
     }
     return total;

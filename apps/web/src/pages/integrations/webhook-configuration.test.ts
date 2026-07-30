@@ -245,3 +245,115 @@ describe('WebhookConfigurationPage', () => {
       expect(el.textContent).toContain('No webhooks configured');
       expect(el.textContent).toContain('Add a webhook');
     });
+
+    it('should render webhook cards when webhooks exist', () => {
+      const webhooks = [createTestWebhook()];
+      page = new WebhookConfigurationPage({ webhooks });
+      const el = page.getElement();
+
+      const card = el.querySelector('[data-webhook-id="wh-1"]');
+      expect(card).toBeTruthy();
+    });
+  });
+
+  describe('Webhook Display', () => {
+    it('should display webhook URL', () => {
+      const webhook = createTestWebhook({ url: 'https://myapp.com/hooks' });
+      page = new WebhookConfigurationPage({ webhooks: [webhook] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('https://myapp.com/hooks');
+    });
+
+    it('should display webhook status badge', () => {
+      const webhook = createTestWebhook({ status: 'active' });
+      page = new WebhookConfigurationPage({ webhooks: [webhook] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('Active');
+    });
+
+    it('should display subscribed event tags', () => {
+      const webhook = createTestWebhook({ events: ['video.created', 'comment.created'] });
+      page = new WebhookConfigurationPage({ webhooks: [webhook] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('Video Created');
+      expect(el.textContent).toContain('Comment Created');
+    });
+
+    it('should display retry configuration', () => {
+      const webhook = createTestWebhook({ maxRetries: 5, retryIntervalSeconds: 60 });
+      page = new WebhookConfigurationPage({ webhooks: [webhook] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('Retries: 5');
+      expect(el.textContent).toContain('Interval: 60s');
+    });
+
+    it('should display description when provided', () => {
+      const webhook = createTestWebhook({ description: 'Production handler' });
+      page = new WebhookConfigurationPage({ webhooks: [webhook] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('Production handler');
+    });
+  });
+
+  describe('Create Webhook Form', () => {
+    it('should show form when Add Webhook button is clicked', () => {
+      page = new WebhookConfigurationPage();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const btn = el.querySelector('#btn-add-webhook') as HTMLButtonElement;
+      btn.click();
+
+      expect(page.isCreateFormVisible()).toBe(true);
+      expect(el.querySelector('#webhook-form')).toBeTruthy();
+    });
+
+    it('should display URL input with required attribute', () => {
+      page = new WebhookConfigurationPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const input = el.querySelector('#webhook-url-input') as HTMLInputElement;
+      expect(input).toBeTruthy();
+      expect(input.getAttribute('aria-required')).toBe('true');
+      expect(input.type).toBe('url');
+    });
+
+    it('should display event checkboxes grouped by category', () => {
+      page = new WebhookConfigurationPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const checkboxes = el.querySelectorAll('.event-checkbox');
+      expect(checkboxes.length).toBe(AVAILABLE_EVENTS.length);
+
+      const fieldsets = el.querySelectorAll('#event-selection fieldset');
+      expect(fieldsets.length).toBeGreaterThan(0);
+    });
+
+    it('should display retry configuration selects', () => {
+      page = new WebhookConfigurationPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const retrySelect = el.querySelector('#retry-count-select') as HTMLSelectElement;
+      expect(retrySelect).toBeTruthy();
+      expect(retrySelect.options.length).toBe(RETRY_OPTIONS.length);
+
+      const intervalSelect = el.querySelector('#retry-interval-select') as HTMLSelectElement;
+      expect(intervalSelect).toBeTruthy();
+      expect(intervalSelect.options.length).toBe(RETRY_INTERVAL_OPTIONS.length);
+    });
