@@ -566,3 +566,64 @@ export class CalendarIntegrationPage {
     `;
     return section;
   }
+
+  private renderCreateEventForm(): HTMLElement {
+    const form = document.createElement('section');
+    form.id = 'create-event-form';
+    form.className = 'mb-6 p-6 bg-white border border-gray-200 rounded-lg shadow-sm';
+    form.setAttribute('aria-labelledby', 'create-event-heading');
+
+    const attendeeTags = this.createFormData.attendees.map(email => `
+      <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+        ${this.escapeHtml(email)}
+        <button type="button" class="btn-remove-attendee text-blue-600 hover:text-blue-800" data-email="${this.escapeHtml(email)}" aria-label="Remove ${this.escapeHtml(email)}">&times;</button>
+      </span>
+    `).join('');
+
+    form.innerHTML = `
+      <h2 id="create-event-heading" class="text-lg font-medium text-gray-900 mb-4">Schedule Recording</h2>
+      <div class="space-y-4">
+        <div>
+          <label for="event-title-input" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+          <input id="event-title-input" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Recording session title" maxlength="${EVENT_TITLE_MAX_LENGTH}" value="${this.escapeHtml(this.createFormData.title)}" aria-required="true" />
+          <p id="title-error" class="mt-1 text-sm text-red-600 hidden" role="alert"></p>
+        </div>
+        <div>
+          <label for="event-description-input" class="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+          <textarea id="event-description-input" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" rows="3" maxlength="${EVENT_DESCRIPTION_MAX_LENGTH}" placeholder="Add details about the recording session">${this.escapeHtml(this.createFormData.description)}</textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="event-start-input" class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+            <input id="event-start-input" type="datetime-local" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" value="${this.createFormData.startTime}" aria-required="true" />
+          </div>
+          <div>
+            <label for="event-end-input" class="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+            <input id="event-end-input" type="datetime-local" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" value="${this.createFormData.endTime}" aria-required="true" />
+          </div>
+        </div>
+        <p id="time-error" class="text-sm text-red-600 hidden" role="alert"></p>
+        <div>
+          <label for="event-timezone-select" class="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+          <select id="event-timezone-select" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
+            ${TIMEZONE_OPTIONS.map(tz => `<option value="${tz.value}" ${this.createFormData.timezone === tz.value ? 'selected' : ''}>${this.escapeHtml(tz.label)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Attendees</label>
+          <div class="flex gap-2 mb-2">
+            <input id="attendee-input" type="email" class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="email@example.com" value="${this.escapeHtml(this.createFormData.newAttendee)}" />
+            <button id="btn-add-attendee" type="button" class="px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500">Add</button>
+          </div>
+          <div class="flex flex-wrap gap-2">${attendeeTags}</div>
+          <p id="attendee-error" class="mt-1 text-sm text-red-600 hidden" role="alert"></p>
+        </div>
+        <p id="create-error" class="text-sm text-red-600 hidden" role="alert"></p>
+        <div class="flex items-center gap-3 pt-2">
+          <button id="btn-submit-event" type="button" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Create Event</button>
+          <button id="btn-cancel-event" type="button" class="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">Cancel</button>
+        </div>
+      </div>
+    `;
+    return form;
+  }

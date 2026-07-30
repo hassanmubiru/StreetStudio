@@ -501,3 +501,60 @@ describe('Cross-Module Integration: Export Permissions + Share Links', () => {
       expect(validationResult.valid).toBe(false);
       expect(validationResult.error).toContain('future');
     });
+
+    it('should allow non-expiring share links for permanent embeds', () => {
+      const noExpiration = validateExpirationDate(undefined);
+      expect(noExpiration.valid).toBe(true);
+
+      const label = formatExpiration(undefined);
+      expect(label).toBe('Never expires');
+    });
+
+    it('should display export download alongside active share link', () => {
+      const completedJob = createExportJob({
+        status: 'completed',
+        progress: 100,
+        downloadUrl: '/dl/exported.mp4',
+      });
+      const activeLink = createShareLink({ isActive: true, viewCount: 25 });
+
+      const page = new ExportSharingPage({
+        exportJobs: [completedJob],
+        shareLinks: [activeLink],
+      });
+
+      const el = page.getElement();
+      // Both sections should render
+      expect(el.querySelector('#export-progress')).toBeTruthy();
+      expect(el.querySelector('#share-links-list')).toBeTruthy();
+      expect(el.textContent).toContain('25 views');
+
+      page.destroy();
+    });
+
+    it('should revoke share link independently of export jobs', async () => {
+      const shareCallbacks: Partial<ExportSharingCallbacks> = {
+        onStartExport: vi.fn(),
+        onStartBatchExport: vi.fn(),
+        onCancelExport: vi.fn(),
+        onGenerateShareLink: vi.fn(),
+        onRevokeShareLink: vi.fn().mockResolvedValue(true),
+        onGetShareLinks: vi.fn(),
+      };
+
+      const page = new ExportSharingPage({
+        exportJobs: [createExportJob({ status: 'completed', progress: 100 })],
+        shareLinks: [createShareLink({ id: 'link-revoke', isActive: true })],
+        callbacks: shareCallbacks,
+      });
+
+      await page.revokeShareLink('link-revoke');
+
+      // Share link is revoked but export jobs remain
+      const link = page.getShareLinks().find(l => l.id === 'link-revoke');
+      expect(link?.isActive).toBe(false);
+      expect(page.getExportJobs().length).toBe(1);
+
+      page.destroy();
+    });
+  });
