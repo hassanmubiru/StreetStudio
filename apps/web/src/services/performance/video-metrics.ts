@@ -196,7 +196,7 @@ export class VideoPerformanceTracker {
    * Get all pending (unfinished) marks. Useful for debugging leaked operations.
    */
   public getPendingOperations(): string[] {
-    return [...this.activeMarks.keys()];
+    return Array.from(this.activeMarks.keys());
   }
 
   /**

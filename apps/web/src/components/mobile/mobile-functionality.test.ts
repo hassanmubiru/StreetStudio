@@ -335,3 +335,33 @@ describe('Touch Gestures and Mobile-Specific Interactions', () => {
       handler.destroy();
     });
   });
+
+  describe('gesture event data correctness', () => {
+    it('provides accurate velocity and duration in swipe events', () => {
+      const onSwipe = vi.fn();
+      const handler = new TouchGestureHandler(
+        container,
+        { onSwipe },
+        { swipeThreshold: 50, swipeMinVelocity: 0.1 }
+      );
+
+      container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 100, clientY: 300 }]));
+      vi.advanceTimersByTime(150);
+      container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 250, clientY: 300 }]));
+
+      expect(onSwipe).toHaveBeenCalledTimes(1);
+      const event = onSwipe.mock.calls[0][0];
+      expect(event.deltaX).toBe(150);
+      expect(event.deltaY).toBe(0);
+      expect(event.startX).toBe(100);
+      expect(event.startY).toBe(300);
+      expect(event.endX).toBe(250);
+      expect(event.endY).toBe(300);
+      expect(event.duration).toBeGreaterThan(0);
+      expect(event.velocity).toBeGreaterThan(0);
+      handler.destroy();
+    });
+
+    it('provides correct start and end coordinates in tap events', () => {
+      const onTap = vi.fn();
+      const handler = new TouchGestureHandler(container, { onTap });
