@@ -485,3 +485,110 @@ export class DataImportPage {
     `;
     return form;
   }
+
+  private renderItemSelection(): HTMLElement {
+    const section = document.createElement('section');
+    section.id = 'item-selection';
+    section.className = 'mb-6 p-6 bg-white border border-gray-200 rounded-lg shadow-sm';
+    section.setAttribute('aria-labelledby', 'items-heading');
+
+    const selectedCount = this.getSelectedItemCount();
+    const itemRows = this.discoveredItems.map(item => `
+      <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0" data-item-id="${item.id}">
+        <div class="flex items-center gap-3">
+          <input type="checkbox" class="item-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-item-id="${item.id}" ${item.selected ? 'checked' : ''} aria-label="Select ${this.escapeHtml(item.title)}" />
+          ${item.thumbnail ? `<img src="${this.escapeHtml(item.thumbnail)}" alt="" class="w-10 h-7 object-cover rounded" />` : ''}
+          <div>
+            <span class="text-sm font-medium text-gray-900">${this.escapeHtml(item.title)}</span>
+            <span class="text-xs text-gray-500 ml-2">${item.type}${item.duration ? ` • ${formatImportDuration(item.duration)}` : ''}${item.size ? ` • ${formatFileSize(item.size)}` : ''}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    section.innerHTML = `
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="items-heading" class="text-lg font-medium text-gray-900">Discovered Items (${this.discoveredItems.length})</h2>
+        <div class="flex items-center gap-2">
+          <button id="btn-select-all" type="button" class="text-xs text-blue-600 hover:text-blue-800 focus:outline-none">Select All</button>
+          <span class="text-gray-300">|</span>
+          <button id="btn-deselect-all" type="button" class="text-xs text-blue-600 hover:text-blue-800 focus:outline-none">Deselect All</button>
+        </div>
+      </div>
+      <div class="max-h-64 overflow-y-auto">${itemRows}</div>
+      <p id="import-error" class="mt-2 text-sm text-red-600 hidden" role="alert"></p>
+      <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+        <span class="text-sm text-gray-600">${selectedCount} item${selectedCount !== 1 ? 's' : ''} selected</span>
+        <button id="btn-start-import" type="button" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2" ${selectedCount === 0 ? 'disabled' : ''}>Start Import</button>
+      </div>
+    `;
+    return section;
+  }
+
+  private renderJobHistory(): HTMLElement {
+    const section = document.createElement('section');
+    section.id = 'import-history';
+    section.setAttribute('aria-labelledby', 'history-heading');
+
+    if (this.importJobs.length === 0) {
+      section.innerHTML = `
+        <h2 id="history-heading" class="text-lg font-medium text-gray-900 mb-4">Import History</h2>
+        <div class="text-center py-12 bg-white border border-gray-200 rounded-lg">
+          <h3 class="text-sm font-medium text-gray-900">No imports yet</h3>
+          <p class="mt-1 text-sm text-gray-500">Start an import to migrate content from other platforms.</p>
+        </div>
+      `;
+      return section;
+    }
+
+    const jobCards = this.importJobs.map(job => {
+      const progress = calculateImportProgress(job);
+      const statusColor = getImportStatusColor(job.status);
+      const platformInfo = getImportPlatformInfo(job.platform);
+      const isActive = job.status === 'importing' || job.status === 'validating';
+
+      return `
+        <div class="p-4 bg-white border border-gray-200 rounded-lg" data-job-id="${job.id}">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <span class="text-sm font-medium text-gray-900">${this.escapeHtml(platformInfo.label)} Import</span>
+              <span class="inline-flex items-center ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">${job.status}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              ${isActive ? `<button type="button" class="btn-cancel-import px-2 py-1 text-xs font-medium text-red-700 bg-red-50 rounded hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500" data-job-id="${job.id}" aria-label="Cancel import">Cancel</button>` : ''}
+              <button type="button" class="btn-refresh-job px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500" data-job-id="${job.id}" aria-label="Refresh status">Refresh</button>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 mb-1">
+            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Import progress">
+              <div class="h-full bg-blue-500 rounded-full transition-all" style="width: ${progress}%"></div>
+            </div>
+            <span class="text-xs text-gray-600">${progress}%</span>
+          </div>
+          <p class="text-xs text-gray-500">${job.completedItems}/${job.totalItems} items completed${job.failedItems > 0 ? ` • ${job.failedItems} failed` : ''}</p>
+          ${job.error ? `<p class="text-xs text-red-600 mt-1">${this.escapeHtml(job.error)}</p>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    section.innerHTML = `
+      <h2 id="history-heading" class="text-lg font-medium text-gray-900 mb-4">Import History</h2>
+      <div class="space-y-3">${jobCards}</div>
+    `;
+    return section;
+  }
+
+  private showError(elementId: string, message: string): void {
+    const el = this.element.querySelector(`#${elementId}`);
+    if (el) {
+      el.textContent = message;
+      el.classList.remove('hidden');
+    }
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+}

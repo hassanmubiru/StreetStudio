@@ -825,6 +825,9 @@ describe('PushNotificationService', () => {
       requestPermission: vi.fn(() => Promise.resolve('granted')),
     });
 
+    // Mock fetch for subscription registration
+    (global.fetch as any) = vi.fn(() => Promise.resolve({ ok: true }));
+
     const mockSub = {
       endpoint: 'https://push.example.com/sub/123',
       expirationTime: null,
@@ -843,7 +846,7 @@ describe('PushNotificationService', () => {
     };
 
     const service = new PushNotificationService({
-      vapidPublicKey: 'BNhJcX-bXwKEg3P1n3gE3rKa8tO93Y_us-cF4eFoSHPphHhg1JWRh',
+      vapidPublicKey: 'BNhJcXbXwKEg3P1n3gE3rKa8tO93Yus',
       subscriptionEndpoint: '/api/push/subscribe',
     });
 
