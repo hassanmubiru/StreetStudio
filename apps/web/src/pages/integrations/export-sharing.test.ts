@@ -324,3 +324,46 @@ describe('Utility Functions', () => {
     });
   });
 });
+
+// --- Component Tests ---
+
+describe('ExportSharingPage', () => {
+  let page: ExportSharingPage;
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    page?.destroy();
+    if (container.parentNode) {
+      document.body.removeChild(container);
+    }
+  });
+
+  describe('Initialization', () => {
+    it('should create page element with correct attributes', () => {
+      page = new ExportSharingPage();
+      const el = page.getElement();
+      expect(el).toBeInstanceOf(HTMLElement);
+      expect(el.getAttribute('data-page')).toBe('export-sharing');
+      expect(el.getAttribute('data-main-content')).toBe('');
+    });
+
+    it('should display heading', () => {
+      page = new ExportSharingPage();
+      const el = page.getElement();
+      expect(el.querySelector('h1')?.textContent).toContain('Export & Sharing');
+    });
+
+    it('should render New Export button', () => {
+      page = new ExportSharingPage();
+      const el = page.getElement();
+      const btn = el.querySelector('#btn-new-export') as HTMLButtonElement;
+      expect(btn).toBeTruthy();
+      expect(btn.textContent).toContain('New Export');
+      expect(btn.getAttribute('aria-label')).toContain('export');
+    });
+  });

@@ -357,3 +357,61 @@ describe('WebhookConfigurationPage', () => {
       expect(intervalSelect).toBeTruthy();
       expect(intervalSelect.options.length).toBe(RETRY_INTERVAL_OPTIONS.length);
     });
+
+    it('should hide form when Cancel is clicked', () => {
+      page = new WebhookConfigurationPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const cancelBtn = el.querySelector('#btn-cancel-create') as HTMLButtonElement;
+      cancelBtn.click();
+
+      expect(page.isCreateFormVisible()).toBe(false);
+      expect(el.querySelector('#webhook-form')).toBeFalsy();
+    });
+
+    it('should update URL on input', () => {
+      page = new WebhookConfigurationPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const input = el.querySelector('#webhook-url-input') as HTMLInputElement;
+      input.value = 'https://test.com/hook';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(page.getCreateFormData().url).toBe('https://test.com/hook');
+    });
+
+    it('should toggle events on checkbox change', () => {
+      page = new WebhookConfigurationPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const checkbox = el.querySelector('.event-checkbox[value="video.created"]') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getCreateFormData().events).toContain('video.created');
+
+      checkbox.checked = false;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getCreateFormData().events).not.toContain('video.created');
+    });
+
+    it('should show error for empty URL on submit', () => {
+      page = new WebhookConfigurationPage({ callbacks: createMockCallbacks() });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const submitBtn = el.querySelector('#btn-submit-create') as HTMLButtonElement;
+      submitBtn.click();
+
+      const urlError = el.querySelector('#url-error');
+      expect(urlError?.classList.contains('hidden')).toBe(false);
+      expect(urlError?.textContent).toContain('required');
+    });
