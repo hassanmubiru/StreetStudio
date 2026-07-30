@@ -415,3 +415,63 @@ describe('WebhookConfigurationPage', () => {
       expect(urlError?.classList.contains('hidden')).toBe(false);
       expect(urlError?.textContent).toContain('required');
     });
+
+    it('should show error when no events selected', () => {
+      page = new WebhookConfigurationPage({ callbacks: createMockCallbacks() });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      // Set URL but no events
+      const input = el.querySelector('#webhook-url-input') as HTMLInputElement;
+      input.value = 'https://example.com/hook';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const submitBtn = el.querySelector('#btn-submit-create') as HTMLButtonElement;
+      submitBtn.click();
+
+      const eventsError = el.querySelector('#events-error');
+      expect(eventsError?.classList.contains('hidden')).toBe(false);
+      expect(eventsError?.textContent).toContain('event type');
+    });
+
+    it('should display event filter input', () => {
+      page = new WebhookConfigurationPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const filterInput = el.querySelector('#event-filter-input') as HTMLInputElement;
+      expect(filterInput).toBeTruthy();
+      expect(filterInput.getAttribute('aria-label')).toContain('Filter event types');
+    });
+  });
+
+  describe('Webhook Creation', () => {
+    it('should call onCreateWebhook with form data', async () => {
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ callbacks });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      // Fill URL
+      const urlInput = el.querySelector('#webhook-url-input') as HTMLInputElement;
+      urlInput.value = 'https://api.example.com/hooks';
+      urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Select event
+      const checkbox = el.querySelector('.event-checkbox[value="video.created"]') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await page.createWebhook();
+
+      expect(callbacks.onCreateWebhook).toHaveBeenCalledWith({
+        url: 'https://api.example.com/hooks',
+        description: '',
+        events: ['video.created'],
+        maxRetries: 5,
+        retryIntervalSeconds: 60,
+      });
+    });

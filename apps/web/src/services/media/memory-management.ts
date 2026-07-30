@@ -384,7 +384,7 @@ export class VideoSessionMemoryManager {
   private enforceResourceLimits(type: ResourceHandle['type']): void {
     if (type !== 'video-buffer') return;
 
-    const buffers = [...this.resources.entries()]
+    const buffers = Array.from(this.resources.entries())
       .filter(([, r]) => r.type === 'video-buffer')
       .sort(([, a], [, b]) => a.lastAccessedAt - b.lastAccessedAt);
 
