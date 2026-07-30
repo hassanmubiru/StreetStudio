@@ -231,10 +231,9 @@ export class PushNotificationService {
         badge: payload.badge || '/icons/badge-72.png',
         tag: payload.tag,
         data: payload.data,
-        actions: payload.actions,
         requireInteraction: payload.requireInteraction,
-      });
-    } else if ('Notification' in window) {
+      } as NotificationOptions);
+    } else if ('Notification' in globalThis) {
       // Fallback to basic Notification API
       new Notification(payload.title, {
         body: payload.body,
