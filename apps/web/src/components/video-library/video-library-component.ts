@@ -81,6 +81,10 @@ export class VideoLibraryComponent {
     content.setAttribute('data-video-content', '');
     container.appendChild(content);
     
+    // Assign the element reference before rendering so that renderVideoContent
+    // (which locates the content area via this.element) can populate it during
+    // initial construction.
+    this.element = container;
     this.renderVideoContent();
     
     return container;

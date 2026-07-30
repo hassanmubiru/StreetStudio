@@ -3,7 +3,7 @@
  * Tests for Requirements 4.3, 4.7, 4.9, 4.10
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { VideoLibraryComponent, type VideoLibraryState, type ViewLayout } from './video-library-component.js';
 import type { VideoDto } from '@streetstudio/shared';
 
@@ -23,6 +23,10 @@ describe('VideoLibraryComponent', () => {
 
   beforeEach(() => {
     component = new VideoLibraryComponent();
+    // The component wires up its interactions using document-level event
+    // delegation, so its element must be attached to the document for
+    // dispatched click/change/input events to reach those handlers.
+    document.body.appendChild(component.getElement());
     mockVideos = [
       {
         id: 'video-1',
@@ -43,6 +47,13 @@ describe('VideoLibraryComponent', () => {
         createdAt: '2024-01-14T15:45:00Z'
       }
     ];
+  });
+
+  afterEach(() => {
+    const el = component.getElement();
+    if (el.parentNode) {
+      el.parentNode.removeChild(el);
+    }
   });
 
   describe('Component Creation', () => {
