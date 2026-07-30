@@ -548,6 +548,10 @@ class UploadSession {
         await this.uploadChunkWithRetry(chunk, uploadId, uploadUrl);
         
         this.completedChunks.push(chunk.index);
+        // Recompute progress now that the chunk is recorded as completed so
+        // the final onProgress callback reflects 100% once all chunks finish.
+        this.uploadedBytes = this.calculateUploadedBytes();
+        this.updateProgress();
         this.options.onChunkComplete?.(chunk.index, this.chunks.length);
       }
 

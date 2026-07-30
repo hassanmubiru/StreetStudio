@@ -22,29 +22,29 @@ describe('ActivityFeed', () => {
     mockNotifications = [
       {
         id: 'notif-1',
-        message: 'John Doe commented on your video',
-        type: 'comment',
-        read: false,
-        createdAt: '2024-01-01T12:00:00Z',
-        metadata: { videoId: 'video-123' }
+        memberId: 'member-1',
+        eventType: 'comment',
+        sourceResourceId: 'video-123',
+        createdAt: '2024-01-01T12:00:00Z'
+        // no readAt => unread
       },
       {
         id: 'notif-2',
-        message: 'You were invited to Project Alpha',
-        type: 'project_invite',
-        read: true,
+        memberId: 'member-1',
+        eventType: 'project_invite',
+        sourceResourceId: 'project-456',
         createdAt: '2024-01-01T11:30:00Z',
-        metadata: { projectId: 'project-456' }
+        readAt: '2024-01-01T11:35:00Z' // read
       },
       {
         id: 'notif-3',
-        message: 'Your video is ready for viewing',
-        type: 'video_ready',
-        read: false,
-        createdAt: '2024-01-01T11:00:00Z',
-        metadata: { videoId: 'video-789' }
+        memberId: 'member-1',
+        eventType: 'video_ready',
+        sourceResourceId: 'video-789',
+        createdAt: '2024-01-01T11:00:00Z'
+        // no readAt => unread
       }
-    ] as unknown as NotificationDto[];
+    ] satisfies NotificationDto[];
 
     // Setup DOM
     document.body.innerHTML = '<div id="test-container"></div>';
@@ -96,12 +96,13 @@ describe('ActivityFeed', () => {
       activityFeed = new ActivityFeed(mockNotifications);
     });
 
-    it('should render notification messages correctly', () => {
+    it('should render notification content for each notification', () => {
       const element = activityFeed.getElement();
       
-      expect(element.textContent).toContain('John Doe commented on your video');
-      expect(element.textContent).toContain('You were invited to Project Alpha');
-      expect(element.textContent).toContain('Your video is ready for viewing');
+      // The component renders the notification eventType as its content
+      expect(element.textContent).toContain('comment');
+      expect(element.textContent).toContain('project_invite');
+      expect(element.textContent).toContain('video_ready');
     });
 
     it('should show unread indicators for unread notifications', () => {
