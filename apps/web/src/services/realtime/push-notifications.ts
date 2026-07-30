@@ -145,7 +145,7 @@ export class PushNotificationService {
 
       this.subscription = await this.serviceWorkerRegistration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey,
+        applicationServerKey: applicationServerKey as BufferSource,
       });
 
       const subscriptionInfo = this.serializeSubscription(this.subscription);
