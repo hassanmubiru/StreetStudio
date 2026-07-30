@@ -5,7 +5,21 @@
  * error categorization, and configurable exponential backoff.
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// Mock logger before importing module
+vi.mock('../../app/client-logger.js', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    fatal: vi.fn(),
+  },
+}));
+
 import { NetworkErrorHandler, type NetworkErrorCategory, type RetryConfig } from './network-error-handler.js';
 
 // Mock fetch
