@@ -169,12 +169,13 @@ function delay(ms: number): Promise<void> {
  * Custom error class for module loading failures.
  */
 export class ModuleLoadError extends Error {
-  public readonly cause?: Error;
+  override readonly name = 'ModuleLoadError';
+  override readonly cause?: Error;
 
   constructor(message: string, cause?: Error) {
-    super(message);
-    this.name = 'ModuleLoadError';
-    this.cause = cause;
+    super(message, { cause });
+    // Restore prototype chain
+    Object.setPrototypeOf(this, ModuleLoadError.prototype);
   }
 }
 

@@ -93,7 +93,7 @@ export class MobileNotificationManager {
    * Checks if push notifications (via service worker) are supported.
    */
   public isPushSupported(): boolean {
-    return 'PushManager' in window && 'serviceWorker' in navigator;
+    return !!((window as any).PushManager) && 'serviceWorker' in navigator;
   }
 
   /**

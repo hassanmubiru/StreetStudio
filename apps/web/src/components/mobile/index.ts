@@ -1,52 +1,44 @@
 /**
- * Mobile-Specific Features
+ * Mobile-Optimized Interface Components
  * 
- * Exports all mobile-specific functionality including pull-to-refresh,
- * camera access, photo library integration, and mobile notifications.
+ * Touch-friendly components for mobile devices including:
+ * - Mobile video player with gesture controls
+ * - Touch gesture detection handler
+ * - Mobile comment input with keyboard optimization
+ * - Swipe actions for list items
  * 
- * Requirements: 10.6, 10.7, 10.8, 10.9
+ * Requirements: 10.4, 10.5
  */
 
-export {
-  PullToRefresh,
-  PullToRefreshCSS,
-  setupPullToRefreshCSS,
-  type PullToRefreshOptions,
-  type PullToRefreshState,
-} from './pull-to-refresh.js';
+export { TouchGestureHandler } from './touch-gesture-handler.js';
+export type {
+  GestureEvent,
+  PanEvent,
+  SwipeDirection,
+  GestureType,
+  TouchGestureOptions,
+  TouchGestureCallbacks,
+} from './touch-gesture-handler.js';
 
-export {
-  isCameraAvailable,
-  isVideoCaptureAvailable,
-  getCameraPermissionState,
-  requestCameraAccess,
-  capturePhotoNative,
-  captureVideoNative,
-  releaseCamera,
-  CameraError,
-  type CameraOptions,
-  type CaptureResult,
-  type CameraPermissionState,
-} from './camera-access.js';
+export { MobileVideoPlayer } from './mobile-video-player.js';
+export type {
+  MobilePlayerOptions,
+  MobilePlayerCallbacks,
+  MobilePlayerState,
+} from './mobile-video-player.js';
 
-export {
-  openPhotoLibrary,
-  revokeMediaPreviews,
-  prepareForUpload,
-  getThumbnailDimensions,
-  PhotoLibraryError,
-  type PhotoLibraryOptions,
-  type SelectedMedia,
-  type PhotoLibraryResult,
-} from './photo-library.js';
+export { MobileCommentInput } from './mobile-comment-input.js';
+export type {
+  MobileCommentInputOptions,
+  MobileCommentInputCallbacks,
+  MobileCommentInputState,
+} from './mobile-comment-input.js';
 
-export {
-  MobileNotificationManager,
-  urlBase64ToUint8Array,
-  NotificationError,
-  type NotificationOptions,
-  type NotificationAction,
-  type NotificationPermissionState,
-  type PushSubscriptionInfo,
-  type NotificationEventHandler,
-} from './mobile-notifications.js';
+export { SwipeableItem, SwipeActionsList } from './swipe-actions.js';
+export type {
+  SwipeAction,
+  SwipeActionType,
+  SwipeActionsOptions,
+  SwipeActionsCallbacks,
+  SwipeableItemOptions,
+} from './swipe-actions.js';

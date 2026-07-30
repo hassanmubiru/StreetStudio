@@ -13,15 +13,6 @@ import {
   NotificationError,
 } from './mobile-notifications.js';
 
-// Mock Notification API
-const MockNotification = {
-  permission: 'default' as NotificationPermission,
-  requestPermission: vi.fn(),
-};
-
-// Use vi.stubGlobal for proper test isolation
-vi.stubGlobal('Notification', MockNotification);
-
 // Mock PushManager
 const mockPushSubscription = {
   endpoint: 'https://push.example.com/subscription/123',
@@ -48,12 +39,50 @@ const mockRegistration = {
   active: { state: 'activated' },
 };
 
+// Mock Notification class
+class MockNotificationClass {
+  static permission: NotificationPermission = 'default';
+  static requestPermission = vi.fn().mockResolvedValue('granted');
+
+  title: string;
+  body?: string;
+  icon?: string;
+  badge?: string;
+  tag?: string;
+  requireInteraction?: boolean;
+  silent?: boolean;
+  data?: unknown;
+  onclick: ((ev: Event) => void) | null = null;
+  onclose: ((ev: Event) => void) | null = null;
+  onerror: ((ev: Event) => void) | null = null;
+
+  constructor(title: string, options?: NotificationOptions & { data?: unknown }) {
+    this.title = title;
+    this.body = options?.body;
+    this.icon = options?.icon;
+    this.badge = options?.badge;
+    this.tag = options?.tag;
+    this.requireInteraction = options?.requireInteraction;
+    this.silent = options?.silent;
+    this.data = (options as any)?.data;
+  }
+
+  close() {}
+}
+
 describe('Mobile Notifications', () => {
   let manager: MobileNotificationManager;
 
   beforeEach(() => {
-    MockNotification.permission = 'default';
-    MockNotification.requestPermission.mockResolvedValue('granted');
+    // Set Notification as configurable so tests can override it
+    Object.defineProperty(window, 'Notification', {
+      value: MockNotificationClass,
+      writable: true,
+      configurable: true,
+    });
+
+    MockNotificationClass.permission = 'default';
+    MockNotificationClass.requestPermission.mockResolvedValue('granted');
     mockPushManager.subscribe.mockClear();
     mockPushManager.getSubscription.mockClear();
     mockPushSubscription.unsubscribe.mockClear();
@@ -62,6 +91,7 @@ describe('Mobile Notifications', () => {
     // Mock serviceWorker
     Object.defineProperty(navigator, 'serviceWorker', {
       writable: true,
+      configurable: true,
       value: {
         register: vi.fn().mockResolvedValue(mockRegistration),
         ready: Promise.resolve(mockRegistration),
@@ -69,13 +99,23 @@ describe('Mobile Notifications', () => {
     });
 
     // Mock PushManager on window
-    (window as any).PushManager = {};
+    Object.defineProperty(window, 'PushManager', {
+      value: {},
+      writable: true,
+      configurable: true,
+    });
 
     manager = new MobileNotificationManager();
   });
 
   afterEach(() => {
     manager.destroy();
+    // Restore Notification
+    Object.defineProperty(window, 'Notification', {
+      value: MockNotificationClass,
+      writable: true,
+      configurable: true,
+    });
   });
 
   describe('isSupported', () => {
@@ -84,13 +124,14 @@ describe('Mobile Notifications', () => {
     });
 
     it('returns false when Notification API is not available', () => {
-      const original = (window as any).Notification;
-      Object.defineProperty(window, 'Notification', { value: undefined, writable: true, configurable: true });
+      Object.defineProperty(window, 'Notification', {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      });
 
       const mgr = new MobileNotificationManager();
       expect(mgr.isSupported()).toBe(false);
-
-      Object.defineProperty(window, 'Notification', { value: original, writable: true, configurable: true });
     });
   });
 
@@ -100,76 +141,79 @@ describe('Mobile Notifications', () => {
     });
 
     it('returns false when PushManager is not available', () => {
-      const original = (window as any).PushManager;
-      delete (window as any).PushManager;
+      Object.defineProperty(window, 'PushManager', {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      });
 
       const mgr = new MobileNotificationManager();
       expect(mgr.isPushSupported()).toBe(false);
-
-      (window as any).PushManager = original;
     });
   });
 
   describe('getPermissionState', () => {
     it('returns "default" when permission has not been decided', () => {
-      MockNotification.permission = 'default';
+      MockNotificationClass.permission = 'default';
       expect(manager.getPermissionState()).toBe('default');
     });
 
     it('returns "granted" when permission is granted', () => {
-      MockNotification.permission = 'granted';
+      MockNotificationClass.permission = 'granted';
       expect(manager.getPermissionState()).toBe('granted');
     });
 
     it('returns "denied" when permission is denied', () => {
-      MockNotification.permission = 'denied';
+      MockNotificationClass.permission = 'denied';
       expect(manager.getPermissionState()).toBe('denied');
     });
 
     it('returns "unsupported" when Notification API is not available', () => {
-      const original = (window as any).Notification;
-      Object.defineProperty(window, 'Notification', { value: undefined, writable: true, configurable: true });
+      Object.defineProperty(window, 'Notification', {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      });
 
       const mgr = new MobileNotificationManager();
       expect(mgr.getPermissionState()).toBe('unsupported');
-
-      Object.defineProperty(window, 'Notification', { value: original, writable: true, configurable: true });
     });
   });
 
   describe('requestPermission', () => {
     it('returns "unsupported" when Notification API is not available', async () => {
-      const original = (window as any).Notification;
-      Object.defineProperty(window, 'Notification', { value: undefined, writable: true, configurable: true });
+      Object.defineProperty(window, 'Notification', {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      });
 
       const mgr = new MobileNotificationManager();
       const result = await mgr.requestPermission();
       expect(result).toBe('unsupported');
-
-      Object.defineProperty(window, 'Notification', { value: original, writable: true, configurable: true });
     });
 
     it('returns current permission if already granted', async () => {
-      MockNotification.permission = 'granted';
+      MockNotificationClass.permission = 'granted';
       const result = await manager.requestPermission();
       expect(result).toBe('granted');
-      expect(MockNotification.requestPermission).not.toHaveBeenCalled();
+      expect(MockNotificationClass.requestPermission).not.toHaveBeenCalled();
     });
 
     it('returns current permission if already denied', async () => {
-      MockNotification.permission = 'denied';
+      MockNotificationClass.permission = 'denied';
       const result = await manager.requestPermission();
       expect(result).toBe('denied');
-      expect(MockNotification.requestPermission).not.toHaveBeenCalled();
+      expect(MockNotificationClass.requestPermission).not.toHaveBeenCalled();
     });
 
     it('calls Notification.requestPermission when state is default', async () => {
-      MockNotification.permission = 'default';
-      MockNotification.requestPermission.mockResolvedValue('granted');
+      MockNotificationClass.permission = 'default';
+      MockNotificationClass.requestPermission.mockResolvedValue('granted');
 
       const result = await manager.requestPermission();
       expect(result).toBe('granted');
-      expect(MockNotification.requestPermission).toHaveBeenCalled();
+      expect(MockNotificationClass.requestPermission).toHaveBeenCalled();
     });
   });
 
@@ -186,14 +230,15 @@ describe('Mobile Notifications', () => {
     });
 
     it('returns null when push is not supported', async () => {
-      const original = (window as any).PushManager;
-      delete (window as any).PushManager;
+      Object.defineProperty(window, 'PushManager', {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      });
 
       const mgr = new MobileNotificationManager();
       const registration = await mgr.registerServiceWorker();
       expect(registration).toBeNull();
-
-      (window as any).PushManager = original;
     });
 
     it('calls onError when registration fails', async () => {
@@ -224,8 +269,8 @@ describe('Mobile Notifications', () => {
     it('returns subscription info on success', async () => {
       await manager.registerServiceWorker();
       manager.setVapidKey('test-vapid-key');
-      MockNotification.permission = 'default';
-      MockNotification.requestPermission.mockResolvedValue('granted');
+      MockNotificationClass.permission = 'default';
+      MockNotificationClass.requestPermission.mockResolvedValue('granted');
 
       const result = await manager.subscribeToPush();
 
@@ -238,8 +283,8 @@ describe('Mobile Notifications', () => {
     it('returns null when permission is denied', async () => {
       await manager.registerServiceWorker();
       manager.setVapidKey('test-vapid-key');
-      MockNotification.permission = 'default';
-      MockNotification.requestPermission.mockResolvedValue('denied');
+      MockNotificationClass.permission = 'default';
+      MockNotificationClass.requestPermission.mockResolvedValue('denied');
 
       const result = await manager.subscribeToPush();
       expect(result).toBeNull();
@@ -272,24 +317,25 @@ describe('Mobile Notifications', () => {
 
   describe('showNotification', () => {
     it('returns null when notifications are not supported', async () => {
-      const original = (window as any).Notification;
-      Object.defineProperty(window, 'Notification', { value: undefined, writable: true, configurable: true });
+      Object.defineProperty(window, 'Notification', {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      });
 
       const mgr = new MobileNotificationManager();
       const result = await mgr.showNotification({ title: 'Test', body: 'Body' });
       expect(result).toBeNull();
-
-      Object.defineProperty(window, 'Notification', { value: original, writable: true, configurable: true });
     });
 
     it('returns null when permission is not granted', async () => {
-      MockNotification.permission = 'denied';
+      MockNotificationClass.permission = 'denied';
       const result = await manager.showNotification({ title: 'Test', body: 'Body' });
       expect(result).toBeNull();
     });
 
     it('uses service worker notification when available', async () => {
-      MockNotification.permission = 'granted';
+      MockNotificationClass.permission = 'granted';
       await manager.registerServiceWorker();
 
       await manager.showNotification({
@@ -314,7 +360,7 @@ describe('Mobile Notifications', () => {
     });
 
     it('creates standard Notification when no service worker', async () => {
-      MockNotification.permission = 'granted';
+      MockNotificationClass.permission = 'granted';
 
       const result = await manager.showNotification({
         title: 'Test',
@@ -327,7 +373,7 @@ describe('Mobile Notifications', () => {
     });
 
     it('attaches onClick handler', async () => {
-      MockNotification.permission = 'granted';
+      MockNotificationClass.permission = 'granted';
       const onClick = vi.fn();
       const mgr = new MobileNotificationManager({ onClick });
 
@@ -345,7 +391,7 @@ describe('Mobile Notifications', () => {
 
   describe('setEventHandler', () => {
     it('updates the event handler', async () => {
-      MockNotification.permission = 'granted';
+      MockNotificationClass.permission = 'granted';
       const newHandler = { onClick: vi.fn() };
       manager.setEventHandler(newHandler);
 

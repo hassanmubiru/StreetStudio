@@ -108,7 +108,7 @@ describe('Progressive Loading', () => {
       });
 
       // Simulate intersection
-      const callback = intersectionCallbacks[0];
+      const callback = intersectionCallbacks[0]!;
       callback([{ isIntersecting: true, target: el }]);
 
       // Check that src was set on the full image
@@ -124,7 +124,7 @@ describe('Progressive Loading', () => {
       });
 
       // Simulate non-intersection
-      const callback = intersectionCallbacks[0];
+      const callback = intersectionCallbacks[0]!;
       callback([{ isIntersecting: false, target: el }]);
 
       // Check that src was NOT set
@@ -142,12 +142,14 @@ describe('Progressive Loading', () => {
       });
 
       // Simulate intersection
-      const callback = intersectionCallbacks[0];
+      const callback = intersectionCallbacks[0]!;
       callback([{ isIntersecting: true, target: el }]);
 
       // Simulate image load event
       const fullImg = el.querySelector('.progressive-image__full') as HTMLImageElement;
-      fullImg.onload?.(new Event('load') as any);
+      if (fullImg.onload) {
+        (fullImg.onload as EventListener)(new Event('load'));
+      }
 
       expect(onLoad).toHaveBeenCalled();
       expect(el.classList.contains('progressive-image--loaded')).toBe(true);
@@ -163,12 +165,14 @@ describe('Progressive Loading', () => {
       });
 
       // Simulate intersection
-      const callback = intersectionCallbacks[0];
+      const callback = intersectionCallbacks[0]!;
       callback([{ isIntersecting: true, target: el }]);
 
       // Simulate image error event
       const fullImg = el.querySelector('.progressive-image__full') as HTMLImageElement;
-      fullImg.onerror?.(new Event('error') as any);
+      if (fullImg.onerror) {
+        (fullImg.onerror as EventListener)(new Event('error'));
+      }
 
       expect(onError).toHaveBeenCalled();
       expect(el.classList.contains('progressive-image--error')).toBe(true);
@@ -231,7 +235,7 @@ describe('Progressive Loading', () => {
       });
 
       // Trigger load
-      const callback = intersectionCallbacks[0];
+      const callback = intersectionCallbacks[0]!;
       callback([{ isIntersecting: true, target: el }]);
 
       const fullImg = el.querySelector('.progressive-image__full') as HTMLImageElement;
