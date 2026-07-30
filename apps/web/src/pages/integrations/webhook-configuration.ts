@@ -580,15 +580,21 @@ export class WebhookConfigurationPage {
     const cancelId = mode === 'create' ? 'btn-cancel-create' : 'btn-cancel-edit';
 
     const eventCategories = getEventsByCategory();
-    const filteredCategories = this.eventFilter
-      ? new Map([...eventCategories].map(([cat, events]) => [
-          cat,
-          events.filter(e =>
-            e.label.toLowerCase().includes(this.eventFilter.toLowerCase()) ||
-            e.type.toLowerCase().includes(this.eventFilter.toLowerCase())
-          )
-        ]).filter(([, events]) => events.length > 0))
-      : eventCategories;
+    let filteredCategories: Map<string, typeof AVAILABLE_EVENTS>;
+    if (this.eventFilter) {
+      filteredCategories = new Map<string, typeof AVAILABLE_EVENTS>();
+      for (const [cat, events] of eventCategories) {
+        const filtered = events.filter(e =>
+          e.label.toLowerCase().includes(this.eventFilter.toLowerCase()) ||
+          e.type.toLowerCase().includes(this.eventFilter.toLowerCase())
+        );
+        if (filtered.length > 0) {
+          filteredCategories.set(cat, filtered);
+        }
+      }
+    } else {
+      filteredCategories = eventCategories;
+    }
 
     const eventsHtml = Array.from(filteredCategories.entries()).map(([category, events]) => `
       <fieldset class="mb-3">

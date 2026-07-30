@@ -1058,8 +1058,12 @@ describe('ExportSharingPage', () => {
       const el = page.getElement();
       container.appendChild(el);
 
-      const progressBar = el.querySelector('[role="progressbar"]');
-      expect(progressBar?.getAttribute('aria-label')).toContain('My Video');
+      const progressBars = el.querySelectorAll('[role="progressbar"]');
+      const jobBar = Array.from(progressBars).find(bar =>
+        bar.getAttribute('aria-label')?.includes('My Video')
+      );
+      expect(jobBar).toBeTruthy();
+      expect(jobBar?.getAttribute('aria-label')).toContain('My Video');
     });
 
     it('should have aria-label on video selection checkboxes', () => {
