@@ -41,6 +41,18 @@ import {
   repositoryContentStore,
   type FolderRef,
 } from "@streetstudio/projects";
+import {
+  NotificationService,
+  repositoryNotificationStore,
+  repositoryNotificationPreferenceStore,
+  toNotificationDto,
+} from "@streetstudio/notifications";
+import {
+  AnalyticsService,
+  repositoryViewEventStore,
+  repositoryVideoOrganizationResolver,
+  permissionAnalyticsAuthorizer,
+} from "@streetstudio/analytics";
 import type { OrganizationRecord } from "@streetstudio/database";
 import { isUuid } from "@streetstudio/database";
 import type { Uuid } from "@streetstudio/shared";
