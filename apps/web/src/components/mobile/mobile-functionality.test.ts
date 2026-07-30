@@ -239,3 +239,36 @@ describe('Responsive Layout Behavior Across Breakpoints', () => {
       expect(ResponsiveCSS).toContain(`min-height: ${MIN_TOUCH_TARGET}px`);
     });
   });
+
+  describe('touch device detection', () => {
+    it('detects touch device via coarse pointer media query', () => {
+      matchMediaMock.mockImplementation((query: string) => ({
+        matches: query === '(pointer: coarse)',
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+
+      expect(isTouchDevice()).toBe(true);
+    });
+
+    it('returns false for non-touch devices', () => {
+      matchMediaMock.mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+
+      expect(isTouchDevice()).toBe(false);
+    });
+  });
+});
