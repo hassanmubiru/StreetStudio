@@ -165,3 +165,124 @@ describe('Utility Functions', () => {
     });
   });
 });
+
+describe('ApiKeyManagementPage', () => {
+  let page: ApiKeyManagementPage;
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    page?.destroy();
+    if (container.parentNode) {
+      document.body.removeChild(container);
+    }
+  });
+
+  describe('Initialization', () => {
+    it('should create page element with correct structure', () => {
+      page = new ApiKeyManagementPage();
+      const el = page.getElement();
+
+      expect(el).toBeInstanceOf(HTMLElement);
+      expect(el.getAttribute('data-page')).toBe('api-key-management');
+      expect(el.getAttribute('data-main-content')).toBe('');
+    });
+
+    it('should display heading and description', () => {
+      page = new ApiKeyManagementPage();
+      const el = page.getElement();
+
+      expect(el.querySelector('h1')?.textContent).toContain('API Keys');
+      expect(el.textContent).toContain('programmatic access');
+    });
+
+    it('should render generate button', () => {
+      page = new ApiKeyManagementPage();
+      const el = page.getElement();
+
+      const btn = el.querySelector('#btn-create-key') as HTMLButtonElement;
+      expect(btn).toBeTruthy();
+      expect(btn.textContent).toContain('Generate New Key');
+      expect(btn.getAttribute('aria-label')).toContain('Generate');
+    });
+
+    it('should show empty state when no keys', () => {
+      page = new ApiKeyManagementPage({ keys: [] });
+      const el = page.getElement();
+
+      expect(el.textContent).toContain('No API keys');
+      expect(el.textContent).toContain('Generate a key');
+    });
+
+    it('should render key table when keys exist', () => {
+      const keys = [createTestKey()];
+      page = new ApiKeyManagementPage({ keys });
+      const el = page.getElement();
+
+      const table = el.querySelector('table');
+      expect(table).toBeTruthy();
+      expect(table?.getAttribute('aria-label')).toContain('API keys');
+    });
+  });
+
+  describe('Key Display with Partial Masking', () => {
+    it('should display masked key in table', () => {
+      const key = createTestKey({ maskedKey: '••••••••••••abcd' });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const codeEl = el.querySelector('code');
+      expect(codeEl?.textContent).toContain('abcd');
+    });
+
+    it('should display key name', () => {
+      const key = createTestKey({ name: 'Production API' });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('Production API');
+    });
+
+    it('should display scope count', () => {
+      const key = createTestKey({ scopes: ['read:videos', 'write:videos', 'read:projects'] });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('3 scopes');
+    });
+
+    it('should display singular scope for single scope', () => {
+      const key = createTestKey({ scopes: ['read:videos'] });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('1 scope');
+      expect(el.textContent).not.toContain('1 scopes');
+    });
+
+    it('should display status badge', () => {
+      const key = createTestKey({ status: 'active' });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('Active');
+    });
+
+    it('should display revoked status', () => {
+      const key = createTestKey({ status: 'revoked' });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('Revoked');
+    });
+  });

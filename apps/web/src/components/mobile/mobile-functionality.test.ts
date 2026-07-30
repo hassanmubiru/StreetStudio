@@ -272,3 +272,30 @@ describe('Responsive Layout Behavior Across Breakpoints', () => {
     });
   });
 });
+
+
+// ===========================================================================
+// Section 2: Touch Gestures and Mobile-Specific Interactions
+// ===========================================================================
+
+describe('Touch Gestures and Mobile-Specific Interactions', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    container = document.createElement('div');
+    container.style.width = '375px';
+    container.style.height = '667px';
+    document.body.appendChild(container);
+    Object.defineProperty(container, 'getBoundingClientRect', {
+      value: () => ({
+        left: 0, top: 0, width: 375, height: 667,
+        right: 375, bottom: 667, x: 0, y: 0, toJSON: () => {},
+      }),
+    });
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+    vi.useRealTimers();
+  });

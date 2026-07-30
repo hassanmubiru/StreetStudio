@@ -131,11 +131,12 @@ export function observeINP(callback: WebVitalCallback): (() => void) | undefined
       const entries = entryList.getEntries() as PerformanceEventTiming[];
       for (const entry of entries) {
         // Group by interactionId — INP considers the worst interaction
-        if (entry.interactionId && entry.interactionId > 0) {
-          const existing = interactions.get(entry.interactionId) ?? 0;
+        const interactionId = (entry as any).interactionId as number | undefined;
+        if (interactionId && interactionId > 0) {
+          const existing = interactions.get(interactionId) ?? 0;
           const duration = entry.duration;
           if (duration > existing) {
-            interactions.set(entry.interactionId, duration);
+            interactions.set(interactionId, duration);
           }
         }
       }
