@@ -446,3 +446,58 @@ describe('ExportSharingPage', () => {
       expect(page.isExportFormVisible()).toBe(false);
     });
   });
+
+  describe('Export Form - Format and Quality', () => {
+    it('should display format radio buttons', () => {
+      page = new ExportSharingPage({ videos: [createTestVideo()] });
+      page.showExport();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const radios = el.querySelectorAll('.format-radio');
+      expect(radios.length).toBe(FORMAT_OPTIONS.length);
+    });
+
+    it('should display quality select', () => {
+      page = new ExportSharingPage({ videos: [createTestVideo()] });
+      page.showExport();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const select = el.querySelector('#export-quality') as HTMLSelectElement;
+      expect(select).toBeTruthy();
+      expect(select.options.length).toBe(QUALITY_OPTIONS.length);
+    });
+
+    it('should display resolution select', () => {
+      page = new ExportSharingPage({ videos: [createTestVideo()] });
+      page.showExport();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const select = el.querySelector('#export-resolution') as HTMLSelectElement;
+      expect(select).toBeTruthy();
+      expect(select.options.length).toBe(RESOLUTION_OPTIONS.length);
+    });
+
+    it('should update export format', () => {
+      page = new ExportSharingPage({ videos: [createTestVideo()] });
+      page.showExport();
+      page.setExportFormat('webm');
+      expect(page.getExportOptions().format).toBe('webm');
+    });
+
+    it('should update export quality', () => {
+      page = new ExportSharingPage({ videos: [createTestVideo()] });
+      page.showExport();
+      page.setExportQuality('low');
+      expect(page.getExportOptions().quality).toBe('low');
+    });
+
+    it('should update export resolution', () => {
+      page = new ExportSharingPage({ videos: [createTestVideo()] });
+      page.showExport();
+      page.setExportResolution('4k');
+      expect(page.getExportOptions().resolution).toBe('4k');
+    });
+  });

@@ -475,3 +475,45 @@ describe('WebhookConfigurationPage', () => {
         retryIntervalSeconds: 60,
       });
     });
+
+    it('should add webhook to list after creation', async () => {
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ callbacks });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const urlInput = el.querySelector('#webhook-url-input') as HTMLInputElement;
+      urlInput.value = 'https://new.example.com/hook';
+      urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const checkbox = el.querySelector('.event-checkbox[value="video.ready"]') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await page.createWebhook();
+
+      expect(page.getWebhooks().length).toBe(1);
+      expect(page.isCreateFormVisible()).toBe(false);
+    });
+
+    it('should hide form after successful creation', async () => {
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ callbacks });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const urlInput = el.querySelector('#webhook-url-input') as HTMLInputElement;
+      urlInput.value = 'https://example.com/hook';
+      urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const checkbox = el.querySelector('.event-checkbox[value="video.created"]') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await page.createWebhook();
+
+      expect(page.isCreateFormVisible()).toBe(false);
+    });
+  });
