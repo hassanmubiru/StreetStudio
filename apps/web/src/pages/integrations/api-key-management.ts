@@ -692,3 +692,87 @@ export class ApiKeyManagementPage {
       this.newKeyFullValue = null;
       this.render();
     });
+
+    // Revoke buttons
+    this.element.querySelectorAll('.btn-revoke-key').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const keyId = (e.currentTarget as HTMLElement).dataset.keyId!;
+        this.confirmRevoke = keyId;
+        this.confirmDelete = null;
+        this.render();
+      });
+    });
+
+    // Confirm revoke
+    this.element.querySelectorAll('.btn-confirm-revoke').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const keyId = (e.currentTarget as HTMLElement).dataset.keyId!;
+        this.revokeKey(keyId);
+      });
+    });
+
+    // Cancel revoke
+    this.element.querySelectorAll('.btn-cancel-revoke').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.confirmRevoke = null;
+        this.render();
+      });
+    });
+
+    // Rotate buttons
+    this.element.querySelectorAll('.btn-rotate-key').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const keyId = (e.currentTarget as HTMLElement).dataset.keyId!;
+        this.rotateKey(keyId);
+      });
+    });
+
+    // Delete buttons
+    this.element.querySelectorAll('.btn-delete-key').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const keyId = (e.currentTarget as HTMLElement).dataset.keyId!;
+        this.confirmDelete = keyId;
+        this.confirmRevoke = null;
+        this.render();
+      });
+    });
+
+    // Confirm delete
+    this.element.querySelectorAll('.btn-confirm-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const keyId = (e.currentTarget as HTMLElement).dataset.keyId!;
+        this.deleteKey(keyId);
+      });
+    });
+
+    // Cancel delete
+    this.element.querySelectorAll('.btn-cancel-delete').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.confirmDelete = null;
+        this.render();
+      });
+    });
+  }
+
+  private showError(elementId: string, message: string): void {
+    const el = this.element.querySelector(`#${elementId}`);
+    if (el) {
+      el.textContent = message;
+      el.classList.remove('hidden');
+    }
+  }
+
+  private hideError(elementId: string): void {
+    const el = this.element.querySelector(`#${elementId}`);
+    if (el) {
+      el.textContent = '';
+      el.classList.add('hidden');
+    }
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+}

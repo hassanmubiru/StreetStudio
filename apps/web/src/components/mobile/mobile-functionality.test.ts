@@ -89,3 +89,56 @@ function createTouchEvent(
 // ===========================================================================
 // Section 1: Responsive Layout Behavior Across Breakpoints
 // ===========================================================================
+
+describe('Responsive Layout Behavior Across Breakpoints', () => {
+  describe('breakpoint transitions at boundary values', () => {
+    it('transitions from mobile to tablet at exactly 640px', () => {
+      Object.defineProperty(window, 'innerWidth', { value: 639, writable: true });
+      expect(getCurrentBreakpoint()).toBe('mobile');
+
+      Object.defineProperty(window, 'innerWidth', { value: 640, writable: true });
+      expect(getCurrentBreakpoint()).toBe('tablet');
+    });
+
+    it('transitions from tablet to desktop at exactly 1024px', () => {
+      Object.defineProperty(window, 'innerWidth', { value: 1023, writable: true });
+      expect(getCurrentBreakpoint()).toBe('tablet');
+
+      Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true });
+      expect(getCurrentBreakpoint()).toBe('desktop');
+    });
+
+    it('handles minimum supported width of 320px', () => {
+      Object.defineProperty(window, 'innerWidth', { value: 320, writable: true });
+      expect(getCurrentBreakpoint()).toBe('mobile');
+      expect(isBreakpointActive('mobile')).toBe(true);
+      expect(isBreakpointActive('tablet')).toBe(false);
+      expect(isBreakpointActive('desktop')).toBe(false);
+    });
+
+    it('handles very wide desktop widths', () => {
+      Object.defineProperty(window, 'innerWidth', { value: 2560, writable: true });
+      expect(getCurrentBreakpoint()).toBe('desktop');
+      expect(isBreakpointActive('desktop')).toBe(true);
+    });
+
+    it('handles widths below minimum (e.g., 280px) as mobile', () => {
+      Object.defineProperty(window, 'innerWidth', { value: 280, writable: true });
+      expect(getCurrentBreakpoint()).toBe('mobile');
+    });
+  });
+
+  describe('BreakpointObserver debounces resize events', () => {
+    let observer: BreakpointObserver;
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true });
+      observer = new BreakpointObserver();
+      observer.start();
+    });
+
+    afterEach(() => {
+      observer.destroy();
+      vi.useRealTimers();
+    });
