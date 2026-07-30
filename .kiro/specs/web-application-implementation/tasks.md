@@ -344,7 +344,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Test organization settings and billing interfaces
     - _Requirements: 8.1, 8.3, 8.6_
 
-- [ ] 11. Settings and Profile Management
+- [x] 11. Settings and Profile Management
   - [x] 11.1 Build user profile settings
     - Create profile page with avatar upload and display name editing
     - Implement bio editing with character limits and formatting
@@ -366,14 +366,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Create theme selection (light, dark, system) with preview
     - _Requirements: 9.4, 9.8, 11.4, 11.7_
 
-  - [-] 11.4 Add privacy and data management controls
+  - [x] 11.4 Add privacy and data management controls
     - Create privacy settings with profile visibility controls
     - Build data export functionality with progress tracking
     - Implement data deletion options with confirmation workflows
     - Add activity sharing preferences and history controls
     - _Requirements: 9.5, 9.9_
 
-  - [-] 11.5 Write unit tests for settings management
+  - [x] 11.5 Write unit tests for settings management
     - Test profile editing and preference updates
     - Test security settings and two-factor authentication
     - Test accessibility preferences and theme selection
@@ -398,21 +398,21 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Implement saved searches with bookmark functionality
     - _Requirements: 14.2, 14.7, 14.8_
 
-  - [-] 12.4 Add content-specific search features
+  - [x] 12.4 Add content-specific search features
     - Implement transcript search within videos with timestamp navigation
     - Create project-scoped and organization-wide search options
     - Build natural language and semantic search capabilities
     - Add search result highlighting and context display
     - _Requirements: 14.4, 14.6, 14.9_
 
-  - [-] 12.5 Create search discovery and recommendations
+  - [x] 12.5 Create search discovery and recommendations
     - Build "no results" page with alternative suggestions
     - Implement content discovery recommendations
     - Add popular content and trending search displays
     - Create search analytics and improvement suggestions
     - _Requirements: 14.10_
 
-  - [-] 12.6 Write unit tests for search functionality
+  - [x] 12.6 Write unit tests for search functionality
     - Test global search activation and result display
     - Test advanced filtering and faceted search
     - Test transcript search and content-specific features
