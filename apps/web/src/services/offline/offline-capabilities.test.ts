@@ -129,8 +129,10 @@ describe('ConnectivityStatusManager', () => {
       value: true,
     });
 
-    // Mock fetch for ping
-    (global.fetch as any).mockResolvedValue({ ok: true, status: 200 });
+    // Provide a mock fetch for the connectivity ping. jsdom does not supply a
+    // fetch implementation, so stub only this specific global and restore it
+    // in afterEach.
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200 }));
 
     const mod = await import('./connectivity-status.js');
     ConnectivityStatusManager = mod.ConnectivityStatusManager;
@@ -138,6 +140,7 @@ describe('ConnectivityStatusManager', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('should report online when navigator.onLine is true', () => {
