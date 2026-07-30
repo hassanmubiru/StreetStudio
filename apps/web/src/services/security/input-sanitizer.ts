@@ -16,6 +16,12 @@ const ALLOWED_TAGS = new Set([
   'figure', 'figcaption', 'img', 'hr',
 ]);
 
+/** Tags that should be removed entirely (including their content) */
+const REMOVED_ENTIRELY_TAGS = new Set([
+  'script', 'style', 'noscript', 'object', 'embed', 'applet',
+  'iframe', 'frame', 'frameset', 'form', 'input', 'textarea', 'select',
+]);
+
 /** Attributes that are allowed on any tag */
 const ALLOWED_GLOBAL_ATTRS = new Set([
   'class', 'id', 'title', 'lang', 'dir', 'role',
