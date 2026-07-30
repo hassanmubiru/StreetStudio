@@ -15,6 +15,30 @@ vi.mock('../../stores/workspace-store');
 vi.mock('../../stores/notification-store');
 vi.mock('../../stores/upload-store');
 
+// jsdom returns a fresh localStorage wrapper on each access, so vi.spyOn does
+// not stick. This builds a stable, faithful in-memory Storage backed by a real
+// Map whose methods are spies (optionally overridden), so we can both assert
+// calls and round-trip values. It is a complete key/value store, not a mask.
+function createLocalStorageStub(
+  overrides: Partial<Record<'getItem' | 'setItem' | 'removeItem', (...args: any[]) => any>> = {}
+): Storage {
+  const store = new Map<string, string>();
+  return {
+    getItem: vi.fn(overrides.getItem ?? ((key: string) => (store.has(key) ? store.get(key)! : null))),
+    setItem: vi.fn(overrides.setItem ?? ((key: string, value: string) => {
+      store.set(key, String(value));
+    })),
+    removeItem: vi.fn(overrides.removeItem ?? ((key: string) => {
+      store.delete(key);
+    })),
+    clear: vi.fn(() => store.clear()),
+    key: vi.fn((index: number) => Array.from(store.keys())[index] ?? null),
+    get length() {
+      return store.size;
+    },
+  } as Storage;
+}
+
 describe('Navigation Integration', () => {
   let navigationController: NavigationController;
   let layoutController: LayoutController;
