@@ -496,7 +496,7 @@ export class CollaborationSyncService {
   private emit(event: CollaborationEventType, data: unknown): void {
     const handlers = this.eventListeners.get(event);
     if (!handlers) return;
-    for (const handler of handlers) {
+    for (const handler of Array.from(handlers)) {
       try {
         handler(data);
       } catch {
