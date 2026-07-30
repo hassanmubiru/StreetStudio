@@ -247,7 +247,7 @@ export class ActivityFeed {
 
   private navigateToNotificationTarget(notification: NotificationDto): void {
     if (!notification.sourceResourceId) {
-      window.location.href = '/notifications';
+      // No target resource to navigate to; leave the user where they are.
       return;
     }
 

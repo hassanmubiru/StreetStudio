@@ -1078,6 +1078,11 @@ export class AuthController {
       await oauthConfigService.initiateOAuth(providerId, returnUrl);
       
       logger.info('OAuth flow initiated', { provider: providerId });
+
+      // Clear the loading state once initiation completes. In a real redirect
+      // flow the browser navigates away, but if initiation resolves without a
+      // navigation (e.g. popup flows) the UI must not stay stuck loading.
+      this.setState({ isLoading: false });
       
     } catch (error) {
       const errorMessage = (error as Error).message || 'OAuth authentication failed to start';
@@ -1139,6 +1144,10 @@ export class AuthController {
       await ssoConfigService.initiatSSO(providerId, returnUrl);
       
       logger.info('SSO flow initiated', { provider: providerId });
+
+      // Clear the loading state once initiation completes so the UI does not
+      // remain stuck loading if no navigation occurs.
+      this.setState({ isLoading: false });
       
     } catch (error) {
       const errorMessage = (error as Error).message || 'SSO authentication failed to start';

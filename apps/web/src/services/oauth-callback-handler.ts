@@ -7,6 +7,7 @@
 export interface OAuthCallbackParams {
   code?: string;
   error?: string;
+  error_description?: string;
   state?: string;
   provider?: string;
 }
@@ -19,7 +20,7 @@ export interface OAuthCallbackResult {
 }
 
 export class OAuthCallbackHandler {
-  private static storageKey = 'streetstudio_oauth_error';
+  private static storageKey = 'auth_callback_error';
   private static stateKey = 'streetstudio_oauth_state';
   private static returnUrlKey = 'streetstudio_oauth_return_url';
 
@@ -33,10 +34,35 @@ export class OAuthCallbackHandler {
     return {
       code: urlParams.get('code') || hashParams.get('code') || undefined,
       error: urlParams.get('error') || hashParams.get('error') || undefined,
+      error_description: urlParams.get('error_description') ||
+                         hashParams.get('error_description') || undefined,
       state: urlParams.get('state') || hashParams.get('state') || undefined,
       provider: urlParams.get('provider') || hashParams.get('provider') || 
                 sessionStorage.getItem('oauth_provider') || undefined,
     };
+  }
+
+  /**
+   * Determine whether the current URL is an OAuth/SSO callback (or an auth
+   * page carrying an OAuth error). Used to decide when callback processing
+   * should run.
+   */
+  static isCallbackUrl(): boolean {
+    if (typeof window === 'undefined' || !window.location) {
+      return false;
+    }
+
+    const pathname = window.location.pathname || '';
+    const params = new URLSearchParams(window.location.search || '');
+
+    // Explicit OAuth/SSO callback routes always qualify.
+    if (pathname.includes('/callback')) {
+      return true;
+    }
+
+    // Any page that carries an OAuth authorization code or error is a
+    // callback landing (e.g. the login page showing a provider error).
+    return params.has('code') || params.has('error');
   }
 
   /**
@@ -124,6 +150,25 @@ export class OAuthCallbackHandler {
    * Handle successful redirect after authentication
    */
   static handleSuccessRedirect(returnUrl?: string): void {
+    // Strip sensitive OAuth parameters (code, state, error, etc.) from the
+    // current URL before redirecting so they are not retained in browser
+    // history or leaked via the address bar.
+    try {
+      if (typeof window !== 'undefined' &&
+          window.history &&
+          typeof window.history.replaceState === 'function' &&
+          window.location) {
+        const url = new URL(window.location.href);
+        ['code', 'state', 'error', 'error_description', 'provider'].forEach(param => {
+          url.searchParams.delete(param);
+        });
+        const cleanPath = url.pathname + url.search + url.hash;
+        window.history.replaceState({}, document.title, cleanPath);
+      }
+    } catch (e) {
+      console.warn('Failed to clean up OAuth callback URL:', e);
+    }
+
     window.location.href = returnUrl || '/dashboard';
   }
 

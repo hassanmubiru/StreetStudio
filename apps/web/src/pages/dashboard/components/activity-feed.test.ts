@@ -61,7 +61,7 @@ describe('ActivityFeed', () => {
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
     document.body.innerHTML = '';
   });
 
@@ -327,12 +327,11 @@ describe('ActivityFeed', () => {
     it('should escape HTML in notification messages', () => {
       const maliciousNotifications = [{
         id: 'notif-xss',
-        message: '<script>alert("xss")</script>Test message',
-        type: 'comment',
-        read: false,
-        createdAt: '2024-01-01T12:00:00Z',
-        metadata: { videoId: 'video-123' }
-      }] as unknown as NotificationDto[];
+        memberId: 'member-1',
+        eventType: '<script>alert("xss")</script>Test message',
+        sourceResourceId: 'video-123',
+        createdAt: '2024-01-01T12:00:00Z'
+      }] satisfies NotificationDto[];
       
       activityFeed = new ActivityFeed(maliciousNotifications);
       
@@ -352,12 +351,11 @@ describe('ActivityFeed', () => {
       
       const newNotification = {
         id: 'notif-new',
-        message: 'New notification message',
-        type: 'mention',
-        read: false,
-        createdAt: '2024-01-01T12:30:00Z',
-        metadata: { videoId: 'video-new' }
-      } as unknown as NotificationDto;
+        memberId: 'member-1',
+        eventType: 'mention',
+        sourceResourceId: 'video-new',
+        createdAt: '2024-01-01T12:30:00Z'
+      } satisfies NotificationDto;
       
       activityFeed.addNotification(newNotification);
       
@@ -371,13 +369,13 @@ describe('ActivityFeed', () => {
       const newNotifications = [
         {
           id: 'notif-updated-1',
-          message: 'Updated notification 1',
-          type: 'comment',
-          read: true,
+          memberId: 'member-1',
+          eventType: 'comment',
+          sourceResourceId: 'video-updated',
           createdAt: '2024-01-01T13:00:00Z',
-          metadata: { videoId: 'video-updated' }
+          readAt: '2024-01-01T13:05:00Z'
         }
-      ] as unknown as NotificationDto[];
+      ] satisfies NotificationDto[];
       
       activityFeed.updateNotifications(newNotifications);
       
@@ -390,12 +388,11 @@ describe('ActivityFeed', () => {
       // Create many notifications first
       const manyNotifications = Array.from({ length: 12 }, (_, i) => ({
         id: `notif-${i + 1}`,
-        message: `Notification ${i + 1}`,
-        type: 'comment',
-        read: false,
-        createdAt: `2024-01-01T12:${String(i).padStart(2, '0')}:00Z`,
-        metadata: { videoId: `video-${i + 1}` }
-      })) as unknown as NotificationDto[];
+        memberId: 'member-1',
+        eventType: 'comment',
+        sourceResourceId: `video-${i + 1}`,
+        createdAt: `2024-01-01T12:${String(i).padStart(2, '0')}:00Z`
+      })) satisfies NotificationDto[];
       
       activityFeed = new ActivityFeed(manyNotifications);
       
@@ -429,12 +426,11 @@ describe('ActivityFeed', () => {
       // Create more notifications to show load more button
       const manyNotifications = Array.from({ length: 10 }, (_, i) => ({
         id: `notif-${i + 1}`,
-        message: `Notification ${i + 1}`,
-        type: 'comment',
-        read: false,
-        createdAt: `2024-01-01T12:${String(i).padStart(2, '0')}:00Z`,
-        metadata: { videoId: `video-${i + 1}` }
-      })) as unknown as NotificationDto[];
+        memberId: 'member-1',
+        eventType: 'comment',
+        sourceResourceId: `video-${i + 1}`,
+        createdAt: `2024-01-01T12:${String(i).padStart(2, '0')}:00Z`
+      })) satisfies NotificationDto[];
       
       activityFeed = new ActivityFeed(manyNotifications);
       
@@ -516,12 +512,12 @@ describe('ActivityFeed', () => {
     it('should handle large notification lists efficiently', () => {
       const manyNotifications = Array.from({ length: 1000 }, (_, i) => ({
         id: `notif-${i + 1}`,
-        message: `Notification ${i + 1}`,
-        type: 'comment',
-        read: i % 2 === 0,
+        memberId: 'member-1',
+        eventType: 'comment',
+        sourceResourceId: `video-${i + 1}`,
         createdAt: `2024-01-01T12:${String(i % 60).padStart(2, '0')}:00Z`,
-        metadata: { videoId: `video-${i + 1}` }
-      })) as unknown as NotificationDto[];
+        ...(i % 2 === 0 ? { readAt: `2024-01-01T12:${String(i % 60).padStart(2, '0')}:30Z` } : {})
+      })) satisfies NotificationDto[];
       
       const startTime = performance.now();
       activityFeed = new ActivityFeed(manyNotifications);
@@ -541,12 +537,11 @@ describe('ActivityFeed', () => {
     it('should handle notifications with unknown types', () => {
       const unknownTypeNotifications = [{
         id: 'notif-unknown',
-        message: 'Unknown notification type',
-        type: 'unknown_type' as any,
-        read: false,
-        createdAt: '2024-01-01T12:00:00Z',
-        metadata: { videoId: 'video-123' }
-      }] as unknown as NotificationDto[];
+        memberId: 'member-1',
+        eventType: 'unknown_type',
+        sourceResourceId: 'video-123',
+        createdAt: '2024-01-01T12:00:00Z'
+      }] satisfies NotificationDto[];
       
       expect(() => {
         activityFeed = new ActivityFeed(unknownTypeNotifications);
@@ -564,12 +559,12 @@ describe('ActivityFeed', () => {
     it('should handle notifications without metadata gracefully', () => {
       const noMetadataNotifications = [{
         id: 'notif-no-meta',
-        message: 'Notification without metadata',
-        type: 'comment',
-        read: false,
+        memberId: 'member-1',
+        eventType: 'comment',
+        sourceResourceId: '',
         createdAt: '2024-01-01T12:00:00Z'
-        // no metadata field
-      }] as unknown as NotificationDto[];
+        // no readAt / empty target
+      }] satisfies NotificationDto[];
       
       expect(() => {
         activityFeed = new ActivityFeed(noMetadataNotifications);

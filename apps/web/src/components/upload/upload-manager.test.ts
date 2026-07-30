@@ -7,25 +7,30 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { UploadManagerComponent, type UploadManagerConfig } from './upload-manager.js';
+import { uploadManager } from '../../services/upload.js';
+import { getUploadStore } from '../../stores/upload-store.js';
 
-// Mock dependencies
-vi.mock('../../services/upload.js', () => ({
+// Mock dependencies.
+//
+// The mocks are created via vi.hoisted so the factory functions can close over
+// stable singleton instances. This matters because the component captures the
+// store instance in its constructor (getUploadStore()); returning a fresh
+// object per call would leave the test asserting against a different instance
+// than the one the component actually uses.
+const mocks = vi.hoisted(() => ({
   uploadManager: {
     configure: vi.fn(),
     uploadFile: vi.fn(),
     canResumeUpload: vi.fn(() => false),
     getResumeInfo: vi.fn(() => null),
     getQueueStatus: vi.fn(() => ({ active: 0, maxConcurrent: 3, canAcceptMore: true })),
-    getResumeableUploads: vi.fn(() => []),
+    getResumeableUploads: vi.fn(() => [] as any[]),
     cancelAllUploads: vi.fn()
-  }
-}));
-
-vi.mock('../../stores/upload-store.js', () => ({
-  getUploadStore: vi.fn(() => ({
+  },
+  uploadStore: {
     subscribe: vi.fn(() => () => {}),
     getState: vi.fn(() => ({
-      uploads: [],
+      uploads: [] as any[],
       isUploading: false,
       totalProgress: 0,
       completedUploads: 0,
@@ -34,8 +39,18 @@ vi.mock('../../stores/upload-store.js', () => ({
       totalSpeed: 0
     })),
     clearCompleted: vi.fn(),
-    pauseAllActiveUploads: vi.fn()
-  }))
+    pauseAllActiveUploads: vi.fn(),
+    resumeQueuedUploads: vi.fn(),
+    addUpload: vi.fn()
+  }
+}));
+
+vi.mock('../../services/upload.js', () => ({
+  uploadManager: mocks.uploadManager
+}));
+
+vi.mock('../../stores/upload-store.js', () => ({
+  getUploadStore: vi.fn(() => mocks.uploadStore)
 }));
 
 vi.mock('../../app/client-logger.js', () => ({

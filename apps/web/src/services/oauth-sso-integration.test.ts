@@ -26,6 +26,12 @@ vi.mock('../app/client-logger.js', () => ({
   },
 }));
 
+// Restore any globals stubbed within individual tests (e.g. crypto) so they
+// do not leak across test cases.
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe('OAuth Configuration Service', () => {
   let oauthService: OAuthConfigService;
   let mockApiClient: any;
@@ -123,11 +129,12 @@ describe('OAuth Configuration Service', () => {
         writable: true,
       });
 
-      // Mock crypto.randomUUID
-      global.crypto = {
-        ...global.crypto,
+      // Stub crypto.randomUUID (crypto is a getter-only global in jsdom, so it
+      // must be replaced via stubGlobal rather than direct assignment).
+      vi.stubGlobal('crypto', {
+        ...globalThis.crypto,
         randomUUID: vi.fn(() => 'test-uuid-123'),
-      } as any;
+      });
 
       await oauthService.initiateOAuth('google', '/dashboard');
 
@@ -394,11 +401,11 @@ describe('SSO Configuration Service', () => {
 
       mockApiClient.get.mockResolvedValue({ data: mockConfig });
 
-      // Mock crypto and window.location
-      global.crypto = {
-        ...global.crypto,
+      // Stub crypto (getter-only global in jsdom) and window.location
+      vi.stubGlobal('crypto', {
+        ...globalThis.crypto,
         randomUUID: vi.fn(() => 'sso-nonce-123'),
-      } as any;
+      });
 
       Object.defineProperty(window, 'location', {
         value: {
@@ -629,11 +636,11 @@ describe('OAuth/SSO Integration', () => {
       data: { user: { id: 'user-123', email: 'test@example.com' } },
     });
 
-    // Mock crypto
-    global.crypto = {
-      ...global.crypto,
+    // Stub crypto (getter-only global in jsdom)
+    vi.stubGlobal('crypto', {
+      ...globalThis.crypto,
       randomUUID: vi.fn(() => 'test-uuid'),
-    } as any;
+    });
 
     // Initiate OAuth flow
     await oauthService.initiateOAuth('google');

@@ -226,15 +226,22 @@ describe('UploadManager', () => {
       // Mock cleanup
       (apiClient.delete as any).mockResolvedValue({});
 
-      const promise = manager.uploadFile(file, {
+      // Attach the rejection handler immediately so the rejection that occurs
+      // while advancing timers is never treated as unhandled.
+      const settled = manager.uploadFile(file, {
         chunkSize: 5 * 1024 * 1024,
         maxRetries: 2,
         retryDelay: 100
-      });
+      }).then(
+        () => ({ rejected: false as const, message: '' }),
+        (error: unknown) => ({ rejected: true as const, message: (error as Error).message })
+      );
 
       await vi.advanceTimersByTimeAsync(5000);
 
-      await expect(promise).rejects.toThrow(/Failed to upload chunk/);
+      const outcome = await settled;
+      expect(outcome.rejected).toBe(true);
+      expect(outcome.message).toMatch(/Failed to upload chunk/);
     });
 
     it('should apply exponential backoff between retries', async () => {
@@ -284,21 +291,25 @@ describe('UploadManager', () => {
       (apiClient.delete as any).mockResolvedValue({});
 
       const onError = vi.fn();
-      const promise = manager.uploadFile(file, {
+      // Attach the rejection handler immediately so the rejection that occurs
+      // while advancing timers is never treated as unhandled.
+      const settled = manager.uploadFile(file, {
         chunkSize: 5 * 1024 * 1024,
         maxRetries: 1,
         retryDelay: 100,
         onError
-      });
+      }).then(
+        () => ({ rejected: false as const }),
+        (error: unknown) => ({ rejected: true as const, error: error as UploadError })
+      );
 
       await vi.advanceTimersByTimeAsync(5000);
 
-      try {
-        await promise;
-      } catch (error) {
-        const uploadError = error as UploadError;
-        expect(uploadError.type).toBe('chunk');
-        expect(uploadError.retryable).toBe(true);
+      const outcome = await settled;
+      expect(outcome.rejected).toBe(true);
+      if (outcome.rejected) {
+        expect(outcome.error.type).toBe('chunk');
+        expect(outcome.error.retryable).toBe(true);
       }
     });
   });
@@ -457,8 +468,12 @@ describe('UploadManager', () => {
         return { data: { uploadId: 'upload-1', uploadUrl: '/chunks' } };
       });
 
-      // Start first upload
-      const upload1Promise = manager.uploadFile(file1);
+      // Start first upload. Attach a rejection handler immediately so the
+      // eventual cancellation rejection is never treated as unhandled.
+      const upload1Settled = manager.uploadFile(file1).then(
+        () => undefined,
+        () => undefined
+      );
 
       // Second upload should fail due to concurrent limit
       await expect(manager.uploadFile(file2)).rejects.toThrow(/Too many active uploads/);
@@ -466,7 +481,7 @@ describe('UploadManager', () => {
       // Cleanup
       manager.cancelAllUploads();
       await vi.advanceTimersByTimeAsync(20000);
-      try { await upload1Promise; } catch {}
+      await upload1Settled;
     });
   });
 
