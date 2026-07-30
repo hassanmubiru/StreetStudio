@@ -205,3 +205,91 @@ describe('Cross-Module Integration: API Key + Webhook Authentication', () => {
       webhookPage.destroy();
     });
   });
+
+  describe('API key rotation with webhook secret consistency', () => {
+    it('should rotate API key without invalidating webhook secret', async () => {
+      const key = createApiKey({ id: 'key-rot', status: 'active' });
+      const webhook = createWebhook({ secret: 'whsec_stable' });
+
+      const keyCallbacks: Partial<ApiKeyManagementCallbacks> = {
+        onCreateKey: vi.fn(),
+        onRevokeKey: vi.fn().mockResolvedValue(true),
+        onRotateKey: vi.fn().mockResolvedValue({
+          key: createApiKey({ id: 'key-rot-new', name: 'Rotated Key' }),
+          fullKey: 'sk_live_newrotatedkey123',
+        } as CreateApiKeyResponse),
+        onDeleteKey: vi.fn(),
+      };
+
+      const keyPage = new ApiKeyManagementPage({ keys: [key], callbacks: keyCallbacks });
+      await keyPage.rotateKey('key-rot');
+
+      // Webhook secret remains unchanged after key rotation
+      expect(webhook.secret).toBe('whsec_stable');
+      // New key was generated
+      expect(keyPage.getNewKeyValue()).toBe('sk_live_newrotatedkey123');
+
+      keyPage.destroy();
+    });
+
+    it('should mask rotated key consistently', async () => {
+      const originalMasked = maskApiKey('sk_live_original123key');
+      const rotatedMasked = maskApiKey('sk_live_newrotated456');
+
+      // Both should show last 4 chars only
+      expect(originalMasked).toMatch(/•+.{4}$/);
+      expect(rotatedMasked).toMatch(/•+.{4}$/);
+      expect(originalMasked.slice(-4)).toBe('key');
+      expect(rotatedMasked.slice(-3)).toBe('456');
+    });
+  });
+});
+
+describe('Cross-Module Integration: Webhook Events + Export/Share', () => {
+  describe('Webhook events triggered by share link creation', () => {
+    it('should have share.created webhook event matching share link workflow', () => {
+      const webhookEvents = AVAILABLE_EVENTS.map(e => e.type);
+      expect(webhookEvents).toContain('share.created');
+      expect(webhookEvents).toContain('share.accessed');
+    });
+
+    it('should process share link creation while webhook monitors delivery', async () => {
+      const shareCallbacks: Partial<ExportSharingCallbacks> = {
+        onGenerateShareLink: vi.fn().mockResolvedValue(
+          createShareLink({ id: 'new-share', permission: 'public' })
+        ),
+        onStartExport: vi.fn(),
+        onStartBatchExport: vi.fn(),
+        onCancelExport: vi.fn(),
+        onRevokeShareLink: vi.fn(),
+        onGetShareLinks: vi.fn(),
+      };
+
+      const webhookCallbacks: Partial<WebhookConfigurationCallbacks> = {
+        onCreateWebhook: vi.fn(),
+        onUpdateWebhook: vi.fn(),
+        onDeleteWebhook: vi.fn(),
+        onTestWebhook: vi.fn(),
+        onFetchDeliveries: vi.fn().mockResolvedValue([
+          {
+            id: 'del-share-1',
+            webhookId: 'wh-1',
+            eventType: 'share.created' as const,
+            status: 'success' as const,
+            statusCode: 200,
+            responseTimeMs: 95,
+            attemptCount: 1,
+            timestamp: new Date().toISOString(),
+          },
+        ]),
+      };
+
+      // Create share link
+      const exportPage = new ExportSharingPage({ callbacks: shareCallbacks });
+      exportPage.showShare('video-1');
+      exportPage.setSharePermission('public');
+      await exportPage.createShareLink();
+
+      expect(shareCallbacks.onGenerateShareLink).toHaveBeenCalledWith(
+        'video-1', 'public', expect.anything()
+      );

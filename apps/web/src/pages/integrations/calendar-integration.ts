@@ -347,3 +347,44 @@ export class CalendarIntegrationPage {
     this.showCreateForm = false;
     this.render();
   }
+
+  public async connectProvider(provider: CalendarProvider): Promise<void> {
+    if (this.callbacks.onConnectProvider) {
+      try {
+        const connection = await this.callbacks.onConnectProvider(provider);
+        this.connections = [...this.connections, connection];
+        this.render();
+      } catch (error) {
+        this.showError('connect-error', `Failed to connect ${getProviderInfo(provider).label}. Please try again.`);
+      }
+    }
+  }
+
+  public async disconnectProvider(connectionId: Uuid): Promise<void> {
+    if (this.callbacks.onDisconnectProvider) {
+      try {
+        const success = await this.callbacks.onDisconnectProvider(connectionId);
+        if (success) {
+          this.connections = this.connections.filter(c => c.id !== connectionId);
+          this.confirmDisconnectId = null;
+          this.render();
+        }
+      } catch (error) {
+        this.showError(`disconnect-error-${connectionId}`, 'Failed to disconnect.');
+      }
+    }
+  }
+
+  public async syncCalendar(connectionId: Uuid): Promise<void> {
+    if (this.callbacks.onSyncCalendar) {
+      try {
+        await this.callbacks.onSyncCalendar(connectionId);
+        this.connections = this.connections.map(c =>
+          c.id === connectionId ? { ...c, lastSyncAt: new Date().toISOString() } : c
+        );
+        this.render();
+      } catch (error) {
+        this.showError(`sync-error-${connectionId}`, 'Sync failed. Please try again.');
+      }
+    }
+  }
