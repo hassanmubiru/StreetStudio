@@ -293,3 +293,61 @@ describe('Cross-Module Integration: Webhook Events + Export/Share', () => {
       expect(shareCallbacks.onGenerateShareLink).toHaveBeenCalledWith(
         'video-1', 'public', expect.anything()
       );
+
+      // Webhook delivery should show the share.created event was delivered
+      const webhookPage = new WebhookConfigurationPage({
+        webhooks: [createWebhook({ events: ['share.created'] })],
+        callbacks: webhookCallbacks,
+      });
+      await webhookPage.viewDeliveries('wh-1');
+
+      const deliveries = webhookPage.getDeliveries();
+      expect(deliveries.length).toBe(1);
+      expect(deliveries[0].eventType).toBe('share.created');
+      expect(deliveries[0].status).toBe('success');
+
+      exportPage.destroy();
+      webhookPage.destroy();
+    });
+
+    it('should track webhook delivery failures for share events', async () => {
+      const webhookCallbacks: Partial<WebhookConfigurationCallbacks> = {
+        onCreateWebhook: vi.fn(),
+        onUpdateWebhook: vi.fn(),
+        onDeleteWebhook: vi.fn(),
+        onTestWebhook: vi.fn(),
+        onFetchDeliveries: vi.fn().mockResolvedValue([
+          {
+            id: 'del-fail-1',
+            webhookId: 'wh-1',
+            eventType: 'share.created' as const,
+            status: 'failed' as const,
+            statusCode: 500,
+            attemptCount: 3,
+            timestamp: new Date().toISOString(),
+            nextRetryAt: new Date(Date.now() + 60000).toISOString(),
+          },
+        ]),
+      };
+
+      const webhook = createWebhook({
+        events: ['share.created'],
+        maxRetries: 5,
+        retryIntervalSeconds: 60,
+      });
+      const webhookPage = new WebhookConfigurationPage({
+        webhooks: [webhook],
+        callbacks: webhookCallbacks,
+      });
+
+      await webhookPage.viewDeliveries('wh-1');
+
+      const deliveries = webhookPage.getDeliveries();
+      expect(deliveries[0].status).toBe('failed');
+      expect(deliveries[0].attemptCount).toBe(3);
+      // Still has retries remaining (3 < maxRetries of 5)
+      expect(deliveries[0].attemptCount).toBeLessThan(webhook.maxRetries);
+
+      webhookPage.destroy();
+    });
+  });

@@ -388,3 +388,67 @@ export class CalendarIntegrationPage {
       }
     }
   }
+
+  public addAttendee(email: string): boolean {
+    const validation = validateAttendeeEmail(email);
+    if (!validation.valid) {
+      this.showError('attendee-error', validation.error!);
+      return false;
+    }
+    if (this.createFormData.attendees.length >= MAX_ATTENDEES) {
+      this.showError('attendee-error', `Maximum ${MAX_ATTENDEES} attendees allowed`);
+      return false;
+    }
+    if (this.createFormData.attendees.includes(email.trim())) {
+      this.showError('attendee-error', 'Attendee already added');
+      return false;
+    }
+    this.createFormData.attendees.push(email.trim());
+    this.createFormData.newAttendee = '';
+    this.render();
+    return true;
+  }
+
+  public removeAttendee(email: string): void {
+    this.createFormData.attendees = this.createFormData.attendees.filter(a => a !== email);
+    this.render();
+  }
+
+  public async createEvent(): Promise<void> {
+    const titleValidation = validateEventTitle(this.createFormData.title);
+    if (!titleValidation.valid) {
+      this.showError('title-error', titleValidation.error!);
+      return;
+    }
+
+    const timeValidation = validateEventTimeRange(
+      this.createFormData.startTime,
+      this.createFormData.endTime
+    );
+    if (!timeValidation.valid) {
+      this.showError('time-error', timeValidation.error!);
+      return;
+    }
+
+    const request: CreateRecordingEventRequest = {
+      title: this.createFormData.title.trim(),
+      description: this.createFormData.description.trim() || undefined,
+      startTime: this.createFormData.startTime,
+      endTime: this.createFormData.endTime,
+      timezone: this.createFormData.timezone,
+      calendarId: this.createFormData.calendarId ?? undefined,
+      attendees: this.createFormData.attendees,
+      reminders: this.createFormData.reminders,
+    };
+
+    if (this.callbacks.onCreateEvent) {
+      try {
+        const event = await this.callbacks.onCreateEvent(request);
+        this.events = [event, ...this.events];
+        this.showCreateForm = false;
+        this.render();
+      } catch (error) {
+        this.showError('create-error', 'Failed to create event. Please try again.');
+      }
+    }
+  }
