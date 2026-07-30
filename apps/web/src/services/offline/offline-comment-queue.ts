@@ -91,7 +91,7 @@ export class OfflineCommentQueue {
       return;
     }
 
-    if (!('indexedDB' in globalThis)) {
+    if (typeof indexedDB === 'undefined' || !indexedDB) {
       throw new Error('IndexedDB is not available');
     }
 

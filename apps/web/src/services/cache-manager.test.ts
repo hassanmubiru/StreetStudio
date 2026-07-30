@@ -1,253 +1,401 @@
 /**
- * Cache Manager Tests
+ * Unit Tests: Cache Manager
  *
- * Tests for intelligent caching strategies, LRU eviction, and persistence.
+ * Tests for cache-first / network-first / stale-while-revalidate strategies,
+ * TTL expiration, LRU eviction, invalidation, and persistence.
+ *
+ * Validates: Requirements 12.3
+ *
+ * @vitest-environment jsdom
  */
 
-// @vitest-environment jsdom
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { CacheManager, type CacheStrategy } from './cache-manager.js';
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CacheManager } from './cache-manager.js';
+// Mock the client-logger to avoid side effects
+vi.mock('../app/client-logger.js', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 describe('CacheManager', () => {
-  let cacheManager: CacheManager;
+  let cache: CacheManager;
 
   beforeEach(() => {
     localStorage.clear();
-    cacheManager = new CacheManager({ persist: false });
+    cache = new CacheManager({
+      defaultTTL: 5000,
+      maxEntries: 10,
+      prefix: 'test_cache_',
+      persist: false,
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('cache-first strategy', () => {
-    it('returns cached data on cache hit', async () => {
-      const fetcher = vi.fn().mockResolvedValue({ name: 'test' });
+    it('returns cached data when cache is valid', async () => {
+      const fetcher = vi.fn().mockResolvedValue('network-data');
 
-      // First call populates the cache
-      const result1 = await cacheManager.get('test-key', {
-        strategy: 'cache-first',
-        fetcher,
-      });
+      // First call populates cache
+      const result1 = await cache.get('key1', { strategy: 'cache-first', fetcher });
+      expect(result1).toBe('network-data');
+      expect(fetcher).toHaveBeenCalledTimes(1);
 
-      // Second call should use cache
-      const result2 = await cacheManager.get('test-key', {
-        strategy: 'cache-first',
-        fetcher,
-      });
-
-      expect(result1).toEqual({ name: 'test' });
-      expect(result2).toEqual({ name: 'test' });
+      // Second call returns cached data without calling fetcher
+      fetcher.mockResolvedValue('new-network-data');
+      const result2 = await cache.get('key1', { strategy: 'cache-first', fetcher });
+      expect(result2).toBe('network-data');
       expect(fetcher).toHaveBeenCalledTimes(1);
     });
 
-    it('calls fetcher on cache miss', async () => {
-      const fetcher = vi.fn().mockResolvedValue({ id: 1 });
+    it('fetches from network on cache miss', async () => {
+      const fetcher = vi.fn().mockResolvedValue('fresh-data');
 
-      const result = await cacheManager.get('missing-key', {
-        strategy: 'cache-first',
-        fetcher,
-      });
+      const result = await cache.get('missing-key', { strategy: 'cache-first', fetcher });
 
-      expect(result).toEqual({ id: 1 });
+      expect(result).toBe('fresh-data');
       expect(fetcher).toHaveBeenCalledTimes(1);
     });
 
-    it('respects TTL expiration', async () => {
-      const fetcher = vi.fn()
-        .mockResolvedValueOnce({ version: 1 })
-        .mockResolvedValueOnce({ version: 2 });
+    it('triggers background revalidation when entry exceeds half its TTL', async () => {
+      vi.useFakeTimers();
+      const onRevalidate = vi.fn();
+      const fetcher = vi.fn().mockResolvedValue('data-v1');
 
-      await cacheManager.get('ttl-key', {
+      // Populate cache with TTL of 1000ms
+      await cache.get('revalidate-key', {
         strategy: 'cache-first',
         fetcher,
-        ttl: 50, // 50ms TTL
+        ttl: 1000,
+        onRevalidate,
       });
 
-      // Wait for expiration
-      await new Promise((resolve) => setTimeout(resolve, 60));
+      // Advance past half-life (500ms)
+      vi.advanceTimersByTime(600);
 
-      const result = await cacheManager.get('ttl-key', {
+      fetcher.mockResolvedValue('data-v2');
+      await cache.get('revalidate-key', {
         strategy: 'cache-first',
         fetcher,
+        ttl: 1000,
+        onRevalidate,
       });
 
-      expect(result).toEqual({ version: 2 });
-      expect(fetcher).toHaveBeenCalledTimes(2);
+      // Allow background revalidation to complete
+      await vi.runAllTimersAsync();
+
+      expect(onRevalidate).toHaveBeenCalledWith('data-v2');
+      vi.useRealTimers();
     });
   });
 
   describe('network-first strategy', () => {
-    it('returns network data when available', async () => {
-      const fetcher = vi.fn().mockResolvedValue({ fresh: true });
+    it('returns network data on success and caches it', async () => {
+      const fetcher = vi.fn().mockResolvedValue('network-result');
 
-      const result = await cacheManager.get('net-key', {
-        strategy: 'network-first',
-        fetcher,
-      });
+      const result = await cache.get('nf-key', { strategy: 'network-first', fetcher });
 
-      expect(result).toEqual({ fresh: true });
-      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(result).toBe('network-result');
+      expect(cache.has('nf-key')).toBe(true);
     });
 
     it('falls back to cache when network fails', async () => {
-      const freshFetcher = vi.fn().mockResolvedValue({ data: 'cached' });
-      const failingFetcher = vi.fn().mockRejectedValue(new Error('Network error'));
+      const fetcher = vi.fn().mockResolvedValue('cached-data');
+      await cache.get('fallback-key', { strategy: 'network-first', fetcher });
 
-      // Populate cache
-      await cacheManager.get('fallback-key', {
-        strategy: 'network-first',
-        fetcher: freshFetcher,
-      });
+      // Now network fails
+      fetcher.mockRejectedValue(new Error('Network error'));
+      const result = await cache.get('fallback-key', { strategy: 'network-first', fetcher });
 
-      // Network fails, should use cache
-      const result = await cacheManager.get('fallback-key', {
-        strategy: 'network-first',
-        fetcher: failingFetcher,
-      });
-
-      expect(result).toEqual({ data: 'cached' });
+      expect(result).toBe('cached-data');
     });
 
     it('throws when network fails and no cache exists', async () => {
       const fetcher = vi.fn().mockRejectedValue(new Error('Network error'));
 
       await expect(
-        cacheManager.get('no-cache-key', {
-          strategy: 'network-first',
-          fetcher,
-        })
+        cache.get('no-cache-key', { strategy: 'network-first', fetcher })
       ).rejects.toThrow('Network error');
     });
   });
 
   describe('stale-while-revalidate strategy', () => {
-    it('returns stale data immediately and revalidates in background', async () => {
+    it('returns stale cache immediately and revalidates in background', async () => {
       const onRevalidate = vi.fn();
-      const fetcher1 = vi.fn().mockResolvedValue({ version: 1 });
-      const fetcher2 = vi.fn().mockResolvedValue({ version: 2 });
+      const fetcher = vi.fn().mockResolvedValue('data-v1');
 
       // Populate cache
-      await cacheManager.get('swr-key', {
+      await cache.get('swr-key', {
         strategy: 'stale-while-revalidate',
-        fetcher: fetcher1,
-      });
-
-      // Returns stale, revalidates in background
-      const result = await cacheManager.get('swr-key', {
-        strategy: 'stale-while-revalidate',
-        fetcher: fetcher2,
+        fetcher,
         onRevalidate,
       });
 
-      expect(result).toEqual({ version: 1 }); // Stale data returned immediately
+      // Change what fetcher returns
+      fetcher.mockResolvedValue('data-v2');
 
-      // Wait for background revalidation
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      expect(onRevalidate).toHaveBeenCalledWith({ version: 2 });
+      const result = await cache.get('swr-key', {
+        strategy: 'stale-while-revalidate',
+        fetcher,
+        onRevalidate,
+      });
+
+      // Returns stale data immediately
+      expect(result).toBe('data-v1');
+
+      // Background revalidation fires
+      await new Promise(resolve => setTimeout(resolve, 10));
+      expect(onRevalidate).toHaveBeenCalledWith('data-v2');
     });
 
     it('fetches from network when no cache exists', async () => {
-      const fetcher = vi.fn().mockResolvedValue({ data: 'new' });
+      const fetcher = vi.fn().mockResolvedValue('fresh');
 
-      const result = await cacheManager.get('new-swr-key', {
+      const result = await cache.get('swr-miss', {
         strategy: 'stale-while-revalidate',
         fetcher,
       });
 
-      expect(result).toEqual({ data: 'new' });
-      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(result).toBe('fresh');
     });
   });
 
-  describe('cache management', () => {
-    it('manually sets cache entries', () => {
-      cacheManager.set('manual-key', { manual: true });
-      expect(cacheManager.has('manual-key')).toBe(true);
+  describe('TTL expiration', () => {
+    it('returns false for has() when entry has expired', () => {
+      vi.useFakeTimers();
+
+      cache.set('ttl-key', 'value', 'cache-first', 100);
+      expect(cache.has('ttl-key')).toBe(true);
+
+      vi.advanceTimersByTime(150);
+      expect(cache.has('ttl-key')).toBe(false);
+
+      vi.useRealTimers();
     });
 
-    it('invalidates specific entries', async () => {
-      const fetcher = vi.fn().mockResolvedValue('data');
+    it('fetches fresh data when cached entry has expired', async () => {
+      vi.useFakeTimers();
 
-      await cacheManager.get('inv-key', { strategy: 'cache-first', fetcher });
-      expect(cacheManager.has('inv-key')).toBe(true);
+      const fetcher = vi.fn().mockResolvedValue('fresh');
+      cache.set('expire-key', 'stale', 'cache-first', 100);
 
-      const existed = cacheManager.invalidate('inv-key');
-      expect(existed).toBe(true);
-      expect(cacheManager.has('inv-key')).toBe(false);
+      vi.advanceTimersByTime(150);
+
+      const result = await cache.get('expire-key', { strategy: 'cache-first', fetcher });
+      expect(result).toBe('fresh');
+      expect(fetcher).toHaveBeenCalled();
+
+      vi.useRealTimers();
     });
 
-    it('invalidates entries by pattern', async () => {
-      cacheManager.set('project:1:videos', ['v1']);
-      cacheManager.set('project:1:members', ['m1']);
-      cacheManager.set('project:2:videos', ['v2']);
+    it('uses custom TTL when provided', () => {
+      vi.useFakeTimers();
 
-      const count = cacheManager.invalidatePattern('project:1:');
-      expect(count).toBe(2);
-      expect(cacheManager.has('project:1:videos')).toBe(false);
-      expect(cacheManager.has('project:1:members')).toBe(false);
-      expect(cacheManager.has('project:2:videos')).toBe(true);
+      cache.set('custom-ttl', 'data', 'cache-first', 2000);
+
+      vi.advanceTimersByTime(1500);
+      expect(cache.has('custom-ttl')).toBe(true);
+
+      vi.advanceTimersByTime(600);
+      expect(cache.has('custom-ttl')).toBe(false);
+
+      vi.useRealTimers();
     });
+  });
 
-    it('evicts LRU entries when max size is reached', () => {
-      const smallCache = new CacheManager({ maxEntries: 3, persist: false });
+  describe('LRU eviction', () => {
+    it('evicts least recently used entries when maxEntries is exceeded', () => {
+      const smallCache = new CacheManager({
+        maxEntries: 3,
+        persist: false,
+        prefix: 'lru_test_',
+        defaultTTL: 60000,
+        maxPersistSize: 0,
+      });
 
-      smallCache.set('a', 1);
-      smallCache.set('b', 2);
-      smallCache.set('c', 3);
-      smallCache.set('d', 4); // Should evict 'a'
+      smallCache.set('a', 'data-a', 'cache-first');
+      smallCache.set('b', 'data-b', 'cache-first');
+      smallCache.set('c', 'data-c', 'cache-first');
+
+      // All three should exist
+      expect(smallCache.has('a')).toBe(true);
+      expect(smallCache.has('b')).toBe(true);
+      expect(smallCache.has('c')).toBe(true);
+
+      // Adding a fourth entry should evict 'a' (oldest)
+      smallCache.set('d', 'data-d', 'cache-first');
 
       expect(smallCache.has('a')).toBe(false);
       expect(smallCache.has('b')).toBe(true);
+      expect(smallCache.has('c')).toBe(true);
       expect(smallCache.has('d')).toBe(true);
     });
 
-    it('clears all cache entries', () => {
-      cacheManager.set('k1', 'v1');
-      cacheManager.set('k2', 'v2');
+    it('accessing an entry refreshes its LRU position', () => {
+      const smallCache = new CacheManager({
+        maxEntries: 3,
+        persist: false,
+        prefix: 'lru_access_',
+        defaultTTL: 60000,
+        maxPersistSize: 0,
+      });
 
-      cacheManager.clear();
+      smallCache.set('a', 'data-a', 'cache-first');
+      smallCache.set('b', 'data-b', 'cache-first');
+      smallCache.set('c', 'data-c', 'cache-first');
 
-      expect(cacheManager.has('k1')).toBe(false);
-      expect(cacheManager.has('k2')).toBe(false);
-      expect(cacheManager.getStats().size).toBe(0);
+      // Access 'a' to refresh its position
+      smallCache.has('a');
+
+      // Adding a fourth entry should evict 'b' (least recently accessed)
+      smallCache.set('d', 'data-d', 'cache-first');
+
+      expect(smallCache.has('a')).toBe(true);
+      expect(smallCache.has('b')).toBe(false);
+      expect(smallCache.has('c')).toBe(true);
+      expect(smallCache.has('d')).toBe(true);
+    });
+  });
+
+  describe('invalidation', () => {
+    it('invalidates a specific key', () => {
+      cache.set('inv-key', 'data', 'cache-first');
+      expect(cache.has('inv-key')).toBe(true);
+
+      const result = cache.invalidate('inv-key');
+      expect(result).toBe(true);
+      expect(cache.has('inv-key')).toBe(false);
     });
 
-    it('returns correct stats', () => {
-      cacheManager.set('s1', 'data1');
-      cacheManager.set('s2', 'data2');
+    it('returns false when invalidating non-existent key', () => {
+      const result = cache.invalidate('non-existent');
+      expect(result).toBe(false);
+    });
 
-      const stats = cacheManager.getStats();
+    it('invalidates entries matching a pattern', () => {
+      cache.set('project:1:videos', 'videos', 'cache-first');
+      cache.set('project:1:settings', 'settings', 'cache-first');
+      cache.set('project:2:videos', 'other-videos', 'cache-first');
+
+      const count = cache.invalidatePattern('project:1:');
+
+      expect(count).toBe(2);
+      expect(cache.has('project:1:videos')).toBe(false);
+      expect(cache.has('project:1:settings')).toBe(false);
+      expect(cache.has('project:2:videos')).toBe(true);
+    });
+
+    it('returns 0 when no entries match the pattern', () => {
+      cache.set('key1', 'data', 'cache-first');
+      const count = cache.invalidatePattern('non-matching:');
+      expect(count).toBe(0);
+    });
+  });
+
+  describe('clear', () => {
+    it('removes all entries from cache', () => {
+      cache.set('k1', 'v1', 'cache-first');
+      cache.set('k2', 'v2', 'cache-first');
+
+      cache.clear();
+
+      expect(cache.has('k1')).toBe(false);
+      expect(cache.has('k2')).toBe(false);
+      expect(cache.getStats().size).toBe(0);
+    });
+  });
+
+  describe('statistics and keys', () => {
+    it('reports correct cache size', () => {
+      cache.set('s1', 'data', 'cache-first');
+      cache.set('s2', 'data', 'cache-first');
+
+      const stats = cache.getStats();
       expect(stats.size).toBe(2);
-      expect(stats.oldestEntry).toBeLessThanOrEqual(Date.now());
-      expect(stats.newestEntry).toBeLessThanOrEqual(Date.now());
+      expect(stats.maxEntries).toBe(10);
     });
 
-    it('returns cache keys without prefix', () => {
-      cacheManager.set('key-one', 1);
-      cacheManager.set('key-two', 2);
+    it('returns all cache keys without prefix', () => {
+      cache.set('alpha', 'a', 'cache-first');
+      cache.set('beta', 'b', 'cache-first');
 
-      const keys = cacheManager.getKeys();
-      expect(keys).toContain('key-one');
-      expect(keys).toContain('key-two');
+      const keys = cache.getKeys();
+      expect(keys).toContain('alpha');
+      expect(keys).toContain('beta');
     });
   });
 
   describe('persistence', () => {
-    it('persists cache to localStorage and loads on init', () => {
+    it('persists cache entries to localStorage', () => {
       const persistentCache = new CacheManager({
-        persist: true,
-        prefix: 'test_persist_',
         defaultTTL: 60000,
+        maxEntries: 10,
+        prefix: 'persist_test_',
+        persist: true,
+        maxPersistSize: 2 * 1024 * 1024,
       });
 
-      persistentCache.set('persisted', { value: 42 });
+      persistentCache.set('persisted-key', { name: 'test' }, 'cache-first');
 
-      // Create new instance that should load from storage
-      const newCache = new CacheManager({
-        persist: true,
-        prefix: 'test_persist_',
+      const stored = localStorage.getItem('persist_test___index');
+      expect(stored).not.toBeNull();
+      expect(stored).toContain('persisted-key');
+    });
+
+    it('loads entries from localStorage on construction', () => {
+      // Pre-populate localStorage
+      const entry = {
+        data: 'loaded-value',
+        timestamp: Date.now(),
+        expiresAt: Date.now() + 60000,
+        strategy: 'cache-first',
+        key: 'loaded-key',
+      };
+      localStorage.setItem(
+        'load_test___index',
+        JSON.stringify([['load_test_loaded-key', entry]])
+      );
+
+      const loadedCache = new CacheManager({
         defaultTTL: 60000,
+        maxEntries: 10,
+        prefix: 'load_test_',
+        persist: true,
+        maxPersistSize: 2 * 1024 * 1024,
       });
 
-      expect(newCache.has('persisted')).toBe(true);
+      expect(loadedCache.has('loaded-key')).toBe(true);
+    });
+
+    it('does not load expired entries from localStorage', () => {
+      const entry = {
+        data: 'expired-value',
+        timestamp: Date.now() - 120000,
+        expiresAt: Date.now() - 60000, // expired
+        strategy: 'cache-first',
+        key: 'expired-key',
+      };
+      localStorage.setItem(
+        'expired_test___index',
+        JSON.stringify([['expired_test_expired-key', entry]])
+      );
+
+      const loadedCache = new CacheManager({
+        defaultTTL: 60000,
+        maxEntries: 10,
+        prefix: 'expired_test_',
+        persist: true,
+        maxPersistSize: 2 * 1024 * 1024,
+      });
+
+      expect(loadedCache.has('expired-key')).toBe(false);
     });
   });
 });

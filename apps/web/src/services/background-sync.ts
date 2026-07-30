@@ -186,9 +186,12 @@ export class BackgroundSyncManager {
     const results: SyncResult[] = [];
 
     try {
+      // Take a snapshot of operations to process in this pass
+      const operationsToProcess = [...this.queue];
+
       // Process in batches respecting concurrency
-      while (this.queue.length > 0 && this.isOnline) {
-        const batch = this.queue.slice(0, this.config.concurrency);
+      for (let offset = 0; offset < operationsToProcess.length && this.isOnline; offset += this.config.concurrency) {
+        const batch = operationsToProcess.slice(offset, offset + this.config.concurrency);
         const batchResults = await Promise.allSettled(
           batch.map((op) => this.executeOperation(op))
         );

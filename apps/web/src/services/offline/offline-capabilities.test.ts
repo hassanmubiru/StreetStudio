@@ -47,14 +47,16 @@ describe('ServiceWorkerManager', () => {
   });
 
   it('should report not supported when serviceWorker is unavailable', () => {
-    Object.defineProperty(navigator, 'serviceWorker', {
-      writable: true,
-      configurable: true,
-      value: undefined,
-    });
+    // Delete the property so 'serviceWorker' in navigator is false
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'serviceWorker');
+    delete (navigator as any).serviceWorker;
     const manager = new ServiceWorkerManager();
     const status = manager.getStatus();
     expect(status.isSupported).toBe(false);
+    // Restore
+    if (descriptor) {
+      Object.defineProperty(navigator, 'serviceWorker', descriptor);
+    }
   });
 
   it('should register successfully and update status', async () => {
@@ -101,15 +103,16 @@ describe('ServiceWorkerManager', () => {
   });
 
   it('should return error status when not supported', async () => {
-    Object.defineProperty(navigator, 'serviceWorker', {
-      writable: true,
-      configurable: true,
-      value: undefined,
-    });
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'serviceWorker');
+    delete (navigator as any).serviceWorker;
     const manager = new ServiceWorkerManager();
     const status = await manager.register();
     expect(status.isRegistered).toBe(false);
     expect(status.error).toContain('not supported');
+    // Restore
+    if (descriptor) {
+      Object.defineProperty(navigator, 'serviceWorker', descriptor);
+    }
   });
 });
 
@@ -309,9 +312,11 @@ describe('OfflineContentCache', () => {
   });
 
   it('should throw if indexedDB not available', async () => {
-    vi.stubGlobal('indexedDB', undefined);
+    const original = globalThis.indexedDB;
+    (globalThis as any).indexedDB = undefined;
     const cache = new OfflineContentCache();
     await expect(cache.initialize()).rejects.toThrow('IndexedDB is not available');
+    (globalThis as any).indexedDB = original;
   });
 
   it('should expose getStats method', () => {
@@ -390,3 +395,115 @@ describe('OfflineCommentQueue', () => {
       })),
       createIndex: vi.fn(),
     };
+
+    mockDb = {
+      transaction: vi.fn(() => ({
+        objectStore: vi.fn(() => mockStore),
+      })),
+      objectStoreNames: { contains: vi.fn(() => false) },
+      createObjectStore: vi.fn(() => mockStore),
+      close: vi.fn(),
+    };
+
+    const mockOpen = {
+      result: mockDb,
+      onsuccess: null as any,
+      onerror: null as any,
+      onupgradeneeded: null as any,
+    };
+
+    vi.stubGlobal('indexedDB', {
+      open: vi.fn(() => {
+        setTimeout(() => {
+          if (mockOpen.onupgradeneeded) {
+            mockOpen.onupgradeneeded();
+          }
+          if (mockOpen.onsuccess) {
+            mockOpen.onsuccess();
+          }
+        }, 0);
+        return mockOpen;
+      }),
+    });
+
+    // Set online status
+    Object.defineProperty(navigator, 'onLine', {
+      writable: true,
+      configurable: true,
+      value: false, // Simulate offline
+    });
+
+    const mod = await import('./offline-comment-queue.js');
+    OfflineCommentQueue = mod.OfflineCommentQueue;
+  });
+
+  it('should create an instance with default options', () => {
+    const queue = new OfflineCommentQueue();
+    expect(queue).toBeDefined();
+  });
+
+  it('should throw if indexedDB not available', async () => {
+    const original = globalThis.indexedDB;
+    (globalThis as any).indexedDB = undefined;
+    const queue = new OfflineCommentQueue();
+    await expect(queue.initialize()).rejects.toThrow('IndexedDB is not available');
+    (globalThis as any).indexedDB = original;
+  });
+
+  it('should expose processQueue method', () => {
+    const queue = new OfflineCommentQueue();
+    expect(typeof queue.processQueue).toBe('function');
+  });
+
+  it('should expose destroy method for cleanup', () => {
+    const queue = new OfflineCommentQueue();
+    expect(typeof queue.destroy).toBe('function');
+    queue.destroy(); // Should not throw
+  });
+
+  it('should expose getQueuedComments method', () => {
+    const queue = new OfflineCommentQueue();
+    expect(typeof queue.getQueuedComments).toBe('function');
+  });
+
+  it('should expose clearAll method', () => {
+    const queue = new OfflineCommentQueue();
+    expect(typeof queue.clearAll).toBe('function');
+  });
+});
+
+// === Integration / Module Export Tests ===
+
+describe('Offline Module Exports', () => {
+  it('should export all required functions from index', async () => {
+    const mod = await import('./index.js');
+
+    // Service Worker
+    expect(mod.ServiceWorkerManager).toBeDefined();
+    expect(mod.initializeServiceWorker).toBeDefined();
+    expect(mod.getServiceWorkerManager).toBeDefined();
+    expect(mod.registerServiceWorker).toBeDefined();
+
+    // Content Cache
+    expect(mod.OfflineContentCache).toBeDefined();
+    expect(mod.getOfflineContentCache).toBeDefined();
+    expect(mod.cacheVideoForOffline).toBeDefined();
+    expect(mod.cacheProjectForOffline).toBeDefined();
+    expect(mod.getRecentOfflineContent).toBeDefined();
+
+    // Comment Queue
+    expect(mod.OfflineCommentQueue).toBeDefined();
+    expect(mod.getOfflineCommentQueue).toBeDefined();
+    expect(mod.queueCommentOffline).toBeDefined();
+
+    // Connectivity
+    expect(mod.ConnectivityStatusManager).toBeDefined();
+    expect(mod.initializeConnectivityMonitor).toBeDefined();
+    expect(mod.getConnectivityManager).toBeDefined();
+    expect(mod.isAppOnline).toBeDefined();
+    expect(mod.getConnectivityState).toBeDefined();
+
+    // Convenience initializer
+    expect(mod.initializeOfflineCapabilities).toBeDefined();
+  });
+});

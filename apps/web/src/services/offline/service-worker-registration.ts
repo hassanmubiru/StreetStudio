@@ -58,7 +58,7 @@ export class ServiceWorkerManager {
 
   constructor(options: ServiceWorkerRegistrationOptions = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
-    this.status.isSupported = 'serviceWorker' in navigator;
+    this.status.isSupported = typeof navigator !== 'undefined' && 'serviceWorker' in navigator && !!navigator.serviceWorker;
   }
 
   /**

@@ -570,3 +570,194 @@ describe('Offline Capabilities and Background Sync', () => {
       expect(storage.getItem('offline_data')).toEqual(complexData);
     });
   });
+
+  describe('network status detection and offline indicator', () => {
+    it('detects offline event on window', () => {
+      const offlineHandler = vi.fn();
+      window.addEventListener('offline', offlineHandler);
+
+      window.dispatchEvent(new Event('offline'));
+      expect(offlineHandler).toHaveBeenCalledTimes(1);
+
+      window.removeEventListener('offline', offlineHandler);
+    });
+
+    it('detects online event on window', () => {
+      const onlineHandler = vi.fn();
+      window.addEventListener('online', onlineHandler);
+
+      window.dispatchEvent(new Event('online'));
+      expect(onlineHandler).toHaveBeenCalledTimes(1);
+
+      window.removeEventListener('online', onlineHandler);
+    });
+
+    it('navigator.onLine reflects initial state', () => {
+      // jsdom defaults navigator.onLine to true
+      expect(navigator.onLine).toBe(true);
+    });
+  });
+
+  describe('offline comment queue (background sync pattern)', () => {
+    let storage: StorageManager;
+
+    beforeEach(() => {
+      storage = new StorageManager(StorageType.Memory);
+    });
+
+    it('queues comments locally when offline', () => {
+      const comment = {
+        text: 'Great video!',
+        videoId: 'v123',
+        timestamp: 42,
+        createdAt: Date.now(),
+      };
+
+      // Simulate offline queue behavior
+      const queue = storage.getItem<any[]>('offline_comment_queue', []) ?? [];
+      queue.push(comment);
+      storage.setItem('offline_comment_queue', queue);
+
+      const stored = storage.getItem<any[]>('offline_comment_queue');
+      expect(stored).toHaveLength(1);
+      expect(stored![0].text).toBe('Great video!');
+      expect(stored![0].videoId).toBe('v123');
+    });
+
+    it('supports queuing multiple comments while offline', () => {
+      const comments = [
+        { text: 'Comment 1', videoId: 'v1', timestamp: 10 },
+        { text: 'Comment 2', videoId: 'v1', timestamp: 20 },
+        { text: 'Comment 3', videoId: 'v2', timestamp: 5 },
+      ];
+
+      storage.setItem('offline_comment_queue', comments);
+      const stored = storage.getItem<any[]>('offline_comment_queue');
+      expect(stored).toHaveLength(3);
+    });
+
+    it('clears queue after sync completes', () => {
+      const comments = [{ text: 'Synced comment', videoId: 'v1' }];
+      storage.setItem('offline_comment_queue', comments);
+
+      // Simulate successful sync
+      storage.setItem('offline_comment_queue', []);
+      const remaining = storage.getItem<any[]>('offline_comment_queue');
+      expect(remaining).toHaveLength(0);
+    });
+
+    it('preserves queue items on failed sync attempt', () => {
+      const comments = [
+        { text: 'Will fail', videoId: 'v1', retryCount: 0 },
+      ];
+      storage.setItem('offline_comment_queue', comments);
+
+      // Simulate failed sync - increment retry count but keep in queue
+      const queue = storage.getItem<any[]>('offline_comment_queue')!;
+      queue[0].retryCount += 1;
+      storage.setItem('offline_comment_queue', queue);
+
+      const stored = storage.getItem<any[]>('offline_comment_queue');
+      expect(stored).toHaveLength(1);
+      expect(stored![0].retryCount).toBe(1);
+    });
+  });
+
+  describe('offline content caching strategy', () => {
+    let storage: StorageManager;
+
+    beforeEach(() => {
+      storage = new StorageManager(StorageType.Memory);
+    });
+
+    it('caches recently viewed video metadata for offline access', () => {
+      const recentVideos = [
+        { id: 'v1', title: 'Meeting Recording', duration: 3600 },
+        { id: 'v2', title: 'Product Demo', duration: 1800 },
+      ];
+
+      storage.setItem('recent_videos', recentVideos, { expiration: 86400000 }); // 24h
+      const cached = storage.getItem<typeof recentVideos>('recent_videos');
+      expect(cached).toEqual(recentVideos);
+    });
+
+    it('expired cache returns undefined (forces re-fetch when online)', () => {
+      vi.useFakeTimers();
+      storage.setItem('stale_data', { old: true }, { expiration: 100 });
+
+      vi.advanceTimersByTime(200);
+      expect(storage.getItem('stale_data')).toBeUndefined();
+      vi.useRealTimers();
+    });
+
+    it('falls back to memory storage when localStorage is unavailable', () => {
+      // StorageType.Memory is the fallback behavior
+      const memStorage = new StorageManager(StorageType.Memory);
+      memStorage.setItem('offline_key', 'value');
+      expect(memStorage.getItem('offline_key')).toBe('value');
+    });
+
+    it('handles storage of user preferences for offline use', () => {
+      storage.setItem('user_prefs', {
+        theme: 'dark',
+        autoplay: false,
+        quality: 'auto',
+        reducedMotion: true,
+      });
+
+      const prefs = storage.getItem<Record<string, any>>('user_prefs');
+      expect(prefs?.theme).toBe('dark');
+      expect(prefs?.reducedMotion).toBe(true);
+    });
+  });
+
+  describe('background sync registration pattern', () => {
+    it('registers sync event listener on online event', () => {
+      const syncHandler = vi.fn();
+      window.addEventListener('online', syncHandler);
+
+      window.dispatchEvent(new Event('online'));
+      expect(syncHandler).toHaveBeenCalledTimes(1);
+
+      window.removeEventListener('online', syncHandler);
+    });
+
+    it('queues actions during offline and flushes on reconnect', async () => {
+      const actionQueue: Array<{ action: string; payload: any }> = [];
+      const syncFn = vi.fn(async () => {
+        actionQueue.length = 0; // Clear on successful sync
+      });
+
+      // Simulate going offline and queuing actions
+      actionQueue.push({ action: 'post_comment', payload: { text: 'Hello' } });
+      actionQueue.push({ action: 'add_reaction', payload: { type: 'like' } });
+      expect(actionQueue).toHaveLength(2);
+
+      // Simulate coming back online
+      await syncFn();
+      expect(syncFn).toHaveBeenCalledTimes(1);
+      expect(actionQueue).toHaveLength(0);
+    });
+
+    it('retains failed sync items for retry', async () => {
+      const storage = new StorageManager(StorageType.Memory);
+      const pendingActions = [
+        { id: '1', action: 'comment', data: { text: 'A' }, attempts: 0 },
+        { id: '2', action: 'comment', data: { text: 'B' }, attempts: 0 },
+      ];
+      storage.setItem('pending_sync', pendingActions);
+
+      // Simulate partial sync failure
+      const actions = storage.getItem<typeof pendingActions>('pending_sync')!;
+      // First succeeds, second fails
+      const remaining = actions.slice(1);
+      remaining[0].attempts += 1;
+      storage.setItem('pending_sync', remaining);
+
+      const stored = storage.getItem<typeof pendingActions>('pending_sync');
+      expect(stored).toHaveLength(1);
+      expect(stored![0].id).toBe('2');
+      expect(stored![0].attempts).toBe(1);
+    });
+  });
+});

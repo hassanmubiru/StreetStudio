@@ -64,8 +64,8 @@ describe('Utility Functions', () => {
   describe('maskApiKey', () => {
     it('should mask key showing only last 4 characters', () => {
       const result = maskApiKey('sk_test_abc123xyz789');
-      expect(result).toMatch(/•+xyz789$/);
-      expect(result.slice(-4)).toBe('9789');
+      expect(result).toMatch(/•+.{4}$/);
+      expect(result.slice(-4)).toBe('z789');
     });
 
     it('should show only dots for very short keys', () => {
@@ -754,7 +754,7 @@ describe('ApiKeyManagementPage', () => {
       const el = page.getElement();
       container.appendChild(el);
 
-      const rows = el.querySelectorAll('[data-key-id]');
+      const rows = el.querySelectorAll('tr[data-key-id]');
       expect(rows.length).toBe(3);
     });
 
