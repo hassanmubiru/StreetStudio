@@ -455,3 +455,49 @@ describe('Cross-Module Integration: Export Permissions + Share Links', () => {
       expect(iframeCode).toContain('t=45');
       expect(iframeCode).toContain('width="1280"');
       expect(iframeCode).toContain('height="720"');
+
+      const scriptCode = generateScriptEmbed('shared-vid', opts);
+      expect(scriptCode).toContain('shared-vid');
+      expect(scriptCode).toContain('player.js');
+      expect(scriptCode).toContain('width:1280px');
+      expect(scriptCode).toContain('height:720px');
+    });
+
+    it('should validate share link permissions before embed generation', () => {
+      // Password-protected links require password validation
+      const passwordResult = validateSharePassword('myP@ss', 'password');
+      expect(passwordResult.valid).toBe(true);
+
+      // Members-only links do not require password
+      const membersResult = validateSharePassword(undefined, 'members');
+      expect(membersResult.valid).toBe(true);
+
+      // Public links do not require password
+      const publicResult = validateSharePassword(undefined, 'public');
+      expect(publicResult.valid).toBe(true);
+    });
+
+    it('should enforce password minimum length for protected embeds', () => {
+      const shortPassword = validateSharePassword('ab', 'password');
+      expect(shortPassword.valid).toBe(false);
+      expect(shortPassword.error).toContain('4 characters');
+
+      const emptyPassword = validateSharePassword(undefined, 'password');
+      expect(emptyPassword.valid).toBe(false);
+
+      const validPassword = validateSharePassword('secure123', 'password');
+      expect(validPassword.valid).toBe(true);
+    });
+  });
+
+  describe('Share link expiration with export availability', () => {
+    it('should validate that expired share links show correct status', () => {
+      const pastDate = new Date(Date.now() - 86400000).toISOString();
+      const expirationLabel = formatExpiration(pastDate);
+      expect(expirationLabel).toBe('Expired');
+
+      // An expired date should fail validation for new links
+      const validationResult = validateExpirationDate(pastDate);
+      expect(validationResult.valid).toBe(false);
+      expect(validationResult.error).toContain('future');
+    });
