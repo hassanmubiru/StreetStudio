@@ -546,3 +546,96 @@ describe('ApiKeyManagementPage', () => {
       expect(page.isCreateFormVisible()).toBe(false);
     });
   });
+
+  describe('Key Revocation', () => {
+    it('should show confirmation dialog when revoke is clicked', () => {
+      const key = createTestKey({ status: 'active' });
+      page = new ApiKeyManagementPage({ keys: [key], callbacks: createMockCallbacks() });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const revokeBtn = el.querySelector('.btn-revoke-key') as HTMLButtonElement;
+      revokeBtn.click();
+
+      expect(el.querySelector('[role="alertdialog"]')).toBeTruthy();
+      expect(el.textContent).toContain('Revoke this key');
+    });
+
+    it('should call onRevokeKey when confirmed', async () => {
+      const key = createTestKey({ id: 'key-to-revoke', status: 'active' });
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ keys: [key], callbacks });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      await page.revokeKey('key-to-revoke');
+
+      expect(callbacks.onRevokeKey).toHaveBeenCalledWith('key-to-revoke');
+    });
+
+    it('should update key status to revoked after successful revocation', async () => {
+      const key = createTestKey({ id: 'key-to-revoke', status: 'active' });
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ keys: [key], callbacks });
+
+      await page.revokeKey('key-to-revoke');
+
+      const keys = page.getKeys();
+      expect(keys[0].status).toBe('revoked');
+    });
+
+    it('should not show revoke button for already revoked keys', () => {
+      const key = createTestKey({ status: 'revoked' });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('.btn-revoke-key')).toBeFalsy();
+    });
+  });
+
+  describe('Key Rotation', () => {
+    it('should call onRotateKey callback', async () => {
+      const key = createTestKey({ id: 'key-to-rotate', status: 'active' });
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ keys: [key], callbacks });
+
+      await page.rotateKey('key-to-rotate');
+
+      expect(callbacks.onRotateKey).toHaveBeenCalledWith('key-to-rotate');
+    });
+
+    it('should revoke old key and add new key', async () => {
+      const key = createTestKey({ id: 'key-to-rotate', status: 'active' });
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ keys: [key], callbacks });
+
+      await page.rotateKey('key-to-rotate');
+
+      const keys = page.getKeys();
+      expect(keys.length).toBe(2);
+      // New key is first
+      expect(keys[0].id).toBe('rotated-key-1');
+      // Old key is revoked
+      expect(keys[1].status).toBe('revoked');
+    });
+
+    it('should show new key banner after rotation', async () => {
+      const key = createTestKey({ id: 'key-to-rotate', status: 'active' });
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ keys: [key], callbacks });
+
+      await page.rotateKey('key-to-rotate');
+
+      expect(page.getNewKeyValue()).toBe('sk_test_rotated123fullkey');
+    });
+
+    it('should not show rotate button for revoked keys', () => {
+      const key = createTestKey({ status: 'revoked' });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('.btn-rotate-key')).toBeFalsy();
+    });
+  });

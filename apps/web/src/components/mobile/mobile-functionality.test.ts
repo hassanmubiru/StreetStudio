@@ -486,3 +486,29 @@ describe('Touch Gestures and Mobile-Specific Interactions', () => {
     });
   });
 });
+
+
+// ===========================================================================
+// Section 3: Offline Capabilities and Background Sync
+// ===========================================================================
+
+describe('Offline Capabilities and Background Sync', () => {
+  describe('StorageManager as offline data cache', () => {
+    let storage: StorageManager;
+
+    beforeEach(() => {
+      storage = new StorageManager(StorageType.Memory);
+    });
+
+    it('stores and retrieves items for offline use', () => {
+      const videoData = { id: 'v1', title: 'Test Video', duration: 120 };
+      storage.setItem('recent_video_v1', videoData);
+
+      const retrieved = storage.getItem<typeof videoData>('recent_video_v1');
+      expect(retrieved).toEqual(videoData);
+    });
+
+    it('returns default value when item does not exist', () => {
+      const result = storage.getItem('nonexistent', { fallback: true });
+      expect(result).toEqual({ fallback: true });
+    });

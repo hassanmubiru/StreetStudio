@@ -209,3 +209,61 @@ describe('ConnectivityStatusManager', () => {
     expect(banner).toBeNull();
   });
 });
+
+// === Offline Content Cache Tests ===
+
+describe('OfflineContentCache', () => {
+  let OfflineContentCache: any;
+  let mockDb: any;
+  let mockStore: any;
+  let mockIndex: any;
+
+  beforeEach(async () => {
+    // Create IndexedDB mock
+    const entries = new Map<string, any>();
+
+    mockIndex = {
+      getAll: vi.fn((key?: any) => {
+        const results = Array.from(entries.values()).filter((e) =>
+          key ? e.type === key : true
+        );
+        return { result: results, onsuccess: null, onerror: null };
+      }),
+      openCursor: vi.fn(() => ({
+        result: null,
+        onsuccess: null,
+        onerror: null,
+      })),
+    };
+
+    mockStore = {
+      put: vi.fn((entry: any) => {
+        entries.set(entry.id, entry);
+        return { onsuccess: null, onerror: null };
+      }),
+      get: vi.fn((id: string) => ({
+        result: entries.get(id) || null,
+        onsuccess: null,
+        onerror: null,
+      })),
+      delete: vi.fn((id: string) => {
+        entries.delete(id);
+        return { onsuccess: null, onerror: null };
+      }),
+      clear: vi.fn(() => {
+        entries.clear();
+        return { onsuccess: null, onerror: null };
+      }),
+      getAll: vi.fn(() => ({
+        result: Array.from(entries.values()),
+        onsuccess: null,
+        onerror: null,
+      })),
+      index: vi.fn(() => mockIndex),
+      openCursor: vi.fn(() => ({
+        result: null,
+        onsuccess: null,
+        onerror: null,
+      })),
+      createIndex: vi.fn(),
+    };
