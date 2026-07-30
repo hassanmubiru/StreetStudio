@@ -29,7 +29,7 @@ vi.mock('../../app/client-logger.js', () => ({
 }));
 
 import { Router } from '../../app/router.js';
-import { KeyboardShortcutManager } from '../../app/keyboard-shortcuts.js';
+import { KeyboardShortcuts } from '../../app/keyboard-shortcuts.js';
 
 describe('Accessibility Integration', () => {
   let router: Router;
