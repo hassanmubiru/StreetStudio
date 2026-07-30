@@ -473,7 +473,9 @@ describe('UploadManagerComponent', () => {
     });
 
     it('should format upload speeds correctly', () => {
-      const formatSpeed = (component as any).formatSpeed;
+      // formatSpeed internally calls this.formatFileSize, so it must keep its
+      // binding to the component instance.
+      const formatSpeed = (component as any).formatSpeed.bind(component);
       
       expect(formatSpeed(0)).toBe('0 B/s');
       expect(formatSpeed(1024)).toBe('1.0 KB/s');
