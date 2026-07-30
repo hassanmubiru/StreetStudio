@@ -696,3 +696,114 @@ describe('ExportSharingPage', () => {
       expect(el.textContent).toContain('1 active');
     });
   });
+
+  describe('Embed Code Generation', () => {
+    it('should show embed panel for a video', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(page.isEmbedPanelVisible()).toBe(true);
+      expect(el.querySelector('#embed-panel')).toBeTruthy();
+    });
+
+    it('should hide embed panel', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+      page.hideEmbed();
+
+      expect(page.isEmbedPanelVisible()).toBe(false);
+    });
+
+    it('should display embed type radio buttons', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const radios = el.querySelectorAll('.embed-type-radio');
+      expect(radios.length).toBe(2);
+    });
+
+    it('should display embed option checkboxes', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const checkboxes = el.querySelectorAll('.embed-option-checkbox');
+      expect(checkboxes.length).toBe(6); // autoplay, controls, loop, muted, branding, responsive
+    });
+
+    it('should generate iframe code by default', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+
+      const code = page.getEmbedCode();
+      expect(code).toContain('iframe');
+      expect(code).toContain('vid-1');
+    });
+
+    it('should switch to script embed type', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+      page.setEmbedType('script');
+
+      const code = page.getEmbedCode();
+      expect(code).toContain('script');
+      expect(code).toContain('player.js');
+    });
+
+    it('should update embed options', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+      page.setEmbedOption('autoplay', true);
+      page.setEmbedOption('loop', true);
+
+      const opts = page.getEmbedOptions();
+      expect(opts.autoplay).toBe(true);
+      expect(opts.loop).toBe(true);
+    });
+
+    it('should show width/height inputs when not responsive', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+      page.setEmbedOption('responsive', false);
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('#embed-width')).toBeTruthy();
+      expect(el.querySelector('#embed-height')).toBeTruthy();
+    });
+
+    it('should hide width/height inputs when responsive', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+      // responsive is true by default
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('#embed-width')).toBeFalsy();
+      expect(el.querySelector('#embed-height')).toBeFalsy();
+    });
+
+    it('should display generated code in textarea', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const textarea = el.querySelector('#embed-code-output') as HTMLTextAreaElement;
+      expect(textarea).toBeTruthy();
+      expect(textarea.value).toContain('vid-1');
+    });
+
+    it('should use custom base embed URL', () => {
+      page = new ExportSharingPage({ baseEmbedUrl: 'https://my.embed.io' });
+      page.showEmbed('vid-1');
+
+      const code = page.getEmbedCode();
+      expect(code).toContain('https://my.embed.io');
+    });
+  });

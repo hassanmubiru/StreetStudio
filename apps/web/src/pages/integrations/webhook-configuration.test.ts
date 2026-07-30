@@ -748,3 +748,56 @@ describe('WebhookConfigurationPage', () => {
       expect(page.getDeliveries().length).toBe(0);
     });
   });
+
+  describe('Event Filtering', () => {
+    it('should filter events by search text', () => {
+      page = new WebhookConfigurationPage();
+      page.showCreate();
+      page.setEventFilter('video');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const checkboxes = el.querySelectorAll('.event-checkbox');
+      // Should show only video-related events (video.created, video.ready, video.failed)
+      expect(checkboxes.length).toBe(3);
+    });
+
+    it('should show all events when filter is cleared', () => {
+      page = new WebhookConfigurationPage();
+      page.showCreate();
+      page.setEventFilter('');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const checkboxes = el.querySelectorAll('.event-checkbox');
+      expect(checkboxes.length).toBe(AVAILABLE_EVENTS.length);
+    });
+
+    it('should filter by event type string', () => {
+      page = new WebhookConfigurationPage();
+      page.showCreate();
+      page.setEventFilter('comment');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const checkboxes = el.querySelectorAll('.event-checkbox');
+      expect(checkboxes.length).toBe(2); // comment.created, comment.mention
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should have proper ARIA labels on action buttons', () => {
+      const webhook = createTestWebhook({ url: 'https://test.com/hook' });
+      page = new WebhookConfigurationPage({ webhooks: [webhook] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const testBtn = el.querySelector('.btn-test-webhook');
+      expect(testBtn?.getAttribute('aria-label')).toContain('https://test.com/hook');
+
+      const editBtn = el.querySelector('.btn-edit-webhook');
+      expect(editBtn?.getAttribute('aria-label')).toContain('https://test.com/hook');
+
+      const deleteBtn = el.querySelector('.btn-delete-webhook');
+      expect(deleteBtn?.getAttribute('aria-label')).toContain('https://test.com/hook');
+    });
