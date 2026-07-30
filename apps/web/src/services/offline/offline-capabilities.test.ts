@@ -39,3 +39,45 @@ describe('ServiceWorkerManager', () => {
     const mod = await import('./service-worker-registration.js');
     ServiceWorkerManager = mod.ServiceWorkerManager;
   });
+
+  it('should report supported when serviceWorker is available', () => {
+    const manager = new ServiceWorkerManager();
+    const status = manager.getStatus();
+    expect(status.isSupported).toBe(true);
+  });
+
+  it('should report not supported when serviceWorker is unavailable', () => {
+    Object.defineProperty(navigator, 'serviceWorker', {
+      writable: true,
+      configurable: true,
+      value: undefined,
+    });
+    const manager = new ServiceWorkerManager();
+    const status = manager.getStatus();
+    expect(status.isSupported).toBe(false);
+  });
+
+  it('should register successfully and update status', async () => {
+    const manager = new ServiceWorkerManager();
+    const status = await manager.register();
+    expect(status.isRegistered).toBe(true);
+    expect(status.isActive).toBe(true);
+  });
+
+  it('should call onRegistered callback after successful registration', async () => {
+    const onRegistered = vi.fn();
+    const manager = new ServiceWorkerManager({ callbacks: { onRegistered } });
+    await manager.register();
+    expect(onRegistered).toHaveBeenCalled();
+  });
+
+  it('should handle registration error gracefully', async () => {
+    const error = new Error('Registration failed');
+    (navigator.serviceWorker.register as any).mockRejectedValueOnce(error);
+    const onError = vi.fn();
+    const manager = new ServiceWorkerManager({ callbacks: { onError } });
+    const status = await manager.register();
+    expect(status.isRegistered).toBe(false);
+    expect(status.error).toBe('Registration failed');
+    expect(onError).toHaveBeenCalledWith(error);
+  });

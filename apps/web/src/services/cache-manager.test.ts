@@ -4,6 +4,8 @@
  * Tests for intelligent caching strategies, LRU eviction, and persistence.
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CacheManager } from './cache-manager.js';
 
