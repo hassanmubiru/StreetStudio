@@ -174,3 +174,34 @@ describe('Responsive Layout Behavior Across Breakpoints', () => {
 
       expect(listener).toHaveBeenCalledWith('mobile', 375);
     });
+
+    it('notifies on transition from mobile to tablet', async () => {
+      // Start at mobile
+      Object.defineProperty(window, 'innerWidth', { value: 375, writable: true });
+      window.dispatchEvent(new Event('resize'));
+      await vi.advanceTimersByTimeAsync(200);
+
+      const listener = vi.fn();
+      observer.onChange(listener);
+
+      Object.defineProperty(window, 'innerWidth', { value: 768, writable: true });
+      window.dispatchEvent(new Event('resize'));
+      await vi.advanceTimersByTimeAsync(200);
+
+      expect(listener).toHaveBeenCalledWith('tablet', 768);
+    });
+
+    it('supports multiple listeners', async () => {
+      const listener1 = vi.fn();
+      const listener2 = vi.fn();
+      observer.onChange(listener1);
+      observer.onChange(listener2);
+
+      Object.defineProperty(window, 'innerWidth', { value: 375, writable: true });
+      window.dispatchEvent(new Event('resize'));
+      await vi.advanceTimersByTimeAsync(200);
+
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(1);
+    });
+  });
