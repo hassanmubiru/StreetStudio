@@ -75,3 +75,43 @@ function simulateSwipe(
   const end = createTouchEvent('touchend', [], [{ clientX: endX, clientY: endY }]);
   element.dispatchEvent(end);
 }
+
+// ===========================================================================
+// TouchGestureHandler Tests
+// ===========================================================================
+
+describe('TouchGestureHandler', () => {
+  let container: HTMLElement;
+  let handler: TouchGestureHandler;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    container = document.createElement('div');
+    container.style.width = '375px';
+    container.style.height = '667px';
+    document.body.appendChild(container);
+    Object.defineProperty(container, 'getBoundingClientRect', {
+      value: () => ({ left: 0, top: 0, width: 375, height: 667, right: 375, bottom: 667, x: 0, y: 0, toJSON: () => {} }),
+    });
+  });
+
+  afterEach(() => {
+    handler?.destroy();
+    document.body.innerHTML = '';
+    vi.useRealTimers();
+  });
+
+  it('should detect tap gestures', () => {
+    const onTap = vi.fn();
+    handler = new TouchGestureHandler(container, { onTap }, { tapMaxDuration: 200 });
+
+    const start = createTouchEvent('touchstart', [{ clientX: 100, clientY: 100 }]);
+    container.dispatchEvent(start);
+    vi.advanceTimersByTime(50);
+    const end = createTouchEvent('touchend', [], [{ clientX: 101, clientY: 101 }]);
+    container.dispatchEvent(end);
+
+    // Tap fires immediately when no double-tap listener
+    expect(onTap).toHaveBeenCalledTimes(1);
+    expect(onTap.mock.calls[0][0].type).toBe('tap');
+  });
