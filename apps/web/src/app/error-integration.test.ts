@@ -4,7 +4,7 @@
  * Tests the integration between error handler, error boundary, and client logger.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ErrorBoundary } from './error-boundary.js';
 import { setupErrorHandling } from './error-handler.js';
 

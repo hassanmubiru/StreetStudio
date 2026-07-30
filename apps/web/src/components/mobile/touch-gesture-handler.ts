@@ -183,6 +183,7 @@ export class TouchGestureHandler {
     }
 
     const touch = e.touches[0];
+    if (!touch) return;
     this.startX = touch.clientX;
     this.startY = touch.clientY;
     this.startTime = Date.now();
@@ -191,9 +192,11 @@ export class TouchGestureHandler {
 
     // Start long press timer
     this.clearLongPressTimer();
+    const touchX = touch.clientX;
+    const touchY = touch.clientY;
     this.longPressTimer = setTimeout(() => {
       if (!this.isPanning) {
-        const gestureEvent = this.createGestureEvent('longpress', e, touch.clientX, touch.clientY);
+        const gestureEvent = this.createGestureEvent('longpress', e, touchX, touchY);
         this.callbacks.onLongPress?.(gestureEvent);
       }
     }, this.options.longPressDelay);
@@ -203,6 +206,7 @@ export class TouchGestureHandler {
     if (this.isDestroyed || e.touches.length !== 1) return;
 
     const touch = e.touches[0];
+    if (!touch) return;
     const deltaX = touch.clientX - this.startX;
     const deltaY = touch.clientY - this.startY;
     const absX = Math.abs(deltaX);

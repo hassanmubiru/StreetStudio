@@ -63,7 +63,7 @@ class MockNotificationClass {
     this.badge = options?.badge;
     this.tag = options?.tag;
     this.requireInteraction = options?.requireInteraction;
-    this.silent = options?.silent;
+    this.silent = options?.silent ?? undefined;
     this.data = (options as any)?.data;
   }
 

@@ -8,11 +8,19 @@
 import type { ProjectDto } from '@streetstudio/shared';
 import { formatRelativeTime } from '../../../utils/format-time.js';
 
+export interface ProjectCardData extends ProjectDto {
+  thumbnailUrl?: string;
+  description?: string;
+  videoCount?: number;
+  memberCount?: number;
+  updatedAt?: string;
+}
+
 export class ProjectCard {
   private element: HTMLElement;
-  private project: ProjectDto;
+  private project: ProjectCardData;
 
-  constructor(project: ProjectDto) {
+  constructor(project: ProjectCardData) {
     this.project = project;
     this.element = document.createElement('div');
     this.render();
@@ -80,7 +88,7 @@ export class ProjectCard {
 
           <!-- Last Updated -->
           <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Updated ${formatRelativeTime(this.project.updatedAt)}
+            Updated ${formatRelativeTime(this.project.updatedAt ?? this.project.createdAt)}
           </div>
         </div>
       </div>

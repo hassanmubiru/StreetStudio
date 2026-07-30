@@ -51,33 +51,28 @@ describe('Task 3.4: Workspace and Organization Management Integration', () => {
       id: 'user-1' as Uuid,
       email: 'test@example.com',
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
-      avatarUrl: '/avatar.jpg'
-    };
+    } as MemberDto;
 
     mockOrganization = {
       id: 'org-1' as Uuid,
       name: 'Test Organization',
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    };
+      settings: {},
+    } as OrganizationDto;
 
     mockWorkspace = {
       id: 'workspace-1' as Uuid,
       name: 'Default Workspace',
-      description: 'Test workspace',
       organizationId: mockOrganization.id,
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    };
+    } as WorkspaceDto;
 
     mockProject = {
       id: 'project-1' as Uuid,
       name: 'Test Project',
       organizationId: mockOrganization.id,
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    };
+    } as ProjectDto;
 
     // Initialize stores
     authStore = createAuthStore(mockDashboardSession as any);
@@ -185,7 +180,7 @@ describe('Task 3.4: Workspace and Organization Management Integration', () => {
       expect(state.breadcrumbs.length).toBeGreaterThan(1);
       
       // Verify breadcrumb structure includes project
-      const projectBreadcrumb = state.breadcrumbs.find(b => b.label === mockProject.name);
+      const projectBreadcrumb = state.breadcrumbs.find((b: any) => b.label === mockProject.name);
       expect(projectBreadcrumb).toBeDefined();
     });
 
@@ -204,7 +199,7 @@ describe('Task 3.4: Workspace and Organization Management Integration', () => {
 
     test('should update breadcrumbs when context changes', () => {
       const stateChanges: any[] = [];
-      const unsubscribe = workspaceStore.subscribe((state) => {
+      const unsubscribe = workspaceStore.subscribe((state: any) => {
         stateChanges.push(state.breadcrumbs);
       });
 
@@ -314,7 +309,7 @@ describe('Task 3.4: Workspace and Organization Management Integration', () => {
       expect(breadcrumbs.length).toBeGreaterThanOrEqual(3); // Dashboard > Projects > Project
       
       // Verify breadcrumb navigation functionality
-      const projectBreadcrumb = breadcrumbs.find(b => b.label === mockProject.name);
+      const projectBreadcrumb = breadcrumbs.find((b: any) => b.label === mockProject.name);
       expect(projectBreadcrumb).toBeDefined();
       expect(projectBreadcrumb?.href).toContain('/projects/');
     });

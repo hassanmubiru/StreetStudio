@@ -173,18 +173,14 @@ describe('NavigationController', () => {
     const mockUser: MemberDto = {
       id: 'user-1' as any,
       email: 'test@example.com',
-      displayName: 'Test User',
-      avatarUrl: '/avatar.jpg',
       createdAt: '2023-01-01T00:00:00Z' as any,
-      updatedAt: '2023-01-01T00:00:00Z' as any,
     };
 
     const mockOrganization: OrganizationDto = {
       id: 'org-1' as any,
       name: 'Test Org',
-      slug: 'test-org',
+      settings: {},
       createdAt: '2023-01-01T00:00:00Z' as any,
-      updatedAt: '2023-01-01T00:00:00Z' as any,
     };
 
     beforeEach(() => {

@@ -72,7 +72,7 @@ describe('DashboardStatsWidget', () => {
     it('should render videos created stat correctly', () => {
       const element = statsWidget.getElement();
       const statCards = element.querySelectorAll('.bg-white');
-      const videosCard = statCards[0];
+      const videosCard = statCards[0]!;
       
       expect(videosCard.textContent).toContain('12');
       expect(videosCard.textContent).toContain('Videos Created');
@@ -105,7 +105,7 @@ describe('DashboardStatsWidget', () => {
     it('should render comments received stat correctly', () => {
       const element = statsWidget.getElement();
       const statCards = element.querySelectorAll('.bg-white');
-      const commentsCard = statCards[1];
+      const commentsCard = statCards[1]!;
       
       expect(commentsCard.textContent).toContain('45');
       expect(commentsCard.textContent).toContain('Comments Received');
@@ -138,7 +138,7 @@ describe('DashboardStatsWidget', () => {
     it('should render team members stat correctly', () => {
       const element = statsWidget.getElement();
       const statCards = element.querySelectorAll('.bg-white');
-      const teamCard = statCards[2];
+      const teamCard = statCards[2]!;
       
       expect(teamCard.textContent).toContain('8');
       expect(teamCard.textContent).toContain('Team Members');

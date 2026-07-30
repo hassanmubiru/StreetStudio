@@ -242,7 +242,9 @@ export class VideoSessionMemoryManager {
     const recent = this.memorySnapshots.slice(-5);
     let totalDelta = 0;
     for (let i = 1; i < recent.length; i++) {
-      totalDelta += recent[i].usageRatio - recent[i - 1].usageRatio;
+      const curr = recent[i]!;
+      const prev = recent[i - 1]!;
+      totalDelta += curr.usageRatio - prev.usageRatio;
     }
     return totalDelta / (recent.length - 1);
   }
@@ -406,7 +408,8 @@ export class VideoSessionMemoryManager {
     let freed = 0;
 
     for (let i = 0; i < toRelease && i < buffers.length; i++) {
-      const [id, resource] = buffers[i];
+      const entry = buffers[i]!;
+      const [id, resource] = entry;
       resource.cleanup();
       freed += resource.estimatedSize;
       this.resources.delete(id);

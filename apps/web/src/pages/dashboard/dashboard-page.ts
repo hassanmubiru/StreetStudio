@@ -110,29 +110,9 @@ export class DashboardPage {
 
   private async loadRecentProjects(): Promise<ProjectDto[]> {
     try {
-      // Mock implementation - replace with actual API call
-      return [
-        {
-          id: '1' as Uuid,
-          name: 'Product Demo Videos',
-          description: 'Comprehensive product demonstration recordings',
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          videoCount: 5,
-          memberCount: 3,
-          thumbnailUrl: '/api/projects/1/thumbnail'
-        } as ProjectDto,
-        {
-          id: '2' as Uuid,
-          name: 'Team Training Sessions',
-          description: 'Internal team training and onboarding content',
-          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-          updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          videoCount: 8,
-          memberCount: 12,
-          thumbnailUrl: '/api/projects/2/thumbnail'
-        } as ProjectDto
-      ];
+      // Load projects from the current session's API
+      const projects = await this.session.api.projects.list();
+      return projects.slice(0, 5);
     } catch (error) {
       console.warn('Failed to load recent projects:', error);
       return [];
@@ -141,31 +121,9 @@ export class DashboardPage {
 
   private async loadRecentVideos(): Promise<VideoDto[]> {
     try {
-      // Mock implementation - replace with actual API call
-      return [
-        {
-          id: '1' as Uuid,
-          title: 'Feature Walkthrough - New Dashboard',
-          description: 'Complete walkthrough of the new dashboard interface',
-          duration: 154, // 2:34
-          createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-          status: 'ready',
-          thumbnailUrl: '/api/videos/1/thumbnail',
-          commentCount: 3,
-          viewCount: 15
-        } as VideoDto,
-        {
-          id: '2' as Uuid, 
-          title: 'Bug Report Demonstration',
-          description: 'Demonstrating bug reproduction steps',
-          duration: 105, // 1:45
-          createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-          status: 'ready',
-          thumbnailUrl: '/api/videos/2/thumbnail',
-          commentCount: 1,
-          viewCount: 8
-        } as VideoDto
-      ];
+      // Load videos from the current session's API
+      const videos = await this.session.api.videos.list();
+      return videos.slice(0, 5);
     } catch (error) {
       console.warn('Failed to load recent videos:', error);
       return [];
@@ -173,30 +131,9 @@ export class DashboardPage {
   }
   private async loadNotifications(): Promise<NotificationDto[]> {
     try {
-      // Mock implementation - replace with actual API call
-      return [
-        {
-          id: '1' as Uuid,
-          type: 'comment',
-          message: 'Sarah commented on "Feature Walkthrough"',
-          createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 min ago
-          read: false,
-          metadata: {
-            videoId: '1' as Uuid,
-            commentId: '1' as Uuid
-          }
-        } as NotificationDto,
-        {
-          id: '2' as Uuid,
-          type: 'project_invite',
-          message: 'You were added to "Team Training Sessions"',
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          read: false,
-          metadata: {
-            projectId: '2' as Uuid
-          }
-        } as NotificationDto
-      ];
+      // Load notifications from the current session's API
+      const notifications = await this.session.api.notifications.list();
+      return notifications.slice(0, 10);
     } catch (error) {
       console.warn('Failed to load notifications:', error);
       return [];
@@ -248,7 +185,7 @@ export class DashboardPage {
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                Welcome back, ${this.data?.currentMember?.displayName || 'User'}!
+                Welcome back, ${this.data?.currentMember?.email || 'User'}!
               </h1>
               <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 Here's what's happening with your videos and projects.
@@ -568,12 +505,8 @@ export class DashboardPage {
 
     switch (update.type) {
       case 'new_comment':
-        // Update comment counts for affected videos
-        const video = this.data.recentVideos.find(v => v.id === update.videoId);
-        if (video) {
-          video.commentCount = (video.commentCount || 0) + 1;
-          this.updateVideoCard(video);
-        }
+        // Refresh the videos section to reflect updated comment counts
+        this.refresh();
         break;
         
       case 'project_updated':
@@ -598,9 +531,9 @@ export class DashboardPage {
   private updateVideoCard(video: VideoDto): void {
     const videoCard = document.querySelector(`[data-video-id="${video.id}"]`);
     if (videoCard) {
-      const commentCount = videoCard.querySelector('[data-comment-count]');
-      if (commentCount) {
-        commentCount.textContent = `${video.commentCount} comments`;
+      const statusEl = videoCard.querySelector('[data-video-status]');
+      if (statusEl) {
+        statusEl.textContent = video.status;
       }
     }
   }

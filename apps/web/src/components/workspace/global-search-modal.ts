@@ -232,14 +232,18 @@ export class GlobalSearchModal {
 
     if (this.results.length > 0 && this.selectedIndex < this.results.length) {
       const result = this.results[this.selectedIndex];
-      this.searchService.addToRecentSearches(this.query.trim());
-      this.options.onNavigate?.(result.url);
-      this.close();
+      if (result) {
+        this.searchService.addToRecentSearches(this.query.trim());
+        this.options.onNavigate?.(result.url);
+        this.close();
+      }
     } else if (this.suggestions.length > 0 && this.selectedIndex < this.suggestions.length) {
       const suggestion = this.suggestions[this.selectedIndex];
-      this.query = suggestion.text;
-      this.selectedIndex = -1;
-      this.handleInput(suggestion.text);
+      if (suggestion) {
+        this.query = suggestion.text;
+        this.selectedIndex = -1;
+        this.handleInput(suggestion.text);
+      }
     }
   }
 

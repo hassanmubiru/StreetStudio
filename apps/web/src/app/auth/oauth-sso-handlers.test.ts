@@ -73,7 +73,7 @@ describe('AuthController OAuth/SSO Integration', () => {
   describe('OAuth Integration', () => {
     it('initiates OAuth flow successfully', async () => {
       const { oauthConfigService } = await import('../../services/oauth-config.js');
-      oauthConfigService.initiateOAuth.mockResolvedValue(undefined);
+      vi.mocked(oauthConfigService.initiateOAuth).mockResolvedValue(undefined);
 
       await authController.initiateOAuth('google', '/dashboard');
 
@@ -82,7 +82,7 @@ describe('AuthController OAuth/SSO Integration', () => {
 
     it('handles OAuth initiation errors gracefully', async () => {
       const { oauthConfigService } = await import('../../services/oauth-config.js');
-      oauthConfigService.initiateOAuth.mockRejectedValue(new Error('Provider not found'));
+      vi.mocked(oauthConfigService.initiateOAuth).mockRejectedValue(new Error('Provider not found'));
 
       await expect(authController.initiateOAuth('invalid-provider')).rejects.toThrow('Provider not found');
 
@@ -94,7 +94,7 @@ describe('AuthController OAuth/SSO Integration', () => {
 
     it('checks OAuth availability correctly', async () => {
       const { oauthConfigService } = await import('../../services/oauth-config.js');
-      oauthConfigService.isOAuthAvailable.mockResolvedValue(true);
+      vi.mocked(oauthConfigService.isOAuthAvailable).mockResolvedValue(true);
 
       const available = await authController.isOAuthAvailable();
 
@@ -104,7 +104,7 @@ describe('AuthController OAuth/SSO Integration', () => {
 
     it('returns empty providers list on error', async () => {
       const { oauthConfigService } = await import('../../services/oauth-config.js');
-      oauthConfigService.getEnabledProviders.mockRejectedValue(new Error('Network error'));
+      vi.mocked(oauthConfigService.getEnabledProviders).mockRejectedValue(new Error('Network error'));
 
       const providers = await authController.getOAuthProviders();
 
@@ -118,7 +118,7 @@ describe('AuthController OAuth/SSO Integration', () => {
       ];
 
       const { oauthConfigService } = await import('../../services/oauth-config.js');
-      oauthConfigService.getEnabledProviders.mockResolvedValue(mockProviders);
+      vi.mocked(oauthConfigService.getEnabledProviders).mockResolvedValue(mockProviders as any);
 
       const providers = await authController.getOAuthProviders();
 
@@ -129,7 +129,7 @@ describe('AuthController OAuth/SSO Integration', () => {
   describe('SSO Integration', () => {
     it('initiates SSO flow successfully', async () => {
       const { ssoConfigService } = await import('../../services/sso-config.js');
-      ssoConfigService.initiatSSO.mockResolvedValue(undefined);
+      vi.mocked(ssoConfigService.initiatSSO).mockResolvedValue(undefined);
 
       await authController.initiateSSO('azure-ad', '/dashboard');
 
@@ -138,7 +138,7 @@ describe('AuthController OAuth/SSO Integration', () => {
 
     it('handles SSO initiation errors gracefully', async () => {
       const { ssoConfigService } = await import('../../services/sso-config.js');
-      ssoConfigService.initiatSSO.mockRejectedValue(new Error('SSO not configured'));
+      vi.mocked(ssoConfigService.initiatSSO).mockRejectedValue(new Error('SSO not configured'));
 
       await expect(authController.initiateSSO('invalid-provider')).rejects.toThrow('SSO not configured');
 
@@ -151,7 +151,7 @@ describe('AuthController OAuth/SSO Integration', () => {
     it('checks SSO auto-redirect correctly', async () => {
       const mockProvider = { id: 'azure-ad', displayName: 'Microsoft Azure AD' };
       const { ssoConfigService } = await import('../../services/sso-config.js');
-      ssoConfigService.shouldAutoRedirect.mockResolvedValue(mockProvider);
+      vi.mocked(ssoConfigService.shouldAutoRedirect).mockResolvedValue(mockProvider as any);
 
       const provider = await authController.shouldAutoRedirectSSO('user@company.com');
 
@@ -161,7 +161,7 @@ describe('AuthController OAuth/SSO Integration', () => {
 
     it('returns null when SSO auto-redirect fails', async () => {
       const { ssoConfigService } = await import('../../services/sso-config.js');
-      ssoConfigService.shouldAutoRedirect.mockRejectedValue(new Error('Network error'));
+      vi.mocked(ssoConfigService.shouldAutoRedirect).mockRejectedValue(new Error('Network error'));
 
       const provider = await authController.shouldAutoRedirectSSO('user@company.com');
 
@@ -170,7 +170,7 @@ describe('AuthController OAuth/SSO Integration', () => {
 
     it('checks SSO availability', async () => {
       const { ssoConfigService } = await import('../../services/sso-config.js');
-      ssoConfigService.isSSOAvailable.mockResolvedValue(true);
+      vi.mocked(ssoConfigService.isSSOAvailable).mockResolvedValue(true);
 
       const available = await authController.isSSOAvailable();
 
@@ -184,7 +184,7 @@ describe('AuthController OAuth/SSO Integration', () => {
       ];
 
       const { ssoConfigService } = await import('../../services/sso-config.js');
-      ssoConfigService.getEnabledProviders.mockResolvedValue(mockProviders);
+      vi.mocked(ssoConfigService.getEnabledProviders).mockResolvedValue(mockProviders as any);
 
       const providers = await authController.getSSOProviders();
 
@@ -194,7 +194,7 @@ describe('AuthController OAuth/SSO Integration', () => {
     it('gets SSO provider for domain', async () => {
       const mockProvider = { id: 'azure-ad', displayName: 'Microsoft Azure AD' };
       const { ssoConfigService } = await import('../../services/sso-config.js');
-      ssoConfigService.getProviderForDomain.mockResolvedValue(mockProvider);
+      vi.mocked(ssoConfigService.getProviderForDomain).mockResolvedValue(mockProvider as any);
 
       const provider = await authController.getSSOProviderForDomain('user@company.com');
 
@@ -206,7 +206,7 @@ describe('AuthController OAuth/SSO Integration', () => {
   describe('Enhanced Login with SSO Check', () => {
     it('performs regular login when no SSO auto-redirect', async () => {
       const { ssoConfigService } = await import('../../services/sso-config.js');
-      ssoConfigService.shouldAutoRedirect.mockResolvedValue(null);
+      vi.mocked(ssoConfigService.shouldAutoRedirect).mockResolvedValue(null);
 
       // Mock successful login
       vi.spyOn(authController, 'login').mockResolvedValue({ success: true });
@@ -221,7 +221,7 @@ describe('AuthController OAuth/SSO Integration', () => {
     it('returns SSO provider when auto-redirect is required', async () => {
       const mockProvider = { id: 'azure-ad', displayName: 'Microsoft Azure AD' };
       const { ssoConfigService } = await import('../../services/sso-config.js');
-      ssoConfigService.shouldAutoRedirect.mockResolvedValue(mockProvider);
+      vi.mocked(ssoConfigService.shouldAutoRedirect).mockResolvedValue(mockProvider as any);
 
       const result = await authController.loginWithEmailCheck('user@company.com', 'password');
 
@@ -238,7 +238,7 @@ describe('AuthController OAuth/SSO Integration', () => {
     it('retrieves stored callback errors', async () => {
       const mockError = { error: 'OAuth failed', provider: 'google' };
       const { OAuthCallbackHandler } = await import('../../services/oauth-callback-handler.js');
-      OAuthCallbackHandler.getAndClearStoredError.mockReturnValue(mockError);
+      vi.mocked(OAuthCallbackHandler.getAndClearStoredError).mockReturnValue(mockError);
 
       const error = await authController.getStoredCallbackError();
 
@@ -248,7 +248,7 @@ describe('AuthController OAuth/SSO Integration', () => {
 
     it('handles errors when retrieving callback errors', async () => {
       const { OAuthCallbackHandler } = await import('../../services/oauth-callback-handler.js');
-      OAuthCallbackHandler.getAndClearStoredError.mockImplementation(() => {
+      vi.mocked(OAuthCallbackHandler.getAndClearStoredError).mockImplementation(() => {
         throw new Error('Storage error');
       });
 
@@ -267,7 +267,7 @@ describe('AuthController OAuth/SSO Integration', () => {
       const oauthPromise = new Promise<void>(resolve => {
         resolveOAuth = resolve;
       });
-      oauthConfigService.initiateOAuth.mockReturnValue(oauthPromise);
+      vi.mocked(oauthConfigService.initiateOAuth).mockReturnValue(oauthPromise);
 
       const oauthPromiseResult = authController.initiateOAuth('google');
 
@@ -283,7 +283,7 @@ describe('AuthController OAuth/SSO Integration', () => {
 
     it('clears loading state after OAuth completion', async () => {
       const { oauthConfigService } = await import('../../services/oauth-config.js');
-      oauthConfigService.initiateOAuth.mockResolvedValue(undefined);
+      vi.mocked(oauthConfigService.initiateOAuth).mockResolvedValue(undefined);
 
       await authController.initiateOAuth('google');
 
@@ -294,7 +294,7 @@ describe('AuthController OAuth/SSO Integration', () => {
     it('sets error state on OAuth failure', async () => {
       const { oauthConfigService } = await import('../../services/oauth-config.js');
       const errorMessage = 'OAuth provider not configured';
-      oauthConfigService.initiateOAuth.mockRejectedValue(new Error(errorMessage));
+      vi.mocked(oauthConfigService.initiateOAuth).mockRejectedValue(new Error(errorMessage));
 
       await expect(authController.initiateOAuth('invalid')).rejects.toThrow();
 
@@ -308,7 +308,7 @@ describe('AuthController OAuth/SSO Integration', () => {
     it('logs OAuth operations correctly', async () => {
       const { logger } = await import('../client-logger.js');
       const { oauthConfigService } = await import('../../services/oauth-config.js');
-      oauthConfigService.initiateOAuth.mockResolvedValue(undefined);
+      vi.mocked(oauthConfigService.initiateOAuth).mockResolvedValue(undefined);
 
       await authController.initiateOAuth('google');
 
@@ -318,7 +318,7 @@ describe('AuthController OAuth/SSO Integration', () => {
     it('logs SSO operations correctly', async () => {
       const { logger } = await import('../client-logger.js');
       const { ssoConfigService } = await import('../../services/sso-config.js');
-      ssoConfigService.initiatSSO.mockResolvedValue(undefined);
+      vi.mocked(ssoConfigService.initiatSSO).mockResolvedValue(undefined);
 
       await authController.initiateSSO('azure-ad');
 
@@ -331,7 +331,7 @@ describe('AuthController OAuth/SSO Integration', () => {
       const { oauthConfigService } = await import('../../services/oauth-config.js');
       
       const error = new Error('OAuth failed');
-      oauthConfigService.initiateOAuth.mockRejectedValue(error);
+      vi.mocked(oauthConfigService.initiateOAuth).mockRejectedValue(error);
 
       await expect(authController.initiateOAuth('google')).rejects.toThrow();
 
@@ -343,7 +343,7 @@ describe('AuthController OAuth/SSO Integration', () => {
 
     it('handles network failures gracefully', async () => {
       const { oauthConfigService } = await import('../../services/oauth-config.js');
-      oauthConfigService.isOAuthAvailable.mockRejectedValue(new Error('Network timeout'));
+      vi.mocked(oauthConfigService.isOAuthAvailable).mockRejectedValue(new Error('Network timeout'));
 
       const available = await authController.isOAuthAvailable();
 

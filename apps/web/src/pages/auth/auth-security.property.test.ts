@@ -146,7 +146,7 @@ describe('Feature: web-application-implementation, Property 1: Authentication Se
     
     // Reset document mocks
     mockDocument.createElement.mockClear();
-    mockDocument.querySelector.mockImplementation((selector: string) => {
+    (mockDocument.querySelector as any).mockImplementation((selector: string) => {
       // Return mock elements for common selectors used in LoginPage
       if (selector === '#login-form') {
         const form = createMockElement('form');
@@ -287,7 +287,7 @@ describe('Feature: web-application-implementation, Property 1: Authentication Se
           const errorTextElement = createMockElement('span');
           
           // Mock querySelector to return our tracked elements
-          mockDocument.querySelector.mockImplementation((selector: string) => {
+          (mockDocument.querySelector as any).mockImplementation((selector: string) => {
             switch (selector) {
               case '#password': return passwordInput;
               case '#error-message': return errorMessageElement;

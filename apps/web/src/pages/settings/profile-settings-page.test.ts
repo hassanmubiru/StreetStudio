@@ -402,7 +402,7 @@ describe('ProfileSettingsPage', () => {
       saveBtn.click();
 
       expect(saveSpy).toHaveBeenCalled();
-      const detail = saveSpy.mock.calls[0][0].detail;
+      const detail = saveSpy.mock.calls[0]![0].detail;
       expect(detail.profileData.displayName).toBe('Updated Name');
     });
 

@@ -189,7 +189,7 @@ export class MobileNotificationManager {
     try {
       const subscription = await this.serviceWorkerRegistration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(this.vapidPublicKey),
+        applicationServerKey: urlBase64ToUint8Array(this.vapidPublicKey) as BufferSource,
       });
 
       const subscriptionJson = subscription.toJSON();
@@ -267,14 +267,11 @@ export class MobileNotificationManager {
           body: options.body,
           icon: options.icon,
           badge: options.badge,
-          image: options.image,
           tag: options.tag,
           requireInteraction: options.requireInteraction,
-          vibrate: options.vibrate,
           data: options.data,
-          actions: options.actions,
           silent: options.silent,
-        });
+        } as NotificationOptions);
         return null; // SW notifications don't return a Notification object
       }
 

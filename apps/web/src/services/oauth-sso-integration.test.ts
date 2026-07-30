@@ -30,7 +30,7 @@ describe('OAuth Configuration Service', () => {
   let oauthService: OAuthConfigService;
   let mockApiClient: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     
     // Reset DOM state
@@ -73,7 +73,7 @@ describe('OAuth Configuration Service', () => {
 
       expect(config.enabled).toBe(true);
       expect(config.providers).toHaveLength(4); // Default providers
-      expect(config.providers[0].id).toBe('google');
+      expect(config.providers![0]!.id).toBe('google');
     });
 
     it('returns enabled providers only', async () => {
@@ -290,7 +290,7 @@ describe('SSO Configuration Service', () => {
   let ssoService: SSOConfigService;
   let mockApiClient: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     sessionStorage.clear();
     
@@ -506,7 +506,7 @@ describe('OAuth/SSO Callback Handler', () => {
       const params = OAuthCallbackHandler.parseCallbackParams();
 
       expect(params.error).toBe('access_denied');
-      expect(params.error_description).toBe('User cancelled');
+      expect((params as any).error_description).toBe('User cancelled');
       expect(params.state).toBe('xyz789');
     });
   });
@@ -531,7 +531,7 @@ describe('OAuth/SSO Callback Handler', () => {
           writable: true,
         });
 
-        expect(OAuthCallbackHandler.isCallbackUrl()).toBe(expected);
+        expect((OAuthCallbackHandler as any).isCallbackUrl()).toBe(expected);
       });
     });
   });
@@ -599,7 +599,7 @@ describe('OAuth/SSO Callback Handler', () => {
 describe('OAuth/SSO Integration', () => {
   let mockApiClient: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     sessionStorage.clear();
     mockApiClient = (await import('./api.js')).apiClient;

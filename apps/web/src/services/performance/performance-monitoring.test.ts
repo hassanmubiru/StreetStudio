@@ -443,8 +443,8 @@ describe('PerformanceBudgetMonitor', () => {
 
     const history = monitor.getAlertHistory();
     expect(history).toHaveLength(2);
-    expect(history[0].metric).toBe('FID'); // Most recent first
-    expect(history[1].metric).toBe('LCP');
+    expect(history[0]!.metric).toBe('FID'); // Most recent first
+    expect(history[1]!.metric).toBe('LCP');
   });
 
   it('clears alert history', () => {
@@ -678,8 +678,8 @@ describe('UserExperienceMetrics', () => {
 
     const resources = metrics.getResourceTimings();
     expect(resources).toHaveLength(1);
-    expect(resources[0].name).toBe('https://cdn.example.com/video.mp4');
-    expect(resources[0].transferSize).toBe(1024000);
+    expect(resources[0]!.name).toBe('https://cdn.example.com/video.mp4');
+    expect(resources[0]!.transferSize).toBe(1024000);
   });
 });
 

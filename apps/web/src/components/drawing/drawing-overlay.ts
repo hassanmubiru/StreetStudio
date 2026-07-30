@@ -264,6 +264,7 @@ export class DrawingOverlay {
   private handleTouchStart(event: TouchEvent): void {
     event.preventDefault();
     const touch = event.touches[0];
+    if (!touch) return;
     const mouseEvent = new MouseEvent('mousedown', {
       clientX: touch.clientX,
       clientY: touch.clientY
@@ -274,6 +275,7 @@ export class DrawingOverlay {
   private handleTouchMove(event: TouchEvent): void {
     event.preventDefault();
     const touch = event.touches[0];
+    if (!touch) return;
     const mouseEvent = new MouseEvent('mousemove', {
       clientX: touch.clientX,
       clientY: touch.clientY
@@ -434,6 +436,9 @@ export class DrawingOverlay {
   private drawPath(path: DrawingPath): void {
     if (path.points.length === 0) return;
     
+    const firstPoint = path.points[0];
+    if (!firstPoint) return;
+    
     this.ctx.save();
     this.ctx.strokeStyle = path.style.color;
     this.ctx.lineWidth = path.style.strokeWidth;
@@ -442,13 +447,19 @@ export class DrawingOverlay {
     this.ctx.lineJoin = path.style.lineJoin || 'round';
     
     if (path.tool === 'arrow' && path.points.length >= 2) {
-      this.drawArrow(path.points[0], path.points[path.points.length - 1]);
+      const lastPoint = path.points[path.points.length - 1];
+      if (lastPoint) {
+        this.drawArrow(firstPoint, lastPoint);
+      }
     } else {
       this.ctx.beginPath();
-      this.ctx.moveTo(path.points[0].x, path.points[0].y);
+      this.ctx.moveTo(firstPoint.x, firstPoint.y);
       
       for (let i = 1; i < path.points.length; i++) {
-        this.ctx.lineTo(path.points[i].x, path.points[i].y);
+        const point = path.points[i];
+        if (point) {
+          this.ctx.lineTo(point.x, point.y);
+        }
       }
       
       this.ctx.stroke();

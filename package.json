@@ -15,7 +15,8 @@
   "scripts": {
     "build": "tsc -b",
     "build:clean": "tsc -b --clean",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b && tsc -p apps/web/tsconfig.json --noEmit",
+    "typecheck:web": "tsc -p apps/web/tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run --project unit",

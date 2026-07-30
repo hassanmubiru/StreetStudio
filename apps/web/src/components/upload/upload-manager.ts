@@ -25,10 +25,10 @@ export class UploadManagerComponent {
   private container: HTMLElement;
   private config: Required<UploadManagerConfig>;
   private uploadStore = getUploadStore();
-  private fileInput: HTMLInputElement;
-  private dropzone: HTMLElement;
-  private progressContainer: HTMLElement;
-  private queueContainer: HTMLElement;
+  private fileInput!: HTMLInputElement;
+  private dropzone!: HTMLElement;
+  private progressContainer!: HTMLElement;
+  private queueContainer!: HTMLElement;
   private activeUploads = new Map<string, UploadTracker>();
 
   private readonly DEFAULT_CONFIG: Required<UploadManagerConfig> = {
@@ -232,8 +232,9 @@ export class UploadManagerComponent {
   }
 
   private async startUpload(file: File): Promise<void> {
+    let uploadId: string | undefined;
     try {
-      const uploadId = crypto.randomUUID();
+      uploadId = crypto.randomUUID();
       const tracker = new UploadTracker(uploadId, file);
       this.activeUploads.set(uploadId, tracker);
 
@@ -267,13 +268,15 @@ export class UploadManagerComponent {
       this.onUploadComplete?.(result);
 
     } catch (error) {
-      const tracker = this.activeUploads.get(uploadId!);
-      if (tracker) {
-        tracker.setError((error as Error).message);
-        this.updateProgressDisplay(tracker);
+      if (uploadId) {
+        const tracker = this.activeUploads.get(uploadId);
+        if (tracker) {
+          tracker.setError((error as Error).message);
+          this.updateProgressDisplay(tracker);
+        }
       }
       
-      logger.error('Upload failed:', error);
+      logger.error('Upload failed', { error: (error as Error).message });
       this.showError(`Upload failed: ${(error as Error).message}`);
     }
   }

@@ -294,7 +294,7 @@ export class NotificationStore {
       notifications.splice(100);
     }
 
-    const unreadCount = notification.isRead ? this.state.unreadCount : this.state.unreadCount + 1;
+    const unreadCount = notification.readAt ? this.state.unreadCount : this.state.unreadCount + 1;
 
     this.updateState({
       notifications,
@@ -306,8 +306,8 @@ export class NotificationStore {
 
     logger.debug('New notification added', {
       id: notification.id,
-      type: notification.type,
-      isRead: notification.isRead
+      eventType: notification.eventType,
+      readAt: notification.readAt
     });
   }
 
@@ -338,9 +338,10 @@ export class NotificationStore {
    * Mark notification as read in local state
    */
   private markNotificationAsRead(notificationId: Uuid): void {
+    const now = new Date().toISOString() as IsoTimestamp;
     const notifications = this.state.notifications.map(notification => {
-      if (notification.id === notificationId && !notification.isRead) {
-        return { ...notification, isRead: true };
+      if (notification.id === notificationId && !notification.readAt) {
+        return { ...notification, readAt: now };
       }
       return notification;
     });
@@ -371,7 +372,7 @@ export class NotificationStore {
 
       const notifications = this.state.notifications.map(notification => ({
         ...notification,
-        isRead: true
+        readAt: notification.readAt || (new Date().toISOString() as IsoTimestamp)
       }));
 
       this.updateState({
@@ -404,7 +405,7 @@ export class NotificationStore {
 
       const notifications = this.state.notifications.filter(n => n.id !== notificationId);
       const deletedNotification = this.state.notifications.find(n => n.id === notificationId);
-      const unreadCount = deletedNotification && !deletedNotification.isRead 
+      const unreadCount = deletedNotification && !deletedNotification.readAt 
         ? Math.max(0, this.state.unreadCount - 1)
         : this.state.unreadCount;
 
@@ -426,11 +427,11 @@ export class NotificationStore {
   private showBrowserNotification(notification: NotificationDto): void {
     if (Notification.permission === 'granted') {
       try {
-        new Notification(notification.title || 'New Notification', {
-          body: notification.message,
+        new Notification('New Notification', {
+          body: `Event: ${notification.eventType}`,
           icon: '/logo.svg',
           tag: notification.id, // Prevent duplicate notifications
-          requireInteraction: notification.type === 'urgent'
+          requireInteraction: notification.eventType === 'urgent'
         });
       } catch (error) {
         logger.warn('Failed to show browser notification', { error });
@@ -476,14 +477,14 @@ export class NotificationStore {
    * Get notifications by type
    */
   public getNotificationsByType(type: string): NotificationDto[] {
-    return this.state.notifications.filter(notification => notification.type === type);
+    return this.state.notifications.filter(notification => notification.eventType === type);
   }
 
   /**
    * Get unread notifications
    */
   public getUnreadNotifications(): NotificationDto[] {
-    return this.state.notifications.filter(notification => !notification.isRead);
+    return this.state.notifications.filter(notification => !notification.readAt);
   }
 
   /**

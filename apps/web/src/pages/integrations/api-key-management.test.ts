@@ -581,7 +581,7 @@ describe('ApiKeyManagementPage', () => {
       await page.revokeKey('key-to-revoke');
 
       const keys = page.getKeys();
-      expect(keys[0].status).toBe('revoked');
+      expect(keys[0]!.status).toBe('revoked');
     });
 
     it('should not show revoke button for already revoked keys', () => {
@@ -615,9 +615,9 @@ describe('ApiKeyManagementPage', () => {
       const keys = page.getKeys();
       expect(keys.length).toBe(2);
       // New key is first
-      expect(keys[0].id).toBe('rotated-key-1');
+      expect(keys[0]!.id).toBe('rotated-key-1');
       // Old key is revoked
-      expect(keys[1].status).toBe('revoked');
+      expect(keys[1]!.status).toBe('revoked');
     });
 
     it('should show new key banner after rotation', async () => {
@@ -765,7 +765,7 @@ describe('ApiKeyManagementPage', () => {
       ];
       page.updateKeys(newKeys);
 
-      expect(page.getKeys()[0].name).toBe('Updated');
+      expect(page.getKeys()[0]!.name).toBe('Updated');
     });
   });
 });

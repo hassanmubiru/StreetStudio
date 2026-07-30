@@ -66,7 +66,7 @@ const getButtonStyles = (variant: ButtonVariant, size: ButtonSize, disabled: boo
 
 export class Button {
   private element: HTMLButtonElement;
-  private props: Required<ButtonProps>;
+  private props: Required<Omit<ButtonProps, 'leftIcon' | 'rightIcon'>> & Pick<ButtonProps, 'leftIcon' | 'rightIcon'>;
   private loadingSpinner?: HTMLElement;
 
   constructor(props: ButtonProps) {

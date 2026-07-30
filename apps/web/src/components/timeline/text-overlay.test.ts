@@ -566,9 +566,9 @@ describe('TextOverlayManager', () => {
       manager.addCaption('C', 60, 90);
 
       const sorted = manager.getCaptionsSorted();
-      expect(sorted[0].text).toBe('A');
-      expect(sorted[1].text).toBe('B');
-      expect(sorted[2].text).toBe('C');
+      expect(sorted[0]!.text).toBe('A');
+      expect(sorted[1]!.text).toBe('B');
+      expect(sorted[2]!.text).toBe('C');
     });
   });
 
@@ -683,11 +683,11 @@ describe('TextOverlayManager', () => {
 
       const captions = m.processSpeechToTextResults(results);
       expect(captions).toHaveLength(2);
-      expect(captions[0].text).toBe('Hello world');
-      expect(captions[0].startFrame).toBe(0);
-      expect(captions[0].endFrame).toBe(60); // 2s * 30fps
-      expect(captions[1].text).toBe('How are you?');
-      expect(captions[1].startFrame).toBe(75); // 2.5s * 30fps
+      expect(captions[0]!.text).toBe('Hello world');
+      expect(captions[0]!.startFrame).toBe(0);
+      expect(captions[0]!.endFrame).toBe(60); // 2s * 30fps
+      expect(captions[1]!.text).toBe('How are you?');
+      expect(captions[1]!.startFrame).toBe(75); // 2.5s * 30fps
       expect(m.isSpeechToTextActive()).toBe(false);
       expect(callbacks.onSpeechToTextComplete).toHaveBeenCalledWith(results);
     });
@@ -704,7 +704,7 @@ describe('TextOverlayManager', () => {
 
       const captions = m.processSpeechToTextResults(results);
       expect(captions).toHaveLength(1);
-      expect(captions[0].text).toBe('Valid');
+      expect(captions[0]!.text).toBe('Valid');
     });
 
     it('includes speaker in captions from STT', () => {
@@ -716,7 +716,7 @@ describe('TextOverlayManager', () => {
       ];
 
       const captions = m.processSpeechToTextResults(results);
-      expect(captions[0].speaker).toBe('Bob');
+      expect(captions[0]!.speaker).toBe('Bob');
     });
 
     it('handles speech-to-text error', () => {
@@ -809,12 +809,12 @@ Goodbye
 `;
       const captions = manager.importCaptionsFromVTT(vtt);
       expect(captions).toHaveLength(2);
-      expect(captions[0].text).toBe('Hello world');
-      expect(captions[0].startFrame).toBe(0);
-      expect(captions[0].endFrame).toBe(90);
-      expect(captions[1].text).toBe('Goodbye');
-      expect(captions[1].startFrame).toBe(90);
-      expect(captions[1].endFrame).toBe(150);
+      expect(captions[0]!.text).toBe('Hello world');
+      expect(captions[0]!.startFrame).toBe(0);
+      expect(captions[0]!.endFrame).toBe(90);
+      expect(captions[1]!.text).toBe('Goodbye');
+      expect(captions[1]!.startFrame).toBe(90);
+      expect(captions[1]!.endFrame).toBe(150);
     });
 
     it('imports VTT with speaker tags', () => {
@@ -825,8 +825,8 @@ Goodbye
 `;
       const captions = manager.importCaptionsFromVTT(vtt);
       expect(captions).toHaveLength(1);
-      expect(captions[0].speaker).toBe('Alice');
-      expect(captions[0].text).toBe('Hello from Alice');
+      expect(captions[0]!.speaker).toBe('Alice');
+      expect(captions[0]!.text).toBe('Hello from Alice');
     });
 
     it('handles empty VTT gracefully', () => {

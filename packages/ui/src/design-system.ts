@@ -184,7 +184,8 @@ export type ZIndex = keyof typeof zIndex;
 export const getColor = (color: string): string => {
   const parts = color.split('.');
   if (parts.length === 2) {
-    const [category, shade] = parts;
+    const category = parts[0]!;
+    const shade = parts[1]!;
     return (colors as any)[category]?.[shade] || color;
   }
   return color;

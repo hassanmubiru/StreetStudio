@@ -58,8 +58,8 @@ describe('BackgroundSyncManager', () => {
       });
 
       const queue = syncManager.getQueue();
-      expect(queue[0].priority).toBe(5);
-      expect(queue[0].maxRetries).toBe(5);
+      expect(queue[0]!.priority).toBe(5);
+      expect(queue[0]!.maxRetries).toBe(5);
     });
 
     it('respects custom priority and maxRetries', () => {
@@ -73,8 +73,8 @@ describe('BackgroundSyncManager', () => {
       });
 
       const queue = syncManager.getQueue();
-      expect(queue[0].priority).toBe(1);
-      expect(queue[0].maxRetries).toBe(10);
+      expect(queue[0]!.priority).toBe(1);
+      expect(queue[0]!.maxRetries).toBe(10);
     });
 
     it('sorts queue by priority (lower number = higher priority)', () => {
@@ -95,8 +95,8 @@ describe('BackgroundSyncManager', () => {
       });
 
       const queue = syncManager.getQueue();
-      expect(queue[0].resource).toBe('high');
-      expect(queue[1].resource).toBe('low');
+      expect(queue[0]!.resource).toBe('high');
+      expect(queue[1]!.resource).toBe('low');
     });
 
     it('throws when queue is full', () => {
@@ -182,7 +182,7 @@ describe('BackgroundSyncManager', () => {
 
       const results = await syncManager.processQueue();
 
-      expect(results[0].success).toBe(false);
+      expect(results[0]!.success).toBe(false);
       // Operation stays in queue because it has retries left
       expect(syncManager.getQueueSize()).toBe(1);
     });
@@ -411,7 +411,7 @@ describe('BackgroundSyncManager', () => {
 
       // Manual retry succeeds
       const queue = syncManager.getQueue();
-      const result = await syncManager.retry(queue[0].id);
+      const result = await syncManager.retry(queue[0]!.id);
 
       expect(result?.success).toBe(true);
     });

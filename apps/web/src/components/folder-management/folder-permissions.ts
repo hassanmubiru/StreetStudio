@@ -122,9 +122,9 @@ export class FolderPermissions {
         </div>
         
         <div class="flex items-center space-x-3 text-xs">
-          ${this.renderPermissionBadge('Read', groups.read)}
-          ${this.renderPermissionBadge('Write', groups.write)}
-          ${this.renderPermissionBadge('Manage', groups.manage)}
+          ${this.renderPermissionBadge('Read', groups.read ?? [])}
+          ${this.renderPermissionBadge('Write', groups.write ?? [])}
+          ${this.renderPermissionBadge('Manage', groups.manage ?? [])}
         </div>
       </div>
     `;
@@ -157,9 +157,9 @@ export class FolderPermissions {
 
   private renderDetailedPermissions(groups: Record<string, FolderPermission[]>): string {
     const sections = [
-      { title: 'Read Permissions', permissions: groups.read, color: 'blue' },
-      { title: 'Write Permissions', permissions: groups.write, color: 'green' },
-      { title: 'Management Permissions', permissions: groups.manage, color: 'red' }
+      { title: 'Read Permissions', permissions: groups.read ?? [], color: 'blue' },
+      { title: 'Write Permissions', permissions: groups.write ?? [], color: 'green' },
+      { title: 'Management Permissions', permissions: groups.manage ?? [], color: 'red' }
     ];
 
     return sections.map(section => `
@@ -202,7 +202,7 @@ export class FolderPermissions {
     const folderInfo = [
       { label: 'Folder Level', value: `${this.config.folder.depth + 1} of 10` },
       { label: 'Project', value: 'Inherited from project permissions' },
-      { label: 'Role', value: this.config.currentUser.role || 'Member' }
+      { label: 'Role', value: (this.config.currentUser as MemberDto & { role?: string }).role || 'Member' }
     ];
 
     return `
@@ -229,9 +229,9 @@ export class FolderPermissions {
   }
 
   private determineAccessLevel(groups: Record<string, FolderPermission[]>): string {
-    const hasManage = groups.manage.some(p => p.allowed);
-    const hasWrite = groups.write.some(p => p.allowed);
-    const hasRead = groups.read.some(p => p.allowed);
+    const hasManage = groups.manage?.some(p => p.allowed) ?? false;
+    const hasWrite = groups.write?.some(p => p.allowed) ?? false;
+    const hasRead = groups.read?.some(p => p.allowed) ?? false;
 
     if (hasManage) return 'Full';
     if (hasWrite) return 'Editor';

@@ -110,18 +110,18 @@ describe('extractMentionQuery', () => {
 
 describe('insertMentionIntoText', () => {
   it('replaces @query with full mention', () => {
-    const result = insertMentionIntoText('hello @ali', 10, mockMembers[0]);
+    const result = insertMentionIntoText('hello @ali', 10, mockMembers[0]!);
     expect(result.text).toBe('hello @Alice Johnson ');
     expect(result.member).toBe(mockMembers[0]);
   });
 
   it('preserves text after cursor', () => {
-    const result = insertMentionIntoText('hi @bo and more', 6, mockMembers[1]);
+    const result = insertMentionIntoText('hi @bo and more', 6, mockMembers[1]!);
     expect(result.text).toBe('hi @Bob Smith  and more');
   });
 
   it('returns correct cursor position after insertion', () => {
-    const result = insertMentionIntoText('@ali', 4, mockMembers[0]);
+    const result = insertMentionIntoText('@ali', 4, mockMembers[0]!);
     expect(result.cursorPosition).toBe('@Alice Johnson '.length);
   });
 });
@@ -134,14 +134,14 @@ describe('filterCandidates', () => {
   it('filters by display name (case-insensitive)', () => {
     const results = filterCandidates(mockMembers, 'alice', 10);
     expect(results.length).toBe(2);
-    expect(results[0].displayName).toBe('Alice Johnson');
-    expect(results[1].displayName).toBe('Alice Williams');
+    expect(results[0]!.displayName).toBe('Alice Johnson');
+    expect(results[1]!.displayName).toBe('Alice Williams');
   });
 
   it('filters by email', () => {
     const results = filterCandidates(mockMembers, 'bob@', 10);
     expect(results.length).toBe(1);
-    expect(results[0].id).toBe('u2');
+    expect(results[0]!.id).toBe('u2');
   });
 
   it('returns all candidates with empty query', () => {
@@ -604,13 +604,13 @@ describe('filterNotifications', () => {
   it('filters replies only', () => {
     const filtered = filterNotifications(notifications, 'replies');
     expect(filtered.length).toBe(1);
-    expect(filtered[0].type).toBe('comment_reply');
+    expect(filtered[0]!.type).toBe('comment_reply');
   });
 
   it('filters system only', () => {
     const filtered = filterNotifications(notifications, 'system');
     expect(filtered.length).toBe(1);
-    expect(filtered[0].type).toBe('system');
+    expect(filtered[0]!.type).toBe('system');
   });
 });
 

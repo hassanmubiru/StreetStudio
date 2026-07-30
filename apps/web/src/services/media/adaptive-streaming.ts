@@ -98,7 +98,8 @@ export class AdaptiveBitrateManager {
   constructor(config: Partial<ABRConfig> = {}) {
     this.config = { ...DEFAULT_ABR_CONFIG, ...config };
     this.availableLevels = this.computeAvailableLevels();
-    this.currentLevel = this.availableLevels[this.availableLevels.length - 1].level;
+    const lastLevel = this.availableLevels[this.availableLevels.length - 1];
+    this.currentLevel = lastLevel ? lastLevel.level : '240p';
   }
 
   /**
@@ -204,13 +205,16 @@ export class AdaptiveBitrateManager {
    */
   public getSmoothedBandwidth(): number {
     if (this.bandwidthHistory.length === 0) return 0;
-    if (this.bandwidthHistory.length === 1) return this.bandwidthHistory[0];
+    if (this.bandwidthHistory.length === 1) return this.bandwidthHistory[0] ?? 0;
 
     // EWMA with alpha=0.3 (recent samples weighted more)
     const alpha = 0.3;
-    let ewma = this.bandwidthHistory[0];
+    let ewma: number = this.bandwidthHistory[0] ?? 0;
     for (let i = 1; i < this.bandwidthHistory.length; i++) {
-      ewma = alpha * this.bandwidthHistory[i] + (1 - alpha) * ewma;
+      const sample = this.bandwidthHistory[i];
+      if (sample !== undefined) {
+        ewma = alpha * sample + (1 - alpha) * ewma;
+      }
     }
     return ewma;
   }
@@ -238,7 +242,8 @@ export class AdaptiveBitrateManager {
   public reset(): void {
     this.bandwidthHistory = [];
     this.lastSwitchTime = 0;
-    this.currentLevel = this.availableLevels[this.availableLevels.length - 1].level;
+    const lastLevel = this.availableLevels[this.availableLevels.length - 1];
+    this.currentLevel = lastLevel ? lastLevel.level : '240p';
   }
 
   /**
@@ -266,13 +271,17 @@ export class AdaptiveBitrateManager {
       }
     }
     // If nothing fits, return lowest available
-    return this.availableLevels[this.availableLevels.length - 1].level;
+    const lastLevel = this.availableLevels[this.availableLevels.length - 1];
+    return lastLevel ? lastLevel.level : '240p';
   }
 
   private downgradeQuality(): QualityLevel {
     const currentIdx = this.getQualityIndex(this.currentLevel);
     if (currentIdx < this.availableLevels.length - 1) {
-      return this.availableLevels[currentIdx + 1].level;
+      const nextLevel = this.availableLevels[currentIdx + 1];
+      if (nextLevel) {
+        return nextLevel.level;
+      }
     }
     return this.currentLevel;
   }

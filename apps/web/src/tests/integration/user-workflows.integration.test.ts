@@ -258,7 +258,7 @@ describe('End-to-End User Workflow Integration', () => {
     });
 
     it('should integrate comment system with real-time updates', () => {
-      const handlers: Array<(msg: any) => void> = [];
+      const handlers: any[] = [];
 
       // Subscribe to multiple event types like the real collaboration interface does
       const unsubComment = wsManager.subscribe('comment.added', (msg) => handlers.push(msg));
@@ -293,7 +293,7 @@ describe('End-to-End User Workflow Integration', () => {
       });
 
       expect(fetchDashboard).toHaveBeenCalledTimes(1);
-      expect(data1.projects).toHaveLength(1);
+      expect((data1 as any).projects).toHaveLength(1);
 
       // Second load should come from cache
       const data2 = await cacheManager.get('dashboard:main', {

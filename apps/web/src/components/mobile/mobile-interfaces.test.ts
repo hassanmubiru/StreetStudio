@@ -115,7 +115,7 @@ describe('TouchGestureHandler', () => {
 
     // Tap fires immediately when no double-tap listener
     expect(onTap).toHaveBeenCalledTimes(1);
-    expect(onTap.mock.calls[0][0].type).toBe('tap');
+    expect(onTap.mock.calls[0]![0].type).toBe('tap');
   });
 
   it('should detect double tap gestures', () => {
@@ -135,7 +135,7 @@ describe('TouchGestureHandler', () => {
     container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 100, clientY: 100 }]));
 
     expect(onDoubleTap).toHaveBeenCalledTimes(1);
-    expect(onDoubleTap.mock.calls[0][0].type).toBe('doubletap');
+    expect(onDoubleTap.mock.calls[0]![0].type).toBe('doubletap');
   });
 
   it('should detect left swipe', () => {
@@ -147,7 +147,7 @@ describe('TouchGestureHandler', () => {
     container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 80, clientY: 300 }]));
 
     expect(onSwipeLeft).toHaveBeenCalledTimes(1);
-    expect(onSwipeLeft.mock.calls[0][0].direction).toBe('left');
+    expect(onSwipeLeft.mock.calls[0]![0].direction).toBe('left');
   });
 
   it('should detect right swipe', () => {
@@ -159,7 +159,7 @@ describe('TouchGestureHandler', () => {
     container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 200, clientY: 300 }]));
 
     expect(onSwipeRight).toHaveBeenCalledTimes(1);
-    expect(onSwipeRight.mock.calls[0][0].direction).toBe('right');
+    expect(onSwipeRight.mock.calls[0]![0].direction).toBe('right');
   });
 
   it('should detect long press', () => {
@@ -170,7 +170,7 @@ describe('TouchGestureHandler', () => {
     vi.advanceTimersByTime(600);
 
     expect(onLongPress).toHaveBeenCalledTimes(1);
-    expect(onLongPress.mock.calls[0][0].type).toBe('longpress');
+    expect(onLongPress.mock.calls[0]![0].type).toBe('longpress');
   });
 
   it('should cancel long press on move', () => {
@@ -633,8 +633,8 @@ describe('SwipeableItem', () => {
 
     const actionBtns = container.querySelectorAll('.swipeable-action-btn');
     expect(actionBtns.length).toBe(2);
-    expect(actionBtns[0].getAttribute('aria-label')).toBe('Delete');
-    expect(actionBtns[1].getAttribute('aria-label')).toBe('Archive');
+    expect(actionBtns[0]!.getAttribute('aria-label')).toBe('Delete');
+    expect(actionBtns[1]!.getAttribute('aria-label')).toBe('Archive');
   });
 
   it('should have touch-friendly action buttons (min 44px)', () => {

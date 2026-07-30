@@ -4,39 +4,40 @@
  * Tests for recording state management, keyboard shortcuts, and session recovery
  */
 
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { RecordingStateManager, type RecordingEvents } from './recording-state-manager.js';
 import { RecordingStore } from '../../stores/recording-store.js';
 import { KeyboardShortcuts } from '../../app/keyboard-shortcuts.js';
 
 // Mock dependencies
 const mockLogger = {
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn()
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  debug: vi.fn()
 };
 
-jest.mock('../../app/client-logger.js', () => ({
+vi.mock('../../app/client-logger.js', () => ({
   logger: mockLogger
 }));
 
-jest.mock('../../stores/recording-store.js', () => ({
-  getRecordingStore: jest.fn(),
-  RecordingStore: jest.fn()
+vi.mock('../../stores/recording-store.js', () => ({
+  getRecordingStore: vi.fn(),
+  RecordingStore: vi.fn()
 }));
 
 describe('RecordingStateManager', () => {
   let stateManager: RecordingStateManager;
-  let mockRecordingStore: jest.Mocked<RecordingStore>;
-  let mockKeyboardShortcuts: jest.Mocked<KeyboardShortcuts>;
-  let mockEvents: jest.Mocked<RecordingEvents>;
+  let mockRecordingStore: any;
+  let mockKeyboardShortcuts: any;
+  let mockEvents: any;
 
   beforeEach(() => {
     // Mock RecordingStore
     mockRecordingStore = {
-      initialize: jest.fn().mockResolvedValue(true),
-      subscribe: jest.fn().mockReturnValue(jest.fn()),
-      getState: jest.fn().mockReturnValue({
+      initialize: vi.fn().mockResolvedValue(true),
+      subscribe: vi.fn().mockReturnValue(vi.fn()),
+      getState: vi.fn().mockReturnValue({
         currentSession: undefined,
         permissions: { screen: 'prompt', audio: 'prompt', hasRequestedBefore: false, deniedCount: 0 },
         preferences: { enableKeyboardShortcuts: true, autoSave: true, saveInterval: 5, quality: 'high', includeAudio: true, cursorHighlight: true },
@@ -44,38 +45,38 @@ describe('RecordingStateManager', () => {
         availableSources: [],
         savedSessions: []
       }),
-      createSession: jest.fn().mockReturnValue('test-session-id'),
-      updateSessionMetadata: jest.fn(),
-      requestScreenPermission: jest.fn().mockResolvedValue({ success: true, stream: {} }),
-      startRecording: jest.fn().mockResolvedValue(true),
-      pauseRecording: jest.fn().mockReturnValue(true),
-      resumeRecording: jest.fn().mockReturnValue(true),
-      stopRecording: jest.fn().mockReturnValue(true),
-      saveSession: jest.fn(),
-      isRecording: jest.fn().mockReturnValue(false),
-      isPaused: jest.fn().mockReturnValue(false),
-      hasActiveSession: jest.fn().mockReturnValue(false),
-      getFormattedDuration: jest.fn().mockReturnValue('00:00'),
-      destroy: jest.fn()
-    } as any;
+      createSession: vi.fn().mockReturnValue('test-session-id'),
+      updateSessionMetadata: vi.fn(),
+      requestScreenPermission: vi.fn().mockResolvedValue({ success: true, stream: {} }),
+      startRecording: vi.fn().mockResolvedValue(true),
+      pauseRecording: vi.fn().mockReturnValue(true),
+      resumeRecording: vi.fn().mockReturnValue(true),
+      stopRecording: vi.fn().mockReturnValue(true),
+      saveSession: vi.fn(),
+      isRecording: vi.fn().mockReturnValue(false),
+      isPaused: vi.fn().mockReturnValue(false),
+      hasActiveSession: vi.fn().mockReturnValue(false),
+      getFormattedDuration: vi.fn().mockReturnValue('00:00'),
+      destroy: vi.fn()
+    };
 
-    (require('../../stores/recording-store.js').getRecordingStore as jest.Mock).mockReturnValue(mockRecordingStore);
+    (require('../../stores/recording-store.js').getRecordingStore as Mock).mockReturnValue(mockRecordingStore);
 
     // Mock KeyboardShortcuts
     mockKeyboardShortcuts = {
-      register: jest.fn(),
-      unregister: jest.fn(),
-      setContext: jest.fn(),
-      destroy: jest.fn()
-    } as any;
+      register: vi.fn(),
+      unregister: vi.fn(),
+      setContext: vi.fn(),
+      destroy: vi.fn()
+    };
 
     // Mock events
     mockEvents = {
-      onStateChange: jest.fn(),
-      onPermissionDenied: jest.fn(),
-      onSessionRecovered: jest.fn(),
-      onRecordingComplete: jest.fn(),
-      onError: jest.fn()
+      onStateChange: vi.fn(),
+      onPermissionDenied: vi.fn(),
+      onSessionRecovered: vi.fn(),
+      onRecordingComplete: vi.fn(),
+      onError: vi.fn()
     };
 
     stateManager = new RecordingStateManager(mockKeyboardShortcuts, {}, mockEvents);
@@ -83,7 +84,7 @@ describe('RecordingStateManager', () => {
 
   afterEach(() => {
     stateManager.destroy();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('initialization', () => {
@@ -201,7 +202,7 @@ describe('RecordingStateManager', () => {
     it('should handle operations when not initialized', async () => {
       const uninitializedManager = new RecordingStateManager(mockKeyboardShortcuts, {}, mockEvents);
 
-      const startResult = await uninitializedManager.startResult();
+      const startResult = await uninitializedManager.startRecording();
       const pauseResult = uninitializedManager.pauseRecording();
       const resumeResult = uninitializedManager.resumeRecording();
       const stopResult = uninitializedManager.stopRecording();
@@ -225,7 +226,7 @@ describe('RecordingStateManager', () => {
         currentSession: undefined
       } as any);
 
-      const startSpy = jest.spyOn(stateManager, 'startRecording').mockResolvedValue(true);
+      const startSpy = vi.spyOn(stateManager, 'startRecording').mockResolvedValue(true);
 
       const result = stateManager.toggleRecording();
 
@@ -237,7 +238,7 @@ describe('RecordingStateManager', () => {
         currentSession: { state: 'recording' }
       } as any);
 
-      const pauseSpy = jest.spyOn(stateManager, 'pauseRecording');
+      const pauseSpy = vi.spyOn(stateManager, 'pauseRecording');
 
       stateManager.toggleRecording();
 
@@ -249,7 +250,7 @@ describe('RecordingStateManager', () => {
         currentSession: { state: 'paused' }
       } as any);
 
-      const resumeSpy = jest.spyOn(stateManager, 'resumeRecording');
+      const resumeSpy = vi.spyOn(stateManager, 'resumeRecording');
 
       stateManager.toggleRecording();
 
@@ -284,8 +285,8 @@ describe('RecordingStateManager', () => {
       const shortcuts = mockKeyboardShortcuts.register.mock.calls[0][0];
       const toggleShortcut = shortcuts.find((s: any) => s.key === ' ' && s.modifiers?.includes('ctrl'));
       
-      const toggleSpy = jest.spyOn(stateManager, 'toggleRecording');
-      const mockEvent = { preventDefault: jest.fn() } as any;
+      const toggleSpy = vi.spyOn(stateManager, 'toggleRecording');
+      const mockEvent = { preventDefault: vi.fn() } as any;
 
       const result = toggleShortcut.handler(mockEvent);
 
@@ -299,8 +300,8 @@ describe('RecordingStateManager', () => {
       const escapeShortcut = shortcuts.find((s: any) => s.key === 'Escape');
       
       mockRecordingStore.isRecording.mockReturnValue(true);
-      const stopSpy = jest.spyOn(stateManager, 'stopRecording');
-      const mockEvent = { preventDefault: jest.fn() } as any;
+      const stopSpy = vi.spyOn(stateManager, 'stopRecording');
+      const mockEvent = { preventDefault: vi.fn() } as any;
 
       const result = escapeShortcut.handler(mockEvent);
 
@@ -315,8 +316,8 @@ describe('RecordingStateManager', () => {
       
       mockRecordingStore.isRecording.mockReturnValue(false);
       mockRecordingStore.isPaused.mockReturnValue(false);
-      const stopSpy = jest.spyOn(stateManager, 'stopRecording');
-      const mockEvent = { preventDefault: jest.fn() } as any;
+      const stopSpy = vi.spyOn(stateManager, 'stopRecording');
+      const mockEvent = { preventDefault: vi.fn() } as any;
 
       const result = escapeShortcut.handler(mockEvent);
 
@@ -327,7 +328,7 @@ describe('RecordingStateManager', () => {
   });
 
   describe('state changes', () => {
-    let mockStateChangeCallback: jest.Mock;
+    let mockStateChangeCallback: Mock;
 
     beforeEach(async () => {
       await stateManager.initialize();
@@ -412,12 +413,12 @@ describe('RecordingStateManager', () => {
     });
 
     it('should provide specific guidance for permission denied', () => {
-      const mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue({
+      const mockCreateElement = vi.spyOn(document, 'createElement').mockReturnValue({
         className: '',
-        setAttribute: jest.fn(),
+        setAttribute: vi.fn(),
         innerHTML: ''
       } as any);
-      const mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation();
+      const mockAppendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(() => null as any);
 
       // Simulate permission denied
       mockRecordingStore.requestScreenPermission.mockResolvedValue({
@@ -479,7 +480,7 @@ describe('RecordingStateManager', () => {
 
   describe('cleanup', () => {
     it('should clean up resources on destroy', async () => {
-      const unsubscribe = jest.fn();
+      const unsubscribe = vi.fn();
       mockRecordingStore.subscribe.mockReturnValue(unsubscribe);
 
       await stateManager.initialize();

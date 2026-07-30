@@ -713,8 +713,8 @@ export class AuthController {
       }
       
       // Clear session from dashboard
-      if (this.session.clearAuthentication) {
-        this.session.clearAuthentication();
+      if ((this.session as any).clearAuthentication) {
+        (this.session as any).clearAuthentication();
       }
 
       // Clear local state

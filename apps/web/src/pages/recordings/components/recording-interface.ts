@@ -15,7 +15,7 @@ export class RecordingInterface {
   private screenSelector: ScreenSelector;
   private recordingControls: RecordingControls;
   private cursorSettings: CursorSettings;
-  private recordingStateManager: RecordingStateManager;
+  private recordingStateManager!: RecordingStateManager;
   private keyboardShortcuts: KeyboardShortcuts;
   private drawingEnabled = false;
   private currentState: RecordingState = 'idle';

@@ -256,7 +256,7 @@ export class PreferenceManager {
       // Only import valid keys with valid values
       for (const [key, value] of Object.entries(parsed)) {
         if (key in DEFAULT_PREFERENCES && this.validatePreference(key as PreferenceKey, value)) {
-          this.preferences[key as PreferenceKey] = value as any;
+          (this.preferences as unknown as Record<string, unknown>)[key] = value;
         }
       }
 

@@ -300,7 +300,7 @@ export class WebSocketManager {
       }
 
     } catch (error) {
-      this.handleError(new Error(`Failed to parse WebSocket message: ${error.message}`));
+      this.handleError(new Error(`Failed to parse WebSocket message: ${(error as Error).message}`));
     }
   }
 
@@ -393,7 +393,7 @@ export class WebSocketManager {
       } catch (error) {
         logger.warn('WebSocket reconnection failed', {
           attempt: this.reconnectAttempts,
-          error: error.message,
+          error: (error as Error).message,
         });
         
         // Try again

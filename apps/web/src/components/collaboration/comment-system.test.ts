@@ -127,8 +127,8 @@ describe('buildCommentTree', () => {
     const tree = buildCommentTree(comments, new Map());
     expect(tree.length).toBe(2);
     // Sorted newest first
-    expect(tree[0].id).toBe('c2');
-    expect(tree[1].id).toBe('c1');
+    expect(tree[0]!.id).toBe('c2');
+    expect(tree[1]!.id).toBe('c1');
   });
 
   it('nests replies under parent comments', () => {
@@ -139,15 +139,15 @@ describe('buildCommentTree', () => {
     ];
     const tree = buildCommentTree(comments, new Map());
     expect(tree.length).toBe(1);
-    expect(tree[0].id).toBe('c1');
-    expect(tree[0].replies.length).toBe(2);
+    expect(tree[0]!.id).toBe('c1');
+    expect(tree[0]!.replies.length).toBe(2);
   });
 
   it('attaches author information from the map', () => {
     const comments = [makeComment({ id: 'c1', authorId: 'user-1' })];
     const authors = makeAuthorMap({ id: 'user-1', displayName: 'Alice' });
     const tree = buildCommentTree(comments, authors);
-    expect(tree[0].author?.displayName).toBe('Alice');
+    expect(tree[0]!.author?.displayName).toBe('Alice');
   });
 
   it('handles orphan replies as top-level', () => {
@@ -156,7 +156,7 @@ describe('buildCommentTree', () => {
     ];
     const tree = buildCommentTree(comments, new Map());
     expect(tree.length).toBe(1);
-    expect(tree[0].id).toBe('c1');
+    expect(tree[0]!.id).toBe('c1');
   });
 });
 
@@ -181,8 +181,8 @@ describe('getCommentMarkerPositions', () => {
     ];
     const markers = getCommentMarkerPositions(comments, 120);
     expect(markers.length).toBe(2);
-    expect(markers[0].position).toBe(50); // 60/120 * 100
-    expect(markers[1].position).toBe(25); // 30/120 * 100
+    expect(markers[0]!.position).toBe(50); // 60/120 * 100
+    expect(markers[1]!.position).toBe(25); // 30/120 * 100
   });
 
   it('skips comments without timestamps', () => {
@@ -192,13 +192,13 @@ describe('getCommentMarkerPositions', () => {
     ];
     const markers = getCommentMarkerPositions(comments, 120);
     expect(markers.length).toBe(1);
-    expect(markers[0].commentId).toBe('c1');
+    expect(markers[0]!.commentId).toBe('c1');
   });
 
   it('caps position at 100%', () => {
     const comments = [makeComment({ id: 'c1', timestampSeconds: 200 })];
     const markers = getCommentMarkerPositions(comments, 120);
-    expect(markers[0].position).toBe(100);
+    expect(markers[0]!.position).toBe(100);
   });
 });
 

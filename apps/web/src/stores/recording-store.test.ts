@@ -4,31 +4,32 @@
  * Unit tests for recording state management, session persistence, and control interactions
  */
 
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { RecordingStore, type RecordingState, type RecordingSession } from './recording-store.js';
 
 // Mock dependencies
 const mockLogger = {
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn()
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  debug: vi.fn()
 };
 
-jest.mock('../app/client-logger.js', () => ({
+vi.mock('../app/client-logger.js', () => ({
   logger: mockLogger
 }));
 
-jest.mock('../utils/format-time.js', () => ({
-  formatTime: jest.fn().mockReturnValue('00:00')
+vi.mock('../utils/format-time.js', () => ({
+  formatTime: vi.fn().mockReturnValue('00:00')
 }));
 
 // Mock MediaRecorder and related APIs
-global.MediaRecorder = jest.fn().mockImplementation(() => ({
-  start: jest.fn(),
-  stop: jest.fn(),
-  pause: jest.fn(),
-  resume: jest.fn(),
-  addEventListener: jest.fn(),
+global.MediaRecorder = vi.fn().mockImplementation(() => ({
+  start: vi.fn(),
+  stop: vi.fn(),
+  pause: vi.fn(),
+  resume: vi.fn(),
+  addEventListener: vi.fn(),
   state: 'inactive',
   mimeType: 'video/webm',
   ondataavailable: null,
@@ -36,37 +37,41 @@ global.MediaRecorder = jest.fn().mockImplementation(() => ({
   onerror: null
 })) as any;
 
-global.navigator.mediaDevices = {
-  enumerateDevices: jest.fn().mockResolvedValue([
-    { deviceId: 'screen1', kind: 'videoinput', label: 'Screen 1' },
-    { deviceId: 'screen2', kind: 'videoinput', label: 'Screen 2' }
-  ]),
-  getDisplayMedia: jest.fn().mockResolvedValue({
-    getVideoTracks: () => [{
-      addEventListener: jest.fn(),
-      stop: jest.fn()
-    }],
-    getTracks: () => [{
-      stop: jest.fn()
-    }]
-  })
-} as any;
+Object.defineProperty(global.navigator, 'mediaDevices', {
+  value: {
+    enumerateDevices: vi.fn().mockResolvedValue([
+      { deviceId: 'screen1', kind: 'videoinput', label: 'Screen 1' },
+      { deviceId: 'screen2', kind: 'videoinput', label: 'Screen 2' }
+    ]),
+    getDisplayMedia: vi.fn().mockResolvedValue({
+      getVideoTracks: () => [{
+        addEventListener: vi.fn(),
+        stop: vi.fn()
+      }],
+      getTracks: () => [{
+        stop: vi.fn()
+      }]
+    })
+  },
+  writable: true,
+  configurable: true
+});
 
 // Mock localStorage
 const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn()
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn()
 };
 global.localStorage = localStorageMock as any;
 
 // Mock sessionStorage
 const sessionStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn()
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn()
 };
 global.sessionStorage = sessionStorageMock as any;
 
@@ -74,7 +79,7 @@ describe('RecordingStore', () => {
   let store: RecordingStore;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorageMock.getItem.mockReturnValue(null);
     sessionStorageMock.getItem.mockReturnValue(null);
     store = new RecordingStore();
@@ -104,7 +109,7 @@ describe('RecordingStore', () => {
     });
 
     it('should handle initialization failure', async () => {
-      (navigator.mediaDevices.enumerateDevices as jest.Mock).mockRejectedValue(new Error('No devices'));
+      (navigator.mediaDevices.enumerateDevices as Mock).mockRejectedValue(new Error('No devices'));
       
       const result = await store.initialize();
       
@@ -169,7 +174,7 @@ describe('RecordingStore', () => {
       const state = store.getState();
       expect(state.currentSession).toBeUndefined();
       expect(state.savedSessions).toHaveLength(1);
-      expect(state.savedSessions[0].id).toBe(sessionId);
+      expect(state.savedSessions[0]!.id).toBe(sessionId);
     });
   });
 
@@ -180,7 +185,7 @@ describe('RecordingStore', () => {
 
     it('should request screen permission successfully', async () => {
       const mockStream = { getTracks: () => [] };
-      (navigator.mediaDevices.getDisplayMedia as jest.Mock).mockResolvedValue(mockStream);
+      (navigator.mediaDevices.getDisplayMedia as Mock).mockResolvedValue(mockStream);
 
       const result = await store.requestScreenPermission();
 
@@ -203,7 +208,7 @@ describe('RecordingStore', () => {
     it('should handle permission denied', async () => {
       const permissionError = new Error('Permission denied');
       permissionError.name = 'NotAllowedError';
-      (navigator.mediaDevices.getDisplayMedia as jest.Mock).mockRejectedValue(permissionError);
+      (navigator.mediaDevices.getDisplayMedia as Mock).mockRejectedValue(permissionError);
 
       const result = await store.requestScreenPermission();
 
@@ -218,7 +223,7 @@ describe('RecordingStore', () => {
     it('should handle unsupported browser', async () => {
       const unsupportedError = new Error('Not supported');
       unsupportedError.name = 'NotSupportedError';
-      (navigator.mediaDevices.getDisplayMedia as jest.Mock).mockRejectedValue(unsupportedError);
+      (navigator.mediaDevices.getDisplayMedia as Mock).mockRejectedValue(unsupportedError);
 
       const result = await store.requestScreenPermission();
 
@@ -235,18 +240,18 @@ describe('RecordingStore', () => {
       await store.initialize();
       
       mockStream = {
-        getTracks: jest.fn().mockReturnValue([{ stop: jest.fn() }]),
-        getVideoTracks: jest.fn().mockReturnValue([{ 
-          addEventListener: jest.fn(),
-          stop: jest.fn()
+        getTracks: vi.fn().mockReturnValue([{ stop: vi.fn() }]),
+        getVideoTracks: vi.fn().mockReturnValue([{ 
+          addEventListener: vi.fn(),
+          stop: vi.fn()
         }])
       };
 
       mockMediaRecorder = {
-        start: jest.fn(),
-        stop: jest.fn(),
-        pause: jest.fn(),
-        resume: jest.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        pause: vi.fn(),
+        resume: vi.fn(),
         state: 'inactive',
         mimeType: 'video/webm',
         ondataavailable: null,
@@ -254,7 +259,7 @@ describe('RecordingStore', () => {
         onerror: null
       };
 
-      (global.MediaRecorder as jest.Mock).mockReturnValue(mockMediaRecorder);
+      (global.MediaRecorder as unknown as Mock).mockReturnValue(mockMediaRecorder);
     });
 
     it('should start recording successfully', async () => {
@@ -343,7 +348,7 @@ describe('RecordingStore', () => {
       expect(store.isPaused()).toBe(false);
       expect(store.hasActiveSession()).toBe(false);
 
-      const mockStream = { getTracks: () => [], getVideoTracks: () => [{ addEventListener: () => {}, stop: () => {} }] };
+      const mockStream = { getTracks: () => [], getVideoTracks: () => [{ addEventListener: () => {}, stop: () => {} }] } as unknown as MediaStream;
       store.createSession();
       await store.startRecording(mockStream);
 
@@ -441,11 +446,11 @@ describe('RecordingStore', () => {
   });
 
   describe('subscription and events', () => {
-    let listener: jest.Mock;
+    let listener: Mock;
 
     beforeEach(async () => {
       await store.initialize();
-      listener = jest.fn();
+      listener = vi.fn();
     });
 
     it('should notify listeners on state changes', () => {
@@ -470,7 +475,7 @@ describe('RecordingStore', () => {
     });
 
     it('should handle listener errors gracefully', () => {
-      const errorListener = jest.fn().mockImplementation(() => {
+      const errorListener = vi.fn().mockImplementation(() => {
         throw new Error('Listener error');
       });
 
@@ -487,7 +492,7 @@ describe('RecordingStore', () => {
   describe('cleanup', () => {
     it('should clean up resources on destroy', async () => {
       await store.initialize();
-      const mockStream = { getTracks: () => [{ stop: jest.fn() }], getVideoTracks: () => [{ addEventListener: () => {}, stop: () => {} }] };
+      const mockStream = { getTracks: () => [{ stop: vi.fn() }], getVideoTracks: () => [{ addEventListener: () => {}, stop: () => {} }] } as unknown as MediaStream;
       
       store.createSession();
       await store.startRecording(mockStream);

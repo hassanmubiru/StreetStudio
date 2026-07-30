@@ -89,11 +89,11 @@ export class UploadManager {
     try {
       const stored = localStorage.getItem('streetstudio_upload_resume');
       if (stored) {
-        const resumeData = JSON.parse(stored);
+        const resumeData: Record<string, ResumeInfo> = JSON.parse(stored);
         this.resumeStorage = new Map(Object.entries(resumeData));
       }
     } catch (error) {
-      logger.warn('Failed to load resume information from storage:', error);
+      logger.warn('Failed to load resume information from storage', { error });
     }
   }
 
@@ -105,7 +105,7 @@ export class UploadManager {
       const resumeData = Object.fromEntries(this.resumeStorage);
       localStorage.setItem('streetstudio_upload_resume', JSON.stringify(resumeData));
     } catch (error) {
-      logger.warn('Failed to save resume information to storage:', error);
+      logger.warn('Failed to save resume information to storage', { error });
     }
   }
 
@@ -562,7 +562,7 @@ class UploadSession {
         try {
           await apiClient.delete(`/uploads/${uploadId}`);
         } catch (cleanupError) {
-          logger.warn(`Failed to cleanup upload ${uploadId}:`, (cleanupError as Error).message);
+          logger.warn(`Failed to cleanup upload ${uploadId}`, { error: (cleanupError as Error).message });
         }
       }
       

@@ -330,7 +330,7 @@ describe('TimelineController', () => {
       const updated = { ...marker1, label: 'Updated' };
       controller.addMarker(updated);
       expect(controller.getState().markers).toHaveLength(1);
-      expect(controller.getState().markers[0].label).toBe('Updated');
+      expect(controller.getState().markers[0]!.label).toBe('Updated');
     });
 
     it('addMarker() maintains sorted order by time', () => {
@@ -338,9 +338,9 @@ describe('TimelineController', () => {
       controller.addMarker(marker1);
       controller.addMarker(marker2);
       const markers = controller.getState().markers;
-      expect(markers[0].time).toBe(10);
-      expect(markers[1].time).toBe(30);
-      expect(markers[2].time).toBe(60);
+      expect(markers[0]!.time).toBe(10);
+      expect(markers[1]!.time).toBe(30);
+      expect(markers[2]!.time).toBe(60);
     });
 
     it('addMarker() rejects markers outside duration range', () => {
@@ -356,7 +356,7 @@ describe('TimelineController', () => {
       controller.addMarker(marker2);
       controller.removeMarker('m1');
       expect(controller.getState().markers).toHaveLength(1);
-      expect(controller.getState().markers[0].id).toBe('m2');
+      expect(controller.getState().markers[0]!.id).toBe('m2');
     });
 
     it('clearMarkers() removes all markers', () => {
@@ -373,8 +373,8 @@ describe('TimelineController', () => {
       controller.addMarker(marker3);
       const inRange = controller.getMarkersInRange(5, 35);
       expect(inRange).toHaveLength(2);
-      expect(inRange[0].id).toBe('m1');
-      expect(inRange[1].id).toBe('m2');
+      expect(inRange[0]!.id).toBe('m1');
+      expect(inRange[1]!.id).toBe('m2');
     });
 
     it('handleMarkerClick() calls onMarkerClick callback and seeks', () => {

@@ -327,7 +327,7 @@ export class TimelineComponent {
 
     // Snap to nice time intervals
     const niceIntervals = [0.1, 0.25, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600];
-    let majorInterval = niceIntervals[0];
+    let majorInterval: number = niceIntervals[0] ?? 0.1;
     for (const interval of niceIntervals) {
       if (interval >= idealMajorInterval) {
         majorInterval = interval;
@@ -610,7 +610,8 @@ export class TimelineComponent {
   private seekToTouchPosition(e: TouchEvent): void {
     if (!this.rulerCanvas || e.touches.length === 0) return;
     const rect = this.rulerCanvas.getBoundingClientRect();
-    const x = e.touches[0].clientX - rect.left;
+    const touch = e.touches[0]!;
+    const x = touch.clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, x / rect.width));
     const visibleDuration = this.controller.getVisibleDuration();
     const state = this.controller.getState();

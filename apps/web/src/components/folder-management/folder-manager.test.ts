@@ -454,10 +454,8 @@ describe('FolderPermissions', () => {
 
   const mockUser: MemberDto = {
     id: 'user-123',
-    organizationId: 'org-123',
     email: 'test@example.com',
-    role: 'Editor',
-    joinedAt: '2024-01-01T00:00:00Z'
+    createdAt: '2024-01-01T00:00:00Z'
   };
 
   const mockPermissions = [

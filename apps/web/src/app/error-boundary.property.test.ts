@@ -108,7 +108,7 @@ const arbitraryErrorContext = fc.record({
   props: fc.option(fc.dictionary(fc.string(), fc.anything())),
   stack: fc.option(fc.string({ minLength: 0, maxLength: 1000 })),
   metadata: fc.option(fc.dictionary(fc.string(), fc.anything())),
-});
+}) as fc.Arbitrary<ComponentErrorInfo>;
 
 describe('Error Boundary Resilience Properties', () => {
   let container: HTMLElement;

@@ -24,7 +24,7 @@ export class OAuthCallbackPage extends LitElement {
   @state()
   private returnUrl?: string;
 
-  static styles = css`
+  static override styles = css`
     :host {
       display: flex;
       flex-direction: column;
@@ -193,7 +193,7 @@ export class OAuthCallbackPage extends LitElement {
     }
   `;
 
-  async connectedCallback() {
+  override async connectedCallback() {
     super.connectedCallback();
     await this.handleCallback();
   }
@@ -263,7 +263,7 @@ export class OAuthCallbackPage extends LitElement {
     window.location.href = '/auth/login';
   }
 
-  render() {
+  override render() {
     return html`
       <div class="container">
         ${this.renderIcon()}

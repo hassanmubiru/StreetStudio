@@ -153,12 +153,16 @@ export function relativeLuminance(hex: string): number {
   const rgb = hexToRgb(hex);
   if (!rgb) return 0;
 
-  const [r, g, b] = rgb.map(c => {
+  const linearized = rgb.map(c => {
     const sRGB = c / 255;
     return sRGB <= 0.03928
       ? sRGB / 12.92
       : Math.pow((sRGB + 0.055) / 1.055, 2.4);
   });
+
+  const r = linearized[0] ?? 0;
+  const g = linearized[1] ?? 0;
+  const b = linearized[2] ?? 0;
 
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
@@ -193,9 +197,13 @@ export function meetsWCAGContrast(
 export function hexToRgb(hex: string): [number, number, number] | null {
   const cleaned = hex.replace(/^#/, '');
   if (cleaned.length === 3) {
-    const r = parseInt(cleaned[0] + cleaned[0], 16);
-    const g = parseInt(cleaned[1] + cleaned[1], 16);
-    const b = parseInt(cleaned[2] + cleaned[2], 16);
+    const c0 = cleaned[0];
+    const c1 = cleaned[1];
+    const c2 = cleaned[2];
+    if (c0 === undefined || c1 === undefined || c2 === undefined) return null;
+    const r = parseInt(c0 + c0, 16);
+    const g = parseInt(c1 + c1, 16);
+    const b = parseInt(c2 + c2, 16);
     if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
     return [r, g, b];
   }
@@ -663,9 +671,13 @@ export class TextOverlayManager {
       /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\)/
     );
     if (!match) return null;
-    const r = parseInt(match[1], 10);
-    const g = parseInt(match[2], 10);
-    const b = parseInt(match[3], 10);
+    const matchR = match[1];
+    const matchG = match[2];
+    const matchB = match[3];
+    if (!matchR || !matchG || !matchB) return null;
+    const r = parseInt(matchR, 10);
+    const g = parseInt(matchG, 10);
+    const b = parseInt(matchB, 10);
     const a = match[4] !== undefined ? parseFloat(match[4]) : 1;
     // Blend with black background (worst case for contrast)
     const blendedR = Math.round(r * a);
@@ -786,8 +798,10 @@ export class TextOverlayManager {
 
     for (let i = 0; i < sorted.length; i++) {
       for (let j = i + 1; j < sorted.length; j++) {
-        if (sorted[j].startFrame < sorted[i].endFrame) {
-          overlaps.push([sorted[i].id, sorted[j].id]);
+        const captionJ = sorted[j];
+        const captionI = sorted[i];
+        if (captionJ && captionI && captionJ.startFrame < captionI.endFrame) {
+          overlaps.push([captionI.id, captionJ.id]);
         } else {
           break;
         }
@@ -808,6 +822,7 @@ export class TextOverlayManager {
 
     for (let i = 0; i < sorted.length; i++) {
       const caption = sorted[i];
+      if (!caption) continue;
       const startTime = this.formatVTTTime(
         framesToSeconds(caption.startFrame, this.options.frameRate)
       );
@@ -837,15 +852,17 @@ export class TextOverlayManager {
     let i = 0;
 
     // Skip header
-    while (i < lines.length && !lines[i].includes('-->')) {
+    while (i < lines.length && lines[i]?.includes('-->') === false) {
       i++;
     }
 
     while (i < lines.length) {
-      const line = lines[i].trim();
+      const line = lines[i]?.trim() ?? '';
 
       if (line.includes('-->')) {
-        const [startStr, endStr] = line.split('-->').map(s => s.trim());
+        const splitParts = line.split('-->').map(s => s.trim());
+        const startStr = splitParts[0] ?? '00:00:00.000';
+        const endStr = splitParts[1] ?? '00:00:00.000';
         const startSeconds = this.parseVTTTime(startStr);
         const endSeconds = this.parseVTTTime(endStr);
 
@@ -853,13 +870,13 @@ export class TextOverlayManager {
         i++;
         let text = '';
         let speaker: string | undefined;
-        while (i < lines.length && lines[i].trim() !== '') {
-          const textLine = lines[i].trim();
+        while (i < lines.length && (lines[i]?.trim() ?? '') !== '') {
+          const textLine = (lines[i]?.trim() ?? '');
           // Check for speaker tag <v Speaker>
           const speakerMatch = textLine.match(/^<v\s+([^>]+)>(.*)/);
           if (speakerMatch) {
             speaker = speakerMatch[1];
-            text += (text ? '\n' : '') + speakerMatch[2];
+            text += (text ? '\n' : '') + (speakerMatch[2] ?? '');
           } else {
             text += (text ? '\n' : '') + textLine;
           }
@@ -910,17 +927,19 @@ export class TextOverlayManager {
   private parseVTTTime(timeStr: string): number {
     const parts = timeStr.split(':');
     if (parts.length === 3) {
-      const h = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10);
-      const secParts = parts[2].split('.');
-      const s = parseInt(secParts[0], 10);
+      const h = parseInt(parts[0] ?? '0', 10);
+      const m = parseInt(parts[1] ?? '0', 10);
+      const secStr = parts[2] ?? '0';
+      const secParts = secStr.split('.');
+      const s = parseInt(secParts[0] ?? '0', 10);
       const ms = secParts[1] ? parseInt(secParts[1].padEnd(3, '0'), 10) : 0;
       return h * 3600 + m * 60 + s + ms / 1000;
     }
     if (parts.length === 2) {
-      const m = parseInt(parts[0], 10);
-      const secParts = parts[1].split('.');
-      const s = parseInt(secParts[0], 10);
+      const m = parseInt(parts[0] ?? '0', 10);
+      const secStr = parts[1] ?? '0';
+      const secParts = secStr.split('.');
+      const s = parseInt(secParts[0] ?? '0', 10);
       const ms = secParts[1] ? parseInt(secParts[1].padEnd(3, '0'), 10) : 0;
       return m * 60 + s + ms / 1000;
     }

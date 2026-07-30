@@ -318,7 +318,7 @@ describe('NetworkErrorHandler', () => {
       expect(error).toBeInstanceOf(Error);
       expect(error.message).toContain('HTTP 500');
       expect(onError).toHaveBeenCalled();
-      expect(onError.mock.calls[0][0].category).toBe('server-error');
+      expect(onError.mock.calls[0]![0].category).toBe('server-error');
     });
 
     it('calls onRetry callback on each retry attempt', async () => {
@@ -398,7 +398,7 @@ describe('NetworkErrorHandler', () => {
 
       const history = handler.getErrorHistory();
       expect(history.length).toBe(1);
-      expect(history[0].category).toBe('client-error');
+      expect(history[0]!.category).toBe('client-error');
     });
 
     it('clears error history', async () => {

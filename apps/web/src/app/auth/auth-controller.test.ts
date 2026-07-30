@@ -222,7 +222,7 @@ describe('AuthController', () => {
         token: 'current-token',
         refreshToken: 'refresh-token',
         expiry: new Date(Date.now() + 60000).toISOString(),
-        user: { id: 'user-1', email: 'test@example.com' }
+        user: { id: 'user-1', email: 'test@example.com', createdAt: '2024-01-01T00:00:00Z' }
       };
 
       authController.setState({
@@ -298,7 +298,7 @@ describe('AuthController', () => {
     beforeEach(() => {
       authController.setState({
         isAuthenticated: true,
-        currentUser: { id: 'user-1', email: 'test@example.com' },
+        currentUser: { id: 'user-1', email: 'test@example.com', createdAt: '2024-01-01T00:00:00Z' },
         tokenExpiry: new Date(Date.now() + 60000)
       });
     });
@@ -363,7 +363,7 @@ describe('AuthController', () => {
       // Setup authenticated state
       authController.setState({
         isAuthenticated: true,
-        currentUser: { id: 'user-1', email: 'test@example.com' }
+        currentUser: { id: 'user-1', email: 'test@example.com', createdAt: '2024-01-01T00:00:00Z' }
       });
 
       // Trigger session timeout
@@ -390,7 +390,7 @@ describe('AuthController', () => {
     it('should validate session when page becomes visible', async () => {
       authController.setState({
         isAuthenticated: true,
-        currentUser: { id: 'user-1', email: 'test@example.com' }
+        currentUser: { id: 'user-1', email: 'test@example.com', createdAt: '2024-01-01T00:00:00Z' }
       });
 
       mockDashboardSession.currentMember.mockResolvedValue({
@@ -565,7 +565,7 @@ describe('AuthController', () => {
 
       authController.setState({
         isAuthenticated: true,
-        currentUser: { id: 'user-1', email: 'test@example.com' }
+        currentUser: { id: 'user-1', email: 'test@example.com', createdAt: '2024-01-01T00:00:00Z' }
       });
 
       mockFetch.mockResolvedValueOnce({

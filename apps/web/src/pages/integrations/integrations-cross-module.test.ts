@@ -303,8 +303,8 @@ describe('Cross-Module Integration: Webhook Events + Export/Share', () => {
 
       const deliveries = webhookPage.getDeliveries();
       expect(deliveries.length).toBe(1);
-      expect(deliveries[0].eventType).toBe('share.created');
-      expect(deliveries[0].status).toBe('success');
+      expect(deliveries[0]!.eventType).toBe('share.created');
+      expect(deliveries[0]!.status).toBe('success');
 
       exportPage.destroy();
       webhookPage.destroy();
@@ -343,10 +343,10 @@ describe('Cross-Module Integration: Webhook Events + Export/Share', () => {
       await webhookPage.viewDeliveries('wh-1');
 
       const deliveries = webhookPage.getDeliveries();
-      expect(deliveries[0].status).toBe('failed');
-      expect(deliveries[0].attemptCount).toBe(3);
+      expect(deliveries[0]!.status).toBe('failed');
+      expect(deliveries[0]!.attemptCount).toBe(3);
       // Still has retries remaining (3 < maxRetries of 5)
-      expect(deliveries[0].attemptCount).toBeLessThan(webhook.maxRetries);
+      expect(deliveries[0]!.attemptCount).toBeLessThan(webhook.maxRetries);
 
       webhookPage.destroy();
     });
@@ -397,7 +397,7 @@ describe('Cross-Module Integration: Webhook Events + Export/Share', () => {
       });
       await webhookPage.viewDeliveries('wh-1');
 
-      expect(webhookPage.getDeliveries()[0].eventType).toBe('video.ready');
+      expect(webhookPage.getDeliveries()[0]!.eventType).toBe('video.ready');
 
       exportPage.destroy();
       webhookPage.destroy();
@@ -610,7 +610,7 @@ describe('Cross-Module Integration: API Key + Export Operations', () => {
       const page = new ApiKeyManagementPage({ keys: [keyBefore] });
       page.updateKeys([keyAfter]);
 
-      const updatedKey = page.getKeys()[0];
+      const updatedKey = page.getKeys()[0]!;
       expect(updatedKey.requestCount).toBe(105);
       expect(updatedKey.rateLimitRemaining).toBe(895);
 

@@ -794,7 +794,7 @@ describe('Drawing Tool Functionality and Overlay Rendering', () => {
 
       const state = overlay.getState();
       expect(state.paths.length).toBe(1);
-      expect(state.paths[0].tool).toBe('pen');
+      expect(state.paths[0]!.tool).toBe('pen');
 
       overlay.destroy();
     });
@@ -810,8 +810,8 @@ describe('Drawing Tool Functionality and Overlay Rendering', () => {
       canvas.dispatchEvent(new MouseEvent('mouseup', { clientX: 100, clientY: 50 }));
 
       const state = overlay.getState();
-      expect(state.paths[0].tool).toBe('highlighter');
-      expect(state.paths[0].style.opacity).toBe(0.3);
+      expect(state.paths[0]!.tool).toBe('highlighter');
+      expect(state.paths[0]!.style.opacity).toBe(0.3);
 
       overlay.destroy();
     });
@@ -828,7 +828,7 @@ describe('Drawing Tool Functionality and Overlay Rendering', () => {
       canvas.dispatchEvent(new MouseEvent('mouseup', { clientX: 200, clientY: 200 }));
 
       const state = overlay.getState();
-      expect(state.paths[0].tool).toBe('arrow');
+      expect(state.paths[0]!.tool).toBe('arrow');
 
       overlay.destroy();
     });
@@ -854,7 +854,7 @@ describe('Drawing Tool Functionality and Overlay Rendering', () => {
 
       const state = overlay.getState();
       expect(state.textAnnotations.length).toBe(1);
-      expect(state.textAnnotations[0].text).toBe('Annotation text');
+      expect(state.textAnnotations[0]!.text).toBe('Annotation text');
 
       overlay.destroy();
     });
@@ -961,9 +961,9 @@ describe('Drawing Tool Functionality and Overlay Rendering', () => {
       canvas.dispatchEvent(new MouseEvent('mouseup', { clientX: 50, clientY: 50 }));
 
       const state = overlay.getState();
-      expect(state.paths[0].style.color).toBe('#FF0000');
-      expect(state.paths[0].style.strokeWidth).toBe(5);
-      expect(state.paths[0].style.opacity).toBe(0.9);
+      expect(state.paths[0]!.style.color).toBe('#FF0000');
+      expect(state.paths[0]!.style.strokeWidth).toBe(5);
+      expect(state.paths[0]!.style.opacity).toBe(0.9);
 
       overlay.destroy();
     });
@@ -1006,8 +1006,8 @@ describe('Drawing Tool Functionality and Overlay Rendering', () => {
 
       expect(state.currentTool).toBe('highlighter');
       expect(state.paths.length).toBe(1);
-      expect(state.paths[0].id).toBe('saved-path-1');
-      expect(state.paths[0].style.color).toBe('#0000FF');
+      expect(state.paths[0]!.id).toBe('saved-path-1');
+      expect(state.paths[0]!.style.color).toBe('#0000FF');
 
       overlay.destroy();
     });

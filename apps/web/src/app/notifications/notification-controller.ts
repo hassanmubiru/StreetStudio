@@ -100,7 +100,10 @@ export class NotificationController {
 
     // Remove oldest if at capacity
     if (this.toasts.length >= this.options.maxToasts) {
-      this.dismissToast(this.toasts[0].id);
+      const oldestToast = this.toasts[0];
+      if (oldestToast) {
+        this.dismissToast(oldestToast.id);
+      }
     }
 
     this.toasts.push(entry);
@@ -140,6 +143,7 @@ export class NotificationController {
     if (index === -1) return;
 
     const entry = this.toasts[index];
+    if (!entry) return;
     if (entry.timer) clearTimeout(entry.timer);
 
     // Animate out

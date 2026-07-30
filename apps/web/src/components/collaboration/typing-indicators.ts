@@ -61,7 +61,7 @@ export function formatTypingMessage(
   maxNames: number = 3
 ): string {
   if (users.length === 0) return '';
-  if (users.length === 1) return `${users[0].displayName} is typing...`;
+  if (users.length === 1) return `${users[0]!.displayName} is typing...`;
 
   if (users.length <= maxNames) {
     const names = users.map(u => u.displayName);

@@ -145,9 +145,8 @@ export class UserExperienceMetrics {
     }
 
     const entries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
-    if (entries.length === 0) return null;
-
     const nav = entries[0];
+    if (!nav) return null;
 
     const data: NavigationTimingData = {
       dnsLookup: nav.domainLookupEnd - nav.domainLookupStart,

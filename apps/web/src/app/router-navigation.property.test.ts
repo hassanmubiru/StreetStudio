@@ -80,7 +80,7 @@ interface NavigationElement {
   isProtected: boolean;
   hasSubmenu: boolean;
   tabIndex: number;
-  ariaLabel?: string;
+  ariaLabel?: string | null;
 }
 
 interface KeyboardEvent {
@@ -303,10 +303,10 @@ describe('Feature: web-application-implementation, Property 3: Keyboard Navigati
           
           // Test tab navigation through elements
           let currentFocusIndex = 0;
-          createdElements[0].focus();
+          createdElements[0]!.focus();
           
           for (const keyEvent of keySequence) {
-            const currentElement = createdElements[currentFocusIndex];
+            const currentElement = createdElements[currentFocusIndex]!;
             
             if (keyEvent.key === 'Tab') {
               // Simulate tab navigation
@@ -315,7 +315,7 @@ describe('Feature: web-application-implementation, Property 3: Keyboard Navigati
                 : Math.min(createdElements.length - 1, currentFocusIndex + 1);
               
               if (nextIndex !== currentFocusIndex) {
-                createdElements[nextIndex].focus();
+                createdElements[nextIndex]!.focus();
                 currentFocusIndex = nextIndex;
               }
             }
@@ -483,7 +483,7 @@ describe('Feature: web-application-implementation, Property 3: Keyboard Navigati
           
           // Test navigation through different authentication states
           for (let i = 0; i < authStates.length; i++) {
-            const isAuthenticated = authStates[i];
+            const isAuthenticated = authStates[i]!;
             router.setAuthenticationCheck(() => isAuthenticated);
             
             // Test each element remains keyboard accessible

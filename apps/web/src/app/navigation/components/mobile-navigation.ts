@@ -65,14 +65,6 @@ export class MobileNavigation {
   }
 
   /**
-   * Update navigation items
-   */
-  public updateItems(items: any[]): void {
-    // Update navigation items and re-render
-    this.render();
-  }
-
-  /**
    * Update notification and upload badges
    */
   public updateBadges(badges: { notifications?: number; uploads?: number }): void {
@@ -269,10 +261,10 @@ export class MobileNavigation {
       <div class="w-full">
         <!-- User info -->
         <div class="flex items-center mb-4">
-          <img class="h-10 w-10 rounded-full" src="${this.currentUser.avatarUrl || '/default-avatar.png'}" alt="${this.currentUser.displayName || this.currentUser.email}" />
+          <img class="h-10 w-10 rounded-full" src="/default-avatar.png" alt="${this.currentUser.email}" />
           <div class="ml-3">
             <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
-              ${this.currentUser.displayName || this.currentUser.email}
+              ${this.currentUser.email}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               ${this.currentOrganization?.name || 'Personal'}

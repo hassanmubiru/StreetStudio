@@ -681,7 +681,7 @@ export class ProfileSettingsPage {
     for (const [field, errors] of Object.entries(result.errors)) {
       const errorEl = this.element.querySelector(`#${field === 'displayName' ? 'display-name' : field}-error`);
       if (errorEl && errors.length > 0) {
-        errorEl.textContent = errors[0];
+        errorEl.textContent = errors[0] ?? '';
       }
     }
   }
@@ -691,7 +691,9 @@ export class ProfileSettingsPage {
     if (!name) return '?';
     const parts = name.split(/\s+/);
     if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      const first = parts[0]?.[0] ?? '';
+      const last = parts[parts.length - 1]?.[0] ?? '';
+      return (first + last).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
   }

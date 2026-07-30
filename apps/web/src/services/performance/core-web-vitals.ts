@@ -46,7 +46,7 @@ export function observeLCP(callback: WebVitalCallback): (() => void) | undefined
     const observer = new PerformanceObserver((entryList) => {
       const entries = entryList.getEntries();
       // LCP may fire multiple times; always take the latest entry
-      lastEntry = entries[entries.length - 1];
+      lastEntry = entries[entries.length - 1] ?? null;
     });
 
     observer.observe({ type: 'largest-contentful-paint', buffered: true });
@@ -154,7 +154,7 @@ export function observeINP(callback: WebVitalCallback): (() => void) | undefined
         Math.floor(sortedDurations.length * 0.02),
         sortedDurations.length - 1
       );
-      const value = sortedDurations[index];
+      const value = sortedDurations[index] ?? 0;
 
       callback({
         name: 'INP',
@@ -208,7 +208,7 @@ export function observeCLS(callback: WebVitalCallback): (() => void) | undefined
         if (
           sessionValue > 0 &&
           (entry.startTime - previousSessionEndTime > 1000 ||
-            entry.startTime - sessionEntries[0].startTime > 5000)
+            entry.startTime - (sessionEntries[0]?.startTime ?? 0) > 5000)
         ) {
           // New session: keep the max session value
           if (sessionValue > clsValue) {

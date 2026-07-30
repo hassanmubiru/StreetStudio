@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+// @ts-ignore -- jsdom types not installed
 import { JSDOM } from 'jsdom';
 
 // Mock dependencies first

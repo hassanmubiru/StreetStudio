@@ -74,7 +74,7 @@ export function extractMentionQuery(
 
   if (!match) return null;
 
-  const query = match[1];
+  const query = match[1] ?? '';
   const triggerIndex = textUpToCursor.lastIndexOf('@');
 
   return { query, triggerIndex };
@@ -145,7 +145,8 @@ export function extractMentionsFromText(text: string): string[] {
   let match: RegExpExecArray | null;
 
   while ((match = mentionPattern.exec(text)) !== null) {
-    mentions.push(match[1]);
+    const captured = match[1];
+    if (captured) mentions.push(captured);
   }
 
   return [...new Set(mentions)];
@@ -210,7 +211,7 @@ export class MentionAutocomplete {
   }
 
   private handleInput(): void {
-    const cursorPos = this.textarea.selectionStart;
+    const cursorPos = this.textarea.selectionStart ?? 0;
     const mentionInfo = extractMentionQuery(this.textarea.value, cursorPos);
 
     if (!mentionInfo) {
@@ -243,13 +244,15 @@ export class MentionAutocomplete {
       case 'Enter':
         if (this.selectedIndex >= 0 && this.selectedIndex < this.candidates.length) {
           event.preventDefault();
-          this.selectCandidate(this.candidates[this.selectedIndex]);
+          const enterCandidate = this.candidates[this.selectedIndex];
+          if (enterCandidate) this.selectCandidate(enterCandidate);
         }
         break;
       case 'Tab':
         if (this.selectedIndex >= 0 && this.selectedIndex < this.candidates.length) {
           event.preventDefault();
-          this.selectCandidate(this.candidates[this.selectedIndex]);
+          const tabCandidate = this.candidates[this.selectedIndex];
+          if (tabCandidate) this.selectCandidate(tabCandidate);
         }
         break;
       case 'Escape':
@@ -435,7 +438,7 @@ export class MentionAutocomplete {
   /** Get the currently selected candidate, or null. */
   public getSelectedCandidate(): MentionCandidate | null {
     if (this.selectedIndex >= 0 && this.selectedIndex < this.candidates.length) {
-      return this.candidates[this.selectedIndex];
+      return this.candidates[this.selectedIndex] ?? null;
     }
     return null;
   }

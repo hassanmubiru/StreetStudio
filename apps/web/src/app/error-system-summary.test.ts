@@ -181,7 +181,7 @@ describe('Error System - Requirements Validation', () => {
       const supportError = new Error('Need support for this error');
       
       // Mock crypto to return predictable UUID
-      vi.mocked(crypto.randomUUID).mockReturnValue('support-error-123');
+      vi.mocked(crypto.randomUUID).mockReturnValue('support-error-123-456-789' as `${string}-${string}-${string}-${string}-${string}`);
       
       expect(() => handleError(supportError)).not.toThrow();
       expect(crypto.randomUUID).toHaveBeenCalled();

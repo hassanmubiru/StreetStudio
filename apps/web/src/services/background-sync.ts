@@ -200,6 +200,8 @@ export class BackgroundSyncManager {
           const result = batchResults[i];
           const operation = batch[i];
 
+          if (!result || !operation) continue;
+
           if (result.status === 'fulfilled') {
             results.push(result.value);
             if (result.value.success) {

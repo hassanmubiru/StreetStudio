@@ -27,6 +27,11 @@ import { defineWorkspace } from "vitest/config";
 const shared = {
   globals: true,
   environment: "node" as const,
+  // The web client is a browser application: its tests require DOM globals
+  // (document, window, localStorage). Default every apps/web test to jsdom so
+  // DOM-dependent suites do not need a per-file `@vitest-environment` docblock.
+  // Node-only packages remain on the fast "node" environment.
+  environmentMatchGlobs: [["apps/web/**", "jsdom"]] as [string, string][],
   setupFiles: ["./vitest.setup.ts"],
   passWithNoTests: true,
   exclude: ["**/node_modules/**", "**/dist/**"],

@@ -504,9 +504,8 @@ export class ErrorBoundary {
     }
 
     const retryDelay = delay ?? this.options.retryDelay ?? 1000;
-    const timeoutFn = typeof window !== 'undefined' && window.setTimeout ? window.setTimeout : setTimeout;
     
-    this.recoveryTimer = timeoutFn(() => {
+    this.recoveryTimer = window.setTimeout(() => {
       this.recoveryTimer = null; // Clear the timer reference
       
       if (this.errorState.hasError && this.retryCount < (this.options.maxRetries || 3)) {

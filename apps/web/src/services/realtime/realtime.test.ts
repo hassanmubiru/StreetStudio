@@ -252,7 +252,7 @@ describe('RealtimeWebSocketManager', () => {
     mockWsInstance!.simulateOpen();
     await connectPromise;
 
-    const authMessage = JSON.parse(mockWsInstance!.sentMessages[0]);
+    const authMessage = JSON.parse(mockWsInstance!.sentMessages[0]!);
     expect(authMessage.type).toBe('auth');
     expect(authMessage.payload.token).toBe('my-secret-token');
     manager.disconnect();
@@ -548,7 +548,7 @@ describe('CollaborationSyncService', () => {
     });
 
     expect(service.getPresence()).toHaveLength(1);
-    expect(service.getPresence()[0].userId).toBe('user-2');
+    expect(service.getPresence()[0]!.userId).toBe('user-2');
     expect(presenceUpdates.length).toBe(1);
 
     service.destroy();
@@ -627,7 +627,7 @@ describe('CollaborationSyncService', () => {
     });
 
     expect(service.getTypingUsers()).toHaveLength(1);
-    expect(service.getTypingUsers()[0].displayName).toBe('Bob');
+    expect(service.getTypingUsers()[0]!.displayName).toBe('Bob');
     expect(typingStartEvents).toHaveLength(1);
 
     service.destroy();

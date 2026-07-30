@@ -90,7 +90,6 @@ export class Toast {
       id: generateId('toast'),
       type: 'info',
       title: '',
-      message: '',
       duration: 5000,
       dismissible: true,
       ...props,

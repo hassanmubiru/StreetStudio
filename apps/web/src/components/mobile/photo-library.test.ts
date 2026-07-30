@@ -131,9 +131,9 @@ describe('Photo Library Integration', () => {
 
       const result = await promise;
       expect(result.count).toBe(1);
-      expect(result.items[0].name).toBe('photo.jpg');
-      expect(result.items[0].isImage).toBe(true);
-      expect(result.items[0].isVideo).toBe(false);
+      expect(result.items[0]!.name).toBe('photo.jpg');
+      expect(result.items[0]!.isImage).toBe(true);
+      expect(result.items[0]!.isVideo).toBe(false);
     });
 
     it('rejects when file exceeds maxFileSize', async () => {
@@ -215,8 +215,8 @@ describe('Photo Library Integration', () => {
       input.dispatchEvent(new Event('change'));
 
       const result = await promise;
-      expect(result.items[0].isVideo).toBe(true);
-      expect(result.items[0].isImage).toBe(false);
+      expect(result.items[0]!.isVideo).toBe(true);
+      expect(result.items[0]!.isImage).toBe(false);
     });
 
     it('cleans up input element after selection', async () => {
@@ -267,10 +267,10 @@ describe('Photo Library Integration', () => {
       const prepared = prepareForUpload(result);
 
       expect(prepared).toHaveLength(1);
-      expect(prepared[0].metadata.source).toBe('photo-library');
-      expect(prepared[0].metadata.isImage).toBe(true);
-      expect(prepared[0].metadata.isVideo).toBe(false);
-      expect(prepared[0].metadata.name).toBe('photo.jpg');
+      expect(prepared[0]!.metadata.source).toBe('photo-library');
+      expect(prepared[0]!.metadata.isImage).toBe(true);
+      expect(prepared[0]!.metadata.isVideo).toBe(false);
+      expect(prepared[0]!.metadata.name).toBe('photo.jpg');
     });
 
     it('handles video files', () => {
@@ -284,8 +284,8 @@ describe('Photo Library Integration', () => {
 
       const prepared = prepareForUpload(result);
 
-      expect(prepared[0].metadata.isVideo).toBe(true);
-      expect(prepared[0].metadata.isImage).toBe(false);
+      expect(prepared[0]!.metadata.isVideo).toBe(true);
+      expect(prepared[0]!.metadata.isImage).toBe(false);
     });
 
     it('preserves file references', () => {
@@ -305,7 +305,7 @@ describe('Photo Library Integration', () => {
       };
 
       const prepared = prepareForUpload(result);
-      expect(prepared[0].file).toBe(file);
+      expect(prepared[0]!.file).toBe(file);
     });
   });
 

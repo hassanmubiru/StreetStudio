@@ -441,7 +441,7 @@ describe('AccessibilitySettingsPage', () => {
       saveBtn.click();
 
       expect(saveSpy).toHaveBeenCalled();
-      expect(saveSpy.mock.calls[0][0].detail.preferences.reducedMotion).toBe(true);
+      expect(saveSpy.mock.calls[0]![0].detail.preferences.reducedMotion).toBe(true);
     });
 
     it('should reset dirty state after discard', () => {

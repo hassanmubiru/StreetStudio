@@ -81,8 +81,8 @@ export class ActivityFeed {
   }
 
   private renderNotification(notification: NotificationDto): string {
-    const icon = this.getNotificationIcon(notification.type);
-    const isUnread = !notification.read;
+    const icon = this.getNotificationIcon(notification.eventType);
+    const isUnread = !notification.readAt;
     
     return `
       <div class="flex items-start space-x-3 p-3 rounded-lg ${isUnread ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700'} transition-colors cursor-pointer"
@@ -90,14 +90,14 @@ export class ActivityFeed {
            ${isUnread ? 'data-unread="true"' : ''}
       >
         <!-- Notification Icon -->
-        <div class="flex-shrink-0 w-8 h-8 ${this.getIconBgColor(notification.type)} rounded-full flex items-center justify-center">
+        <div class="flex-shrink-0 w-8 h-8 ${this.getIconBgColor(notification.eventType)} rounded-full flex items-center justify-center">
           ${icon}
         </div>
         
         <!-- Notification Content -->
         <div class="flex-1 min-w-0">
           <p class="text-sm ${isUnread ? 'font-medium' : ''} text-gray-900 dark:text-white">
-            ${this.escapeHtml(notification.message)}
+            ${this.escapeHtml(notification.eventType)}
           </p>
           <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
             ${formatRelativeTime(notification.createdAt)}
@@ -202,11 +202,11 @@ export class ActivityFeed {
     if (!notification) return;
 
     // Mark as read if unread
-    if (!notification.read) {
+    if (!notification.readAt) {
       this.markAsRead(notificationId);
     }
 
-    // Navigate based on notification type and metadata
+    // Navigate based on notification type
     this.navigateToNotificationTarget(notification);
   }
 
@@ -214,7 +214,7 @@ export class ActivityFeed {
     // Update local state
     const notification = this.notifications.find(n => n.id === notificationId);
     if (notification) {
-      notification.read = true;
+      (notification as { readAt?: string }).readAt = new Date().toISOString();
       
       // Update UI
       const notificationElement = this.element.querySelector(`[data-notification-id="${notificationId}"]`);
@@ -246,27 +246,24 @@ export class ActivityFeed {
   }
 
   private navigateToNotificationTarget(notification: NotificationDto): void {
-    if (!notification.metadata) return;
+    if (!notification.sourceResourceId) {
+      window.location.href = '/notifications';
+      return;
+    }
 
-    switch (notification.type) {
+    switch (notification.eventType) {
       case 'comment':
-        if (notification.metadata.videoId) {
-          window.location.href = `/recordings/${notification.metadata.videoId}/review`;
-        }
+        window.location.href = `/recordings/${notification.sourceResourceId}/review`;
         break;
         
       case 'project_invite':
       case 'project_update':
-        if (notification.metadata.projectId) {
-          window.location.href = `/projects/${notification.metadata.projectId}`;
-        }
+        window.location.href = `/projects/${notification.sourceResourceId}`;
         break;
         
       case 'video_ready':
       case 'video_uploaded':
-        if (notification.metadata.videoId) {
-          window.location.href = `/recordings/${notification.metadata.videoId}`;
-        }
+        window.location.href = `/recordings/${notification.sourceResourceId}`;
         break;
         
       default:

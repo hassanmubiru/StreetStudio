@@ -44,7 +44,7 @@ describe('ActivityFeed', () => {
         createdAt: '2024-01-01T11:00:00Z',
         metadata: { videoId: 'video-789' }
       }
-    ] as NotificationDto[];
+    ] as unknown as NotificationDto[];
 
     // Setup DOM
     document.body.innerHTML = '<div id="test-container"></div>';
@@ -199,7 +199,7 @@ describe('ActivityFeed', () => {
         read: i % 2 === 0,
         createdAt: `2024-01-01T12:${String(i).padStart(2, '0')}:00Z`,
         metadata: { videoId: `video-${i + 1}` }
-      })) as NotificationDto[];
+      })) as unknown as NotificationDto[];
       
       activityFeed = new ActivityFeed(manyNotifications);
     });
@@ -308,7 +308,7 @@ describe('ActivityFeed', () => {
         read: false,
         createdAt: '2024-01-01T12:00:00Z',
         metadata: undefined
-      }] as NotificationDto[];
+      }] as unknown as NotificationDto[];
       
       activityFeed = new ActivityFeed(noMetadataNotifications);
       
@@ -331,7 +331,7 @@ describe('ActivityFeed', () => {
         read: false,
         createdAt: '2024-01-01T12:00:00Z',
         metadata: { videoId: 'video-123' }
-      }] as NotificationDto[];
+      }] as unknown as NotificationDto[];
       
       activityFeed = new ActivityFeed(maliciousNotifications);
       
@@ -349,14 +349,14 @@ describe('ActivityFeed', () => {
     it('should add new notification to the beginning of the feed', () => {
       const element = activityFeed.getElement();
       
-      const newNotification: NotificationDto = {
+      const newNotification = {
         id: 'notif-new',
         message: 'New notification message',
         type: 'mention',
         read: false,
         createdAt: '2024-01-01T12:30:00Z',
         metadata: { videoId: 'video-new' }
-      };
+      } as unknown as NotificationDto;
       
       activityFeed.addNotification(newNotification);
       
@@ -367,7 +367,7 @@ describe('ActivityFeed', () => {
     it('should update entire notification list', () => {
       const element = activityFeed.getElement();
       
-      const newNotifications: NotificationDto[] = [
+      const newNotifications = [
         {
           id: 'notif-updated-1',
           message: 'Updated notification 1',
@@ -376,7 +376,7 @@ describe('ActivityFeed', () => {
           createdAt: '2024-01-01T13:00:00Z',
           metadata: { videoId: 'video-updated' }
         }
-      ];
+      ] as unknown as NotificationDto[];
       
       activityFeed.updateNotifications(newNotifications);
       
@@ -394,7 +394,7 @@ describe('ActivityFeed', () => {
         read: false,
         createdAt: `2024-01-01T12:${String(i).padStart(2, '0')}:00Z`,
         metadata: { videoId: `video-${i + 1}` }
-      })) as NotificationDto[];
+      })) as unknown as NotificationDto[];
       
       activityFeed = new ActivityFeed(manyNotifications);
       
@@ -433,7 +433,7 @@ describe('ActivityFeed', () => {
         read: false,
         createdAt: `2024-01-01T12:${String(i).padStart(2, '0')}:00Z`,
         metadata: { videoId: `video-${i + 1}` }
-      })) as NotificationDto[];
+      })) as unknown as NotificationDto[];
       
       activityFeed = new ActivityFeed(manyNotifications);
       
@@ -520,7 +520,7 @@ describe('ActivityFeed', () => {
         read: i % 2 === 0,
         createdAt: `2024-01-01T12:${String(i % 60).padStart(2, '0')}:00Z`,
         metadata: { videoId: `video-${i + 1}` }
-      })) as NotificationDto[];
+      })) as unknown as NotificationDto[];
       
       const startTime = performance.now();
       activityFeed = new ActivityFeed(manyNotifications);
@@ -545,7 +545,7 @@ describe('ActivityFeed', () => {
         read: false,
         createdAt: '2024-01-01T12:00:00Z',
         metadata: { videoId: 'video-123' }
-      }] as NotificationDto[];
+      }] as unknown as NotificationDto[];
       
       expect(() => {
         activityFeed = new ActivityFeed(unknownTypeNotifications);
@@ -568,7 +568,7 @@ describe('ActivityFeed', () => {
         read: false,
         createdAt: '2024-01-01T12:00:00Z'
         // no metadata field
-      }] as NotificationDto[];
+      }] as unknown as NotificationDto[];
       
       expect(() => {
         activityFeed = new ActivityFeed(noMetadataNotifications);

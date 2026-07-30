@@ -20,7 +20,7 @@ const mockDashboardSession = {
   useBearerToken: vi.fn(),
   clearAuthentication: vi.fn(),
   currentMember: vi.fn(),
-} as unknown as DashboardSession;
+} as any;
 
 // Mock BroadcastChannel for cross-tab communication
 class MockBroadcastChannel {

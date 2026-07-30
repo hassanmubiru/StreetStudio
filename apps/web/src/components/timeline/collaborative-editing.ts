@@ -142,7 +142,7 @@ export function getUserColor(userId: string): string {
   for (let i = 0; i < userId.length; i++) {
     hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
   }
-  return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
+  return USER_COLORS[Math.abs(hash) % USER_COLORS.length]!;
 }
 
 /** Get current time as ISO timestamp. */

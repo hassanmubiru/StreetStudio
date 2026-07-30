@@ -60,19 +60,15 @@ describe('Navigation Integration', () => {
     const user: MemberDto = {
       id: 'user-123',
       email: 'test@example.com',
-      displayName: 'Test User',
-      avatarUrl: '/avatar.jpg',
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    };
+    } as MemberDto;
 
     const organization: OrganizationDto = {
       id: 'org-123',
       name: 'Test Organization',
-      slug: 'test-org',
+      settings: {},
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    };
+    } as OrganizationDto;
 
     navigationController.setAuthContext(user, organization);
 
@@ -278,10 +274,8 @@ describe('Navigation Integration', () => {
     const user: MemberDto = {
       id: 'user-123',
       email: 'test@example.com',
-      displayName: 'Test User',
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    };
+    } as MemberDto;
 
     // 1. User logs in
     navigationController.setAuthContext(user);

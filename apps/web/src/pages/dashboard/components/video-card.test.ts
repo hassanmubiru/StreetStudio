@@ -26,13 +26,11 @@ describe('VideoCard', () => {
   beforeEach(() => {
     mockVideo = {
       id: 'video-123',
+      organizationId: 'org-1',
       title: 'Test Video Title',
-      description: 'This is a test video description',
-      thumbnailUrl: 'https://example.com/thumbnail.jpg',
-      duration: 125, // 2:05
-      commentCount: 8,
-      viewCount: 42,
+      durationSeconds: 125, // 2:05
       status: 'ready',
+      developerMode: false,
       createdAt: '2024-01-01T12:00:00Z',
     } as VideoDto;
 
@@ -82,22 +80,7 @@ describe('VideoCard', () => {
       expect(element.innerHTML).toContain('Test Video Title');
     });
 
-    it('should render video description when available', () => {
-      const element = videoCard.getElement();
-      expect(element.innerHTML).toContain('This is a test video description');
-    });
-
-    it('should render video thumbnail when available', () => {
-      const element = videoCard.getElement();
-      const img = element.querySelector('img');
-      expect(img).toBeTruthy();
-      expect(img?.src).toBe('https://example.com/thumbnail.jpg');
-      expect(img?.alt).toBe('Test Video Title thumbnail');
-      expect(img?.getAttribute('loading')).toBe('lazy');
-    });
-
     it('should render placeholder icon when no thumbnail', () => {
-      mockVideo.thumbnailUrl = undefined;
       videoCard = new VideoCard(mockVideo);
       
       const element = videoCard.getElement();
@@ -111,18 +94,6 @@ describe('VideoCard', () => {
     it('should display duration overlay when available', () => {
       const element = videoCard.getElement();
       expect(element.innerHTML).toContain('2:05');
-    });
-
-    it('should display comment count with proper icon', () => {
-      const element = videoCard.getElement();
-      const commentElement = element.querySelector('[data-comment-count]');
-      expect(commentElement).toBeTruthy();
-      expect(commentElement?.textContent?.trim()).toContain('8 comments');
-    });
-
-    it('should display view count with proper icon', () => {
-      const element = videoCard.getElement();
-      expect(element.innerHTML).toContain('42 views');
     });
 
     it('should display relative timestamp', () => {
@@ -165,7 +136,7 @@ describe('VideoCard', () => {
     });
 
     it('should show red indicator for error status', () => {
-      mockVideo.status = 'error';
+      mockVideo.status = 'failed';
       videoCard = new VideoCard(mockVideo);
       
       const element = videoCard.getElement();
@@ -186,54 +157,12 @@ describe('VideoCard', () => {
   });
 
   describe('Empty States and Edge Cases', () => {
-    it('should handle video with no description', () => {
-      mockVideo.description = undefined;
-      videoCard = new VideoCard(mockVideo);
-      
-      const element = videoCard.getElement();
-      expect(element.innerHTML).not.toContain('<p class="text-xs text-gray-600');
-    });
-
     it('should handle video with no duration', () => {
-      mockVideo.duration = undefined;
+      (mockVideo as any).durationSeconds = undefined;
       videoCard = new VideoCard(mockVideo);
       
       const element = videoCard.getElement();
       expect(element.innerHTML).not.toContain('bg-black bg-opacity-70');
-    });
-
-    it('should handle zero comment count', () => {
-      mockVideo.commentCount = 0;
-      videoCard = new VideoCard(mockVideo);
-      
-      const element = videoCard.getElement();
-      const commentElement = element.querySelector('[data-comment-count]');
-      expect(commentElement).toBeNull();
-    });
-
-    it('should handle undefined comment count', () => {
-      mockVideo.commentCount = undefined;
-      videoCard = new VideoCard(mockVideo);
-      
-      const element = videoCard.getElement();
-      const commentElement = element.querySelector('[data-comment-count]');
-      expect(commentElement).toBeNull();
-    });
-
-    it('should handle zero view count', () => {
-      mockVideo.viewCount = 0;
-      videoCard = new VideoCard(mockVideo);
-      
-      const element = videoCard.getElement();
-      expect(element.innerHTML).not.toContain('0 views');
-    });
-
-    it('should handle undefined view count', () => {
-      mockVideo.viewCount = undefined;
-      videoCard = new VideoCard(mockVideo);
-      
-      const element = videoCard.getElement();
-      expect(element.innerHTML).not.toContain('views');
     });
   });
 
@@ -245,15 +174,6 @@ describe('VideoCard', () => {
       const element = videoCard.getElement();
       expect(element.innerHTML).toContain('&lt;script&gt;alert("xss")&lt;/script&gt;');
       expect(element.innerHTML).not.toContain('<script>alert("xss")</script>');
-    });
-
-    it('should escape HTML in video description', () => {
-      mockVideo.description = '<img src="x" onerror="alert(1)">';
-      videoCard = new VideoCard(mockVideo);
-      
-      const element = videoCard.getElement();
-      expect(element.innerHTML).toContain('&lt;img src="x" onerror="alert(1)"&gt;');
-      expect(element.innerHTML).not.toContain('<img src="x" onerror="alert(1)">');
     });
   });
 
@@ -368,7 +288,7 @@ describe('VideoCard', () => {
       ];
 
       testCases.forEach(({ duration, expected }) => {
-        mockVideo.duration = duration;
+        mockVideo.durationSeconds = duration;
         videoCard = new VideoCard(mockVideo);
         
         const element = videoCard.getElement();
@@ -486,7 +406,6 @@ describe('VideoCard', () => {
 
     it('should handle text overflow gracefully', () => {
       mockVideo.title = 'This is a very long video title that should be truncated when displayed in the card component';
-      mockVideo.description = 'This is an extremely long description that should also be truncated to prevent layout issues and maintain a clean appearance in the dashboard interface';
       
       videoCard = new VideoCard(mockVideo);
       
@@ -517,24 +436,15 @@ describe('VideoCard', () => {
       expect(metadataContainer).toBeTruthy();
     });
 
-    it('should display comment and view counts with proper icons', () => {
+    it('should display metadata with proper structure', () => {
       const element = videoCard.getElement();
       
-      // Check comment count structure
-      const commentElement = element.querySelector('[data-comment-count]');
-      const commentIcon = commentElement?.querySelector('svg');
-      expect(commentIcon).toBeTruthy();
-      
-      // Check view count structure  
-      const viewElements = element.querySelectorAll('.flex.items-center');
-      expect(viewElements.length).toBeGreaterThan(1);
+      // Check metadata structure  
+      const metaElements = element.querySelectorAll('.flex.items-center');
+      expect(metaElements.length).toBeGreaterThan(0);
     });
 
     it('should handle missing metadata gracefully', () => {
-      mockVideo.commentCount = undefined;
-      mockVideo.viewCount = undefined;
-      mockVideo.description = undefined;
-      
       videoCard = new VideoCard(mockVideo);
       
       const element = videoCard.getElement();

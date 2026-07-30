@@ -433,7 +433,7 @@ describe('UploadManagerComponent', () => {
       expect(errorContainer?.textContent).toContain(errorMessage);
     });
 
-    it('should auto-remove error messages', (done) => {
+    it('should auto-remove error messages', (done: any) => {
       const errorMessage = 'Auto-remove test';
       (component as any).showError(errorMessage);
       

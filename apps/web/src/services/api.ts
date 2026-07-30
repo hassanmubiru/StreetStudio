@@ -128,7 +128,7 @@ export class ApiClient {
       throw networkError;
     }
 
-    let lastError: ApiError;
+    let lastError!: ApiError;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       const abortController = new AbortController();

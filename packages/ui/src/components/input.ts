@@ -71,12 +71,12 @@ const getInputStyles = (size: InputSize, hasError: boolean, disabled: boolean, r
 export class Input {
   private container: HTMLDivElement;
   private label?: HTMLLabelElement;
-  private inputWrapper: HTMLDivElement;
-  private input: HTMLInputElement;
+  private inputWrapper!: HTMLDivElement;
+  private input!: HTMLInputElement;
   private helperText?: HTMLParagraphElement;
   private errorText?: HTMLParagraphElement;
-  private props: Required<Omit<InputProps, 'leftIcon' | 'rightIcon' | 'onChange' | 'onFocus' | 'onBlur' | 'onKeyDown' | 'validator'>> & 
-    Pick<InputProps, 'leftIcon' | 'rightIcon' | 'onChange' | 'onFocus' | 'onBlur' | 'onKeyDown' | 'validator'>;
+  private props: Required<Omit<InputProps, 'leftIcon' | 'rightIcon' | 'maxLength' | 'minLength' | 'onChange' | 'onFocus' | 'onBlur' | 'onKeyDown' | 'validator'>> & 
+    Pick<InputProps, 'leftIcon' | 'rightIcon' | 'maxLength' | 'minLength' | 'onChange' | 'onFocus' | 'onBlur' | 'onKeyDown' | 'validator'>;
   private validationErrors: string[] = [];
 
   constructor(props: InputProps) {
@@ -186,7 +186,7 @@ export class Input {
     input.disabled = this.props.disabled;
     input.required = this.props.required;
     input.readOnly = this.props.readonly;
-    input.autoComplete = this.props.autoComplete;
+    input.autocomplete = this.props.autoComplete as AutoFill;
     
     if (this.props.maxLength !== undefined) {
       input.maxLength = this.props.maxLength;
@@ -301,7 +301,7 @@ export class Input {
     }
 
     if (allErrors.length > 0) {
-      this.errorText!.textContent = allErrors[0]; // Show first error
+      this.errorText!.textContent = allErrors[0] ?? ''; // Show first error
       this.errorText!.classList.remove('hidden');
     } else {
       this.errorText!.classList.add('hidden');

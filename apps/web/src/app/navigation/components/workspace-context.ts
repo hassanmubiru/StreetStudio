@@ -198,18 +198,14 @@ export class WorkspaceContext {
           {
             id: 'workspace-1' as Uuid,
             name: 'Default Workspace',
-            description: 'Main workspace for the organization',
             organizationId,
-            createdAt: '2024-01-01T00:00:00Z',
-            updatedAt: '2024-01-15T00:00:00Z'
+            createdAt: '2024-01-01T00:00:00Z' as any,
           },
           {
             id: 'workspace-2' as Uuid,
             name: 'Development',
-            description: 'Development and testing workspace',
             organizationId,
-            createdAt: '2024-01-02T00:00:00Z',
-            updatedAt: '2024-01-14T00:00:00Z'
+            createdAt: '2024-01-02T00:00:00Z' as any,
           }
         ];
         resolve(mockWorkspaces);
@@ -501,15 +497,15 @@ export class WorkspaceContext {
     });
 
     // Listen for workspace context requests
-    window.addEventListener('workspace:context:get', (event: CustomEvent) => {
+    window.addEventListener('workspace:context:get', ((event: CustomEvent) => {
       const callback = event.detail.callback;
       if (callback) {
         callback(this.getContextSummary());
       }
-    });
+    }) as EventListener);
 
     // Listen for navigation events
-    window.addEventListener('navigation:context:update', (event: CustomEvent) => {
+    window.addEventListener('navigation:context:update', ((event: CustomEvent) => {
       const { workspaceId, projectId, folderId } = event.detail;
       
       if (workspaceId) {
@@ -527,7 +523,7 @@ export class WorkspaceContext {
         // Would need to fetch folder data first
         logger.debug('Folder context update requested', { folderId });
       }
-    });
+    }) as EventListener);
   }
 
   /**

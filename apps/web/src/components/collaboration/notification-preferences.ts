@@ -239,8 +239,12 @@ export function isInQuietHours(
   startStr: string,
   endStr: string
 ): boolean {
-  const [startH, startM] = startStr.split(':').map(Number);
-  const [endH, endM] = endStr.split(':').map(Number);
+  const startParts = startStr.split(':').map(Number);
+  const endParts = endStr.split(':').map(Number);
+  const startH = startParts[0] ?? 0;
+  const startM = startParts[1] ?? 0;
+  const endH = endParts[0] ?? 0;
+  const endM = endParts[1] ?? 0;
 
   const hours = time.getHours();
   const minutes = time.getMinutes();

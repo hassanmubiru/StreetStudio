@@ -87,8 +87,8 @@ export class RecordingControls {
     return controls;
   }
 
-  private createControlButton(type: string, label: string, id: string, enabled: boolean): string {
-    const icons = {
+  private createControlButton(type: 'record' | 'pause' | 'stop', label: string, id: string, enabled: boolean): string {
+    const icons: Record<'record' | 'pause' | 'stop', string> = {
       record: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
       </svg>`,
@@ -100,7 +100,7 @@ export class RecordingControls {
       </svg>`
     };
 
-    const colors = {
+    const colors: Record<'record' | 'pause' | 'stop', string> = {
       record: enabled ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed',
       pause: enabled ? 'bg-yellow-600 hover:bg-yellow-700 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed',
       stop: enabled ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed'
@@ -120,8 +120,8 @@ export class RecordingControls {
     `;
   }
 
-  private createSecondaryButton(type: string, label: string, id: string): string {
-    const icons = {
+  private createSecondaryButton(type: 'drawing' | 'settings', label: string, id: string): string {
+    const icons: Record<'drawing' | 'settings', string> = {
       drawing: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
       </svg>`,
@@ -186,8 +186,8 @@ export class RecordingControls {
     return floatingControls;
   }
 
-  private createFloatingButton(type: string, label: string, id: string, toggle = false): string {
-    const icons = {
+  private createFloatingButton(type: 'pause' | 'stop' | 'drawing', label: string, id: string, toggle = false): string {
+    const icons: Record<'pause' | 'stop' | 'drawing', string> = {
       pause: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
       </svg>`,
@@ -324,7 +324,7 @@ export class RecordingControls {
       document.removeEventListener('mouseup', handleMouseUp);
     };
 
-    dragHandle?.addEventListener('mousedown', handleMouseDown);
+    dragHandle?.addEventListener('mousedown', handleMouseDown as EventListener);
   }
 
   public setEnabled(enabled: boolean): void {

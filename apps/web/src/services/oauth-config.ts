@@ -284,7 +284,7 @@ export class OAuthConfigService {
           returnUrl: flowState.returnUrl 
         };
       } else {
-        throw new Error(response.error || 'OAuth token exchange failed');
+        throw new Error((response as any).error || 'OAuth token exchange failed');
       }
 
     } catch (error) {

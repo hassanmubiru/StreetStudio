@@ -27,7 +27,7 @@ describe('ProjectCard', () => {
       videoCount: 5,
       memberCount: 3,
       updatedAt: '2024-01-01T12:00:00Z',
-    } as ProjectDto;
+    } as unknown as ProjectDto;
 
     // Setup DOM
     document.body.innerHTML = '<div id="test-container"></div>';
@@ -84,7 +84,7 @@ describe('ProjectCard', () => {
     });
 
     it('should render placeholder icon when no thumbnail', () => {
-      mockProject.thumbnailUrl = undefined;
+      (mockProject as any).thumbnailUrl = undefined;
       projectCard = new ProjectCard(mockProject);
       
       const element = projectCard.getElement();
@@ -113,7 +113,7 @@ describe('ProjectCard', () => {
 
   describe('Empty States and Edge Cases', () => {
     it('should handle project with no description', () => {
-      mockProject.description = undefined;
+      (mockProject as any).description = undefined;
       projectCard = new ProjectCard(mockProject);
       
       const element = projectCard.getElement();
@@ -121,7 +121,7 @@ describe('ProjectCard', () => {
     });
 
     it('should handle zero video count', () => {
-      mockProject.videoCount = 0;
+      (mockProject as any).videoCount = 0;
       projectCard = new ProjectCard(mockProject);
       
       const element = projectCard.getElement();
@@ -129,7 +129,7 @@ describe('ProjectCard', () => {
     });
 
     it('should handle undefined video count', () => {
-      mockProject.videoCount = undefined;
+      (mockProject as any).videoCount = undefined;
       projectCard = new ProjectCard(mockProject);
       
       const element = projectCard.getElement();
@@ -137,7 +137,7 @@ describe('ProjectCard', () => {
     });
 
     it('should handle zero member count', () => {
-      mockProject.memberCount = 0;
+      (mockProject as any).memberCount = 0;
       projectCard = new ProjectCard(mockProject);
       
       const element = projectCard.getElement();
@@ -145,7 +145,7 @@ describe('ProjectCard', () => {
     });
 
     it('should handle undefined member count', () => {
-      mockProject.memberCount = undefined;
+      (mockProject as any).memberCount = undefined;
       projectCard = new ProjectCard(mockProject);
       
       const element = projectCard.getElement();
@@ -164,7 +164,7 @@ describe('ProjectCard', () => {
     });
 
     it('should escape HTML in project description', () => {
-      mockProject.description = '<img src="x" onerror="alert(1)">';
+      (mockProject as any).description = '<img src="x" onerror="alert(1)">';
       projectCard = new ProjectCard(mockProject);
       
       const element = projectCard.getElement();

@@ -92,8 +92,8 @@ describe('VideoMetadataForm', () => {
 
       const select = container.querySelector('#video-project') as HTMLSelectElement;
       expect(select.options.length).toBe(3); // "No project" + 2 projects
-      expect(select.options[1].textContent).toBe('Project Alpha');
-      expect(select.options[2].textContent).toBe('Project Beta');
+      expect(select.options[1]!.textContent).toBe('Project Alpha');
+      expect(select.options[2]!.textContent).toBe('Project Beta');
     });
   });
 
@@ -106,7 +106,7 @@ describe('VideoMetadataForm', () => {
       const result = form.validate();
       expect(result.isValid).toBe(false);
       expect(result.errors.title).toBeDefined();
-      expect(result.errors.title.length).toBeGreaterThan(0);
+      expect(result.errors.title!.length).toBeGreaterThan(0);
     });
 
     it('should accept valid title', () => {
@@ -308,7 +308,7 @@ describe('VideoMetadataForm', () => {
       tagInput.value = 'tut';
       tagInput.dispatchEvent(new Event('input', { bubbles: true }));
 
-      const suggestions = container.querySelector('#tag-suggestions');
+      const suggestions = container.querySelector('#tag-suggestions') as HTMLElement | null;
       expect(suggestions?.style.display).toBe('block');
       expect(suggestions?.textContent).toContain('tutorial');
     });
@@ -321,7 +321,7 @@ describe('VideoMetadataForm', () => {
       const keyEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
       tagInput.dispatchEvent(keyEvent);
 
-      const suggestions = container.querySelector('#tag-suggestions');
+      const suggestions = container.querySelector('#tag-suggestions') as HTMLElement | null;
       expect(suggestions?.style.display).toBe('none');
     });
   });

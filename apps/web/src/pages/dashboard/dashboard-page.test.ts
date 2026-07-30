@@ -53,9 +53,9 @@ describe('DashboardPage', () => {
   beforeEach(() => {
     mockMember = {
       id: '1',
-      displayName: 'John Doe',
       email: 'john@example.com',
-    } as MemberDto;
+      createdAt: '2024-01-01T00:00:00Z',
+    } as unknown as MemberDto;
 
     (mockSession.currentMember as any).mockResolvedValue(mockMember);
 
@@ -171,7 +171,7 @@ describe('DashboardPage', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const element = dashboardPage.getElement();
-      expect(element.innerHTML).toContain(`Welcome back, ${mockMember.displayName}!`);
+      expect(element.innerHTML).toContain(`Welcome back, ${(mockMember as any).displayName}!`);
     });
 
     it('should render quick actions section', async () => {

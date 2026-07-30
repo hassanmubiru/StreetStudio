@@ -370,18 +370,20 @@ export class CursorSettings {
       cursorHighlight.classList.add('hidden');
     });
 
-    previewArea.addEventListener('mousemove', (e: MouseEvent) => {
+    previewArea.addEventListener('mousemove', (e) => {
+      const mouseEvent = e as MouseEvent;
       const rect = previewArea.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const x = mouseEvent.clientX - rect.left;
+      const y = mouseEvent.clientY - rect.top;
       
       cursorHighlight.style.left = `${x}px`;
       cursorHighlight.style.top = `${y}px`;
     });
 
-    previewArea.addEventListener('click', (e: MouseEvent) => {
+    previewArea.addEventListener('click', (e) => {
+      const mouseEvent = e as MouseEvent;
       if (this.settings.clickAnimation) {
-        this.showClickAnimation(e.clientX - previewArea.getBoundingClientRect().left, e.clientY - previewArea.getBoundingClientRect().top);
+        this.showClickAnimation(mouseEvent.clientX - previewArea.getBoundingClientRect().left, mouseEvent.clientY - previewArea.getBoundingClientRect().top);
       }
     });
   }
@@ -424,13 +426,13 @@ export class CursorSettings {
     const cursorHighlight = this.container.querySelector('#cursor-highlight') as HTMLElement;
     if (!cursorHighlight) return;
 
-    const sizes = {
+    const sizes: Record<string, string> = {
       small: '24px',
       medium: '32px',
       large: '48px'
     };
 
-    const size = sizes[this.settings.size] || sizes.medium;
+    const size = sizes[this.settings.size] ?? sizes['medium'] ?? '32px';
     
     // Update highlight styles based on mode
     switch (this.settings.highlightMode) {

@@ -214,7 +214,7 @@ describe('SecuritySettingsPage', () => {
       form.dispatchEvent(new Event('submit', { bubbles: true }));
 
       expect(handler).toHaveBeenCalled();
-      expect(handler.mock.calls[0][0].detail.passwordData.newPassword).toBe('NewStrong1!');
+      expect(handler.mock.calls[0]![0].detail.passwordData.newPassword).toBe('NewStrong1!');
     });
 
     it('should show validation error when current password is empty', () => {
@@ -322,8 +322,8 @@ describe('SecuritySettingsPage', () => {
       (el.querySelector('#verify-2fa-btn') as HTMLButtonElement).click();
 
       expect(handler).toHaveBeenCalled();
-      expect(handler.mock.calls[0][0].detail.verificationCode).toBe('123456');
-      expect(handler.mock.calls[0][0].detail.secret).toBeTruthy();
+      expect(handler.mock.calls[0]![0].detail.verificationCode).toBe('123456');
+      expect(handler.mock.calls[0]![0].detail.secret).toBeTruthy();
     });
 
     it('should dispatch two-factor-disable event when disabling', () => {
@@ -385,7 +385,7 @@ describe('SecuritySettingsPage', () => {
       revokeBtn.click();
 
       expect(handler).toHaveBeenCalled();
-      expect(handler.mock.calls[0][0].detail.sessionId).toBe('session-2');
+      expect(handler.mock.calls[0]![0].detail.sessionId).toBe('session-2');
     });
 
     it('should remove session from list after revoke', () => {
@@ -415,7 +415,7 @@ describe('SecuritySettingsPage', () => {
 
       const items = el.querySelectorAll('[data-session-id]');
       expect(items.length).toBe(1);
-      expect(items[0].getAttribute('data-session-id')).toBe('session-1');
+      expect(items[0]!.getAttribute('data-session-id')).toBe('session-1');
     });
 
     it('should display device information', () => {
@@ -455,7 +455,7 @@ describe('SecuritySettingsPage', () => {
     });
 
     it('should not show alert banner when no suspicious entries', () => {
-      const safeHistory = [mockLoginHistory[0]];
+      const safeHistory = [mockLoginHistory[0]!];
       page = new SecuritySettingsPage({ loginHistory: safeHistory });
       const el = page.getElement();
 
@@ -468,7 +468,7 @@ describe('SecuritySettingsPage', () => {
       const el = page.getElement();
 
       const rows = el.querySelectorAll('table tbody tr');
-      const suspiciousRow = rows[1];
+      const suspiciousRow = rows[1]!;
       expect(suspiciousRow.className).toContain('bg-red-50');
     });
 
@@ -477,8 +477,8 @@ describe('SecuritySettingsPage', () => {
       const el = page.getElement();
 
       const rows = el.querySelectorAll('table tbody tr');
-      expect(rows[0].textContent).toContain('Success');
-      expect(rows[1].textContent).toContain('Suspicious');
+      expect(rows[0]!.textContent).toContain('Success');
+      expect(rows[1]!.textContent).toContain('Suspicious');
     });
 
     it('should display location and IP information', () => {

@@ -115,7 +115,7 @@ export class ScreenSelector {
   }
 
   private getIconSVG(iconType: string): string {
-    const icons = {
+    const icons: Record<string, string> = {
       monitor: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
       </svg>`,
@@ -126,7 +126,7 @@ export class ScreenSelector {
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
       </svg>`
     };
-    return icons[iconType] || icons.monitor;
+    return (icons[iconType] ?? icons['monitor']) as string;
   }
 
   private handleTabClick(sourceType: string, tabButton: HTMLElement): void {
@@ -169,7 +169,7 @@ export class ScreenSelector {
     // Simulate getting available sources
     // In a real implementation, this would interact with the browser's screen capture API
     
-    const mockSources = {
+    const mockSources: Record<string, Array<{ id: string; name: string; thumbnail?: string }>> = {
       screen: [
         { id: 'screen-1', name: 'Primary Display', thumbnail: this.generateThumbnail('screen') },
         { id: 'screen-2', name: 'Secondary Display', thumbnail: this.generateThumbnail('screen') }

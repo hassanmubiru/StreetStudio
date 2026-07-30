@@ -430,7 +430,7 @@ export class ExportSharingPage {
 
     if (videoIds.length === 1 && this.callbacks.onStartExport) {
       try {
-        const job = await this.callbacks.onStartExport(videoIds[0], this.exportOptions);
+        const job = await this.callbacks.onStartExport(videoIds[0]!, this.exportOptions);
         this.exportJobs = [job, ...this.exportJobs];
         this.showExportForm = false;
         this.selectedVideoIds.clear();

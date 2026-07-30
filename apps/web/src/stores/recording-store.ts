@@ -8,7 +8,7 @@
  */
 
 import { logger } from '../app/client-logger.js';
-import { formatTime } from '../utils/format-time.js';
+import { formatDuration } from '../utils/format-time.js';
 
 export type RecordingState = 'idle' | 'requesting-permission' | 'permission-granted' | 'recording' | 'paused' | 'stopped' | 'error';
 
@@ -333,9 +333,8 @@ export class RecordingStore {
       this.updatePermissionAttempt();
       this.updateSessionState('requesting-permission');
 
-      const constraints: DisplayMediaStreamConstraints = {
+      const constraints: MediaStreamConstraints = {
         video: {
-          mediaSource: 'screen',
           width: { ideal: 1920, max: 1920 },
           height: { ideal: 1080, max: 1080 },
           frameRate: { ideal: 30 }
@@ -431,9 +430,12 @@ export class RecordingStore {
       };
 
       // Track when stream ends (user stops sharing)
-      stream.getVideoTracks()[0].addEventListener('ended', () => {
-        this.stopRecording();
-      });
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.addEventListener('ended', () => {
+          this.stopRecording();
+        });
+      }
 
       // Start recording
       mediaRecorder.start(1000); // Collect data every second
@@ -669,7 +671,7 @@ export class RecordingStore {
     const session = this.state.currentSession;
     if (!session) return '00:00';
 
-    return formatTime(session.duration);
+    return formatDuration(session.duration / 1000);
   }
 
   /**

@@ -137,7 +137,7 @@ describe('Presence Indicators', () => {
       tracker.upsertUser(makePresenceUser({ id: 'u1' }));
       tracker.upsertUser(makePresenceUser({ id: 'me' }));
       expect(tracker.getViewerCount()).toBe(1);
-      expect(tracker.getViewers()[0].id).toBe('u1');
+      expect(tracker.getViewers()[0]!.id).toBe('u1');
     });
 
     it('removes users correctly', () => {
@@ -159,7 +159,7 @@ describe('Presence Indicators', () => {
       const tracker = new PresenceTracker('me');
       tracker.upsertUser(makePresenceUser({ id: 'u1', status: 'active' }));
       tracker.setUserStatus('u1', 'idle');
-      expect(tracker.getViewers()[0].status).toBe('idle');
+      expect(tracker.getViewers()[0]!.status).toBe('idle');
     });
   });
 
@@ -319,7 +319,7 @@ describe('Typing Indicators', () => {
       ];
       const result = filterExpiredTyping(users, 5000, now);
       expect(result.length).toBe(1);
-      expect(result[0].id).toBe('u1');
+      expect(result[0]!.id).toBe('u1');
     });
 
     it('keeps all users if none expired', () => {
@@ -707,7 +707,7 @@ describe('Activity Feed', () => {
       ];
       const groups = groupActivities(events);
       expect(groups.length).toBe(1);
-      expect(groups[0].length).toBe(2);
+      expect(groups[0]!.length).toBe(2);
     });
 
     it('separates events from different actors', () => {
@@ -792,7 +792,7 @@ describe('Activity Feed', () => {
       ]);
       feed.addEvent(makeActivityEvent({ id: 'e2', actorName: 'Bob', description: 'new action' }));
       const events = feed.getEvents();
-      expect(events[0].id).toBe('e2');
+      expect(events[0]!.id).toBe('e2');
     });
 
     it('removes events by ID', () => {

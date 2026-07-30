@@ -358,7 +358,10 @@ export class VideoMetadataForm {
         this.addTag(value);
       }
     } else if (e.key === 'Backspace' && value === '' && this.formData.tags.length > 0) {
-      this.removeTag(this.formData.tags[this.formData.tags.length - 1]);
+      const lastTag = this.formData.tags[this.formData.tags.length - 1];
+      if (lastTag) {
+        this.removeTag(lastTag);
+      }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       this.navigateSuggestions(1);
@@ -427,8 +430,9 @@ export class VideoMetadataForm {
 
     // Remove active state from current
     if (this.activeSuggestionIndex >= 0 && suggestions[this.activeSuggestionIndex]) {
-      suggestions[this.activeSuggestionIndex].classList.remove('active');
-      suggestions[this.activeSuggestionIndex].setAttribute('aria-selected', 'false');
+      const currentSuggestion = suggestions[this.activeSuggestionIndex]!;
+      currentSuggestion.classList.remove('active');
+      currentSuggestion.setAttribute('aria-selected', 'false');
     }
 
     // Calculate new index
@@ -440,8 +444,11 @@ export class VideoMetadataForm {
     }
 
     // Apply active state
-    suggestions[this.activeSuggestionIndex].classList.add('active');
-    suggestions[this.activeSuggestionIndex].setAttribute('aria-selected', 'true');
+    const newSuggestion = suggestions[this.activeSuggestionIndex];
+    if (newSuggestion) {
+      newSuggestion.classList.add('active');
+      newSuggestion.setAttribute('aria-selected', 'true');
+    }
   }
 
   private selectActiveSuggestion(): void {
@@ -560,7 +567,7 @@ export class VideoMetadataForm {
 
   private displayErrors(errors: Record<string, string[]>): void {
     for (const [field, messages] of Object.entries(errors)) {
-      if (messages.length > 0) {
+      if (messages.length > 0 && messages[0]) {
         this.showFieldError(field, messages[0]);
       }
     }

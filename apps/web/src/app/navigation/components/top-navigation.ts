@@ -264,7 +264,7 @@ export class TopNavigation {
           aria-haspopup="true"
         >
           <span class="sr-only">Open user menu</span>
-          <img class="h-8 w-8 rounded-full" src="${this.currentUser.avatarUrl || '/default-avatar.png'}" alt="${this.currentUser.displayName || this.currentUser.email}" />
+          <img class="h-8 w-8 rounded-full" src="${(this.currentUser as any).avatarUrl || '/default-avatar.png'}" alt="${(this.currentUser as any).displayName || this.currentUser.email}" />
         </button>
 
         <!-- User dropdown -->
@@ -278,7 +278,7 @@ export class TopNavigation {
           <!-- User info -->
           <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
             <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
-              ${this.currentUser.displayName || this.currentUser.email}
+              ${(this.currentUser as any).displayName || this.currentUser.email}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               ${this.currentUser.email}

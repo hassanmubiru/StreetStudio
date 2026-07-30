@@ -19,7 +19,7 @@ const mockDashboardSession = {
   useBearerToken: vi.fn(),
   clearAuthentication: vi.fn(),
   currentMember: vi.fn(),
-} as unknown as DashboardSession;
+} as any;
 
 // Mock API responses
 const mockFetch = vi.fn();

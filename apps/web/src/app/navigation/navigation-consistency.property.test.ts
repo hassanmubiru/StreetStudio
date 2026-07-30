@@ -89,7 +89,7 @@ interface NavigationElementConfig {
   hasOrganization: boolean;
   isDropdownOpen: boolean;
   label: string;
-  route?: string;
+  route?: string | null;
 }
 
 interface KeyboardInteraction {
@@ -121,7 +121,7 @@ function createMockOrganization(orgData: any): OrganizationDto {
     name: orgData.name,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-  } as OrganizationDto;
+  } as unknown as OrganizationDto;
 }
 
 function setupNavigationComponent(config: NavigationElementConfig, user?: MemberDto, org?: OrganizationDto): TopNavigation {
@@ -378,7 +378,7 @@ describe('Feature: web-application-implementation, Property 3: Keyboard Navigati
         fc.array(keyboardInteractionArb, { minLength: 1, maxLength: 10 }),
         async (navConfigs, userData, orgData, keyboardSequence) => {
           // Use configuration from first element for overall state
-          const primaryConfig = navConfigs[0];
+          const primaryConfig = navConfigs[0]!;
           const user = primaryConfig.isAuthenticated ? createMockUser(userData) : undefined;
           const org = primaryConfig.hasOrganization ? createMockOrganization(orgData) : undefined;
           
@@ -393,7 +393,7 @@ describe('Feature: web-application-implementation, Property 3: Keyboard Navigati
             '#notifications-button',
             '#user-menu-button'
           ].map(selector => container.querySelector(selector))
-            .filter(Boolean) as HTMLElement[];
+            .filter((el): el is HTMLElement => el !== null);
           
           if (existingElements.length === 0) {
             navigation.destroy();
@@ -402,10 +402,10 @@ describe('Feature: web-application-implementation, Property 3: Keyboard Navigati
           
           // Test focus sequence through elements
           let currentIndex = 0;
-          existingElements[0].focus();
+          existingElements[0]!.focus();
           
           for (const keyAction of keyboardSequence) {
-            const currentElement = existingElements[currentIndex];
+            const currentElement = existingElements[currentIndex]!;
             
             // Apply keyboard interaction
             simulateKeyboardInteraction(currentElement, keyAction);
@@ -420,7 +420,7 @@ describe('Feature: web-application-implementation, Property 3: Keyboard Navigati
                 : Math.min(existingElements.length - 1, currentIndex + 1);
               
               if (nextIndex !== currentIndex) {
-                existingElements[nextIndex].focus();
+                existingElements[nextIndex]!.focus();
                 currentIndex = nextIndex;
               }
             }

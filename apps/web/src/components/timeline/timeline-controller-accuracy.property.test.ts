@@ -213,7 +213,7 @@ describe('Property 6: Timeline Controller Frame Accuracy', () => {
       fc.assert(
         fc.property(arbTime, arbFrameRate, (time, frameRate) => {
           const timecode = formatTimecode(time, frameRate);
-          const [hours, minutes, seconds, frames] = timecode.split(':').map(Number);
+          const [hours, minutes, seconds, frames] = timecode.split(':').map(Number) as [number, number, number, number];
           const fps = Math.round(frameRate);
 
           const reconstructedFrames =

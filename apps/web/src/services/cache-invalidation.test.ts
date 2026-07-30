@@ -253,7 +253,7 @@ describe('CacheInvalidationService', () => {
 
       const log = service.getInvalidationLog();
       expect(log).toHaveLength(1);
-      expect(log[0].messageType).toBe('video.updated');
+      expect(log[0]!.messageType).toBe('video.updated');
     });
 
     it('clears the invalidation log', () => {
@@ -294,7 +294,7 @@ describe('CacheInvalidationService', () => {
 
       // Should subscribe to multiple message types (from default rules)
       expect(subscribeMock).toHaveBeenCalled();
-      const subscribedTypes = subscribeMock.mock.calls.map((call) => call[0]);
+      const subscribedTypes = (subscribeMock.mock.calls as any[]).map((call) => call[0]);
       expect(subscribedTypes).toContain('video.updated');
       expect(subscribedTypes).toContain('comment.added');
       expect(subscribedTypes).toContain('project.updated');

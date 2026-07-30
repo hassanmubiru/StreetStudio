@@ -129,12 +129,15 @@ export function groupActivities(
 ): ActivityEvent[][] {
   if (events.length === 0) return [];
 
+  const first = events[0];
+  if (!first) return [];
+
   const groups: ActivityEvent[][] = [];
-  let currentGroup: ActivityEvent[] = [events[0]];
+  let currentGroup: ActivityEvent[] = [first];
 
   for (let i = 1; i < events.length; i++) {
-    const prev = events[i - 1];
-    const curr = events[i];
+    const prev = events[i - 1]!;
+    const curr = events[i]!;
 
     const sameActor = prev.actorId === curr.actorId;
     const timeDiff =
@@ -247,26 +250,26 @@ export class ActivityFeed {
     groupEl.className = 'activity-group';
     groupEl.setAttribute('role', 'article');
 
-    if (group.length === 1) {
-      return this.renderEvent(group[0]);
+    const firstEvent = group[0];
+    if (!firstEvent || group.length === 1) {
+      return this.renderEvent(firstEvent ?? group[0]!);
     }
 
     // Group header with actor info
-    const first = group[0];
     const header = document.createElement('div');
     header.className = 'activity-group-header';
 
-    const avatar = this.createAvatar(first.actorName, first.actorAvatarUrl);
+    const avatar = this.createAvatar(firstEvent.actorName, firstEvent.actorAvatarUrl);
     header.appendChild(avatar);
 
     const actorName = document.createElement('span');
     actorName.className = 'activity-actor-name';
-    actorName.textContent = first.actorName;
+    actorName.textContent = firstEvent.actorName;
     header.appendChild(actorName);
 
     const time = document.createElement('span');
     time.className = 'activity-time';
-    time.textContent = formatRelativeTime(first.createdAt);
+    time.textContent = formatRelativeTime(firstEvent.createdAt);
     header.appendChild(time);
 
     groupEl.appendChild(header);

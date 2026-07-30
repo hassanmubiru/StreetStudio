@@ -64,6 +64,8 @@ export class NavigationController {
   private unsubscribeWorkspace?: () => void;
   private unsubscribeNotifications?: () => void;
   private unsubscribeUploads?: () => void;
+  private routeChangeHandler?: () => void;
+  private resizeHandler?: () => void;
 
   constructor() {
     this.state = {
@@ -79,6 +81,35 @@ export class NavigationController {
     // Listen for route changes
     this.setupRouteListener();
     this.setupResizeListener();
+  }
+
+  /**
+   * Listen for browser route changes (back/forward navigation) and keep the
+   * navigation state's current route — and the active nav items — in sync.
+   */
+  private setupRouteListener(): void {
+    this.routeChangeHandler = () => {
+      const path = window.location.pathname;
+      if (path !== this.state.currentRoute) {
+        this.updateState({ currentRoute: path });
+        this.updateNavigationItems(this.getContextualNavigationItems());
+      }
+    };
+    window.addEventListener("popstate", this.routeChangeHandler);
+  }
+
+  /**
+   * Collapse the mobile menu once the viewport grows past the mobile
+   * breakpoint, so the menu never lingers open on desktop layouts.
+   */
+  private setupResizeListener(): void {
+    const DESKTOP_BREAKPOINT = 1024;
+    this.resizeHandler = () => {
+      if (window.innerWidth >= DESKTOP_BREAKPOINT && this.state.mobileMenuOpen) {
+        this.closeMobileMenu();
+      }
+    };
+    window.addEventListener("resize", this.resizeHandler);
   }
 
   /**
@@ -256,21 +287,6 @@ export class NavigationController {
     this.state = { ...this.state, ...updates };
     this.notifyStateChange();
     this.persistState();
-  }
-
-  /**
-   * Set current organization and user
-   */
-  public setAuthContext(user: MemberDto, organization?: OrganizationDto): void {
-    this.updateState({
-      currentUser: user,
-      currentOrganization: organization,
-    });
-
-    // Update navigation components
-    this.topNavigation?.updateAuthContext(user, organization);
-    this.sidebarNavigation?.updateAuthContext(user, organization);
-    this.mobileNavigation?.updateAuthContext(user, organization);
   }
 
   /**
@@ -598,6 +614,227 @@ export class NavigationController {
   }
 
   /**
+   * Update badge counts on sidebar and mobile navigation items
+   */
+  private updateNavigationBadges(badges: { notifications?: number }): void {
+    if (badges.notifications !== undefined) {
+      const badgeValue = badges.notifications > 0 ? badges.notifications : undefined;
+
+      // Update top navigation badges (has updateBadges method)
+      this.topNavigation?.updateBadges({ notifications: badges.notifications });
+
+      // Update mobile navigation badges (has updateBadges method)
+      this.mobileNavigation?.updateBadges({ notifications: badges.notifications });
+
+      // For sidebar, refresh nav items to reflect badge counts
+      const items = this.getContextualNavigationItems();
+      if (badgeValue !== undefined) {
+        // Add notifications item with badge if not present
+        const notifItem = items.find(item => item.id === 'notifications');
+        if (notifItem) {
+          notifItem.badge = badgeValue;
+        }
+      }
+      this.sidebarNavigation?.updateItems(items);
+    }
+  }
+
+  /**
+   * Show or update upload progress indicator in the header area
+   */
+  private updateUploadProgress(uploadState: any): void {
+    const headerContainer = document.getElementById('app-header');
+    if (!headerContainer) return;
+
+    let indicator = document.getElementById('upload-progress-indicator');
+
+    if (uploadState.isUploading) {
+      // Create indicator if it doesn't exist
+      if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'upload-progress-indicator';
+        indicator.className = 'upload-progress-indicator flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900 rounded text-sm';
+        headerContainer.appendChild(indicator);
+      }
+
+      const completedCount = uploadState.completedUploads || 0;
+      const totalCount = uploadState.uploads?.length || 0;
+      const progress = Math.round(uploadState.totalProgress || 0);
+
+      indicator.innerHTML = `
+        <svg class="animate-spin h-4 w-4 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <span class="text-blue-700 dark:text-blue-300">
+          Uploading ${completedCount}/${totalCount} (${progress}%)
+        </span>
+        <div class="w-20 h-1.5 bg-blue-200 dark:bg-blue-700 rounded-full overflow-hidden">
+          <div class="h-full bg-blue-600 dark:bg-blue-400 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+        </div>
+      `;
+      indicator.setAttribute('role', 'progressbar');
+      indicator.setAttribute('aria-valuenow', String(progress));
+      indicator.setAttribute('aria-valuemin', '0');
+      indicator.setAttribute('aria-valuemax', '100');
+      indicator.setAttribute('aria-label', `Upload progress: ${progress}%`);
+    } else if (indicator) {
+      // Remove indicator when no uploads are active
+      indicator.parentNode?.removeChild(indicator);
+    }
+  }
+
+  /**
+   * Register keyboard shortcuts for navigation
+   */
+  private setupKeyboardShortcuts(): void {
+    const handler = (event: KeyboardEvent) => {
+      // Ctrl+/ or Cmd+/ to toggle sidebar
+      if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+        event.preventDefault();
+        this.toggleSidebar();
+        return;
+      }
+
+      // Escape to close mobile menu
+      if (event.key === 'Escape') {
+        if (this.state.mobileMenuOpen) {
+          event.preventDefault();
+          this.closeMobileMenu();
+          return;
+        }
+      }
+
+      // Ctrl+K or Cmd+K for quick navigation/search
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        const searchEvent = new CustomEvent('navigate:quick-search');
+        window.dispatchEvent(searchEvent);
+        return;
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+
+    // Store reference so we can remove it on destroy
+    const originalDestroy = this.destroy.bind(this);
+    this.destroy = () => {
+      document.removeEventListener('keydown', handler);
+      originalDestroy();
+    };
+  }
+
+  /**
+   * Load persisted navigation state from localStorage and apply it
+   */
+  private loadNavigationState(): void {
+    try {
+      const stored = localStorage.getItem('streetstudio_navigation_state');
+      if (stored) {
+        const savedState = JSON.parse(stored);
+
+        if (savedState.sidebarCollapsed !== undefined) {
+          this.state.sidebarCollapsed = savedState.sidebarCollapsed;
+          this.sidebarNavigation?.setCollapsed(savedState.sidebarCollapsed);
+        }
+      }
+
+      // Sync with workspace store state
+      const workspaceState = this.workspaceStore?.getState();
+      if (workspaceState) {
+        if (workspaceState.breadcrumbs?.length > 0) {
+          this.setBreadcrumbs(workspaceState.breadcrumbs);
+        }
+        if (workspaceState.sidebarCollapsed !== undefined) {
+          this.state.sidebarCollapsed = workspaceState.sidebarCollapsed;
+          this.sidebarNavigation?.setCollapsed(workspaceState.sidebarCollapsed);
+        }
+      }
+
+      logger.debug('Navigation state loaded');
+    } catch (error) {
+      logger.warn('Failed to load navigation state', { error });
+    }
+  }
+
+  /**
+   * Handle user menu actions by dispatching appropriate navigation events
+   */
+  private handleUserMenuAction(action: string): void {
+    switch (action) {
+      case 'logout':
+        window.dispatchEvent(new CustomEvent('navigate:logout'));
+        break;
+      case 'settings':
+        this.handleNavigation('/settings');
+        break;
+      case 'profile':
+        this.handleNavigation('/settings/profile');
+        break;
+      case 'billing':
+        this.handleNavigation('/settings/billing');
+        break;
+      case 'help':
+        window.dispatchEvent(new CustomEvent('navigate:help'));
+        break;
+      default:
+        logger.warn('Unknown user menu action', { action });
+        window.dispatchEvent(new CustomEvent('navigate:user-action', { detail: { action } }));
+        break;
+    }
+  }
+
+  /**
+   * Handle organization switch by delegating to changeOrganization
+   */
+  private handleOrganizationSwitch(orgId: Uuid): void {
+    this.changeOrganization(orgId);
+  }
+
+  /**
+   * Navigate to organization creation page
+   */
+  private handleCreateOrganization(): void {
+    this.handleNavigation('/organizations/new');
+  }
+
+  /**
+   * Navigate to organizations management page
+   */
+  private handleManageOrganizations(): void {
+    this.handleNavigation('/organizations');
+  }
+
+  /**
+   * Refresh breadcrumbs and nav items based on current workspace/project/folder state
+   */
+  private updateWorkspaceContext(): void {
+    try {
+      const workspaceState = this.workspaceStore?.getState();
+      if (!workspaceState) return;
+
+      // Update breadcrumbs from workspace state
+      if (workspaceState.breadcrumbs?.length > 0) {
+        this.setBreadcrumbs(workspaceState.breadcrumbs);
+      }
+
+      // Refresh the workspace context component
+      this.workspaceContext?.refresh();
+
+      // Update navigation items to reflect current context
+      this.updateNavigationItems(this.getContextualNavigationItems());
+
+      logger.debug('Workspace context updated', {
+        workspace: workspaceState.currentWorkspace?.id,
+        project: workspaceState.currentProject?.id,
+        folder: workspaceState.currentFolder?.id,
+      });
+    } catch (error) {
+      logger.warn('Failed to update workspace context', { error });
+    }
+  }
+
+  /**
    * Clean up resources
    */
   public destroy(): void {
@@ -613,6 +850,14 @@ export class NavigationController {
     this.unsubscribeWorkspace?.();
     this.unsubscribeNotifications?.();
     this.unsubscribeUploads?.();
+
+    // Remove window event listeners
+    if (this.routeChangeHandler) {
+      window.removeEventListener("popstate", this.routeChangeHandler);
+    }
+    if (this.resizeHandler) {
+      window.removeEventListener("resize", this.resizeHandler);
+    }
     
     this.orgChangeHandlers.clear();
     this.stateChangeListeners.clear();

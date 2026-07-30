@@ -661,13 +661,13 @@ export class StreetStudioApp {
   private async renderOAuthCallback(): Promise<void> {
     const { OAuthCallbackPage } = await import('../pages/auth/oauth-callback-page.js');
     const page = new OAuthCallbackPage();
-    this.layoutController.renderAuthPage(page.getElement());
+    this.layoutController.renderAuthPage(page as unknown as HTMLElement);
   }
 
   private async renderSSOCallback(): Promise<void> {
     const { SSOCallbackPage } = await import('../pages/auth/sso-callback-page.js');
     const page = new SSOCallbackPage();
-    this.layoutController.renderAuthPage(page.getElement());
+    this.layoutController.renderAuthPage(page as unknown as HTMLElement);
   }
 
   private async renderDashboard(): Promise<void> {

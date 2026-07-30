@@ -25,7 +25,8 @@
     "@streetstudio/search": "*",
     "@streetstudio/shared": "*",
     "@streetstudio/timeline": "*",
-    "@streetstudio/ui": "*"
+    "@streetstudio/ui": "*",
+    "lit": "^3.2.1"
   },
   "devDependencies": {
     "jsdom": "^29.1.1",

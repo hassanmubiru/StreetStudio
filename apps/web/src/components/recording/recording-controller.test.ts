@@ -90,7 +90,9 @@ describe('RecordingController', () => {
 
     it('should initialize without drawing if disabled', () => {
       const noDrawingController = new RecordingController(container, {
-        enableDrawing: false
+        enableDrawing: false,
+        persistDrawings: false,
+        syncWithRecording: false
       });
 
       // Drawing toolbar should not be present in the new controller
@@ -228,7 +230,8 @@ describe('RecordingController', () => {
       // Create a controller with persistence enabled
       const persistentController = new RecordingController(container, {
         enableDrawing: true,
-        persistDrawings: true
+        persistDrawings: true,
+        syncWithRecording: true
       });
 
       // Start and stop a recording to trigger persistence
@@ -271,7 +274,8 @@ describe('RecordingController', () => {
       // Create new controller - should load persisted data
       const loadingController = new RecordingController(container, {
         enableDrawing: true,
-        persistDrawings: true
+        persistDrawings: true,
+        syncWithRecording: true
       });
 
       const drawingState = loadingController.getDrawingState();
@@ -324,7 +328,7 @@ describe('RecordingController', () => {
       const originalMediaRecorder = global.MediaRecorder;
       global.MediaRecorder = vi.fn().mockImplementation(() => {
         throw new Error('MediaRecorder not supported');
-      });
+      }) as unknown as typeof MediaRecorder;
 
       await controller.startRecording();
 

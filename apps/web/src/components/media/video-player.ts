@@ -467,7 +467,8 @@ export class AdaptiveVideoPlayer {
           if (event.key >= '1' && event.key <= '8' && !isInputFocused) {
             const index = parseInt(event.key, 10) - 1;
             if (index < PLAYBACK_RATES.length) {
-              this.setPlaybackRate(PLAYBACK_RATES[index]);
+              const rate = PLAYBACK_RATES[index];
+              if (rate !== undefined) this.setPlaybackRate(rate);
             }
           } else {
             handled = false;
@@ -500,7 +501,8 @@ export class AdaptiveVideoPlayer {
     } else if (directSource) {
       this.loadDirect(directSource);
     } else if (sources.length > 0) {
-      this.loadDirect(sources[0]);
+      const firstSource = sources[0];
+      if (firstSource) this.loadDirect(firstSource);
     }
   }
 
@@ -638,7 +640,8 @@ export class AdaptiveVideoPlayer {
   public increaseSpeed(): void {
     const currentIndex = PLAYBACK_RATES.indexOf(this.state.playbackRate as any);
     if (currentIndex >= 0 && currentIndex < PLAYBACK_RATES.length - 1) {
-      this.setPlaybackRate(PLAYBACK_RATES[currentIndex + 1]);
+      const nextRate = PLAYBACK_RATES[currentIndex + 1];
+      if (nextRate !== undefined) this.setPlaybackRate(nextRate);
     } else if (currentIndex === -1) {
       const nextRate = PLAYBACK_RATES.find(r => r > this.state.playbackRate);
       if (nextRate) this.setPlaybackRate(nextRate);
@@ -648,7 +651,8 @@ export class AdaptiveVideoPlayer {
   public decreaseSpeed(): void {
     const currentIndex = PLAYBACK_RATES.indexOf(this.state.playbackRate as any);
     if (currentIndex > 0) {
-      this.setPlaybackRate(PLAYBACK_RATES[currentIndex - 1]);
+      const prevRate = PLAYBACK_RATES[currentIndex - 1];
+      if (prevRate !== undefined) this.setPlaybackRate(prevRate);
     } else if (currentIndex === -1) {
       const rates = [...PLAYBACK_RATES].reverse();
       const prevRate = rates.find(r => r < this.state.playbackRate);

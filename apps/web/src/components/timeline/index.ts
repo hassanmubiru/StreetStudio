@@ -24,6 +24,10 @@ export type {
 
 export { TimelineComponent } from './timeline-component.js';
 
+export type {
+  TimelineComponentCallbacks,
+} from './timeline-component.js';
+
 // Timeline Editor (video editing)
 export {
   TimelineEditor,

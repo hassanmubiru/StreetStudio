@@ -892,7 +892,7 @@ export class SecuritySettingsPage {
       };
       const errorEl = this.element.querySelector(`#${fieldMap[field]}`);
       if (errorEl && errors.length > 0) {
-        errorEl.textContent = errors[0];
+        errorEl.textContent = errors[0] ?? null;
       }
     }
   }

@@ -120,7 +120,10 @@ export function frameToTimecode(frame: number, frameRate: number): string {
 export function timecodeToFrame(timecode: string, frameRate: number): number {
   const parts = timecode.split(':').map(Number);
   if (parts.length !== 4 || parts.some(isNaN)) return 0;
-  const [hh, mm, ss, ff] = parts;
+  const hh = parts[0] ?? 0;
+  const mm = parts[1] ?? 0;
+  const ss = parts[2] ?? 0;
+  const ff = parts[3] ?? 0;
   const fps = Math.round(frameRate);
   return hh * 3600 * fps + mm * 60 * fps + ss * fps + ff;
 }
@@ -236,7 +239,7 @@ export class WaveformRenderer {
       const sampleIndex = startSample + Math.floor(px * samplesPerPixel);
       if (sampleIndex < 0 || sampleIndex >= totalSamples) continue;
 
-      const amplitude = Math.abs(peaks[sampleIndex]);
+      const amplitude = Math.abs(peaks[sampleIndex] ?? 0);
       const barHeight = amplitude * centerY;
 
       this.ctx.fillRect(px, centerY - barHeight, 1, barHeight * 2);
@@ -1129,7 +1132,7 @@ export class TimelineEditor {
     const fps = this.state.frameRate;
     // Snap to nice intervals: 1 frame, fps/2, fps, 5*fps, 10*fps, 30*fps, 60*fps
     const intervals = [1, fps / 2, fps, fps * 5, fps * 10, fps * 30, fps * 60];
-    let best = intervals[0];
+    let best: number = intervals[0] ?? 1;
     for (const interval of intervals) {
       if (interval >= rawInterval) {
         best = interval;

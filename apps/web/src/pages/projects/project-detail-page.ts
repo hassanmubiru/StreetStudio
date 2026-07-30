@@ -447,6 +447,11 @@ export class ProjectDetailPage {
       }
     });
   }
+
+  private navigateToFolder(folderId: string | null): void {
+    this.handleFolderSelection(folderId);
+  }
+
   private async handleFolderSelection(folderId: string | null): Promise<void> {
     this.currentFolderId = folderId;
     
@@ -520,7 +525,7 @@ export class ProjectDetailPage {
   private async updatePermissionsDisplay(): Promise<void> {
     if (!this.currentFolderId || !this.container) {
       // Hide permissions display if no folder selected
-      const existingPermissions = this.container.querySelector('.folder-permissions-container');
+      const existingPermissions = this.container?.querySelector('.folder-permissions-container');
       existingPermissions?.remove();
       return;
     }
@@ -543,10 +548,8 @@ export class ProjectDetailPage {
     // Mock current user
     const mockUser = {
       id: 'current-user',
-      organizationId: this.project?.organizationId || '',
       email: 'user@example.com',
-      role: 'Editor',
-      joinedAt: new Date().toISOString()
+      createdAt: new Date().toISOString()
     };
 
     // Create or update permissions display

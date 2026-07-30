@@ -96,10 +96,10 @@ describe('VideoLibraryComponent', () => {
       
       expect(sortSelect).toBeDefined();
       expect(sortSelect.options.length).toBe(4);
-      expect(sortSelect.options[0].value).toBe('date');
-      expect(sortSelect.options[1].value).toBe('name');
-      expect(sortSelect.options[2].value).toBe('duration');
-      expect(sortSelect.options[3].value).toBe('activity');
+      expect(sortSelect.options[0]!.value).toBe('date');
+      expect(sortSelect.options[1]!.value).toBe('name');
+      expect(sortSelect.options[2]!.value).toBe('duration');
+      expect(sortSelect.options[3]!.value).toBe('activity');
     });
 
     it('should toggle sort direction when button clicked', () => {

@@ -216,13 +216,15 @@ export class RecordingStateManager {
 
     if (!session) {
       // No session - start recording
-      return this.startRecording().then(success => success);
+      void this.startRecording();
+      return true;
     }
 
     switch (session.state) {
       case 'idle':
       case 'stopped':
-        return this.startRecording().then(success => success);
+        void this.startRecording();
+        return true;
       
       case 'recording':
         return this.pauseRecording();

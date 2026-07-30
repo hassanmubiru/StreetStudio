@@ -545,7 +545,7 @@ describe('ExportSharingPage', () => {
       await page.startExport();
 
       expect(page.getExportJobs().length).toBe(1);
-      expect(page.getExportJobs()[0].id).toBe('new-job-1');
+      expect(page.getExportJobs()[0]!.id).toBe('new-job-1');
     });
 
     it('should add multiple jobs after batch export', async () => {
@@ -937,7 +937,7 @@ describe('ExportSharingPage', () => {
       await page.createShareLink();
 
       expect(page.getShareLinks().length).toBe(1);
-      expect(page.getShareLinks()[0].id).toBe('new-link-1');
+      expect(page.getShareLinks()[0]!.id).toBe('new-link-1');
     });
 
     it('should hide share form after successful creation', async () => {

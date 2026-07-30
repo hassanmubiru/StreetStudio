@@ -325,7 +325,7 @@ describe('Feature: web-application-implementation, Property 11: Search Functiona
             // Wait for any async operations
             await vi.runAllTimersAsync();
 
-            const lastQuery = querySequence[querySequence.length - 1];
+            const lastQuery = querySequence[querySequence.length - 1]!;
             const lastQueryTrimmed = lastQuery.trim();
 
             // Property: If the last query is empty, a null callback is invoked
@@ -429,7 +429,7 @@ describe('Feature: web-application-implementation, Property 11: Search Functiona
             // Property: Most recent search is first (if non-empty inputs exist)
             const lastNonEmpty = [...searches].reverse().find(s => s.trim().length > 0);
             if (lastNonEmpty && recentSearches.length > 0) {
-              expect(recentSearches[0].toLowerCase()).toBe(lastNonEmpty.trim().toLowerCase());
+              expect(recentSearches[0]!.toLowerCase()).toBe(lastNonEmpty.trim().toLowerCase());
             }
 
             // Property: Empty strings are never stored

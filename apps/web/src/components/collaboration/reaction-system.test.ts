@@ -100,11 +100,11 @@ describe('summarizeReactions', () => {
       makeReaction({ memberId: 'u4', type: 'like' }),
     ];
     const tallies = summarizeReactions(reactions);
-    expect(tallies[0].type).toBe('helpful');
-    expect(tallies[0].count).toBe(2);
+    expect(tallies[0]!.type).toBe('helpful');
+    expect(tallies[0]!.count).toBe(2);
     // 'like' and 'unclear' both have count 1, sorted alphabetically
-    expect(tallies[1].type).toBe('like');
-    expect(tallies[2].type).toBe('unclear');
+    expect(tallies[1]!.type).toBe('like');
+    expect(tallies[2]!.type).toBe('unclear');
   });
 
   it('marks reactedByMe when currentUserId matches', () => {
@@ -160,8 +160,8 @@ describe('computeReactionAnalytics', () => {
     ];
     const analytics = computeReactionAnalytics(reactions);
     // Both have 50%
-    expect(analytics.breakdown[0].percentage).toBe(50);
-    expect(analytics.breakdown[1].percentage).toBe(50);
+    expect(analytics.breakdown[0]!.percentage).toBe(50);
+    expect(analytics.breakdown[1]!.percentage).toBe(50);
   });
 
   it('rounds percentages', () => {
@@ -246,7 +246,7 @@ describe('ReactionButton', () => {
     const onClick = vi.fn();
     new ReactionButton(
       container,
-      DEFAULT_REACTION_TYPES[0],
+      DEFAULT_REACTION_TYPES[0]!,
       5,
       false,
       onClick
@@ -259,13 +259,13 @@ describe('ReactionButton', () => {
 
   it('does not render count when 0', () => {
     const onClick = vi.fn();
-    new ReactionButton(container, DEFAULT_REACTION_TYPES[0], 0, false, onClick);
+    new ReactionButton(container, DEFAULT_REACTION_TYPES[0]!, 0, false, onClick);
     expect(container.querySelector('.reaction-count')).toBeNull();
   });
 
   it('marks active state with aria-pressed', () => {
     const onClick = vi.fn();
-    new ReactionButton(container, DEFAULT_REACTION_TYPES[0], 3, true, onClick);
+    new ReactionButton(container, DEFAULT_REACTION_TYPES[0]!, 3, true, onClick);
     const button = container.querySelector('.reaction-button') as HTMLButtonElement;
     expect(button.getAttribute('aria-pressed')).toBe('true');
     expect(button.classList.contains('active')).toBe(true);
@@ -273,7 +273,7 @@ describe('ReactionButton', () => {
 
   it('marks inactive state', () => {
     const onClick = vi.fn();
-    new ReactionButton(container, DEFAULT_REACTION_TYPES[0], 3, false, onClick);
+    new ReactionButton(container, DEFAULT_REACTION_TYPES[0]!, 3, false, onClick);
     const button = container.querySelector('.reaction-button') as HTMLButtonElement;
     expect(button.getAttribute('aria-pressed')).toBe('false');
     expect(button.classList.contains('active')).toBe(false);
@@ -281,7 +281,7 @@ describe('ReactionButton', () => {
 
   it('calls onClick with type and active state on click', () => {
     const onClick = vi.fn();
-    new ReactionButton(container, DEFAULT_REACTION_TYPES[0], 2, true, onClick);
+    new ReactionButton(container, DEFAULT_REACTION_TYPES[0]!, 2, true, onClick);
     const button = container.querySelector('.reaction-button') as HTMLButtonElement;
     button.click();
     expect(onClick).toHaveBeenCalledWith('like', true);
@@ -289,7 +289,7 @@ describe('ReactionButton', () => {
 
   it('has accessible label with count and state', () => {
     const onClick = vi.fn();
-    new ReactionButton(container, DEFAULT_REACTION_TYPES[0], 3, true, onClick);
+    new ReactionButton(container, DEFAULT_REACTION_TYPES[0]!, 3, true, onClick);
     const button = container.querySelector('.reaction-button') as HTMLButtonElement;
     expect(button.getAttribute('aria-label')).toContain('3 reactions');
     expect(button.getAttribute('aria-label')).toContain('you reacted');
@@ -297,7 +297,7 @@ describe('ReactionButton', () => {
 
   it('updates count and active state', () => {
     const onClick = vi.fn();
-    const btn = new ReactionButton(container, DEFAULT_REACTION_TYPES[0], 1, false, onClick);
+    const btn = new ReactionButton(container, DEFAULT_REACTION_TYPES[0]!, 1, false, onClick);
     btn.update(5, true);
     const button = container.querySelector('.reaction-button') as HTMLButtonElement;
     expect(button.getAttribute('aria-pressed')).toBe('true');
@@ -306,7 +306,7 @@ describe('ReactionButton', () => {
 
   it('does not call onClick when disabled', () => {
     const onClick = vi.fn();
-    const btn = new ReactionButton(container, DEFAULT_REACTION_TYPES[0], 1, false, onClick);
+    const btn = new ReactionButton(container, DEFAULT_REACTION_TYPES[0]!, 1, false, onClick);
     btn.setDisabled(true);
     const button = container.querySelector('.reaction-button') as HTMLButtonElement;
     button.click();
@@ -414,8 +414,8 @@ describe('ReactionAnalyticsDisplay', () => {
     new ReactionAnalyticsDisplay(container, analytics, [...DEFAULT_REACTION_TYPES]);
     const percentages = container.querySelectorAll('.breakdown-percentage');
     expect(percentages.length).toBe(2);
-    expect(percentages[0].textContent).toBe('50%');
-    expect(percentages[1].textContent).toBe('50%');
+    expect(percentages[0]!.textContent).toBe('50%');
+    expect(percentages[1]!.textContent).toBe('50%');
   });
 
   it('has proper aria region and label', () => {
@@ -434,8 +434,8 @@ describe('ReactionAnalyticsDisplay', () => {
     ]);
     new ReactionAnalyticsDisplay(container, analytics, [...DEFAULT_REACTION_TYPES]);
     const bars = container.querySelectorAll('.breakdown-bar') as NodeListOf<HTMLElement>;
-    expect(bars[0].style.width).toBe('75%'); // 3/4
-    expect(bars[1].style.width).toBe('25%'); // 1/4
+    expect(bars[0]!.style.width).toBe('75%'); // 3/4
+    expect(bars[1]!.style.width).toBe('25%'); // 1/4
   });
 
   it('updates with new analytics data', () => {

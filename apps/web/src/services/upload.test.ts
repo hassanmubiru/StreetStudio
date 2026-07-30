@@ -174,8 +174,8 @@ describe('UploadManager', () => {
       );
       expect(chunkCalls.length).toBe(2);
 
-      expect(chunkCalls[0][1].headers['Content-Type']).toBe('application/octet-stream');
-      expect(chunkCalls[0][1].headers['X-Chunk-Index']).toBe('0');
+      expect(chunkCalls[0]![1].headers['Content-Type']).toBe('application/octet-stream');
+      expect(chunkCalls[0]![1].headers['X-Chunk-Index']).toBe('0');
     });
   });
 
@@ -326,7 +326,7 @@ describe('UploadManager', () => {
 
       expect(progressUpdates.length).toBeGreaterThan(0);
       // Final progress should be 100%
-      const lastProgress = progressUpdates[progressUpdates.length - 1];
+      const lastProgress = progressUpdates[progressUpdates.length - 1]!;
       expect(lastProgress.percentage).toBe(100);
       expect(lastProgress.loaded).toBe(file.size);
       expect(lastProgress.total).toBe(file.size);
@@ -353,8 +353,8 @@ describe('UploadManager', () => {
       });
 
       // Speed should be calculated (>=0 since test runs quickly)
-      const lastProgress = progressUpdates[progressUpdates.length - 1];
-      expect(lastProgress.speed).toBeGreaterThanOrEqual(0);
+      const lastProgress2 = progressUpdates[progressUpdates.length - 1]!;
+      expect(lastProgress2.speed).toBeGreaterThanOrEqual(0);
     });
 
     it('should track time remaining', async () => {
@@ -416,7 +416,7 @@ describe('UploadManager', () => {
       // Get active uploads and cancel
       const activeUploads = manager.getActiveUploads();
       if (activeUploads.length > 0) {
-        const cancelled = manager.cancelUpload(activeUploads[0].id);
+        const cancelled = manager.cancelUpload(activeUploads[0]!.id);
         expect(cancelled).toBe(true);
       }
 

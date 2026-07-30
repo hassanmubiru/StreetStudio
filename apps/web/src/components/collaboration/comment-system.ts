@@ -281,7 +281,7 @@ export class CommentInput {
     const mentionMatch = textUpToCursor.match(/@(\w*)$/);
 
     if (mentionMatch && this.callbacks.onMention) {
-      const query = mentionMatch[1];
+      const query = mentionMatch[1] ?? '';
       const suggestions = await this.callbacks.onMention(query);
       this.showMentionDropdown(suggestions);
     } else {

@@ -5,6 +5,7 @@ import { RecordingInterface } from './components/recording-interface.js';
 import { ScreenSelector } from './components/screen-selector.js';
 import { RecordingControls } from './components/recording-controls.js';
 import { CursorSettings } from './components/cursor-settings.js';
+import { KeyboardShortcuts } from '../../app/keyboard-shortcuts.js';
 
 // Create a format function for elapsed time from milliseconds
 function formatTime(milliseconds: number): string {
@@ -19,10 +20,10 @@ function formatTime(milliseconds: number): string {
 export class RecordingsPage {
   private container: HTMLElement;
   private recorder: Recorder | null = null;
-  private recordingInterface: RecordingInterface;
-  private screenSelector: ScreenSelector;
-  private recordingControls: RecordingControls;
-  private cursorSettings: CursorSettings;
+  private recordingInterface!: RecordingInterface;
+  private screenSelector!: ScreenSelector;
+  private recordingControls!: RecordingControls;
+  private cursorSettings!: CursorSettings;
   private isRecording = false;
   private recordingStartTime: number = 0;
   private recordingTimer: number | null = null;
@@ -62,7 +63,8 @@ export class RecordingsPage {
     this.recordingInterface = new RecordingInterface({
       screenSelector: this.screenSelector,
       recordingControls: this.recordingControls,
-      cursorSettings: this.cursorSettings
+      cursorSettings: this.cursorSettings,
+      keyboardShortcuts: new KeyboardShortcuts()
     });
   }
 
@@ -303,13 +305,13 @@ export class RecordingsPage {
   }
 
   private getToastStyles(type: string): string {
-    const styles = {
+    const styles: Record<string, string> = {
       success: 'bg-green-500 text-white',
       error: 'bg-red-500 text-white',
       warning: 'bg-yellow-500 text-black',
       info: 'bg-blue-500 text-white'
     };
-    return styles[type] || styles.info;
+    return styles[type] || styles['info']!;
   }
 
   private async handleRecordingCompleted(recording: any): Promise<void> {

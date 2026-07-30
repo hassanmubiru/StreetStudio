@@ -314,7 +314,7 @@ describe('Touch Gestures and Mobile-Specific Interactions', () => {
       container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 200, clientY: 300 }]));
 
       expect(onSwipeUp).toHaveBeenCalledTimes(1);
-      expect(onSwipeUp.mock.calls[0][0].direction).toBe('up');
+      expect(onSwipeUp.mock.calls[0]![0].direction).toBe('up');
       handler.destroy();
     });
 
@@ -331,7 +331,7 @@ describe('Touch Gestures and Mobile-Specific Interactions', () => {
       container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 200, clientY: 320 }]));
 
       expect(onSwipeDown).toHaveBeenCalledTimes(1);
-      expect(onSwipeDown.mock.calls[0][0].direction).toBe('down');
+      expect(onSwipeDown.mock.calls[0]![0].direction).toBe('down');
       handler.destroy();
     });
   });
@@ -350,7 +350,7 @@ describe('Touch Gestures and Mobile-Specific Interactions', () => {
       container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 250, clientY: 300 }]));
 
       expect(onSwipe).toHaveBeenCalledTimes(1);
-      const event = onSwipe.mock.calls[0][0];
+      const event = onSwipe.mock.calls[0]![0];
       expect(event.deltaX).toBe(150);
       expect(event.deltaY).toBe(0);
       expect(event.startX).toBe(100);
@@ -371,7 +371,7 @@ describe('Touch Gestures and Mobile-Specific Interactions', () => {
       container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 152, clientY: 251 }]));
 
       expect(onTap).toHaveBeenCalledTimes(1);
-      const event = onTap.mock.calls[0][0];
+      const event = onTap.mock.calls[0]![0];
       expect(event.startX).toBe(150);
       expect(event.startY).toBe(250);
       expect(event.endX).toBe(152);
@@ -751,13 +751,13 @@ describe('Offline Capabilities and Background Sync', () => {
       const actions = storage.getItem<typeof pendingActions>('pending_sync')!;
       // First succeeds, second fails
       const remaining = actions.slice(1);
-      remaining[0].attempts += 1;
+      remaining[0]!.attempts += 1;
       storage.setItem('pending_sync', remaining);
 
       const stored = storage.getItem<typeof pendingActions>('pending_sync');
       expect(stored).toHaveLength(1);
-      expect(stored![0].id).toBe('2');
-      expect(stored![0].attempts).toBe(1);
+      expect(stored![0]!.id).toBe('2');
+      expect(stored![0]!.attempts).toBe(1);
     });
   });
 });

@@ -24,6 +24,7 @@ export interface UserOrganization extends OrganizationDto {
   memberCount: number;
   lastActivity?: string;
   canSwitch: boolean;
+  description?: string;
 }
 
 export class OrganizationSwitcher {
@@ -119,8 +120,8 @@ export class OrganizationSwitcher {
             id: 'org-1' as Uuid,
             name: 'Acme Corp',
             description: 'Main organization',
+            settings: {},
             createdAt: '2024-01-01T00:00:00Z',
-            updatedAt: '2024-01-01T00:00:00Z',
             role: 'admin',
             permissions: ['read', 'write', 'admin'],
             memberCount: 25,
@@ -131,8 +132,8 @@ export class OrganizationSwitcher {
             id: 'org-2' as Uuid,
             name: 'Development Team',
             description: 'Development workspace',
+            settings: {},
             createdAt: '2024-01-02T00:00:00Z',
-            updatedAt: '2024-01-02T00:00:00Z',
             role: 'member',
             permissions: ['read', 'write'],
             memberCount: 8,
@@ -143,8 +144,8 @@ export class OrganizationSwitcher {
             id: 'org-3' as Uuid,
             name: 'Client Projects',
             description: 'External client work',
+            settings: {},
             createdAt: '2024-01-03T00:00:00Z',
-            updatedAt: '2024-01-03T00:00:00Z',
             role: 'viewer',
             permissions: ['read'],
             memberCount: 12,
@@ -588,7 +589,7 @@ export class OrganizationSwitcher {
       hash = ((hash << 5) - hash + orgId.charCodeAt(i)) & 0xffffffff;
     }
     
-    return colors[Math.abs(hash) % colors.length];
+    return colors[Math.abs(hash) % colors.length] ?? 'bg-blue-500';
   }
 
   /**

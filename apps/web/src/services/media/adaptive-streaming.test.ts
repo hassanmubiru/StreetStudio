@@ -56,8 +56,8 @@ describe('AdaptiveBitrateManager', () => {
     it('returns all default quality levels', () => {
       const levels = abr.getAvailableLevels();
       expect(levels.length).toBe(6);
-      expect(levels[0].level).toBe('2160p');
-      expect(levels[levels.length - 1].level).toBe('240p');
+      expect(levels[0]!.level).toBe('2160p');
+      expect(levels[levels.length - 1]!.level).toBe('240p');
     });
   });
 
@@ -338,7 +338,7 @@ describe('AdaptiveBitrateManager', () => {
       const limited = new AdaptiveBitrateManager({ maxQuality: '720p' });
       const levels = limited.getAvailableLevels();
 
-      expect(levels[0].level).toBe('720p');
+      expect(levels[0]!.level).toBe('720p');
       expect(levels.every((l) => l.level !== '1080p' && l.level !== '2160p')).toBe(true);
     });
 
@@ -347,14 +347,14 @@ describe('AdaptiveBitrateManager', () => {
       const levels = limited.getAvailableLevels();
 
       const lastLevel = levels[levels.length - 1];
-      expect(lastLevel.level).toBe('480p');
+      expect(lastLevel!.level).toBe('480p');
       expect(levels.every((l) => l.level !== '360p' && l.level !== '240p')).toBe(true);
     });
 
     it('updates config at runtime', () => {
       abr.updateConfig({ maxQuality: '720p' });
       const levels = abr.getAvailableLevels();
-      expect(levels[0].level).toBe('720p');
+      expect(levels[0]!.level).toBe('720p');
     });
   });
 

@@ -173,7 +173,7 @@ describe('Password Reset Security Property Tests', () => {
 
           // Verify timing difference is not significant (within 50ms tolerance)
           // This helps prevent timing-based email enumeration
-          const timingDifference = Math.abs(timings[0] - timings[1]);
+          const timingDifference = Math.abs(timings[0]! - timings[1]!);
           if (timingDifference > 50) {
             throw new Error(`Timing difference too large: ${timingDifference}ms. This could enable email enumeration attacks.`);
           }
@@ -235,7 +235,7 @@ describe('Password Reset Security Property Tests', () => {
 
           // Verify all messages are identical (security requirement)
           if (messageContents.length > 1) {
-            const firstMessage = messageContents[0];
+            const firstMessage = messageContents[0]!;
             const allIdentical = messageContents.every(msg => msg === firstMessage);
             
             if (!allIdentical) {

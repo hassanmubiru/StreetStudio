@@ -242,7 +242,7 @@ const interactiveElementTypeArbitrary = fc.constantFrom<InteractiveElement['type
 
 const interactiveElementArbitrary = fc.record({
   type: interactiveElementTypeArbitrary,
-  id: fc.string({ minLength: 1, maxLength: 20 }).map((s, index) => `element-${s}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`),
+  id: fc.string({ minLength: 1, maxLength: 20 }).map((s) => `element-${s}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`),
   label: fc.option(fc.string({ minLength: 1, maxLength: 50 })),
   disabled: fc.boolean(),
   hidden: fc.boolean(),
@@ -395,7 +395,7 @@ describe('Feature: web-application-implementation, Property 9: Universal Keyboar
 
           // The core property: every focusable element should be accessible via tab navigation
           for (let i = 0; i < Math.min(focusableElements.length, 3); i++) {
-            const element = focusableElements[i];
+            const element = focusableElements[i]!;
             
             // Focus the element
             mockDOM.focus(element.element.id);
@@ -632,7 +632,7 @@ describe('Feature: web-application-implementation, Property 9: Universal Keyboar
 
           // Test that keyboard navigation can reach all important sections
           let navigationSteps = 0;
-          let currentElement = firstElement;
+          let currentElement: MockElement | null = firstElement;
           const visitedTypes = new Set<string>();
 
           while (currentElement && navigationSteps < focusableElements.length) {
@@ -698,7 +698,7 @@ describe('Feature: web-application-implementation, Property 9: Universal Keyboar
 
           // Test accessibility consistency across application states
           for (let i = 0; i < Math.min(5, focusableElements.length); i++) {
-            const element = focusableElements[i];
+            const element = focusableElements[i]!;
             
             // Focus element
             mockDOM.focus(element.element.id);

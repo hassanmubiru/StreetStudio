@@ -299,7 +299,7 @@ export class SSOConfigService {
           returnUrl: flowState.returnUrl 
         };
       } else {
-        throw new Error(response.error || 'SSO authentication failed');
+        throw new Error((response as any).error || 'SSO authentication failed');
       }
 
     } catch (error) {

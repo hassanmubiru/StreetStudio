@@ -131,10 +131,10 @@ describe('Accessibility Integration', () => {
       expect(menuItems.length).toBe(4);
 
       // First item should be tabbable, rest should be roving
-      expect(menuItems[0].getAttribute('tabindex')).toBe('0');
-      expect(menuItems[1].getAttribute('tabindex')).toBe('-1');
-      expect(menuItems[2].getAttribute('tabindex')).toBe('-1');
-      expect(menuItems[3].getAttribute('tabindex')).toBe('-1');
+      expect(menuItems[0]!.getAttribute('tabindex')).toBe('0');
+      expect(menuItems[1]!.getAttribute('tabindex')).toBe('-1');
+      expect(menuItems[2]!.getAttribute('tabindex')).toBe('-1');
+      expect(menuItems[3]!.getAttribute('tabindex')).toBe('-1');
     });
 
     it('should provide keyboard-accessible project grid with proper ARIA roles', () => {
@@ -172,7 +172,7 @@ describe('Accessibility Integration', () => {
     });
 
     it('should show loading state with aria-busy during navigation', async () => {
-      const slowHandler = vi.fn(() => new Promise(resolve => setTimeout(resolve, 50)));
+      const slowHandler = vi.fn(() => new Promise(resolve => setTimeout(resolve, 50))) as any;
       router.addRoute('/slow-page', slowHandler);
 
       const navigatePromise = router.navigate('/slow-page');
@@ -276,7 +276,7 @@ describe('Accessibility Integration', () => {
 
       // Other items should not have aria-current
       for (let i = 1; i < navItems.length; i++) {
-        expect(navItems[i].getAttribute('aria-current')).toBeNull();
+        expect(navItems[i]!.getAttribute('aria-current')).toBeNull();
       }
     });
 

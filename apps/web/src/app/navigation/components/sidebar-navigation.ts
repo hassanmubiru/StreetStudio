@@ -401,18 +401,18 @@ export class SidebarNavigation {
         case 'ArrowDown':
           e.preventDefault();
           if (currentIndex < navItems.length - 1) {
-            navItems[currentIndex + 1].focus();
+            navItems[currentIndex + 1]?.focus();
           } else {
-            navItems[0].focus(); // Wrap to first item
+            navItems[0]?.focus(); // Wrap to first item
           }
           break;
 
         case 'ArrowUp':
           e.preventDefault();
           if (currentIndex > 0) {
-            navItems[currentIndex - 1].focus();
+            navItems[currentIndex - 1]?.focus();
           } else {
-            navItems[navItems.length - 1].focus(); // Wrap to last item
+            navItems[navItems.length - 1]?.focus(); // Wrap to last item
           }
           break;
 

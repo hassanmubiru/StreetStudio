@@ -88,9 +88,9 @@ describe('Dashboard Responsive Layout', () => {
   beforeEach(() => {
     mockMember = {
       id: 'user-123',
-      displayName: 'John Doe',
       email: 'john@example.com',
-    } as MemberDto;
+      createdAt: '2024-01-01T00:00:00Z',
+    } as unknown as MemberDto;
 
     vi.mocked(mockSession.currentMember).mockResolvedValue(mockMember);
 
@@ -350,7 +350,7 @@ describe('Dashboard Responsive Layout', () => {
       ];
       
       for (const [width, height] of viewports) {
-        setViewport(width, height);
+        setViewport(width!, height!);
         await new Promise(resolve => setTimeout(resolve, 10));
       }
       
@@ -370,7 +370,7 @@ describe('Dashboard Responsive Layout', () => {
       ];
       
       for (const { viewport, expectedClass } of testCases) {
-        setViewport(viewport[0], viewport[1]);
+        setViewport(viewport[0]!, viewport[1]!);
         
         dashboardPage = new DashboardPage(mockSession);
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -519,7 +519,7 @@ describe('Dashboard Responsive Layout', () => {
       const viewports = [[375, 667], [768, 1024], [1440, 900]];
       
       for (const [width, height] of viewports) {
-        setViewport(width, height);
+        setViewport(width!, height!);
         
         dashboardPage = new DashboardPage(mockSession);
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -541,7 +541,7 @@ describe('Dashboard Responsive Layout', () => {
       const viewports = [[375, 667], [768, 1024], [1440, 900]];
       
       for (const [width, height] of viewports) {
-        setViewport(width, height);
+        setViewport(width!, height!);
         
         dashboardPage = new DashboardPage(mockSession);
         await new Promise(resolve => setTimeout(resolve, 50));

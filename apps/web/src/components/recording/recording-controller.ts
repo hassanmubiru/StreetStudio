@@ -62,7 +62,7 @@ export class RecordingController {
 
   constructor(
     container: HTMLElement,
-    options: RecordingOptions = {},
+    options: RecordingOptions = { enableDrawing: true, persistDrawings: true, syncWithRecording: true },
     callbacks: RecordingCallbacks = {}
   ) {
     this.container = container;
@@ -511,10 +511,12 @@ export class RecordingController {
       const sessions = this.getPersistedSessions();
       const lastSession = sessions[sessions.length - 1];
       
-      if (lastSession?.drawingData.length > 0 && this.drawingOverlay) {
+      if (lastSession && lastSession.drawingData && lastSession.drawingData.length > 0 && this.drawingOverlay) {
         // Load the last drawing state from the most recent session
         const lastDrawingState = lastSession.drawingData[lastSession.drawingData.length - 1];
-        this.drawingOverlay.loadState(lastDrawingState);
+        if (lastDrawingState) {
+          this.drawingOverlay.loadState(lastDrawingState);
+        }
       }
     } catch (error) {
       console.error('Failed to load persisted drawings:', error);

@@ -5,44 +5,44 @@
  * forgot password, and reset password pages.
  */
 
-import { describe, test, expect, beforeEach, jest } from '@jest/globals';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 
 // Mock dependencies
 const mockAuthController = {
-  login: jest.fn(),
-  register: jest.fn(),
-  requestPasswordReset: jest.fn(),
-  onAuthStateChange: jest.fn(),
-  getState: jest.fn(),
+  login: vi.fn(),
+  register: vi.fn(),
+  requestPasswordReset: vi.fn(),
+  onAuthStateChange: vi.fn(),
+  getState: vi.fn(),
 };
 
 const mockOAuthConfig = {
-  getEnabledProviders: jest.fn(),
-  initiateOAuth: jest.fn(),
+  getEnabledProviders: vi.fn(),
+  initiateOAuth: vi.fn(),
 };
 
 // Mock DOM environment
 Object.defineProperty(global, 'document', {
   value: {
-    createElement: jest.fn((tag: string) => ({
+    createElement: vi.fn((tag: string) => ({
       tagName: tag.toUpperCase(),
       innerHTML: '',
       className: '',
-      addEventListener: jest.fn(),
-      querySelector: jest.fn(),
-      querySelectorAll: jest.fn(() => []),
-      setAttribute: jest.fn(),
-      appendChild: jest.fn(),
+      addEventListener: vi.fn(),
+      querySelector: vi.fn(),
+      querySelectorAll: vi.fn(() => []),
+      setAttribute: vi.fn(),
+      appendChild: vi.fn(),
       classList: {
-        add: jest.fn(),
-        remove: jest.fn(),
+        add: vi.fn(),
+        remove: vi.fn(),
       },
-      focus: jest.fn(),
+      focus: vi.fn(),
     })),
-    querySelector: jest.fn(),
+    querySelector: vi.fn(),
     body: {
-      appendChild: jest.fn(),
-      removeChild: jest.fn(),
+      appendChild: vi.fn(),
+      removeChild: vi.fn(),
     },
   },
   writable: true,
@@ -56,36 +56,36 @@ Object.defineProperty(global, 'window', {
       origin: 'http://localhost:3000',
     },
     history: {
-      pushState: jest.fn(),
+      pushState: vi.fn(),
     },
-    addEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
+    addEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
     sessionStorage: {
-      getItem: jest.fn(),
-      setItem: jest.fn(),
-      removeItem: jest.fn(),
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
     },
     crypto: {
-      randomUUID: jest.fn(() => 'mock-uuid'),
+      randomUUID: vi.fn(() => 'mock-uuid'),
     },
-    URLSearchParams: jest.fn(() => ({
-      get: jest.fn(),
-      set: jest.fn(),
+    URLSearchParams: vi.fn(() => ({
+      get: vi.fn(),
+      set: vi.fn(),
     })),
-    URL: jest.fn(),
+    URL: vi.fn(),
   },
   writable: true,
 });
 
 // Mock fetch
 Object.defineProperty(global, 'fetch', {
-  value: jest.fn(),
+  value: vi.fn(),
   writable: true,
 });
 
 describe('Authentication Pages', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Login Page', () => {
@@ -120,9 +120,9 @@ describe('Authentication Pages', () => {
       
       // Mock form submission
       const mockForm = {
-        addEventListener: jest.fn(),
-        querySelector: jest.fn(),
-        querySelectorAll: jest.fn(() => []),
+        addEventListener: vi.fn(),
+        querySelector: vi.fn(),
+        querySelectorAll: vi.fn(() => []),
       };
 
       expect(mockAuthController.login).not.toHaveBeenCalled();
@@ -151,7 +151,7 @@ describe('Authentication Pages', () => {
           authUrl: '/api/auth/oauth/github',
         },
       ]);
-      mockOAuthConfig.initiateOAuth.mockResolvedValue();
+      mockOAuthConfig.initiateOAuth.mockResolvedValue(undefined);
 
       const { LoginPage } = await import('./login-page.js');
       const loginPage = new LoginPage(mockAuthController as any);
@@ -301,9 +301,9 @@ describe('Authentication Pages', () => {
       const resetPasswordPage = new ResetPasswordPage();
 
       // Password matching logic
-      const password1 = 'NewPassword123';
-      const password2 = 'NewPassword123';
-      const password3 = 'DifferentPassword123';
+      const password1: string = 'NewPassword123';
+      const password2: string = 'NewPassword123';
+      const password3: string = 'DifferentPassword123';
 
       expect(password1 === password2).toBe(true);
       expect(password1 === password3).toBe(false);
@@ -318,7 +318,7 @@ describe('Authentication Pages', () => {
       });
 
       // Mock successful API response
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => ({ success: true }),
       });
@@ -347,7 +347,7 @@ describe('Authentication Pages', () => {
         },
       ];
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => ({
           enabled: true,
@@ -368,7 +368,7 @@ describe('Authentication Pages', () => {
       const oauthService = new OAuthConfigService();
 
       // Mock enabled providers
-      jest.spyOn(oauthService, 'getEnabledProviders').mockResolvedValue([
+      vi.spyOn(oauthService, 'getEnabledProviders').mockResolvedValue([
         {
           id: 'google',
           name: 'google',
@@ -388,7 +388,7 @@ describe('Authentication Pages', () => {
 
       // Mock crypto.randomUUID
       const mockUuid = 'secure-random-uuid';
-      window.crypto.randomUUID = jest.fn(() => mockUuid);
+      window.crypto.randomUUID = vi.fn(() => mockUuid) as any;
 
       expect(window.crypto.randomUUID()).toBe(mockUuid);
     });
@@ -399,7 +399,7 @@ describe('Authentication Pages', () => {
       // This test verifies that password fields are cleared on authentication failure
       const mockPasswordInput = {
         value: 'user-password',
-        focus: jest.fn(),
+        focus: vi.fn(),
       };
 
       // Simulate clearing password on error

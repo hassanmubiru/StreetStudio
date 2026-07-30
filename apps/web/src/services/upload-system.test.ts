@@ -310,7 +310,7 @@ describe('Upload System - Chunked Upload Logic', () => {
 
       await expect(
         manager.uploadFile(file, {
-          validateFile: async (f) => {
+          validateFile: async (f: File) => {
             if (!f.type.startsWith('video/')) {
               throw new Error('File must be a video');
             }
@@ -331,7 +331,7 @@ describe('Upload System - Chunked Upload Logic', () => {
       );
 
       const result = await manager.uploadFile(file, {
-        validateFile: async (f) => {
+        validateFile: async (f: File) => {
           if (!f.type.startsWith('video/')) {
             throw new Error('File must be a video');
           }
@@ -731,7 +731,7 @@ describe('Upload System - Metadata Form Validation', () => {
       const result = form.validate();
       expect(result.isValid).toBe(false);
       expect(result.errors.title).toBeDefined();
-      expect(result.errors.title.length).toBeGreaterThan(0);
+      expect(result.errors.title!.length).toBeGreaterThan(0);
 
       form.destroy();
       document.body.removeChild(container);

@@ -349,7 +349,7 @@ export class CacheManager {
 
       // Persist most recently accessed entries up to size limit
       for (let i = this.accessOrder.length - 1; i >= 0; i--) {
-        const key = this.accessOrder[i];
+        const key = this.accessOrder[i]!;
         const entry = this.memoryCache.get(key);
         if (entry && !this.isExpired(entry)) {
           const serialized = JSON.stringify([key, entry]);

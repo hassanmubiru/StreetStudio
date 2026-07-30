@@ -127,15 +127,16 @@ describe('Dashboard Navigation State Management', () => {
 
     mockUser = {
       id: 'user-123',
-      displayName: 'John Doe',
-      email: 'john@example.com'
-    } as MemberDto;
+      email: 'john@example.com',
+      createdAt: '2024-01-01T00:00:00Z',
+    } as unknown as MemberDto;
 
     mockOrganization = {
       id: 'org-123',
       name: 'Test Organization',
-      slug: 'test-org'
-    } as OrganizationDto;
+      settings: {},
+      createdAt: '2024-01-01T00:00:00Z',
+    } as unknown as OrganizationDto;
 
     // Mock localStorage
     Object.defineProperty(window, 'localStorage', {
@@ -535,7 +536,7 @@ describe('Dashboard Navigation State Management', () => {
       
       // Simulate workspace store subscription callback
       const mockSubscriptionCallback = vi.fn();
-      vi.mocked(mockWorkspaceStore.subscribe).mockImplementation((callback) => {
+      vi.mocked(mockWorkspaceStore.subscribe).mockImplementation((callback: any) => {
         mockSubscriptionCallback.mockImplementation(callback);
         return vi.fn();
       });

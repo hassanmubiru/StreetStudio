@@ -120,19 +120,15 @@ describe('NavigationController', () => {
     mockUser = {
       id: 'user-123',
       email: 'test@example.com',
-      displayName: 'Test User',
-      avatarUrl: '/avatar.jpg',
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    };
+    } as MemberDto;
 
     mockOrganization = {
       id: 'org-123',
       name: 'Test Organization',
-      slug: 'test-org',
+      settings: {},
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    };
+    } as OrganizationDto;
 
     navigationController = new NavigationController();
   });
@@ -503,10 +499,8 @@ describe('Navigation Integration Tests', () => {
       controller.setAuthContext({
         id: 'user-1',
         email: 'test@example.com',
-        displayName: 'Test User',
         createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
-      });
+      } as MemberDto);
     }).not.toThrow();
     
     controller.destroy();
@@ -520,16 +514,13 @@ describe('Navigation Integration Tests', () => {
     controller.setAuthContext({
       id: 'user-1',
       email: 'test@example.com',
-      displayName: 'Test User',
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    }, {
+    } as MemberDto, {
       id: 'org-1',
       name: 'Test Org',
-      slug: 'test-org',
+      settings: {},
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    });
+    } as OrganizationDto);
     
     // Set breadcrumbs
     controller.setBreadcrumbs([

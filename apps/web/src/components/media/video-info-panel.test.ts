@@ -180,8 +180,8 @@ describe('VideoInfoPanel', () => {
       panel.setMetadata(createMockMetadata());
       const tags = container.querySelectorAll('.video-tag');
       expect(tags.length).toBe(2);
-      expect(tags[0].textContent).toBe('tutorial');
-      expect(tags[1].textContent).toBe('demo');
+      expect(tags[0]!.textContent).toBe('tutorial');
+      expect(tags[1]!.textContent).toBe('demo');
     });
 
     it('escapes HTML in title and description', () => {
@@ -232,7 +232,7 @@ describe('VideoInfoPanel', () => {
     it('displays current quality indicator', () => {
       panel = new VideoInfoPanel(container, { enableQualitySelection: true }, callbacks);
       panel.setAvailableQualities(createMockQualities());
-      panel.setCurrentQuality(createMockQualities()[2]);
+      panel.setCurrentQuality(createMockQualities()[2]!);
       const current = container.querySelector('.quality-current');
       expect(current?.textContent).toContain('1080p');
     });
@@ -417,8 +417,8 @@ describe('VideoInfoPanel', () => {
       panel.toggleTranscript(true);
       const entries = container.querySelectorAll('.transcript-entry');
       expect(entries.length).toBe(3);
-      expect(entries[0].querySelector('.transcript-time')?.textContent).toBe('0:00');
-      expect(entries[0].querySelector('.transcript-text')?.textContent).toBe('Hello and welcome.');
+      expect(entries[0]!.querySelector('.transcript-time')?.textContent).toBe('0:00');
+      expect(entries[0]!.querySelector('.transcript-text')?.textContent).toBe('Hello and welcome.');
     });
 
     it('displays speaker names when available', () => {
@@ -427,7 +427,7 @@ describe('VideoInfoPanel', () => {
       panel.toggleTranscript(true);
       const speakers = container.querySelectorAll('.transcript-speaker');
       expect(speakers.length).toBe(2); // First two entries have speakers
-      expect(speakers[0].textContent).toContain('Host');
+      expect(speakers[0]!.textContent).toContain('Host');
     });
 
     it('clicking transcript entry triggers seek callback', () => {
@@ -459,9 +459,9 @@ describe('VideoInfoPanel', () => {
       panel.toggleTranscript(true);
       panel.highlightTranscriptAtTime(7);
       const entries = container.querySelectorAll('.transcript-entry');
-      expect(entries[0].classList.contains('transcript-entry--active')).toBe(false);
-      expect(entries[1].classList.contains('transcript-entry--active')).toBe(true);
-      expect(entries[2].classList.contains('transcript-entry--active')).toBe(false);
+      expect(entries[0]!.classList.contains('transcript-entry--active')).toBe(false);
+      expect(entries[1]!.classList.contains('transcript-entry--active')).toBe(true);
+      expect(entries[2]!.classList.contains('transcript-entry--active')).toBe(false);
     });
 
     it('hides transcript section when disabled', () => {

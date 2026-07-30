@@ -43,7 +43,7 @@ export class Modal {
   private backdrop: HTMLDivElement;
   private container: HTMLDivElement;
   private header?: HTMLDivElement;
-  private content: HTMLDivElement;
+  private content!: HTMLDivElement;
   private props: Required<Omit<ModalProps, 'children' | 'onClose' | 'onOpen'>> & Pick<ModalProps, 'children' | 'onClose' | 'onOpen'>;
   private focusTrap?: () => void;
   private previousActiveElement?: HTMLElement;
@@ -51,7 +51,6 @@ export class Modal {
 
   constructor(props: ModalProps) {
     this.props = {
-      isOpen: false,
       size: 'md',
       title: '',
       closeOnBackdrop: true,

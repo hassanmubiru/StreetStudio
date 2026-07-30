@@ -563,9 +563,9 @@ describe('Folder Management and Hierarchy Display', () => {
 
       const path = manager.getFolderPath('grandchild-1');
       expect(path).toHaveLength(3);
-      expect(path[0].name).toBe('Design Assets');
-      expect(path[1].name).toBe('Icons');
-      expect(path[2].name).toBe('SVG');
+      expect(path[0]!.name).toBe('Design Assets');
+      expect(path[1]!.name).toBe('Icons');
+      expect(path[2]!.name).toBe('SVG');
 
       manager.destroy();
     });

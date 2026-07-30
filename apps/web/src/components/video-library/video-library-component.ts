@@ -260,7 +260,7 @@ export class VideoLibraryComponent {
       if (target.closest('.bulk-action')) {
         const action = target.closest('.bulk-action')?.getAttribute('data-action');
         if (action) {
-          this.handleBulkAction(action);
+          this.handleBulkAction(action as 'move' | 'delete' | 'share' | 'download');
         }
         return;
       }
@@ -275,7 +275,7 @@ export class VideoLibraryComponent {
       }
       
       if (target.matches('.filter-processing')) {
-        this.toggleProcessingFilter(target.checked);
+        this.toggleProcessingFilter((target as unknown as HTMLInputElement).checked);
         return;
       }
     });
@@ -363,7 +363,7 @@ export class VideoLibraryComponent {
       if (!confirmed) return;
     }
 
-    this.bulkController.performAction(action, selectedVideoIds)
+    this.bulkController.performAction(action as 'move' | 'delete' | 'share' | 'download' | 'archive' | 'permissions', selectedVideoIds)
       .then(() => {
         this.clearSelection();
         this.loadVideosForProject(); // Refresh the list

@@ -101,7 +101,7 @@ const projectStructureArbitrary: fc.Arbitrary<TestProjectStructure> = fc.integer
           id: fc.uuid(),
           name: folderNameArbitrary,
           projectId: fc.constant(''), // Will be set later
-          parentFolderId: fc.constant(null as string | null), // Will be set during hierarchy building
+          parentFolderId: fc.constant(undefined as string | undefined), // Will be set during hierarchy building
           depth: fc.constant(0), // Will be calculated
           createdAt: fc.date().map(d => d.toISOString()),
           updatedAt: fc.date().map(d => d.toISOString()),
@@ -118,7 +118,7 @@ const projectStructureArbitrary: fc.Arbitrary<TestProjectStructure> = fc.integer
           durationSeconds: fc.integer({ min: 10, max: 7200 }), // 10 seconds to 2 hours
           status: fc.constantFrom('uploading', 'processing', 'ready', 'failed'),
           developerMode: fc.boolean(),
-          folderId: fc.constant(null as string | null), // Will be assigned to folders
+          folderId: fc.constant(undefined as string | undefined), // Will be assigned to folders
           projectId: fc.constant(''), // Will be set later
           createdAt: fc.date().map(d => d.toISOString()),
           updatedAt: fc.date().map(d => d.toISOString()),
@@ -138,23 +138,23 @@ const projectStructureArbitrary: fc.Arbitrary<TestProjectStructure> = fc.integer
 
       // Build valid hierarchy (max 10 levels deep per requirements)
       if (folders.length > 0) {
-        const hierarchicalFolders = buildValidHierarchy(folders, 10);
+        const hierarchicalFolders = buildValidHierarchy(folders as unknown as FolderDto[], 10);
         
         // Assign some videos to folders
         const foldersWithVideos = hierarchicalFolders.filter(f => f.depth < 8); // Don't put videos too deep
         videos.forEach((video, index) => {
           if (foldersWithVideos.length > 0 && index % 3 === 0) { // Assign 1/3 of videos to folders
-            const randomFolder = foldersWithVideos[index % foldersWithVideos.length];
+            const randomFolder = foldersWithVideos[index % foldersWithVideos.length]!;
             video.folderId = randomFolder.id;
           }
         });
         
-        return { project, folders: hierarchicalFolders, videos };
+        return { project: project as unknown as ProjectDto, folders: hierarchicalFolders, videos: videos as unknown as VideoDto[] };
       }
 
-      return { project, folders, videos };
+      return { project: project as unknown as ProjectDto, folders: folders as unknown as FolderDto[], videos: videos as unknown as VideoDto[] };
     });
-  });
+  }) as fc.Arbitrary<TestProjectStructure>;
 
 /**
  * Build a valid folder hierarchy with proper depth calculation
@@ -173,7 +173,7 @@ function buildValidHierarchy(folders: FolderDto[], maxDepth: number): FolderDto[
   
   // Start with all folders as root level (depth 0)
   result.forEach(folder => {
-    folder.parentFolderId = null;
+    folder.parentFolderId = undefined;
     folder.depth = 0;
   });
   
@@ -190,10 +190,10 @@ function buildValidHierarchy(folders: FolderDto[], maxDepth: number): FolderDto[
     for (let i = startIndex; i < endIndex; i++) {
       // Assign to a random parent from the previous level
       const parentIndex = Math.floor(Math.random() * potentialParents.length);
-      const parent = potentialParents[parentIndex];
+      const parent = potentialParents[parentIndex]!;
       
-      result[i].parentFolderId = parent.id;
-      result[i].depth = depth;
+      result[i]!.parentFolderId = parent.id;
+      result[i]!.depth = depth;
     }
   }
   
@@ -308,8 +308,8 @@ describe('Project Organization Consistency Properties', () => {
               return true; // No items to test with
             }
 
-            const sourceItem = sourceItems[0];
-            const targetFolder = targetFolders[0];
+            const sourceItem = sourceItems[0]!;
+            const targetFolder = targetFolders[0]!;
 
             // Test drag-and-drop logic validation
             let canDrop = true;
@@ -318,7 +318,7 @@ describe('Project Organization Consistency Properties', () => {
             if (operation.sourceType === 'folder') {
               const wouldCreateCircularRef = checkCircularReference(
                 sourceItem as FolderDto,
-                targetFolder,
+                targetFolder!,
                 structure.folders
               );
               if (wouldCreateCircularRef) {
@@ -327,7 +327,7 @@ describe('Project Organization Consistency Properties', () => {
             }
 
             // Verify depth constraints are respected
-            const newDepth = targetFolder.depth + 1;
+            const newDepth = targetFolder!.depth + 1;
             if (newDepth > 10) { // Max depth per requirements
               canDrop = false;
             }

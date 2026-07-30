@@ -111,7 +111,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
 /**
  * Background sync event - process queued operations
  */
-self.addEventListener('sync', (event: SyncEvent) => {
+self.addEventListener('sync', (event: any) => {
   if (event.tag === 'streetstudio-comment-sync') {
     event.waitUntil(processCommentSyncQueue());
   } else if (event.tag === 'streetstudio-action-sync') {
@@ -136,7 +136,7 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
       break;
     case 'CACHE_CONTENT':
       if (payload?.url) {
-        cacheContent(payload.url, payload.cacheName || API_CACHE);
+        fetchAndCache(new Request(payload.url), payload.cacheName || API_CACHE);
       }
       break;
     case 'GET_CACHE_STATUS':

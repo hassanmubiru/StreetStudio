@@ -79,10 +79,10 @@ describe('UploadStore', () => {
 
       const state = store.getState();
       expect(state.uploads).toHaveLength(1);
-      expect(state.uploads[0].file).toBe(file);
+      expect(state.uploads[0]!.file).toBe(file);
       // Upload transitions from queued to uploading immediately if queue has capacity
-      expect(['queued', 'uploading']).toContain(state.uploads[0].status);
-      expect(state.uploads[0].retryCount).toBe(0);
+      expect(['queued', 'uploading']).toContain(state.uploads[0]!.status);
+      expect(state.uploads[0]!.retryCount).toBe(0);
     });
 
     it('should add upload with metadata', () => {
@@ -96,7 +96,7 @@ describe('UploadStore', () => {
       store.addUpload(file, metadata);
       const state = store.getState();
 
-      expect(state.uploads[0].metadata).toEqual(metadata);
+      expect(state.uploads[0]!.metadata).toEqual(metadata);
     });
 
     it('should increment queued uploads count', () => {
@@ -124,7 +124,7 @@ describe('UploadStore', () => {
 
       // Called with updated state (may be called multiple times due to queue processing)
       expect(listener.mock.calls.length).toBeGreaterThan(1);
-      const lastCall = listener.mock.calls[listener.mock.calls.length - 1][0] as UploadState;
+      const lastCall = listener.mock.calls[listener.mock.calls.length - 1]![0] as UploadState;
       expect(lastCall.uploads).toHaveLength(1);
     });
 
@@ -241,7 +241,7 @@ describe('UploadStore', () => {
 
       const state = store.getState();
       expect(state.uploads).toHaveLength(1);
-      expect(state.uploads[0].id).toBe(id2);
+      expect(state.uploads[0]!.id).toBe(id2);
     });
 
     it('should clear all uploads', () => {
@@ -287,7 +287,7 @@ describe('UploadStore', () => {
 
       const failed = store.getUploadsByStatus('failed');
       expect(failed).toHaveLength(1);
-      expect(failed[0].id).toBe(id1);
+      expect(failed[0]!.id).toBe(id1);
 
       const queued = store.getUploadsByStatus('queued');
       expect(queued.length).toBeGreaterThanOrEqual(1);

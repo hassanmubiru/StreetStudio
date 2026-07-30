@@ -251,8 +251,8 @@ describe('SearchService', () => {
       const suggestions = searchService.getSuggestions('');
 
       expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions[0].type).toBe('recent');
-      expect(suggestions[0].text).toBe('recent two');
+      expect(suggestions[0]!.type).toBe('recent');
+      expect(suggestions[0]!.text).toBe('recent two');
     });
 
     test('should filter recent searches by query', () => {

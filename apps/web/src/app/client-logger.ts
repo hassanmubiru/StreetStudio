@@ -140,8 +140,7 @@ export class ClientLogger {
   }
 
   private setupPeriodicFlush(): void {
-    const intervalFn = typeof window !== 'undefined' && window.setInterval ? window.setInterval : setInterval;
-    this.flushTimer = intervalFn(() => {
+    this.flushTimer = window.setInterval(() => {
       if (this.logBuffer.length > 0) {
         this.flushLogs();
       }

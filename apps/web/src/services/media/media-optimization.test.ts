@@ -30,15 +30,15 @@ describe('AdaptiveBitrateManager', () => {
   it('returns available quality levels within bounds', () => {
     const levels = abr.getAvailableLevels();
     expect(levels.length).toBe(6);
-    expect(levels[0].level).toBe('2160p');
-    expect(levels[5].level).toBe('240p');
+    expect(levels[0]!.level).toBe('2160p');
+    expect(levels[5]!.level).toBe('240p');
   });
 
   it('respects configured max/min quality bounds', () => {
     const bounded = new AdaptiveBitrateManager({ maxQuality: '1080p', minQuality: '360p' });
     const levels = bounded.getAvailableLevels();
-    expect(levels[0].level).toBe('1080p');
-    expect(levels[levels.length - 1].level).toBe('360p');
+    expect(levels[0]!.level).toBe('1080p');
+    expect(levels[levels.length - 1]!.level).toBe('360p');
     expect(levels.find((l) => l.level === '2160p')).toBeUndefined();
     expect(levels.find((l) => l.level === '240p')).toBeUndefined();
   });
@@ -214,7 +214,7 @@ describe('AdaptiveBitrateManager', () => {
   it('updates config at runtime', () => {
     abr.updateConfig({ maxQuality: '720p' });
     const levels = abr.getAvailableLevels();
-    expect(levels[0].level).toBe('720p');
+    expect(levels[0]!.level).toBe('720p');
   });
 });
 
@@ -669,8 +669,8 @@ describe('UploadOptimizer', () => {
     ];
     const results = await optimizer.optimizeBatch(files);
     expect(results).toHaveLength(2);
-    expect(results[0].wasOptimized).toBe(false);
-    expect(results[1].wasOptimized).toBe(false);
+    expect(results[0]!.wasOptimized).toBe(false);
+    expect(results[1]!.wasOptimized).toBe(false);
   });
 
   it('updates config at runtime', () => {

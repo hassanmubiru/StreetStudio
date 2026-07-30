@@ -279,7 +279,7 @@ describe('TimelineEditor', () => {
       editor.addClip(clip);
       const state = editor.getState();
       expect(state.clips).toHaveLength(1);
-      expect(state.clips[0].id).toBe('clip-1');
+      expect(state.clips[0]!.id).toBe('clip-1');
       expect(state.duration).toBe(300);
     });
 
@@ -503,12 +503,12 @@ describe('TimelineEditor', () => {
       editor.seekToFrame(100);
       editor.splitAtPlayhead();
       const clips = editor.getState().clips;
-      expect(clips[0].inPoint).toBe(0);
-      expect(clips[0].outPoint).toBe(100);
-      expect(clips[0].duration).toBe(100);
-      expect(clips[1].inPoint).toBe(100);
-      expect(clips[1].outPoint).toBe(300);
-      expect(clips[1].duration).toBe(200);
+      expect(clips[0]!.inPoint).toBe(0);
+      expect(clips[0]!.outPoint).toBe(100);
+      expect(clips[0]!.duration).toBe(100);
+      expect(clips[1]!.inPoint).toBe(100);
+      expect(clips[1]!.outPoint).toBe(300);
+      expect(clips[1]!.duration).toBe(200);
     });
 
     it('fires onSplit callback', () => {

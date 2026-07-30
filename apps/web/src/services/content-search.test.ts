@@ -58,9 +58,9 @@ describe('ContentSearchService', () => {
       expect(response.videoId).toBe('vid-1');
       expect(response.videoTitle).toBe('Demo Video');
       expect(response.matches).toHaveLength(1);
-      expect(response.matches[0].segment.startTime).toBe(10);
-      expect(response.matches[0].segment.endTime).toBe(15);
-      expect(response.matches[0].segment.speaker).toBe('Host');
+      expect(response.matches[0]!.segment.startTime).toBe(10);
+      expect(response.matches[0]!.segment.endTime).toBe(15);
+      expect(response.matches[0]!.segment.speaker).toBe('Host');
       expect(response.totalMatches).toBe(1);
       expect(response.query).toBe('demo');
     });
@@ -91,8 +91,8 @@ describe('ContentSearchService', () => {
 
       const response = await service.searchTranscript('vid-1', 'demo');
 
-      expect(response.matches[0].highlightedText).toContain('<mark');
-      expect(response.matches[0].highlightedText).toContain('demo');
+      expect(response.matches[0]!.highlightedText).toContain('<mark');
+      expect(response.matches[0]!.highlightedText).toContain('demo');
     });
 
     test('should return empty results for empty query', async () => {
@@ -221,9 +221,9 @@ describe('ContentSearchService', () => {
       });
 
       expect(results).toHaveLength(2);
-      expect(results[0].videoId).toBe('vid-1');
-      expect(results[1].videoId).toBe('vid-2');
-      expect(results[0].matches).toHaveLength(1);
+      expect(results[0]!.videoId).toBe('vid-1');
+      expect(results[1]!.videoId).toBe('vid-2');
+      expect(results[0]!.matches).toHaveLength(1);
     });
 
     test('should return empty array for empty query', async () => {
@@ -309,8 +309,8 @@ describe('ContentSearchService', () => {
       const contexts = service.highlightInContext(text, 'keyword');
 
       expect(contexts.length).toBeGreaterThan(0);
-      expect(contexts[0].highlights.length).toBeGreaterThan(0);
-      expect(contexts[0].highlights[0].term).toBe('keyword');
+      expect(contexts[0]!.highlights.length).toBeGreaterThan(0);
+      expect(contexts[0]!.highlights[0]!.term).toBe('keyword');
     });
 
     test('should return empty array for empty query', () => {
@@ -339,7 +339,7 @@ describe('ContentSearchService', () => {
       const text = 'A very long prefix text before the keyword and a very long suffix after it.';
       const contexts = svc.highlightInContext(text, 'keyword');
 
-      expect(contexts[0].text).toContain('...');
+      expect(contexts[0]!.text).toContain('...');
       svc.destroy();
     });
   });
@@ -459,9 +459,9 @@ describe('ContentSearchService', () => {
       const enriched = service.enrichResultsWithContext(results, 'demo');
 
       expect(enriched).toHaveLength(1);
-      expect(enriched[0].matchCount).toBeGreaterThan(0);
-      expect(enriched[0].relevanceScore).toBeGreaterThan(0);
-      expect(enriched[0].contextSnippets.length).toBeGreaterThanOrEqual(0);
+      expect(enriched[0]!.matchCount).toBeGreaterThan(0);
+      expect(enriched[0]!.relevanceScore).toBeGreaterThan(0);
+      expect(enriched[0]!.contextSnippets.length).toBeGreaterThanOrEqual(0);
     });
 
     test('should include highlighted title and description', () => {
@@ -478,8 +478,8 @@ describe('ContentSearchService', () => {
 
       const enriched = service.enrichResultsWithContext(results, 'demo');
 
-      expect(enriched[0].highlightedTitle).toContain('<mark');
-      expect(enriched[0].highlightedDescription).toContain('<mark');
+      expect(enriched[0]!.highlightedTitle).toContain('<mark');
+      expect(enriched[0]!.highlightedDescription).toContain('<mark');
     });
 
     test('should handle results without description', () => {
@@ -495,7 +495,7 @@ describe('ContentSearchService', () => {
 
       const enriched = service.enrichResultsWithContext(results, 'Video');
 
-      expect(enriched[0].highlightedDescription).toBeUndefined();
+      expect(enriched[0]!.highlightedDescription).toBeUndefined();
     });
   });
 
@@ -577,8 +577,8 @@ describe('ContentSearchService', () => {
       const scopes = service.getDefaultScopes();
 
       expect(scopes).toHaveLength(2);
-      expect(scopes[0].scope).toBe('personal');
-      expect(scopes[1].scope).toBe('organization');
+      expect(scopes[0]!.scope).toBe('personal');
+      expect(scopes[1]!.scope).toBe('organization');
     });
   });
 

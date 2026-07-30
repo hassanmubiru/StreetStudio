@@ -71,8 +71,8 @@ describe('DrawingOverlay', () => {
       
       const state = drawingOverlay.getState();
       expect(state.paths.length).toBe(1);
-      expect(state.paths[0].tool).toBe('pen');
-      expect(state.paths[0].points.length).toBeGreaterThan(1);
+      expect(state.paths[0]!.tool).toBe('pen');
+      expect(state.paths[0]!.points.length).toBeGreaterThan(1);
     });
 
     it('should support different drawing tools', () => {
@@ -89,7 +89,7 @@ describe('DrawingOverlay', () => {
         canvas.dispatchEvent(mouseUp);
         
         const state = drawingOverlay.getState();
-        expect(state.paths[index].tool).toBe(tool);
+        expect(state.paths[index]!.tool).toBe(tool);
       });
     });
 
@@ -111,7 +111,7 @@ describe('DrawingOverlay', () => {
         
         const state = drawingOverlay.getState();
         expect(state.textAnnotations.length).toBe(1);
-        expect(state.textAnnotations[0].text).toBe('Test annotation');
+        expect(state.textAnnotations[0]!.text).toBe('Test annotation');
       }
     });
   });
@@ -218,9 +218,9 @@ describe('DrawingOverlay', () => {
       canvas.dispatchEvent(mouseUp);
       
       const state = drawingOverlay.getState();
-      expect(state.paths[0].style.color).toBe('#ff0000');
-      expect(state.paths[0].style.strokeWidth).toBe(5);
-      expect(state.paths[0].style.opacity).toBe(0.8);
+      expect(state.paths[0]!.style.color).toBe('#ff0000');
+      expect(state.paths[0]!.style.strokeWidth).toBe(5);
+      expect(state.paths[0]!.style.opacity).toBe(0.8);
     });
   });
 

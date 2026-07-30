@@ -431,8 +431,8 @@ describe('Timeline Frame Accuracy Properties', () => {
               const state = editor.getState();
               expect(state.clips).toHaveLength(2);
 
-              const leftClip = state.clips[0];
-              const rightClip = state.clips[1];
+              const leftClip = state.clips[0]!;
+              const rightClip = state.clips[1]!;
 
               // Both clips must have integer frame boundaries
               expect(Number.isInteger(leftClip.inPoint)).toBe(true);

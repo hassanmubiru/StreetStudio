@@ -89,7 +89,7 @@ describe('PresenceManager', () => {
 
     const others = manager.getOtherParticipants();
     expect(others).toHaveLength(1);
-    expect(others[0].userId).toBe('user-2');
+    expect(others[0]!.userId).toBe('user-2');
   });
 
   it('getAllParticipants includes connected users only', () => {
@@ -275,7 +275,7 @@ describe('ConflictDetector', () => {
     detector.registerEdit('user-2', 'clip-A', 'split');
 
     expect(onDetected).toHaveBeenCalledTimes(1);
-    expect(onDetected.mock.calls[0][0].clipId).toBe('clip-A');
+    expect(onDetected.mock.calls[0]![0].clipId).toBe('clip-A');
   });
 
   it('calls onConflictResolved callback', () => {
@@ -383,8 +383,8 @@ describe('EditHistoryManager', () => {
 
     const recent = history.getRecentHistory(3);
     expect(recent).toHaveLength(3);
-    expect(recent[0].clipId).toBe('c7');
-    expect(recent[2].clipId).toBe('c9');
+    expect(recent[0]!.clipId).toBe('c7');
+    expect(recent[2]!.clipId).toBe('c9');
   });
 
   it('trims history when exceeding maxSize', () => {
@@ -396,8 +396,8 @@ describe('EditHistoryManager', () => {
     expect(smallHistory.getHistorySize()).toBe(5);
     // Should keep the most recent entries
     const all = smallHistory.getHistory();
-    expect(all[0].clipId).toBe('c5');
-    expect(all[4].clipId).toBe('c9');
+    expect(all[0]!.clipId).toBe('c5');
+    expect(all[4]!.clipId).toBe('c9');
   });
 
   it('getLastEdit returns the most recent operation', () => {
@@ -463,8 +463,8 @@ describe('CollaborativeEditingManager', () => {
 
       const session = manager.getSession();
       expect(session!.participants).toHaveLength(1);
-      expect(session!.participants[0].userId).toBe('me');
-      expect(session!.participants[0].displayName).toBe('Current User');
+      expect(session!.participants[0]!.userId).toBe('me');
+      expect(session!.participants[0]!.displayName).toBe('Current User');
     });
 
     it('endSession deactivates the session', () => {
@@ -481,7 +481,7 @@ describe('CollaborativeEditingManager', () => {
       mgr.startSession();
 
       expect(onStart).toHaveBeenCalledTimes(1);
-      expect(onStart.mock.calls[0][0].videoId).toBe('video-1');
+      expect(onStart.mock.calls[0]![0].videoId).toBe('video-1');
       mgr.destroy();
     });
 
@@ -596,7 +596,7 @@ describe('CollaborativeEditingManager', () => {
 
       const hist = manager.getHistoryManager().getHistory();
       expect(hist).toHaveLength(1);
-      expect(hist[0].type).toBe('trim');
+      expect(hist[0]!.type).toBe('trim');
     });
 
     it('handleRemoteEdit records remote operations in history', () => {

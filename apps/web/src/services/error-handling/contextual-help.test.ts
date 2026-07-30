@@ -63,7 +63,7 @@ describe('ContextualHelpService', () => {
       
       // The buffering/playback article should rank high
       if (results.length > 0) {
-        expect(results[0].tags).toContain('playback');
+        expect(results[0]!.tags).toContain('playback');
       }
     });
 
@@ -78,7 +78,7 @@ describe('ContextualHelpService', () => {
     it('returns tips for matching page', () => {
       const tips = service.getTipsForPage('/dashboard');
       expect(tips.length).toBeGreaterThan(0);
-      expect(tips[0].page).toBe('/dashboard');
+      expect(tips[0]!.page).toBe('/dashboard');
     });
 
     it('returns empty array for page with no tips', () => {
@@ -287,7 +287,7 @@ describe('ContextualHelpService', () => {
       const customService = new ContextualHelpService({ articles: customArticles });
       const results = customService.searchArticles('custom');
       expect(results).toHaveLength(1);
-      expect(results[0].title).toBe('Custom Article');
+      expect(results[0]!.title).toBe('Custom Article');
     });
 
     it('uses custom support contacts', () => {
@@ -298,7 +298,7 @@ describe('ContextualHelpService', () => {
       const customService = new ContextualHelpService({ supportContacts: customContacts });
       const contacts = customService.getSupportContacts();
       expect(contacts).toHaveLength(1);
-      expect(contacts[0].label).toBe('Custom Support');
+      expect(contacts[0]!.label).toBe('Custom Support');
     });
 
     it('calls onArticleView when article is expanded', () => {

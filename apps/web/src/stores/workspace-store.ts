@@ -338,7 +338,7 @@ export class WorkspaceStore {
       }
       
       // Fallback to generic labels
-      return this.getGenericLabel(previousSegment);
+      return this.getGenericLabel(previousSegment ?? '');
     }
 
     // Convert to title case
@@ -405,7 +405,7 @@ export class WorkspaceStore {
       const previousPath = history[history.length - 1];
       
       this.updateState({ navigationHistory: history });
-      return previousPath;
+      return previousPath ?? null;
     }
     
     return null;

@@ -178,7 +178,8 @@ export class NotificationDeliveryService {
     let insertIndex = this.queue.length;
 
     for (let i = 0; i < this.queue.length; i++) {
-      if (getPriorityWeight(this.queue[i].priority) < priority) {
+      const item = this.queue[i]!;
+      if (getPriorityWeight(item.priority) < priority) {
         insertIndex = i;
         break;
       }
@@ -242,12 +243,12 @@ export class NotificationDeliveryService {
     this.refreshRateLimitWindow();
     if (this.rateLimitWindow.count >= this.options.maxPerWindow) {
       // Queue as single grouped delivery for later
-      const representative = group.notifications[0];
+      const representative = group.notifications[0]!;
       this.insertByPriority({
         ...representative,
         body: `${group.notifications.length} notifications`,
         ungroupable: true,
-      });
+      } as DeliveryNotification);
       this.options.onDrop?.(group.notifications.slice(1), 'rate_limited_batch');
       return;
     }
