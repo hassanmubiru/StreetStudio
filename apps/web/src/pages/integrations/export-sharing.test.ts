@@ -584,3 +584,115 @@ describe('ExportSharingPage', () => {
       expect(callbacks.onStartBatchExport).not.toHaveBeenCalled();
     });
   });
+
+  describe('Export Progress Tracking', () => {
+    it('should render export progress section when jobs exist', () => {
+      const jobs = [createTestJob()];
+      page = new ExportSharingPage({ exportJobs: jobs });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('#export-progress')).toBeTruthy();
+    });
+
+    it('should display progress bar for each job', () => {
+      const jobs = [createTestJob({ progress: 45 })];
+      page = new ExportSharingPage({ exportJobs: jobs });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const progressBar = el.querySelector('[role="progressbar"]');
+      expect(progressBar).toBeTruthy();
+      expect(progressBar?.getAttribute('aria-valuenow')).toBe('45');
+    });
+
+    it('should display ETA for processing jobs', () => {
+      const jobs = [createTestJob({ status: 'processing', estimatedTimeRemaining: 120 })];
+      page = new ExportSharingPage({ exportJobs: jobs });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('2m');
+      expect(el.textContent).toContain('remaining');
+    });
+
+    it('should display error for failed jobs', () => {
+      const jobs = [createTestJob({ status: 'failed', error: 'Encoding error' })];
+      page = new ExportSharingPage({ exportJobs: jobs });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('Encoding error');
+    });
+
+    it('should display download link for completed jobs', () => {
+      const jobs = [createTestJob({ status: 'completed', progress: 100, downloadUrl: '/dl/video.mp4' })];
+      page = new ExportSharingPage({ exportJobs: jobs });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const link = el.querySelector('a[download]') as HTMLAnchorElement;
+      expect(link).toBeTruthy();
+      expect(link.href).toContain('/dl/video.mp4');
+    });
+
+    it('should update progress on updateExportProgress', () => {
+      const jobs = [createTestJob({ id: 'job-1', progress: 20 })];
+      page = new ExportSharingPage({ exportJobs: jobs });
+
+      page.updateExportProgress('job-1', 75, 30);
+
+      const updatedJob = page.getExportJobs().find(j => j.id === 'job-1');
+      expect(updatedJob?.progress).toBe(75);
+      expect(updatedJob?.estimatedTimeRemaining).toBe(30);
+    });
+
+    it('should mark job as completed', () => {
+      const jobs = [createTestJob({ id: 'job-1' })];
+      page = new ExportSharingPage({ exportJobs: jobs });
+
+      page.completeExport('job-1', '/dl/result.mp4');
+
+      const job = page.getExportJobs().find(j => j.id === 'job-1');
+      expect(job?.status).toBe('completed');
+      expect(job?.progress).toBe(100);
+      expect(job?.downloadUrl).toBe('/dl/result.mp4');
+    });
+
+    it('should mark job as failed', () => {
+      const jobs = [createTestJob({ id: 'job-1' })];
+      page = new ExportSharingPage({ exportJobs: jobs });
+
+      page.failExport('job-1', 'Server error');
+
+      const job = page.getExportJobs().find(j => j.id === 'job-1');
+      expect(job?.status).toBe('failed');
+      expect(job?.error).toBe('Server error');
+    });
+
+    it('should cancel export job', async () => {
+      const callbacks = createMockCallbacks();
+      const jobs = [createTestJob({ id: 'job-1' })];
+      page = new ExportSharingPage({ exportJobs: jobs, callbacks });
+
+      await page.cancelExport('job-1');
+
+      expect(callbacks.onCancelExport).toHaveBeenCalledWith('job-1');
+      expect(page.getExportJobs().find(j => j.id === 'job-1')).toBeUndefined();
+    });
+
+    it('should display batch progress summary', () => {
+      const jobs = [
+        createTestJob({ id: 'j1', status: 'completed', progress: 100 }),
+        createTestJob({ id: 'j2', status: 'processing', progress: 50 }),
+        createTestJob({ id: 'j3', status: 'failed', progress: 0 }),
+      ];
+      page = new ExportSharingPage({ exportJobs: jobs });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('1 completed');
+      expect(el.textContent).toContain('1 failed');
+      expect(el.textContent).toContain('1 active');
+    });
+  });

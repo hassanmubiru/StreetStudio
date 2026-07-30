@@ -642,3 +642,53 @@ describe('WebhookConfigurationPage', () => {
       expect(el.querySelector('#test-result-banner')).toBeTruthy();
       expect(el.textContent).toContain('Test Successful');
     });
+
+    it('should display failed test result banner', async () => {
+      const webhook = createTestWebhook();
+      const callbacks: WebhookConfigurationCallbacks = {
+        ...createMockCallbacks(),
+        onTestWebhook: vi.fn().mockResolvedValue({
+          success: false,
+          error: 'Connection refused',
+        }),
+      };
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.testWebhook(webhook.id);
+
+      const result = page.getTestResult();
+      expect(result!.success).toBe(false);
+
+      const el = page.getElement();
+      expect(el.textContent).toContain('Test Failed');
+      expect(el.textContent).toContain('Connection refused');
+    });
+
+    it('should dismiss test result banner', async () => {
+      const webhook = createTestWebhook();
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.testWebhook(webhook.id);
+      page.dismissTestResult();
+
+      expect(page.getTestResult()).toBeNull();
+      const el = page.getElement();
+      expect(el.querySelector('#test-result-banner')).toBeFalsy();
+    });
+
+    it('should handle test request failure gracefully', async () => {
+      const webhook = createTestWebhook();
+      const callbacks: WebhookConfigurationCallbacks = {
+        ...createMockCallbacks(),
+        onTestWebhook: vi.fn().mockRejectedValue(new Error('Network error')),
+      };
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.testWebhook(webhook.id);
+
+      const result = page.getTestResult();
+      expect(result!.success).toBe(false);
+      expect(result!.error).toContain('failed');
+    });
+  });
