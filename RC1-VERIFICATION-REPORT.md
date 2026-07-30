@@ -94,7 +94,36 @@ This confirms RBAC-SEED-01 is resolved in practice and that deny-by-default cros
 - The public operation catalog (mirroring the SDK) declares full CRUD per resource, but the domain services implement mostly the create/write paths and their invariants: `ContentService` = `createProject`/`createFolder`/`createWorkspace`/`moveVideo` (no list/get/update/delete); `CommentService` = `post`/`reply`/`react`/`mention` (no list/delete); `AnalyticsService` = `recordView`/`aggregate`; etc.
 - **Impact:** wiring the *complete* catalog is not composition work — it needs new domain read/update/delete methods (+ repository queries) across every resource. That is a product-completion effort.
 
-**Net Phase B status:** the composition + transport is proven for auth, organizations, and the RBAC-gated content-create path against real PostgreSQL, with correct deny-by-default authorization and tenant isolation. Full-catalog runtime completion is blocked by AUDIT-SCHEMA-01/SCHEMA-DUP-01 (schema reconciliation) and API-CATALOG-COVERAGE-01 (missing CRUD methods), plus the still-deferred object-storage/ffmpeg media pipeline and WebSocket realtime. RC1 remains **not met**; these are now the concrete, evidence-backed gating items.
+**Net Phase B status (before reconciliation):** the composition + transport is proven for auth, organizations, and the RBAC-gated content-create path against real PostgreSQL, with correct deny-by-default authorization and tenant isolation. Full-catalog runtime completion is blocked by AUDIT-SCHEMA-01/SCHEMA-DUP-01 (schema reconciliation) and API-CATALOG-COVERAGE-01 (missing CRUD methods), plus the still-deferred object-storage/ffmpeg media pipeline and WebSocket realtime.
+
+---
+
+## Update 5 — Schema reconciliation (AUDIT-SCHEMA-01 / SCHEMA-DUP-01 RESOLVED); composition pivoted to the canonical repository path
+
+Investigated the FK/schema-duplication landscape in the live DB and found the decisive fact: the **singular** family (`organization`, `member`, `project`, `audit_entry`, …) is a fully FK-integral relational schema (37 FKs) created by the database package's `runMigrations`, and every domain service ships a `repository*Store` adapter (`repositoryAuthStores`, `repositoryOrgStore`, `repositoryRbacStore`, `repositoryContentStore`, …) backed by `createRepositories(sqlClient)` over that same canonical schema — the one `audit_entry` already references. The **plural** de-seam family (`organizations`, `members`, …) from the per-package `ensure*Schema` DDL has **no FKs** and was the anomaly the initial slice happened to wire.
+
+**Fix (architecturally-intended production path):** rewired `apps/api/src/runtime/` from the plural de-seam stores to the canonical repository path:
+- `main.ts` now runs `runMigrations` (builds the canonical singular schema) instead of the plural `ensure*Schema` DDL.
+- `container.ts` builds `createRepositories(streetSqlClient(pg))` and constructs `AuthService`/`OrgService`/`RbacAccessControl`/`ContentService` from the `repository*Store` adapters, so the whole system runs on **one** FK-integral schema.
+- The `AuditSink` was made **authoritative again** (removed the non-fatal workaround): the `audit_entry.organization_id` FK is now valid because orgs live in the referenced `organization` table.
+
+**Two additional real defects surfaced and fixed (only observable with the live `pg` driver):**
+- **DB-JSONB-WRITE-01 (FIXED):** the database package's `TenantRepository`/`GlobalRepository` write path bound raw JS arrays/objects as parameters for `jsonb` columns (`role.permissions`, org `settings`); node-postgres serializes a JS array as a Postgres **array literal** `{...}`, which `jsonb` rejects (`invalid input syntax for type json`). Added symmetric `JSON.stringify` write-serialization for jsonb columns on both `insert` and `update`, mirroring the existing read coercion. (The earlier RBAC-STORE-01 fix was in the now-unused de-seam stores; this is the canonical-path analogue.)
+
+**Verified end-to-end on the unified canonical schema (two-tenant scenario):**
+
+| Check | Result |
+|---|---|
+| Two tenants register/login; each `createOrg` | **success** (jsonb write fix; `role.permissions` round-trips as `["*","org:manage_roles"]`) |
+| Tenant A `POST /projects` in Org A | **201**, persisted to canonical `project` table |
+| Tenant A `GET /organizations` | **200**, returns only Org A |
+| Tenant A `POST /projects` in Org B (exists, A not a member) | **403** (deny-by-default) |
+| Audit log | **authoritative** — real `projects.create:success` row for Org A and `projects.create:authorization_denied` row for the cross-tenant attempt, with a valid FK (R28 satisfied for org-scoped events) |
+| Full monorepo suite after the core repository change | **5315 passed / 0 failed**; typecheck + streetjs + boundary all green |
+
+**AUDIT-SCHEMA-01 / SCHEMA-DUP-01 status:** the running composition now uses a single canonical, FK-integral schema and the audit log is authoritative. (Follow-up hygiene, non-blocking: the unused plural `ensure*Schema` DDL and duplicate tables can be removed from the domain packages to prevent future confusion.)
+
+**Remaining for full RC:** API-CATALOG-COVERAGE-01 (implement the missing list/get/update/delete domain methods to wire the rest of the catalog), the object-storage/ffmpeg media pipeline (uploads→processing→playback; no concrete `Transcoder` exists), and the WebSocket realtime transport. RC1 remains **not met**; these are the concrete, evidence-backed gating items.
 
 ---
 
