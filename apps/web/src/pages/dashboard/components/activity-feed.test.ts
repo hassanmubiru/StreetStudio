@@ -230,11 +230,12 @@ describe('ActivityFeed', () => {
 
     it('should hide load more button when all notifications are shown', () => {
       const element = activityFeed.getElement();
-      const loadMoreButton = element.querySelector('#load-more-activity') as HTMLButtonElement;
       
-      // Click twice to load all notifications
-      loadMoreButton.click();
-      loadMoreButton.click();
+      // Click twice to load all notifications. The component re-renders its
+      // inner HTML on each load, so the button must be re-queried before the
+      // second click (the first reference is detached after re-render).
+      (element.querySelector('#load-more-activity') as HTMLButtonElement).click();
+      (element.querySelector('#load-more-activity') as HTMLButtonElement).click();
       
       const updatedLoadMoreButton = element.querySelector('#load-more-activity');
       expect(updatedLoadMoreButton).toBeNull();

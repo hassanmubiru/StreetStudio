@@ -428,7 +428,8 @@ describe('UploadManager', () => {
       await vi.advanceTimersByTimeAsync(5000);
 
       // Upload should reject
-      await expect(uploadPromise).rejects.toThrow();
+      const outcome = await uploadSettled;
+      expect(outcome.ok).toBe(false);
     });
 
     it('should return false when cancelling non-existent upload', () => {
