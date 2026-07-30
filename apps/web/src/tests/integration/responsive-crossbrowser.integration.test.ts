@@ -184,8 +184,25 @@ describe('Cross-Browser Responsive Integration', () => {
   });
 
   describe('Touch vs Mouse Interaction Detection', () => {
+    beforeEach(() => {
+      // Mock matchMedia for touch detection tests
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        configurable: true,
+        value: vi.fn().mockImplementation((query: string) => ({
+          matches: false,
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        })),
+      });
+    });
+
     it('should detect touch device based on pointer media query', () => {
-      // Default mock returns false (non-touch)
       expect(isTouchDevice()).toBe(false);
     });
 

@@ -54,7 +54,7 @@ describe('sanitizeHtml', () => {
     const input = '<script>alert("xss")</script><p>safe</p>';
     const result = sanitizeHtml(input);
     expect(result).not.toContain('<script');
-    // The text content of removed elements may remain as plain text (not executable)
+    expect(result).not.toContain('alert');
     expect(result).toContain('<p>safe</p>');
   });
 

@@ -436,9 +436,10 @@ describe('Accessibility Integration', () => {
         modifiers: ['ctrl'],
         handler,
         description: 'New recording',
+        context: 'global',
       });
 
-      shortcutManager.unregister('n', ['ctrl']);
+      shortcutManager.unregister('n', ['ctrl'], 'global');
 
       const event = new KeyboardEvent('keydown', {
         key: 'n',

@@ -240,6 +240,12 @@ function sanitizeNode(node: HTMLElement, options: SanitizeOptions): void {
       const element = child as HTMLElement;
       const tagName = element.tagName.toLowerCase();
 
+      // Completely remove dangerous tags including their content
+      if (REMOVED_ENTIRELY_TAGS.has(tagName)) {
+        node.removeChild(element);
+        continue;
+      }
+
       if (!options.allowedTags.has(tagName)) {
         // Replace disallowed element with its text content
         const text = document.createTextNode(element.textContent ?? '');
