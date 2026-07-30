@@ -153,3 +153,55 @@ describe('Cross-Module Integration: API Key + Webhook Authentication', () => {
       // Sharing events correspond to videos scope since shares are on videos
       expect(scopeNames).toContain('read:videos');
     });
+
+    it('should have consistent event categories in webhook events and scope groups', () => {
+      const webhookCategories = getEventsByCategory();
+      const scopeCategories = new Set(AVAILABLE_SCOPES.map(s => s.category));
+
+      // All webhook event categories should have corresponding scope categories
+      for (const [category] of webhookCategories) {
+        if (category === 'Sharing') {
+          // Sharing is governed by Videos scope
+          expect(scopeCategories.has('Videos')).toBe(true);
+        } else {
+          expect(scopeCategories.has(category)).toBe(true);
+        }
+      }
+    });
+
+    it('should display API key alongside webhook when both are active', () => {
+      const key = createApiKey({ status: 'active', scopes: ['read:videos'] });
+      const webhook = createWebhook({ status: 'active', events: ['video.created'] });
+
+      const keyPage = new ApiKeyManagementPage({ keys: [key] });
+      const webhookPage = new WebhookConfigurationPage({ webhooks: [webhook] });
+
+      const keyEl = keyPage.getElement();
+      const webhookEl = webhookPage.getElement();
+
+      // Both modules should render independently and show active status
+      expect(keyEl.textContent).toContain('Active');
+      expect(webhookEl.textContent).toContain('Active');
+
+      keyPage.destroy();
+      webhookPage.destroy();
+    });
+
+    it('should handle revoked API key not affecting webhook display', () => {
+      const key = createApiKey({ status: 'revoked' });
+      const webhook = createWebhook({ status: 'active' });
+
+      const keyPage = new ApiKeyManagementPage({ keys: [key] });
+      const webhookPage = new WebhookConfigurationPage({ webhooks: [webhook] });
+
+      // Webhook still shows active even if API key is revoked
+      const webhookEl = webhookPage.getElement();
+      expect(webhookEl.textContent).toContain('Active');
+
+      const keyEl = keyPage.getElement();
+      expect(keyEl.textContent).toContain('Revoked');
+
+      keyPage.destroy();
+      webhookPage.destroy();
+    });
+  });

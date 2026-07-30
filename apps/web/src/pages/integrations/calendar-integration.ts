@@ -232,3 +232,58 @@ export function getConnectionStatusColor(status: CalendarConnectionStatus): stri
     default: return 'bg-gray-100 text-gray-600';
   }
 }
+
+/**
+ * Get event status display color.
+ */
+export function getEventStatusColor(status: RecordingEventStatus): string {
+  switch (status) {
+    case 'scheduled': return 'bg-blue-100 text-blue-800';
+    case 'in_progress': return 'bg-yellow-100 text-yellow-800';
+    case 'completed': return 'bg-green-100 text-green-800';
+    case 'cancelled': return 'bg-gray-100 text-gray-600';
+    default: return 'bg-gray-100 text-gray-600';
+  }
+}
+
+// --- Component ---
+
+export class CalendarIntegrationPage {
+  private element: HTMLElement;
+  private connections: CalendarConnection[];
+  private events: RecordingEvent[];
+  private callbacks: Partial<CalendarIntegrationCallbacks>;
+  private showCreateForm = false;
+  private confirmDisconnectId: Uuid | null = null;
+  private confirmDeleteEventId: Uuid | null = null;
+  private createFormData: {
+    title: string;
+    description: string;
+    startTime: string;
+    endTime: string;
+    timezone: string;
+    calendarId: Uuid | null;
+    attendees: string[];
+    reminders: EventReminder[];
+    newAttendee: string;
+  } = {
+    title: '',
+    description: '',
+    startTime: '',
+    endTime: '',
+    timezone: 'America/New_York',
+    calendarId: null,
+    attendees: [],
+    reminders: [{ type: 'notification', minutesBefore: 15 }],
+    newAttendee: '',
+  };
+
+  constructor(options: CalendarIntegrationOptions = {}) {
+    this.connections = options.connections ?? [];
+    this.events = options.events ?? [];
+    this.callbacks = options.callbacks ?? {};
+    this.element = document.createElement('div');
+    this.element.setAttribute('data-page', 'calendar-integration');
+    this.element.setAttribute('data-main-content', '');
+    this.render();
+  }
