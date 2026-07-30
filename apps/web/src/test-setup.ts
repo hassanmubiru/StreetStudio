@@ -20,17 +20,26 @@ vi.stubGlobal('crypto', {
   randomUUID: vi.fn(() => 'test-uuid-123'),
 });
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-};
+// Mock localStorage with functional storage
+function createStorageMock() {
+  let store: Record<string, string> = {};
+  return {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = String(value); }),
+    removeItem: vi.fn((key: string) => { delete store[key]; }),
+    clear: vi.fn(() => { store = {}; }),
+    get length() { return Object.keys(store).length; },
+    key: vi.fn((index: number) => Object.keys(store)[index] ?? null),
+    _getStore: () => store,
+  };
+}
+
+const localStorageMock = createStorageMock();
 vi.stubGlobal('localStorage', localStorageMock);
 
 // Mock sessionStorage  
-vi.stubGlobal('sessionStorage', localStorageMock);
+const sessionStorageMock = createStorageMock();
+vi.stubGlobal('sessionStorage', sessionStorageMock);
 
 // Mock fetch
 global.fetch = vi.fn();
@@ -137,10 +146,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   
   // Reset localStorage mock
-  localStorageMock.getItem.mockClear();
-  localStorageMock.setItem.mockClear();
-  localStorageMock.removeItem.mockClear();
-  localStorageMock.clear.mockClear();
+  localStorageMock.clear();
   
   // Reset global fetch mock
   (global.fetch as any).mockClear?.();
