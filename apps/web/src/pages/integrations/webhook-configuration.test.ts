@@ -692,3 +692,59 @@ describe('WebhookConfigurationPage', () => {
       expect(result!.error).toContain('failed');
     });
   });
+
+  describe('Delivery Monitoring', () => {
+    it('should fetch and display deliveries', async () => {
+      const webhook = createTestWebhook();
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.viewDeliveries(webhook.id);
+
+      expect(callbacks.onFetchDeliveries).toHaveBeenCalledWith(webhook.id);
+      expect(page.getViewingDeliveriesId()).toBe(webhook.id);
+      expect(page.getDeliveries().length).toBe(2);
+    });
+
+    it('should display delivery table with status', async () => {
+      const webhook = createTestWebhook();
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.viewDeliveries(webhook.id);
+
+      const el = page.getElement();
+      const deliverySection = el.querySelector('#delivery-monitor');
+      expect(deliverySection).toBeTruthy();
+
+      const table = deliverySection?.querySelector('table');
+      expect(table).toBeTruthy();
+      expect(table?.getAttribute('aria-label')).toContain('deliveries');
+    });
+
+    it('should display empty state when no deliveries', async () => {
+      const webhook = createTestWebhook();
+      const callbacks: WebhookConfigurationCallbacks = {
+        ...createMockCallbacks(),
+        onFetchDeliveries: vi.fn().mockResolvedValue([]),
+      };
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.viewDeliveries(webhook.id);
+
+      const el = page.getElement();
+      expect(el.textContent).toContain('No deliveries recorded');
+    });
+
+    it('should close delivery monitor', async () => {
+      const webhook = createTestWebhook();
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.viewDeliveries(webhook.id);
+      page.hideDeliveries();
+
+      expect(page.getViewingDeliveriesId()).toBeNull();
+      expect(page.getDeliveries().length).toBe(0);
+    });
+  });
