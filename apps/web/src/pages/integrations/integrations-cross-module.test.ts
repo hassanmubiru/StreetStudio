@@ -351,3 +351,54 @@ describe('Cross-Module Integration: Webhook Events + Export/Share', () => {
       webhookPage.destroy();
     });
   });
+
+  describe('Webhook events triggered by video export completion', () => {
+    it('should have video.ready event matching export completion flow', () => {
+      const webhookEvents = AVAILABLE_EVENTS.map(e => e.type);
+      expect(webhookEvents).toContain('video.ready');
+      expect(webhookEvents).toContain('video.failed');
+    });
+
+    it('should correlate export completion with webhook delivery', async () => {
+      const exportPage = new ExportSharingPage({
+        exportJobs: [createExportJob({ id: 'job-complete', status: 'processing' })],
+      });
+
+      // Complete the export
+      exportPage.completeExport('job-complete', '/downloads/video.mp4');
+
+      const job = exportPage.getExportJobs().find(j => j.id === 'job-complete');
+      expect(job?.status).toBe('completed');
+      expect(job?.downloadUrl).toBe('/downloads/video.mp4');
+
+      // Webhook should receive video.ready event (simulated via delivery fetch)
+      const webhookCallbacks: Partial<WebhookConfigurationCallbacks> = {
+        onCreateWebhook: vi.fn(),
+        onUpdateWebhook: vi.fn(),
+        onDeleteWebhook: vi.fn(),
+        onTestWebhook: vi.fn(),
+        onFetchDeliveries: vi.fn().mockResolvedValue([
+          {
+            id: 'del-ready-1',
+            webhookId: 'wh-1',
+            eventType: 'video.ready' as const,
+            status: 'success' as const,
+            statusCode: 200,
+            responseTimeMs: 45,
+            attemptCount: 1,
+            timestamp: new Date().toISOString(),
+          },
+        ]),
+      };
+
+      const webhookPage = new WebhookConfigurationPage({
+        webhooks: [createWebhook({ events: ['video.ready'] })],
+        callbacks: webhookCallbacks,
+      });
+      await webhookPage.viewDeliveries('wh-1');
+
+      expect(webhookPage.getDeliveries()[0].eventType).toBe('video.ready');
+
+      exportPage.destroy();
+      webhookPage.destroy();
+    });

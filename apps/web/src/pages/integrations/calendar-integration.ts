@@ -452,3 +452,71 @@ export class CalendarIntegrationPage {
       }
     }
   }
+
+  public async deleteEvent(eventId: Uuid): Promise<void> {
+    if (this.callbacks.onDeleteEvent) {
+      try {
+        const success = await this.callbacks.onDeleteEvent(eventId);
+        if (success) {
+          this.events = this.events.filter(e => e.id !== eventId);
+          this.confirmDeleteEventId = null;
+          this.render();
+        }
+      } catch (error) {
+        this.showError(`delete-event-error-${eventId}`, 'Failed to delete event.');
+      }
+    }
+  }
+
+  public async generateRecordingLink(eventId: Uuid): Promise<void> {
+    if (this.callbacks.onGenerateRecordingLink) {
+      try {
+        const link = await this.callbacks.onGenerateRecordingLink(eventId);
+        this.events = this.events.map(e =>
+          e.id === eventId ? { ...e, recordingLink: link } : e
+        );
+        this.render();
+      } catch (error) {
+        this.showError(`link-error-${eventId}`, 'Failed to generate recording link.');
+      }
+    }
+  }
+
+  public destroy(): void {
+    this.element.innerHTML = '';
+    this.connections = [];
+    this.events = [];
+    this.callbacks = {};
+  }
+
+  // --- Private Rendering ---
+
+  private render(): void {
+    this.element.innerHTML = '';
+    this.element.appendChild(this.renderHeader());
+    this.element.appendChild(this.renderConnectionsSection());
+
+    if (this.showCreateForm) {
+      this.element.appendChild(this.renderCreateEventForm());
+    }
+
+    this.element.appendChild(this.renderEventsSection());
+  }
+
+  private renderHeader(): HTMLElement {
+    const header = document.createElement('header');
+    header.className = 'flex items-center justify-between mb-6';
+    header.innerHTML = `
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-900">Calendar Integration</h1>
+        <p class="text-sm text-gray-500 mt-1">Schedule recordings and sync with your calendar</p>
+      </div>
+      <button
+        id="btn-schedule-recording"
+        type="button"
+        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        aria-label="Schedule a new recording"
+      >Schedule Recording</button>
+    `;
+    return header;
+  }
