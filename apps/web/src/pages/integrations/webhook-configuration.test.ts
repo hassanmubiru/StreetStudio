@@ -517,3 +517,65 @@ describe('WebhookConfigurationPage', () => {
       expect(page.isCreateFormVisible()).toBe(false);
     });
   });
+
+  describe('Webhook Editing', () => {
+    it('should populate form with webhook data when editing', () => {
+      const webhook = createTestWebhook({
+        url: 'https://edit.example.com/hook',
+        events: ['video.created', 'comment.created'],
+        maxRetries: 3,
+      });
+      page = new WebhookConfigurationPage({ webhooks: [webhook] });
+      page.startEdit(webhook.id);
+
+      const formData = page.getCreateFormData();
+      expect(formData.url).toBe('https://edit.example.com/hook');
+      expect(formData.events).toContain('video.created');
+      expect(formData.events).toContain('comment.created');
+      expect(formData.maxRetries).toBe(3);
+    });
+
+    it('should call onUpdateWebhook with updated data', async () => {
+      const webhook = createTestWebhook();
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+      page.startEdit(webhook.id);
+      const el = page.getElement();
+      container.appendChild(el);
+
+      // Change URL
+      const urlInput = el.querySelector('#webhook-url-input') as HTMLInputElement;
+      urlInput.value = 'https://updated.example.com/hook';
+      urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      await page.updateWebhook(webhook.id);
+
+      expect(callbacks.onUpdateWebhook).toHaveBeenCalledWith(
+        webhook.id,
+        expect.objectContaining({ url: 'https://updated.example.com/hook' })
+      );
+    });
+
+    it('should close edit form after successful update', async () => {
+      const webhook = createTestWebhook();
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+      page.startEdit(webhook.id);
+
+      await page.updateWebhook(webhook.id);
+
+      expect(page.getEditingWebhookId()).toBeNull();
+    });
+
+    it('should cancel edit and restore view', () => {
+      const webhook = createTestWebhook();
+      page = new WebhookConfigurationPage({ webhooks: [webhook] });
+      page.startEdit(webhook.id);
+
+      expect(page.getEditingWebhookId()).toBe(webhook.id);
+
+      page.cancelEdit();
+
+      expect(page.getEditingWebhookId()).toBeNull();
+    });
+  });
