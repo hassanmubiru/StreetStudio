@@ -286,3 +286,67 @@ export class MobileCommentInput {
       this.updateSubmitState();
     }
   }
+
+  private autoGrow(): void {
+    this.textareaEl.style.height = 'auto';
+    const maxHeight = this.options.maxRows * 24;
+    const scrollHeight = Math.min(this.textareaEl.scrollHeight, maxHeight);
+    this.textareaEl.style.height = `${scrollHeight}px`;
+  }
+
+  private toggleTimestamp(): void {
+    this.state.includeTimestamp = !this.state.includeTimestamp;
+    this.timestampBtn.setAttribute('aria-pressed', String(this.state.includeTimestamp));
+    this.timestampBtn.style.background = this.state.includeTimestamp ? '#dbeafe' : '#f3f4f6';
+    this.timestampBtn.style.borderColor = this.state.includeTimestamp ? '#3b82f6' : '#d1d5db';
+    this.timestampBtn.style.color = this.state.includeTimestamp ? '#1d4ed8' : '#6b7280';
+  }
+
+  private updateSubmitState(): void {
+    const hasContent = this.state.text.trim().length > 0;
+    this.submitBtn.disabled = !hasContent || this.state.isSubmitting;
+    this.submitBtn.style.opacity = hasContent && !this.state.isSubmitting ? '1' : '0.5';
+  }
+
+  // --- Public API ---
+
+  public clear(): void {
+    this.state.text = '';
+    this.state.charCount = 0;
+    this.textareaEl.value = '';
+    this.charCountEl.textContent = `0/${this.options.maxLength}`;
+    this.charCountEl.style.color = '#9ca3af';
+    this.autoGrow();
+    this.updateSubmitState();
+  }
+
+  public focus(): void {
+    this.textareaEl.focus();
+  }
+
+  public blur(): void {
+    this.textareaEl.blur();
+  }
+
+  public updateTimestamp(seconds: number): void {
+    this.options.currentTimestamp = seconds;
+    this.timestampLabel.textContent = formatTimestamp(seconds);
+  }
+
+  public getState(): MobileCommentInputState {
+    return { ...this.state };
+  }
+
+  public getElement(): HTMLElement {
+    return this.container;
+  }
+
+  public destroy(): void {
+    if (this.isDestroyed) return;
+    this.isDestroyed = true;
+    if (this.visualViewportHandler && window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', this.visualViewportHandler);
+    }
+    this.container.innerHTML = '';
+  }
+}

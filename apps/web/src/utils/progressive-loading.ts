@@ -362,9 +362,12 @@ export class ProgressiveMediaLoader {
     element.appendChild(mediaEl);
 
     // Auto-play if the user clicked play
-    mediaEl.play().catch(() => {
-      // Auto-play might be blocked - that's fine
-    });
+    const playPromise = mediaEl.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {
+        // Auto-play might be blocked - that's fine
+      });
+    }
   }
 }
 
