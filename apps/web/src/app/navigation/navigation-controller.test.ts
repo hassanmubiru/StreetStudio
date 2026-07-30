@@ -52,6 +52,30 @@ vi.mock('./components/breadcrumb-navigation', () => ({
   BreadcrumbNavigation: vi.fn(() => mockBreadcrumbNavigation),
 }));
 
+// jsdom returns a fresh localStorage wrapper on each property access, so
+// vi.spyOn does not stick. Provide a stable, faithful in-memory Storage backed
+// by a real Map (round-trips values correctly) whose methods are spies so we
+// can assert calls. This is a complete key/value store, not a behavior mask.
+function createLocalStorageStub(): Storage {
+  const store = new Map<string, string>();
+  return {
+    getItem: vi.fn((key: string) => (store.has(key) ? store.get(key)! : null)),
+    setItem: vi.fn((key: string, value: string) => {
+      store.set(key, String(value));
+    }),
+    removeItem: vi.fn((key: string) => {
+      store.delete(key);
+    }),
+    clear: vi.fn(() => {
+      store.clear();
+    }),
+    key: vi.fn((index: number) => Array.from(store.keys())[index] ?? null),
+    get length() {
+      return store.size;
+    },
+  } as Storage;
+}
+
 describe('NavigationController', () => {
   let navigationController: NavigationController;
   let mockHeaderContainer: HTMLElement;
@@ -71,16 +95,15 @@ describe('NavigationController', () => {
     mainContainer.id = 'app-main';
     document.body.append(mockHeaderContainer, mockSidebarContainer, mainContainer);
 
-    // Spy on the real jsdom localStorage instead of replacing it wholesale.
-    vi.spyOn(window.localStorage, 'getItem').mockReturnValue('false');
-    vi.spyOn(window.localStorage, 'setItem');
+    // Stub the localStorage global with a stable in-memory Storage.
+    vi.stubGlobal('localStorage', createLocalStorageStub());
 
     navigationController = new NavigationController();
   });
 
   afterEach(() => {
     navigationController?.destroy();
-    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     document.body.innerHTML = '';
   });
 
