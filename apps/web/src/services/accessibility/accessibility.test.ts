@@ -227,7 +227,7 @@ describe('SkipLinks', () => {
     skipLinks.addLink({ targetId: 'footer', label: 'Skip to footer', priority: 5 });
     const links = document.body.querySelectorAll('.skip-link');
     expect(links.length).toBe(1);
-    expect(links[0].textContent).toBe('Skip to footer');
+    expect(links[0]!.textContent).toBe('Skip to footer');
   });
 
   test('removeLink removes a link by targetId', () => {
@@ -249,7 +249,7 @@ describe('SkipLinks', () => {
     ];
     const skipLinks = new SkipLinks(links);
     expect(skipLinks.getLinks()).toHaveLength(2);
-    expect(skipLinks.getLinks()[0].targetId).toBe('main');
+    expect(skipLinks.getLinks()[0]!.targetId).toBe('main');
   });
 
   test('clicking skip link focuses the target element', () => {
