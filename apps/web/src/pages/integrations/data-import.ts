@@ -320,3 +320,94 @@ export class DataImportPage {
       }
     }
   }
+
+  public toggleItemSelection(itemId: string): void {
+    this.discoveredItems = this.discoveredItems.map(item =>
+      item.id === itemId ? { ...item, selected: !item.selected } : item
+    );
+    this.render();
+  }
+
+  public selectAllItems(): void {
+    this.discoveredItems = this.discoveredItems.map(item => ({ ...item, selected: true }));
+    this.render();
+  }
+
+  public deselectAllItems(): void {
+    this.discoveredItems = this.discoveredItems.map(item => ({ ...item, selected: false }));
+    this.render();
+  }
+
+  public getSelectedItemCount(): number {
+    return this.discoveredItems.filter(item => item.selected).length;
+  }
+
+  public async startImport(): Promise<void> {
+    const selectedItems = this.discoveredItems.filter(item => item.selected);
+    if (selectedItems.length === 0) {
+      this.showError('import-error', 'Select at least one item to import');
+      return;
+    }
+    if (selectedItems.length > MAX_IMPORT_ITEMS) {
+      this.showError('import-error', `Maximum ${MAX_IMPORT_ITEMS} items per import`);
+      return;
+    }
+    if (!this.sourceFormData.platform) return;
+
+    const request: StartImportRequest = {
+      platform: this.sourceFormData.platform,
+      items: selectedItems.map(item => ({
+        externalId: item.externalId,
+        title: item.title,
+        type: item.type,
+      })),
+      targetProjectId: this.targetProjectId ?? undefined,
+    };
+
+    if (this.callbacks.onStartImport) {
+      try {
+        const job = await this.callbacks.onStartImport(request);
+        this.importJobs = [job, ...this.importJobs];
+        this.showSourceForm = false;
+        this.discoveredItems = [];
+        this.render();
+      } catch (error) {
+        this.showError('import-error', 'Failed to start import. Please try again.');
+      }
+    }
+  }
+
+  public async cancelImport(jobId: Uuid): Promise<void> {
+    if (this.callbacks.onCancelImport) {
+      try {
+        const success = await this.callbacks.onCancelImport(jobId);
+        if (success) {
+          this.importJobs = this.importJobs.map(j =>
+            j.id === jobId ? { ...j, status: 'failed' as ImportStatus, error: 'Cancelled by user' } : j
+          );
+          this.render();
+        }
+      } catch (error) {
+        this.showError(`cancel-error-${jobId}`, 'Failed to cancel import.');
+      }
+    }
+  }
+
+  public async refreshJobStatus(jobId: Uuid): Promise<void> {
+    if (this.callbacks.onFetchJobStatus) {
+      try {
+        const job = await this.callbacks.onFetchJobStatus(jobId);
+        this.importJobs = this.importJobs.map(j => j.id === jobId ? job : j);
+        this.render();
+      } catch {
+        // Silently fail refresh
+      }
+    }
+  }
+
+  public destroy(): void {
+    this.element.innerHTML = '';
+    this.importJobs = [];
+    this.callbacks = {};
+    this.discoveredItems = [];
+  }

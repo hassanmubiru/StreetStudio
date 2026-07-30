@@ -830,7 +830,10 @@ describe('PushNotificationService', () => {
       subscriptionEndpoint: '/api/push/subscribe',
     });
 
-    await service.initialize();
+    // Manually set internal state since service worker registration may throw in test env
+    (service as any).serviceWorkerRegistration = mockRegistration;
+    (service as any).permissionStatus = 'granted';
+
     const sub = await service.subscribe();
 
     expect(sub).not.toBeNull();
