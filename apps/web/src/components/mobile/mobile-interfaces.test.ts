@@ -206,3 +206,42 @@ describe('TouchGestureHandler', () => {
 
     expect(onTap).not.toHaveBeenCalled();
   });
+
+  it('should handle pan events when enabled', () => {
+    const onPanStart = vi.fn();
+    const onPanMove = vi.fn();
+    const onPanEnd = vi.fn();
+    handler = new TouchGestureHandler(
+      container,
+      { onPanStart, onPanMove, onPanEnd },
+      { enablePan: true, tapMaxDistance: 10 }
+    );
+
+    container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 100, clientY: 300 }]));
+    vi.advanceTimersByTime(10);
+    container.dispatchEvent(createTouchEvent('touchmove', [{ clientX: 150, clientY: 300 }]));
+    vi.advanceTimersByTime(10);
+    container.dispatchEvent(createTouchEvent('touchmove', [{ clientX: 200, clientY: 300 }]));
+    vi.advanceTimersByTime(10);
+    container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 200, clientY: 300 }]));
+
+    expect(onPanStart).toHaveBeenCalledTimes(1);
+    expect(onPanMove).toHaveBeenCalled();
+    expect(onPanEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('should ignore multi-touch events', () => {
+    const onTap = vi.fn();
+    handler = new TouchGestureHandler(container, { onTap });
+
+    // Multi-touch start
+    container.dispatchEvent(createTouchEvent('touchstart', [
+      { clientX: 100, clientY: 100 },
+      { clientX: 200, clientY: 200 },
+    ]));
+    vi.advanceTimersByTime(50);
+    container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 100, clientY: 100 }]));
+
+    expect(onTap).not.toHaveBeenCalled();
+  });
+});
