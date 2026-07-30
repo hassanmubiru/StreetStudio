@@ -933,15 +933,22 @@ export class WebhookConfigurationPage {
       const eventSection = this.element.querySelector('#event-selection');
       if (eventSection) {
         const categories = getEventsByCategory();
-        const filtered = this.eventFilter
-          ? new Map([...categories].map(([cat, events]) => [
-              cat,
-              events.filter(ev =>
-                ev.label.toLowerCase().includes(this.eventFilter.toLowerCase()) ||
-                ev.type.toLowerCase().includes(this.eventFilter.toLowerCase())
-              )
-            ]).filter(([, events]) => events.length > 0))
-          : categories;
+        const filtered = new Map<string, typeof AVAILABLE_EVENTS>();
+        if (this.eventFilter) {
+          for (const [cat, events] of categories) {
+            const matching = events.filter((ev: { label: string; type: string }) =>
+              ev.label.toLowerCase().includes(this.eventFilter.toLowerCase()) ||
+              ev.type.toLowerCase().includes(this.eventFilter.toLowerCase())
+            );
+            if (matching.length > 0) {
+              filtered.set(cat, matching);
+            }
+          }
+        } else {
+          for (const [cat, events] of categories) {
+            filtered.set(cat, events);
+          }
+        }
 
         eventSection.innerHTML = Array.from(filtered.entries()).map(([category, events]) => `
           <fieldset class="mb-3">
