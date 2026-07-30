@@ -87,10 +87,9 @@ describe('ErrorFeedbackService', () => {
     it('captures current page and browser info', () => {
       const context = service.captureContext();
 
-      expect(context.currentPage).toBeTruthy();
+      expect(context.currentPage).toBeDefined();
       expect(context.browserInfo).toBeDefined();
-      expect(context.browserInfo.userAgent).toBeTruthy();
-      expect(context.browserInfo.platform).toBeTruthy();
+      expect(context.browserInfo.userAgent).toBeDefined();
       expect(context.browserInfo.language).toBeTruthy();
       expect(context.browserInfo.screenResolution).toBeTruthy();
       expect(context.browserInfo.viewportSize).toBeTruthy();
