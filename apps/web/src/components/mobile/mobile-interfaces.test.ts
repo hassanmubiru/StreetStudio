@@ -115,3 +115,47 @@ describe('TouchGestureHandler', () => {
     expect(onTap).toHaveBeenCalledTimes(1);
     expect(onTap.mock.calls[0][0].type).toBe('tap');
   });
+
+  it('should detect double tap gestures', () => {
+    const onDoubleTap = vi.fn();
+    const onTap = vi.fn();
+    handler = new TouchGestureHandler(container, { onDoubleTap, onTap });
+
+    // First tap
+    container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 100, clientY: 100 }]));
+    vi.advanceTimersByTime(50);
+    container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 100, clientY: 100 }]));
+
+    // Second tap within interval
+    vi.advanceTimersByTime(100);
+    container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 100, clientY: 100 }]));
+    vi.advanceTimersByTime(50);
+    container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 100, clientY: 100 }]));
+
+    expect(onDoubleTap).toHaveBeenCalledTimes(1);
+    expect(onDoubleTap.mock.calls[0][0].type).toBe('doubletap');
+  });
+
+  it('should detect left swipe', () => {
+    const onSwipeLeft = vi.fn();
+    handler = new TouchGestureHandler(container, { onSwipeLeft }, { swipeThreshold: 50, swipeMinVelocity: 0.1 });
+
+    container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 200, clientY: 300 }]));
+    vi.advanceTimersByTime(100);
+    container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 80, clientY: 300 }]));
+
+    expect(onSwipeLeft).toHaveBeenCalledTimes(1);
+    expect(onSwipeLeft.mock.calls[0][0].direction).toBe('left');
+  });
+
+  it('should detect right swipe', () => {
+    const onSwipeRight = vi.fn();
+    handler = new TouchGestureHandler(container, { onSwipeRight }, { swipeThreshold: 50, swipeMinVelocity: 0.1 });
+
+    container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 80, clientY: 300 }]));
+    vi.advanceTimersByTime(100);
+    container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 200, clientY: 300 }]));
+
+    expect(onSwipeRight).toHaveBeenCalledTimes(1);
+    expect(onSwipeRight.mock.calls[0][0].direction).toBe('right');
+  });
