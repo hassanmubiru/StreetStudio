@@ -639,3 +639,133 @@ describe('ApiKeyManagementPage', () => {
       expect(el.querySelector('.btn-rotate-key')).toBeFalsy();
     });
   });
+
+  describe('Key Deletion', () => {
+    it('should show confirmation dialog when delete is clicked', () => {
+      const key = createTestKey({ status: 'revoked' });
+      page = new ApiKeyManagementPage({ keys: [key], callbacks: createMockCallbacks() });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const deleteBtn = el.querySelector('.btn-delete-key') as HTMLButtonElement;
+      deleteBtn.click();
+
+      expect(el.querySelector('[role="alertdialog"]')).toBeTruthy();
+      expect(el.textContent).toContain('Delete this key permanently');
+    });
+
+    it('should call onDeleteKey when confirmed', async () => {
+      const key = createTestKey({ id: 'key-to-delete' });
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ keys: [key], callbacks });
+
+      await page.deleteKey('key-to-delete');
+
+      expect(callbacks.onDeleteKey).toHaveBeenCalledWith('key-to-delete');
+    });
+
+    it('should remove key from list after successful deletion', async () => {
+      const key = createTestKey({ id: 'key-to-delete' });
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ keys: [key], callbacks });
+
+      await page.deleteKey('key-to-delete');
+
+      expect(page.getKeys().length).toBe(0);
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should have proper ARIA labels on action buttons', () => {
+      const key = createTestKey({ name: 'My Key', status: 'active' });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const rotateBtn = el.querySelector('.btn-rotate-key');
+      expect(rotateBtn?.getAttribute('aria-label')).toContain('My Key');
+
+      const revokeBtn = el.querySelector('.btn-revoke-key');
+      expect(revokeBtn?.getAttribute('aria-label')).toContain('My Key');
+
+      const deleteBtn = el.querySelector('.btn-delete-key');
+      expect(deleteBtn?.getAttribute('aria-label')).toContain('My Key');
+    });
+
+    it('should have aria-label on masked key code element', () => {
+      const key = createTestKey({ maskedKey: '••••••••abcd' });
+      page = new ApiKeyManagementPage({ keys: [key] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const code = el.querySelector('code');
+      expect(code?.getAttribute('aria-label')).toContain('abcd');
+    });
+
+    it('should use role=alert for new key banner', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ApiKeyManagementPage({ callbacks });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const input = el.querySelector('#key-name-input') as HTMLInputElement;
+      input.value = 'Test';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      const checkbox = el.querySelector('.scope-checkbox[value="read:videos"]') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await page.createKey();
+
+      const banner = el.querySelector('#new-key-banner');
+      expect(banner?.getAttribute('role')).toBe('alert');
+    });
+
+    it('should have aria-label on the key table', () => {
+      page = new ApiKeyManagementPage({ keys: [createTestKey()] });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const table = el.querySelector('table');
+      expect(table?.getAttribute('aria-label')).toContain('API keys');
+    });
+
+    it('should have role=group on scope selection area', () => {
+      page = new ApiKeyManagementPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const scopeGroup = el.querySelector('#scope-selection');
+      expect(scopeGroup?.getAttribute('role')).toBe('group');
+      expect(scopeGroup?.getAttribute('aria-label')).toContain('scopes');
+    });
+  });
+
+  describe('Multiple Keys', () => {
+    it('should render all keys in the table', () => {
+      const keys = [
+        createTestKey({ id: 'k1', name: 'Key One' }),
+        createTestKey({ id: 'k2', name: 'Key Two' }),
+        createTestKey({ id: 'k3', name: 'Key Three' }),
+      ];
+      page = new ApiKeyManagementPage({ keys });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const rows = el.querySelectorAll('[data-key-id]');
+      expect(rows.length).toBe(3);
+    });
+
+    it('should update keys via updateKeys method', () => {
+      page = new ApiKeyManagementPage({ keys: [createTestKey()] });
+      const newKeys = [
+        createTestKey({ id: 'updated-1', name: 'Updated' }),
+      ];
+      page.updateKeys(newKeys);
+
+      expect(page.getKeys()[0].name).toBe('Updated');
+    });
+  });
+});

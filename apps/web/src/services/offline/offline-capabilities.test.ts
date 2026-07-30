@@ -325,3 +325,68 @@ describe('OfflineContentCache', () => {
     cache.close(); // Should not throw
   });
 });
+
+// === Offline Comment Queue Tests ===
+
+describe('OfflineCommentQueue', () => {
+  let OfflineCommentQueue: any;
+  let mockDb: any;
+  let entries: Map<string, any>;
+  let mockStore: any;
+
+  beforeEach(async () => {
+    entries = new Map();
+
+    mockStore = {
+      put: vi.fn((entry: any) => {
+        entries.set(entry.id, entry);
+        const req = { onsuccess: null as any, onerror: null as any };
+        setTimeout(() => req.onsuccess?.(), 0);
+        return req;
+      }),
+      get: vi.fn((id: string) => {
+        const req = {
+          result: entries.get(id) || null,
+          onsuccess: null as any,
+          onerror: null as any,
+        };
+        setTimeout(() => req.onsuccess?.(), 0);
+        return req;
+      }),
+      getAll: vi.fn(() => {
+        const req = {
+          result: Array.from(entries.values()),
+          onsuccess: null as any,
+          onerror: null as any,
+        };
+        setTimeout(() => req.onsuccess?.(), 0);
+        return req;
+      }),
+      delete: vi.fn((id: string) => {
+        entries.delete(id);
+        const req = { onsuccess: null as any, onerror: null as any };
+        setTimeout(() => req.onsuccess?.(), 0);
+        return req;
+      }),
+      clear: vi.fn(() => {
+        entries.clear();
+        const req = { onsuccess: null as any, onerror: null as any };
+        setTimeout(() => req.onsuccess?.(), 0);
+        return req;
+      }),
+      index: vi.fn(() => ({
+        getAll: vi.fn((key?: any) => {
+          const results = Array.from(entries.values()).filter((e) =>
+            key ? e.videoId === key : true
+          );
+          const req = {
+            result: results,
+            onsuccess: null as any,
+            onerror: null as any,
+          };
+          setTimeout(() => req.onsuccess?.(), 0);
+          return req;
+        }),
+      })),
+      createIndex: vi.fn(),
+    };

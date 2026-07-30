@@ -542,3 +542,31 @@ describe('Offline Capabilities and Background Sync', () => {
       storage.clear();
       expect(storage.getKeys()).toHaveLength(0);
     });
+
+    it('lists all stored keys', () => {
+      storage.setItem('video_cache_1', { id: 1 });
+      storage.setItem('video_cache_2', { id: 2 });
+      storage.setItem('comment_draft', 'hello');
+
+      const keys = storage.getKeys();
+      expect(keys).toContain('video_cache_1');
+      expect(keys).toContain('video_cache_2');
+      expect(keys).toContain('comment_draft');
+    });
+
+    it('reports storage usage information', () => {
+      storage.setItem('large_item', 'x'.repeat(1000));
+      const usage = storage.getUsageInfo();
+      expect(usage.used).toBeGreaterThan(0);
+    });
+
+    it('handles JSON-serializable complex objects', () => {
+      const complexData = {
+        videos: [{ id: 'v1', title: 'Video 1' }, { id: 'v2', title: 'Video 2' }],
+        lastViewed: '2024-01-15T10:00:00Z',
+        settings: { quality: 'auto', volume: 0.8 },
+      };
+      storage.setItem('offline_data', complexData);
+      expect(storage.getItem('offline_data')).toEqual(complexData);
+    });
+  });
