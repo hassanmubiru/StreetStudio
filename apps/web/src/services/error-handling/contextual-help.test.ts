@@ -214,17 +214,16 @@ describe('ContextualHelpService', () => {
     });
 
     it('displays contextual tips for current page', () => {
-      // Mock location for dashboard
-      Object.defineProperty(window, 'location', {
-        value: { pathname: '/dashboard', href: 'http://localhost/dashboard' },
-        configurable: true,
-      });
-
-      const serviceWithTips = new ContextualHelpService();
+      // Use a custom service with tips for the root page
+      const customTips: ContextualTip[] = [
+        { id: 'test-tip', page: '/', title: 'Test Tip', content: 'Test content', dismissible: true },
+      ];
+      const serviceWithTips = new ContextualHelpService({ contextualTips: customTips });
       serviceWithTips.showHelpPanel();
 
       const tipsSection = document.querySelector('#help-tips');
       expect(tipsSection).toBeTruthy();
+      serviceWithTips.closeHelpPanel();
     });
   });
 
