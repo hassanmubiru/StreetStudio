@@ -142,3 +142,35 @@ describe('Responsive Layout Behavior Across Breakpoints', () => {
       observer.destroy();
       vi.useRealTimers();
     });
+
+    it('debounces rapid resize events (only fires once per 150ms)', async () => {
+      const listener = vi.fn();
+      observer.onChange(listener);
+
+      // Fire multiple resize events rapidly
+      Object.defineProperty(window, 'innerWidth', { value: 800, writable: true });
+      window.dispatchEvent(new Event('resize'));
+      Object.defineProperty(window, 'innerWidth', { value: 500, writable: true });
+      window.dispatchEvent(new Event('resize'));
+      Object.defineProperty(window, 'innerWidth', { value: 375, writable: true });
+      window.dispatchEvent(new Event('resize'));
+
+      // Should not fire until debounce completes
+      expect(listener).not.toHaveBeenCalled();
+
+      // After debounce period, uses the final width
+      await vi.advanceTimersByTimeAsync(200);
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith('mobile', 375);
+    });
+
+    it('notifies on transition from desktop to mobile', async () => {
+      const listener = vi.fn();
+      observer.onChange(listener);
+
+      Object.defineProperty(window, 'innerWidth', { value: 375, writable: true });
+      window.dispatchEvent(new Event('resize'));
+      await vi.advanceTimersByTimeAsync(200);
+
+      expect(listener).toHaveBeenCalledWith('mobile', 375);
+    });
