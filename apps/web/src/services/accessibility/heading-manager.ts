@@ -42,7 +42,7 @@ export class HeadingManager {
     if (this.contextStack.length === 0) {
       return this.rootLevel;
     }
-    return this.contextStack[this.contextStack.length - 1].level;
+    return this.contextStack[this.contextStack.length - 1]!.level;
   }
 
   /**

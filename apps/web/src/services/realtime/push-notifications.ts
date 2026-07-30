@@ -194,9 +194,10 @@ export class PushNotificationService {
    */
   public isSupported(): boolean {
     return (
+      typeof navigator !== 'undefined' &&
       'serviceWorker' in navigator &&
-      'PushManager' in window &&
-      'Notification' in window
+      typeof PushManager !== 'undefined' &&
+      typeof Notification !== 'undefined'
     );
   }
 

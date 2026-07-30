@@ -239,8 +239,8 @@ describe('Cross-Module Integration: API Key + Webhook Authentication', () => {
       // Both should show last 4 chars only
       expect(originalMasked).toMatch(/•+.{4}$/);
       expect(rotatedMasked).toMatch(/•+.{4}$/);
-      expect(originalMasked.slice(-4)).toBe('key');
-      expect(rotatedMasked.slice(-3)).toBe('456');
+      expect(originalMasked.slice(-4)).toBe('3key');
+      expect(rotatedMasked.slice(-4)).toBe('d456');
     });
   });
 });
@@ -558,3 +558,274 @@ describe('Cross-Module Integration: Export Permissions + Share Links', () => {
       page.destroy();
     });
   });
+
+  describe('Permission labels consistency across modules', () => {
+    it('should have consistent permission label descriptions', () => {
+      expect(getPermissionLabel('public')).toBe('Anyone with the link');
+      expect(getPermissionLabel('password')).toBe('Password protected');
+      expect(getPermissionLabel('organization')).toBe('Organization members only');
+      expect(getPermissionLabel('members')).toBe('Specific members only');
+    });
+
+    it('should show all four permission types in share form', () => {
+      const page = new ExportSharingPage();
+      page.showShare('video-1');
+      const el = page.getElement();
+
+      const radios = el.querySelectorAll('.permission-radio');
+      expect(radios.length).toBe(4);
+
+      page.destroy();
+    });
+  });
+});
+
+describe('Cross-Module Integration: API Key + Export Operations', () => {
+  describe('API key scope requirements for export operations', () => {
+    it('should require read:videos scope for export operations', () => {
+      const scopeNames = AVAILABLE_SCOPES.map(s => s.scope);
+      // Export operations need at least read access to videos
+      expect(scopeNames).toContain('read:videos');
+      // Write access for modifying exports
+      expect(scopeNames).toContain('write:videos');
+    });
+
+    it('should display rate limit alongside export progress', () => {
+      // Simulate a key with reduced rate limit during batch export
+      const ratePct = getRateLimitPercentage(200, 1000);
+      expect(ratePct).toBe(80); // 80% used
+
+      const batchProgress = calculateBatchProgress([
+        createExportJob({ progress: 100 }),
+        createExportJob({ progress: 50 }),
+        createExportJob({ progress: 0 }),
+      ]);
+      expect(batchProgress).toBe(50);
+    });
+
+    it('should track API key usage count increasing with export requests', () => {
+      const keyBefore = createApiKey({ requestCount: 100, rateLimitRemaining: 900 });
+      const keyAfter = createApiKey({ requestCount: 105, rateLimitRemaining: 895 });
+
+      const page = new ApiKeyManagementPage({ keys: [keyBefore] });
+      page.updateKeys([keyAfter]);
+
+      const updatedKey = page.getKeys()[0];
+      expect(updatedKey.requestCount).toBe(105);
+      expect(updatedKey.rateLimitRemaining).toBe(895);
+
+      page.destroy();
+    });
+  });
+
+  describe('API key validation alongside webhook URL validation', () => {
+    it('should validate key names and webhook URLs with consistent patterns', () => {
+      // Both have length limits and character restrictions
+      const validKeyName = validateKeyName('My Export Key');
+      expect(validKeyName.valid).toBe(true);
+
+      const validWebhookUrl = validateWebhookUrl('https://hooks.example.com/export');
+      expect(validWebhookUrl.valid).toBe(true);
+
+      // Both reject empty values
+      const emptyKeyName = validateKeyName('');
+      expect(emptyKeyName.valid).toBe(false);
+
+      const emptyUrl = validateWebhookUrl('');
+      expect(emptyUrl.valid).toBe(false);
+    });
+
+    it('should reject HTML injection in key names', () => {
+      const xssAttempt = validateKeyName('<script>alert("xss")</script>');
+      expect(xssAttempt.valid).toBe(false);
+    });
+
+    it('should reject HTTP URLs for webhook endpoints', () => {
+      const insecureUrl = validateWebhookUrl('http://insecure.example.com/hook');
+      expect(insecureUrl.valid).toBe(false);
+      expect(insecureUrl.error).toContain('HTTPS');
+    });
+  });
+});
+
+describe('Cross-Module Integration: Concurrent Module Lifecycle', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    if (container.parentNode) {
+      document.body.removeChild(container);
+    }
+  });
+
+  it('should render all three modules simultaneously without conflicts', () => {
+    const keyPage = new ApiKeyManagementPage({ keys: [createApiKey()] });
+    const webhookPage = new WebhookConfigurationPage({
+      webhooks: [createWebhook()],
+    });
+    const exportPage = new ExportSharingPage({
+      videos: [createVideo()],
+      exportJobs: [createExportJob()],
+      shareLinks: [createShareLink()],
+    });
+
+    container.appendChild(keyPage.getElement());
+    container.appendChild(webhookPage.getElement());
+    container.appendChild(exportPage.getElement());
+
+    // All three should coexist without DOM conflicts
+    expect(container.querySelector('[data-page="api-key-management"]')).toBeTruthy();
+    expect(container.querySelector('[data-page="webhook-configuration"]')).toBeTruthy();
+    expect(container.querySelector('[data-page="export-sharing"]')).toBeTruthy();
+
+    keyPage.destroy();
+    webhookPage.destroy();
+    exportPage.destroy();
+  });
+
+  it('should cleanup all modules without side effects', () => {
+    const keyPage = new ApiKeyManagementPage({ keys: [createApiKey()] });
+    const webhookPage = new WebhookConfigurationPage({
+      webhooks: [createWebhook()],
+    });
+    const exportPage = new ExportSharingPage({
+      shareLinks: [createShareLink()],
+    });
+
+    container.appendChild(keyPage.getElement());
+    container.appendChild(webhookPage.getElement());
+    container.appendChild(exportPage.getElement());
+
+    // Destroy all - destroy() cleans up internal state and listeners,
+    // but elements remain in DOM unless explicitly removed
+    keyPage.destroy();
+    webhookPage.destroy();
+    exportPage.destroy();
+
+    // After destroy, the page elements should still be in DOM
+    // but their internal state should be cleaned up
+    const keyEl = container.querySelector('[data-page="api-key-management"]');
+    const webhookEl = container.querySelector('[data-page="webhook-configuration"]');
+    const exportEl = container.querySelector('[data-page="export-sharing"]');
+
+    expect(keyEl).toBeTruthy();
+    expect(webhookEl).toBeTruthy();
+    expect(exportEl).toBeTruthy();
+
+    // Verify that no event listeners are active (pages are inert after destroy)
+    // Re-creating pages should not conflict with destroyed ones
+    const newKeyPage = new ApiKeyManagementPage({ keys: [createApiKey()] });
+    expect(newKeyPage.getKeys().length).toBe(1);
+    newKeyPage.destroy();
+  });
+
+  it('should handle date formatting consistently across modules', () => {
+    const recentDate = new Date(Date.now() - 5 * 60000).toISOString();
+
+    // API key module
+    const keyDateFormatted = formatKeyDate(recentDate);
+    expect(keyDateFormatted).toBe('5m ago');
+
+    // Webhook module
+    const deliveryTimeFormatted = formatDeliveryTime(recentDate);
+    expect(deliveryTimeFormatted).toBe('5m ago');
+  });
+
+  it('should handle status color patterns consistently across modules', () => {
+    // API key active = green
+    const keyActive = getStatusColor('active');
+    expect(keyActive).toContain('green');
+
+    // Webhook active = green (via getWebhookStatusColor, tested in module tests)
+    // Both use same color scheme for active state
+
+    // API key revoked = red
+    const keyRevoked = getStatusColor('revoked');
+    expect(keyRevoked).toContain('red');
+  });
+
+  it('should support creating API key, webhook, and share link in sequence', async () => {
+    // Simulate a user setting up their integration: key → webhook → share
+    const keyCallbacks: Partial<ApiKeyManagementCallbacks> = {
+      onCreateKey: vi.fn().mockResolvedValue({
+        key: createApiKey({ id: 'new-integration-key' }),
+        fullKey: 'sk_live_integration_setup_key',
+      } as CreateApiKeyResponse),
+      onRevokeKey: vi.fn(),
+      onRotateKey: vi.fn(),
+      onDeleteKey: vi.fn(),
+    };
+
+    const webhookCallbacks: Partial<WebhookConfigurationCallbacks> = {
+      onCreateWebhook: vi.fn().mockResolvedValue(
+        createWebhook({ id: 'new-integration-wh' })
+      ),
+      onUpdateWebhook: vi.fn(),
+      onDeleteWebhook: vi.fn(),
+      onTestWebhook: vi.fn(),
+      onFetchDeliveries: vi.fn(),
+    };
+
+    const shareCallbacks: Partial<ExportSharingCallbacks> = {
+      onGenerateShareLink: vi.fn().mockResolvedValue(
+        createShareLink({ id: 'new-integration-link' })
+      ),
+      onStartExport: vi.fn(),
+      onStartBatchExport: vi.fn(),
+      onCancelExport: vi.fn(),
+      onRevokeShareLink: vi.fn(),
+      onGetShareLinks: vi.fn(),
+    };
+
+    // Step 1: Create API key
+    const keyPage = new ApiKeyManagementPage({ callbacks: keyCallbacks });
+    keyPage.showCreate();
+    const keyEl = keyPage.getElement();
+    container.appendChild(keyEl);
+
+    const nameInput = keyEl.querySelector('#key-name-input') as HTMLInputElement;
+    nameInput.value = 'Integration Setup';
+    nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    const scopeCb = keyEl.querySelector('.scope-checkbox[value="read:videos"]') as HTMLInputElement;
+    scopeCb.checked = true;
+    scopeCb.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await keyPage.createKey();
+    expect(keyCallbacks.onCreateKey).toHaveBeenCalled();
+    expect(keyPage.getKeys().length).toBe(1);
+
+    // Step 2: Create webhook
+    const webhookPage = new WebhookConfigurationPage({ callbacks: webhookCallbacks });
+    webhookPage.showCreate();
+    const whEl = webhookPage.getElement();
+    container.appendChild(whEl);
+
+    const urlInput = whEl.querySelector('#webhook-url-input') as HTMLInputElement;
+    urlInput.value = 'https://myapp.com/hooks/streetstudio';
+    urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+    const eventCb = whEl.querySelector('.event-checkbox[value="share.created"]') as HTMLInputElement;
+    eventCb.checked = true;
+    eventCb.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await webhookPage.createWebhook();
+    expect(webhookCallbacks.onCreateWebhook).toHaveBeenCalled();
+    expect(webhookPage.getWebhooks().length).toBe(1);
+
+    // Step 3: Create share link
+    const exportPage = new ExportSharingPage({ callbacks: shareCallbacks });
+    exportPage.showShare('video-1');
+    exportPage.setSharePermission('public');
+
+    await exportPage.createShareLink();
+    expect(shareCallbacks.onGenerateShareLink).toHaveBeenCalled();
+    expect(exportPage.getShareLinks().length).toBe(1);
+
+    keyPage.destroy();
+    webhookPage.destroy();
+    exportPage.destroy();
+  });
+});

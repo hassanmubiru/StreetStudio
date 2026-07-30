@@ -627,3 +627,63 @@ export class CalendarIntegrationPage {
     `;
     return form;
   }
+
+  private renderEventsSection(): HTMLElement {
+    const section = document.createElement('section');
+    section.id = 'scheduled-events';
+    section.setAttribute('aria-labelledby', 'events-heading');
+
+    if (this.events.length === 0) {
+      section.innerHTML = `
+        <h2 id="events-heading" class="text-lg font-medium text-gray-900 mb-4">Scheduled Recordings</h2>
+        <div class="text-center py-12 bg-white border border-gray-200 rounded-lg">
+          <h3 class="text-sm font-medium text-gray-900">No scheduled recordings</h3>
+          <p class="mt-1 text-sm text-gray-500">Schedule a recording to get started.</p>
+        </div>
+      `;
+      return section;
+    }
+
+    const eventCards = this.events.map(event => {
+      const statusColor = getEventStatusColor(event.status);
+      const duration = getEventDurationMinutes(event.startTime, event.endTime);
+      return `
+        <div class="p-4 bg-white border border-gray-200 rounded-lg" data-event-id="${event.id}">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">${this.escapeHtml(event.title)}</h3>
+              <p class="text-xs text-gray-500 mt-1">${formatEventTime(event.startTime)} — ${formatDuration(duration)}</p>
+              ${event.attendees.length > 0 ? `<p class="text-xs text-gray-500 mt-1">${event.attendees.length} attendee${event.attendees.length !== 1 ? 's' : ''}</p>` : ''}
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">${event.status.replace('_', ' ')}</span>
+              ${!event.recordingLink && event.status === 'scheduled' ? `<button type="button" class="btn-generate-link px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500" data-event-id="${event.id}" aria-label="Generate recording link">Get Link</button>` : ''}
+              ${event.recordingLink ? `<a href="${this.escapeHtml(event.recordingLink)}" class="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 rounded" target="_blank" rel="noopener noreferrer">Join</a>` : ''}
+              <button type="button" class="btn-delete-event px-2 py-1 text-xs font-medium text-red-700 bg-red-50 rounded hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500" data-event-id="${event.id}" aria-label="Delete event ${this.escapeHtml(event.title)}">Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    section.innerHTML = `
+      <h2 id="events-heading" class="text-lg font-medium text-gray-900 mb-4">Scheduled Recordings</h2>
+      <div class="space-y-3">${eventCards}</div>
+    `;
+    return section;
+  }
+
+  private showError(elementId: string, message: string): void {
+    const el = this.element.querySelector(`#${elementId}`);
+    if (el) {
+      el.textContent = message;
+      el.classList.remove('hidden');
+    }
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+}
