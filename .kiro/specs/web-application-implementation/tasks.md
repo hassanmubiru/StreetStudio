@@ -426,18 +426,18 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Add responsive navigation with slide-out menu and breadcrumb optimization
     - _Requirements: 10.1, 10.2, 10.3_
 
-  - [ ] 13.2 Write property tests for responsive adaptation
+  - [-] 13.2 Write property tests for responsive adaptation
     - **Property 8: Responsive Layout Adaptation**
     - **Validates: Requirements 10.1**
 
-  - [ ] 13.3 Build mobile-optimized interfaces
+  - [-] 13.3 Build mobile-optimized interfaces
     - Create mobile-optimized video player with appropriate controls
     - Implement touch gestures for video seeking and navigation
     - Build mobile comment composition with touch keyboard optimization
     - Add swipe gestures for common actions (delete, archive, etc.)
     - _Requirements: 10.4, 10.5_
 
-  - [ ] 13.4 Implement mobile-specific features
+  - [-] 13.4 Implement mobile-specific features
     - Add pull-to-refresh functionality for content lists
     - Build camera access integration for mobile uploads
     - Implement photo library integration with upload flow
@@ -458,7 +458,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - _Requirements: 10.1, 10.2, 10.6_
 
 - [ ] 14. Performance Optimization Implementation
-  - [ ] 14.1 Implement code splitting and lazy loading
+  - [-] 14.1 Implement code splitting and lazy loading
     - Set up route-based code splitting with dynamic imports
     - Create lazy loading for heavy components (editor, player)
     - Implement skeleton screens for loading states
