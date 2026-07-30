@@ -85,3 +85,36 @@ export interface CalendarIntegrationOptions {
   events?: RecordingEvent[];
   callbacks?: Partial<CalendarIntegrationCallbacks>;
 }
+
+// --- Constants ---
+
+export const CALENDAR_PROVIDERS: { provider: CalendarProvider; label: string; icon: string }[] = [
+  { provider: 'google', label: 'Google Calendar', icon: 'google-calendar' },
+  { provider: 'outlook', label: 'Microsoft Outlook', icon: 'outlook' },
+  { provider: 'apple', label: 'Apple Calendar', icon: 'apple-calendar' },
+];
+
+export const REMINDER_OPTIONS: { value: number; label: string }[] = [
+  { value: 5, label: '5 minutes before' },
+  { value: 10, label: '10 minutes before' },
+  { value: 15, label: '15 minutes before' },
+  { value: 30, label: '30 minutes before' },
+  { value: 60, label: '1 hour before' },
+  { value: 1440, label: '1 day before' },
+];
+
+export const TIMEZONE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'America/New_York', label: 'Eastern Time (ET)' },
+  { value: 'America/Chicago', label: 'Central Time (CT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MT)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+  { value: 'Europe/London', label: 'GMT/BST' },
+  { value: 'Europe/Paris', label: 'Central European Time (CET)' },
+  { value: 'Asia/Tokyo', label: 'Japan Standard Time (JST)' },
+  { value: 'Australia/Sydney', label: 'Australian Eastern Time (AET)' },
+];
+
+export const EVENT_TITLE_MAX_LENGTH = 200;
+export const EVENT_TITLE_MIN_LENGTH = 1;
+export const EVENT_DESCRIPTION_MAX_LENGTH = 2000;
+export const MAX_ATTENDEES = 50;
