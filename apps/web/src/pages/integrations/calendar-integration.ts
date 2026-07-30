@@ -287,3 +287,63 @@ export class CalendarIntegrationPage {
     this.element.setAttribute('data-main-content', '');
     this.render();
   }
+
+  public getElement(): HTMLElement {
+    return this.element;
+  }
+
+  public getConnections(): CalendarConnection[] {
+    return [...this.connections];
+  }
+
+  public getEvents(): RecordingEvent[] {
+    return [...this.events];
+  }
+
+  public isCreateFormVisible(): boolean {
+    return this.showCreateForm;
+  }
+
+  public getCreateFormData() {
+    return {
+      title: this.createFormData.title,
+      description: this.createFormData.description,
+      startTime: this.createFormData.startTime,
+      endTime: this.createFormData.endTime,
+      timezone: this.createFormData.timezone,
+      calendarId: this.createFormData.calendarId,
+      attendees: [...this.createFormData.attendees],
+      reminders: [...this.createFormData.reminders],
+    };
+  }
+
+  public updateConnections(connections: CalendarConnection[]): void {
+    this.connections = connections;
+    this.render();
+  }
+
+  public updateEvents(events: RecordingEvent[]): void {
+    this.events = events;
+    this.render();
+  }
+
+  public showCreate(): void {
+    this.showCreateForm = true;
+    this.createFormData = {
+      title: '',
+      description: '',
+      startTime: '',
+      endTime: '',
+      timezone: 'America/New_York',
+      calendarId: null,
+      attendees: [],
+      reminders: [{ type: 'notification', minutesBefore: 15 }],
+      newAttendee: '',
+    };
+    this.render();
+  }
+
+  public hideCreate(): void {
+    this.showCreateForm = false;
+    this.render();
+  }
