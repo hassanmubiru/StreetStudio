@@ -4,6 +4,8 @@
  * Tests for WebSocket-driven cache invalidation with rules and patterns.
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CacheInvalidationService } from './cache-invalidation.js';
 import { CacheManager } from './cache-manager.js';

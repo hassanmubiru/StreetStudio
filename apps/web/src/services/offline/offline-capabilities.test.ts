@@ -81,3 +81,39 @@ describe('ServiceWorkerManager', () => {
     expect(status.error).toBe('Registration failed');
     expect(onError).toHaveBeenCalledWith(error);
   });
+
+  it('should post messages to active service worker', async () => {
+    const manager = new ServiceWorkerManager();
+    await manager.register();
+    manager.postMessage({ type: 'TEST_MESSAGE' });
+    expect(navigator.serviceWorker.controller!.postMessage).toHaveBeenCalledWith({
+      type: 'TEST_MESSAGE',
+    });
+  });
+
+  it('should unregister service worker', async () => {
+    const manager = new ServiceWorkerManager();
+    await manager.register();
+    const result = await manager.unregister();
+    expect(result).toBe(true);
+    const status = manager.getStatus();
+    expect(status.isRegistered).toBe(false);
+  });
+
+  it('should return error status when not supported', async () => {
+    Object.defineProperty(navigator, 'serviceWorker', {
+      writable: true,
+      configurable: true,
+      value: undefined,
+    });
+    const manager = new ServiceWorkerManager();
+    const status = await manager.register();
+    expect(status.isRegistered).toBe(false);
+    expect(status.error).toContain('not supported');
+  });
+});
+
+// === Connectivity Status Tests ===
+
+describe('ConnectivityStatusManager', () => {
+  let ConnectivityStatusManager: any;

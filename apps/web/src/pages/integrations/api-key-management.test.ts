@@ -337,3 +337,124 @@ describe('ApiKeyManagementPage', () => {
       expect(el.textContent).toContain('Never');
     });
   });
+
+  describe('Create Key Form', () => {
+    it('should show create form when Generate button is clicked', () => {
+      page = new ApiKeyManagementPage();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const btn = el.querySelector('#btn-create-key') as HTMLButtonElement;
+      btn.click();
+
+      expect(page.isCreateFormVisible()).toBe(true);
+      expect(el.querySelector('#create-key-form')).toBeTruthy();
+    });
+
+    it('should display key name input', () => {
+      page = new ApiKeyManagementPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const input = el.querySelector('#key-name-input') as HTMLInputElement;
+      expect(input).toBeTruthy();
+      expect(input.getAttribute('aria-required')).toBe('true');
+    });
+
+    it('should display scope checkboxes grouped by category', () => {
+      page = new ApiKeyManagementPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const checkboxes = el.querySelectorAll('.scope-checkbox');
+      expect(checkboxes.length).toBe(AVAILABLE_SCOPES.length);
+
+      const fieldsets = el.querySelectorAll('#scope-selection fieldset');
+      expect(fieldsets.length).toBeGreaterThan(0);
+    });
+
+    it('should display expiration select with options', () => {
+      page = new ApiKeyManagementPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const select = el.querySelector('#expiration-select') as HTMLSelectElement;
+      expect(select).toBeTruthy();
+      expect(select.options.length).toBe(EXPIRATION_OPTIONS.length);
+    });
+
+    it('should hide form when Cancel is clicked', () => {
+      page = new ApiKeyManagementPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const cancelBtn = el.querySelector('#btn-cancel-create') as HTMLButtonElement;
+      cancelBtn.click();
+
+      expect(page.isCreateFormVisible()).toBe(false);
+      expect(el.querySelector('#create-key-form')).toBeFalsy();
+    });
+
+    it('should update name on input', () => {
+      page = new ApiKeyManagementPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const input = el.querySelector('#key-name-input') as HTMLInputElement;
+      input.value = 'My New Key';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(page.getCreateFormData().name).toBe('My New Key');
+    });
+
+    it('should toggle scope on checkbox change', () => {
+      page = new ApiKeyManagementPage();
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const checkbox = el.querySelector('.scope-checkbox[value="read:videos"]') as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(page.getCreateFormData().scopes).toContain('read:videos');
+    });
+
+    it('should show error for empty name on submit', () => {
+      page = new ApiKeyManagementPage({ callbacks: createMockCallbacks() });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const submitBtn = el.querySelector('#btn-submit-create') as HTMLButtonElement;
+      submitBtn.click();
+
+      const nameError = el.querySelector('#name-error');
+      expect(nameError?.classList.contains('hidden')).toBe(false);
+      expect(nameError?.textContent).toContain('required');
+    });
+
+    it('should show error when no scopes selected', () => {
+      page = new ApiKeyManagementPage({ callbacks: createMockCallbacks() });
+      page.showCreate();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      // Set name but no scopes
+      const input = el.querySelector('#key-name-input') as HTMLInputElement;
+      input.value = 'Valid Name';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const submitBtn = el.querySelector('#btn-submit-create') as HTMLButtonElement;
+      submitBtn.click();
+
+      const scopeError = el.querySelector('#scope-error');
+      expect(scopeError?.classList.contains('hidden')).toBe(false);
+      expect(scopeError?.textContent).toContain('scope');
+    });
+  });

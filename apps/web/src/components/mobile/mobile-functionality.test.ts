@@ -365,3 +365,36 @@ describe('Touch Gestures and Mobile-Specific Interactions', () => {
     it('provides correct start and end coordinates in tap events', () => {
       const onTap = vi.fn();
       const handler = new TouchGestureHandler(container, { onTap });
+
+      container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 150, clientY: 250 }]));
+      vi.advanceTimersByTime(50);
+      container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 152, clientY: 251 }]));
+
+      expect(onTap).toHaveBeenCalledTimes(1);
+      const event = onTap.mock.calls[0][0];
+      expect(event.startX).toBe(150);
+      expect(event.startY).toBe(250);
+      expect(event.endX).toBe(152);
+      expect(event.endY).toBe(251);
+      handler.destroy();
+    });
+  });
+
+  describe('touch cancel handling', () => {
+    it('cancels long press on touchcancel', () => {
+      const onLongPress = vi.fn();
+      const handler = new TouchGestureHandler(
+        container,
+        { onLongPress },
+        { longPressDelay: 500 }
+      );
+
+      container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 100, clientY: 100 }]));
+      vi.advanceTimersByTime(200);
+      container.dispatchEvent(new TouchEvent('touchcancel', { bubbles: true }));
+      vi.advanceTimersByTime(400);
+
+      expect(onLongPress).not.toHaveBeenCalled();
+      handler.destroy();
+    });
+  });
