@@ -60,7 +60,14 @@ describe('Navigation Integration', () => {
     `;
 
     container = document.getElementById('app')!;
-    
+
+    // Establish the current route via real jsdom history navigation so the
+    // controller initializes with '/dashboard' as its current route.
+    window.history.pushState({}, '', '/dashboard');
+
+    // Provide a stable in-memory localStorage for the suite.
+    vi.stubGlobal('localStorage', createLocalStorageStub());
+
     // Setup layout controller
     layoutController = new LayoutController(container);
     await layoutController.initialize();
@@ -72,6 +79,8 @@ describe('Navigation Integration', () => {
 
   afterEach(() => {
     navigationController?.destroy();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     document.body.innerHTML = '';
   });
 
@@ -204,20 +213,8 @@ describe('Navigation Integration', () => {
   });
 
   test('should persist and restore navigation state', () => {
-    // Mock localStorage
-    const mockStorage: Record<string, string> = {};
-    Object.defineProperty(window, 'localStorage', {
-      value: {
-        getItem: vi.fn((key: string) => mockStorage[key] || null),
-        setItem: vi.fn((key: string, value: string) => {
-          mockStorage[key] = value;
-        }),
-        removeItem: vi.fn((key: string) => {
-          delete mockStorage[key];
-        })
-      },
-      writable: true
-    });
+    // Use a stable in-memory localStorage that round-trips values.
+    vi.stubGlobal('localStorage', createLocalStorageStub());
 
     // Change sidebar state
     navigationController.toggleSidebar();
@@ -239,15 +236,9 @@ describe('Navigation Integration', () => {
   });
 
   test('should handle deep link navigation', () => {
-    // Setup deep link with query parameters
-    Object.defineProperty(window, 'location', {
-      value: {
-        pathname: '/projects/123',
-        search: '?view=grid&sort=name',
-        hash: '#videos'
-      },
-      writable: true
-    });
+    // Setup deep link with query parameters via real jsdom navigation so
+    // window.location.search / hash reflect real parsed values.
+    window.history.pushState({}, '', '/projects/123?view=grid&sort=name#videos');
 
     navigationController.setupDeepLinkSupport();
 
@@ -273,18 +264,15 @@ describe('Navigation Integration', () => {
       controller.destroy();
     }).not.toThrow();
 
-    // Test with localStorage errors
-    Object.defineProperty(window, 'localStorage', {
-      value: {
-        getItem: vi.fn(() => {
-          throw new Error('Storage error');
-        }),
-        setItem: vi.fn(() => {
-          throw new Error('Storage error');
-        })
+    // Test with localStorage errors (stub restored automatically in afterEach)
+    vi.stubGlobal('localStorage', createLocalStorageStub({
+      getItem: () => {
+        throw new Error('Storage error');
       },
-      writable: true
-    });
+      setItem: () => {
+        throw new Error('Storage error');
+      },
+    }));
 
     expect(() => {
       const controller = new NavigationController();

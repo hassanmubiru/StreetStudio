@@ -68,7 +68,9 @@ describe('Task 3.4: Workspace and Organization Management Integration', () => {
     } as WorkspaceDto;
 
     mockProject = {
-      id: 'project-1' as Uuid,
+      // Real UUID so route-segment breadcrumb resolution maps it to the
+      // project name (the resolver only names segments matching the UUID form).
+      id: '11111111-1111-4111-8111-111111111111' as Uuid,
       name: 'Test Project',
       organizationId: mockOrganization.id,
       createdAt: '2024-01-01T00:00:00Z',
@@ -172,8 +174,8 @@ describe('Task 3.4: Workspace and Organization Management Integration', () => {
       workspaceStore.setCurrentWorkspace(mockWorkspace);
       workspaceStore.setCurrentProject(mockProject);
       
-      // Navigate to a deep route
-      workspaceStore.navigateToRoute('/projects/project-1/videos/video-1');
+      // Navigate to a deep route (uses the project's real UUID in the path)
+      workspaceStore.navigateToRoute(`/projects/${mockProject.id}/videos/video-1`);
       
       // Verify breadcrumbs are generated
       const state = workspaceStore.getState();
@@ -302,7 +304,7 @@ describe('Task 3.4: Workspace and Organization Management Integration', () => {
       // Set up deep navigation state
       workspaceStore.setCurrentWorkspace(mockWorkspace);
       workspaceStore.setCurrentProject(mockProject);
-      workspaceStore.navigateToRoute('/projects/project-1/folders/folder-1/videos/video-1');
+      workspaceStore.navigateToRoute(`/projects/${mockProject.id}/folders/folder-1/videos/video-1`);
       
       // Verify breadcrumb generation
       const breadcrumbs = workspaceStore.getState().breadcrumbs;
