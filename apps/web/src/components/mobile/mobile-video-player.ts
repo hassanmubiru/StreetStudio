@@ -276,15 +276,17 @@ export class MobileVideoPlayer {
       e.stopPropagation();
       isTouchingProgress = true;
       this.state.isSeeking = true;
-      if (e.touches.length > 0) {
-        seekToPosition(e.touches[0].clientX);
+      const touch = e.touches[0];
+      if (touch) {
+        seekToPosition(touch.clientX);
       }
     }, { passive: true });
 
     this.progressBar.addEventListener('touchmove', (e) => {
-      if (isTouchingProgress && e.touches.length > 0) {
+      const touch = e.touches[0];
+      if (isTouchingProgress && touch) {
         e.preventDefault();
-        seekToPosition(e.touches[0].clientX);
+        seekToPosition(touch.clientX);
       }
     }, { passive: false });
 
