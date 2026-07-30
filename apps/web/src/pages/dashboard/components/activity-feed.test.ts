@@ -195,12 +195,12 @@ describe('ActivityFeed', () => {
       // Create more notifications to test pagination
       const manyNotifications = Array.from({ length: 12 }, (_, i) => ({
         id: `notif-${i + 1}`,
-        message: `Notification ${i + 1}`,
-        type: 'comment',
-        read: i % 2 === 0,
+        memberId: 'member-1',
+        eventType: 'comment',
+        sourceResourceId: `video-${i + 1}`,
         createdAt: `2024-01-01T12:${String(i).padStart(2, '0')}:00Z`,
-        metadata: { videoId: `video-${i + 1}` }
-      })) as unknown as NotificationDto[];
+        ...(i % 2 === 0 ? { readAt: `2024-01-01T12:${String(i).padStart(2, '0')}:30Z` } : {})
+      })) satisfies NotificationDto[];
       
       activityFeed = new ActivityFeed(manyNotifications);
     });

@@ -405,10 +405,15 @@ describe('UploadManager', () => {
 
       (apiClient.delete as any).mockResolvedValue({});
 
-      // Start upload (don't await)
+      // Start upload (don't await). Attach a rejection handler immediately so
+      // the eventual cancellation rejection is never treated as unhandled.
       const uploadPromise = manager.uploadFile(file, {
         chunkSize: 5 * 1024 * 1024
       });
+      const uploadSettled = uploadPromise.then(
+        () => ({ ok: true as const }),
+        (error: unknown) => ({ ok: false as const, error })
+      );
 
       // Cancel after a tick
       await vi.advanceTimersByTimeAsync(50);
