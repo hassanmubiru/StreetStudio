@@ -225,3 +225,64 @@ export class MobileCommentInput {
       window.visualViewport.addEventListener('resize', this.visualViewportHandler);
     }
   }
+
+  private handleInput(): void {
+    this.state.text = this.textareaEl.value;
+    this.state.charCount = this.state.text.length;
+    this.charCountEl.textContent = `${this.state.charCount}/${this.options.maxLength}`;
+
+    // Warn when near limit
+    if (this.state.charCount > this.options.maxLength * 0.9) {
+      this.charCountEl.style.color = '#ef4444';
+    } else {
+      this.charCountEl.style.color = '#9ca3af';
+    }
+
+    // Enable/disable submit
+    const hasContent = this.state.text.trim().length > 0;
+    this.submitBtn.disabled = !hasContent;
+    this.submitBtn.style.opacity = hasContent ? '1' : '0.5';
+
+    // Auto-grow textarea
+    this.autoGrow();
+  }
+
+  private handleFocus(): void {
+    this.state.isFocused = true;
+    this.textareaEl.style.borderColor = '#3b82f6';
+    this.callbacks.onFocus?.();
+  }
+
+  private handleBlur(): void {
+    this.state.isFocused = false;
+    this.textareaEl.style.borderColor = '#d1d5db';
+    this.wrapperEl.style.paddingBottom = '';
+    this.callbacks.onBlur?.();
+  }
+
+  private handleKeydown(e: KeyboardEvent): void {
+    // Submit on Enter (without Shift) on mobile
+    if (e.key === 'Enter' && !e.shiftKey && this.state.text.trim().length > 0) {
+      e.preventDefault();
+      this.handleSubmit();
+    }
+  }
+
+  private async handleSubmit(): Promise<void> {
+    const text = this.state.text.trim();
+    if (!text || this.state.isSubmitting) return;
+
+    this.state.isSubmitting = true;
+    this.submitBtn.disabled = true;
+    this.submitBtn.style.opacity = '0.5';
+
+    const timestamp = this.state.includeTimestamp ? this.options.currentTimestamp : undefined;
+
+    try {
+      await this.callbacks.onSubmit?.(text, timestamp);
+      this.clear();
+    } finally {
+      this.state.isSubmitting = false;
+      this.updateSubmitState();
+    }
+  }
