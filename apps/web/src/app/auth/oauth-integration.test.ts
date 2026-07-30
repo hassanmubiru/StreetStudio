@@ -10,14 +10,16 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { oauthConfigService } from '../../services/oauth-config.js';
 
-// Mock fetch for API calls
+// Mock fetch for API calls (fetch is not defined by default in jsdom)
 const mockFetch = vi.fn();
-global.fetch = mockFetch;
+vi.stubGlobal('fetch', mockFetch);
 
-// Mock crypto for secure random generation
-global.crypto = {
-  randomUUID: vi.fn(() => 'mock-uuid-12345')
-} as any;
+// Stub crypto for secure random generation. crypto is a getter-only global in
+// jsdom, so it must be replaced via stubGlobal rather than direct assignment.
+vi.stubGlobal('crypto', {
+  ...globalThis.crypto,
+  randomUUID: vi.fn(() => 'mock-uuid-12345'),
+});
 
 describe('OAuth Integration', () => {
   beforeEach(() => {
