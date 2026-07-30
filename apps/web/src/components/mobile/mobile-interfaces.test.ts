@@ -7,6 +7,8 @@
  * Requirements: 10.4, 10.5
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TouchGestureHandler } from './touch-gesture-handler.js';
 import { MobileVideoPlayer } from './mobile-video-player.js';
@@ -472,3 +474,336 @@ describe('MobileCommentInput', () => {
 
     expect(submitBtn.disabled).toBe(false);
   });
+
+  it('should show character count', () => {
+    commentInput = new MobileCommentInput(container, { maxLength: 100 });
+
+    const charCount = container.querySelector('.mobile-char-count') as HTMLElement;
+    expect(charCount.textContent).toBe('0/100');
+
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    textarea.value = 'Hello world';
+    textarea.dispatchEvent(new Event('input'));
+
+    expect(charCount.textContent).toBe('11/100');
+  });
+
+  it('should toggle timestamp inclusion', () => {
+    commentInput = new MobileCommentInput(container, { includeTimestamp: true });
+
+    const timestampBtn = container.querySelector('.mobile-timestamp-toggle') as HTMLButtonElement;
+    expect(timestampBtn.getAttribute('aria-pressed')).toBe('true');
+
+    timestampBtn.click();
+    expect(timestampBtn.getAttribute('aria-pressed')).toBe('false');
+
+    timestampBtn.click();
+    expect(timestampBtn.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('should call onSubmit with text and timestamp', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    commentInput = new MobileCommentInput(
+      container,
+      { currentTimestamp: 42, includeTimestamp: true },
+      { onSubmit }
+    );
+
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    textarea.value = 'Nice video!';
+    textarea.dispatchEvent(new Event('input'));
+
+    const submitBtn = container.querySelector('.mobile-comment-submit') as HTMLButtonElement;
+    submitBtn.click();
+
+    await vi.waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith('Nice video!', 42);
+    });
+  });
+
+  it('should clear input after successful submit', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    commentInput = new MobileCommentInput(container, {}, { onSubmit });
+
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    textarea.value = 'Test comment';
+    textarea.dispatchEvent(new Event('input'));
+
+    const submitBtn = container.querySelector('.mobile-comment-submit') as HTMLButtonElement;
+    submitBtn.click();
+
+    await vi.waitFor(() => {
+      expect(textarea.value).toBe('');
+    });
+  });
+
+  it('should update timestamp display', () => {
+    commentInput = new MobileCommentInput(container, { currentTimestamp: 0 });
+
+    commentInput.updateTimestamp(65);
+    const state = commentInput.getState();
+    // Verify the timestamp button updates
+    const timestampBtn = container.querySelector('.mobile-timestamp-toggle') as HTMLElement;
+    expect(timestampBtn.textContent).toContain('1:05');
+  });
+
+  it('should handle focus and blur events', () => {
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    commentInput = new MobileCommentInput(container, {}, { onFocus, onBlur });
+
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    textarea.dispatchEvent(new Event('focus'));
+    expect(onFocus).toHaveBeenCalled();
+
+    textarea.dispatchEvent(new Event('blur'));
+    expect(onBlur).toHaveBeenCalled();
+  });
+
+  it('should not submit empty text', async () => {
+    const onSubmit = vi.fn();
+    commentInput = new MobileCommentInput(container, {}, { onSubmit });
+
+    const submitBtn = container.querySelector('.mobile-comment-submit') as HTMLButtonElement;
+    submitBtn.click();
+
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('should clean up on destroy', () => {
+    commentInput = new MobileCommentInput(container);
+    commentInput.destroy();
+    expect(container.innerHTML).toBe('');
+  });
+});
+
+// ===========================================================================
+// SwipeActions Tests
+// ===========================================================================
+
+describe('SwipeableItem', () => {
+  let container: HTMLElement;
+  let swipeItem: SwipeableItem;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    container = document.createElement('div');
+    container.style.width = '375px';
+    document.body.appendChild(container);
+    Object.defineProperty(container, 'getBoundingClientRect', {
+      value: () => ({ left: 0, top: 0, width: 375, height: 60, right: 375, bottom: 60, x: 0, y: 0, toJSON: () => {} }),
+    });
+  });
+
+  afterEach(() => {
+    swipeItem?.destroy();
+    document.body.innerHTML = '';
+    vi.useRealTimers();
+  });
+
+  it('should create swipeable item with content', () => {
+    const content = document.createElement('div');
+    content.textContent = 'List item content';
+
+    swipeItem = new SwipeableItem(
+      container,
+      { id: 'item-1', content },
+      { leftActions: [{ type: 'delete', label: 'Delete', color: '#ef4444' }] }
+    );
+
+    expect(container.getAttribute('data-swipeable-id')).toBe('item-1');
+    expect(container.querySelector('.swipeable-item__content')).toBeTruthy();
+    expect(container.textContent).toContain('List item content');
+  });
+
+  it('should render action buttons with labels', () => {
+    const content = document.createElement('div');
+    content.textContent = 'Item';
+
+    swipeItem = new SwipeableItem(
+      container,
+      { id: 'item-1', content },
+      {
+        leftActions: [
+          { type: 'delete', label: 'Delete', color: '#ef4444' },
+          { type: 'archive', label: 'Archive', color: '#6b7280' },
+        ],
+      }
+    );
+
+    const actionBtns = container.querySelectorAll('.swipeable-action-btn');
+    expect(actionBtns.length).toBe(2);
+    expect(actionBtns[0].getAttribute('aria-label')).toBe('Delete');
+    expect(actionBtns[1].getAttribute('aria-label')).toBe('Archive');
+  });
+
+  it('should have touch-friendly action buttons (min 44px)', () => {
+    const content = document.createElement('div');
+    swipeItem = new SwipeableItem(
+      container,
+      { id: 'item-1', content },
+      { leftActions: [{ type: 'delete', label: 'Delete', color: '#ef4444' }] }
+    );
+
+    const actionBtn = container.querySelector('.swipeable-action-btn') as HTMLElement;
+    expect(actionBtn.style.minWidth).toBe('44px');
+    expect(actionBtn.style.minHeight).toBe('44px');
+  });
+
+  it('should trigger action callback on button click', () => {
+    const onAction = vi.fn();
+    const content = document.createElement('div');
+
+    swipeItem = new SwipeableItem(
+      container,
+      { id: 'item-1', content },
+      { leftActions: [{ type: 'delete', label: 'Delete', color: '#ef4444' }] },
+      { onAction }
+    );
+
+    const actionBtn = container.querySelector('.swipeable-action-btn') as HTMLButtonElement;
+    actionBtn.click();
+
+    expect(onAction).toHaveBeenCalledWith(
+      { type: 'delete', label: 'Delete', color: '#ef4444' },
+      'item-1'
+    );
+  });
+
+  it('should report open/closed state', () => {
+    const content = document.createElement('div');
+    swipeItem = new SwipeableItem(
+      container,
+      { id: 'item-1', content },
+      { leftActions: [{ type: 'delete', label: 'Delete', color: '#ef4444' }] }
+    );
+
+    expect(swipeItem.isActionOpen()).toBe(false);
+    expect(swipeItem.getOpenDirection()).toBeNull();
+  });
+
+  it('should close actions programmatically', () => {
+    const onClose = vi.fn();
+    const content = document.createElement('div');
+
+    swipeItem = new SwipeableItem(
+      container,
+      { id: 'item-1', content },
+      { leftActions: [{ type: 'delete', label: 'Delete', color: '#ef4444' }] },
+      { onClose }
+    );
+
+    // Close from initial state (no-op since already closed)
+    swipeItem.close();
+    expect(swipeItem.isActionOpen()).toBe(false);
+  });
+
+  it('should clean up on destroy', () => {
+    const content = document.createElement('div');
+    swipeItem = new SwipeableItem(
+      container,
+      { id: 'item-1', content },
+      { leftActions: [{ type: 'delete', label: 'Delete', color: '#ef4444' }] }
+    );
+
+    swipeItem.destroy();
+    expect(container.innerHTML).toBe('');
+  });
+});
+
+describe('SwipeActionsList', () => {
+  let container: HTMLElement;
+  let list: SwipeActionsList;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    list?.destroy();
+    document.body.innerHTML = '';
+  });
+
+  it('should create list with proper role', () => {
+    list = new SwipeActionsList(container);
+    expect(container.getAttribute('role')).toBe('list');
+  });
+
+  it('should add items with list item role', () => {
+    list = new SwipeActionsList(container, {
+      leftActions: [{ type: 'delete', label: 'Delete', color: '#ef4444' }],
+    });
+
+    const content1 = document.createElement('div');
+    content1.textContent = 'Item 1';
+    list.addItem({ id: 'a', content: content1 });
+
+    const content2 = document.createElement('div');
+    content2.textContent = 'Item 2';
+    list.addItem({ id: 'b', content: content2 });
+
+    const items = container.querySelectorAll('[role="listitem"]');
+    expect(items.length).toBe(2);
+  });
+
+  it('should remove items', () => {
+    list = new SwipeActionsList(container);
+
+    const content = document.createElement('div');
+    list.addItem({ id: 'x', content });
+
+    expect(list.getItems().size).toBe(1);
+    list.removeItem('x');
+    expect(list.getItems().size).toBe(0);
+  });
+
+  it('should close all items', () => {
+    list = new SwipeActionsList(container, {
+      leftActions: [{ type: 'delete', label: 'Delete', color: '#ef4444' }],
+    });
+
+    const c1 = document.createElement('div');
+    const c2 = document.createElement('div');
+    list.addItem({ id: 'a', content: c1 });
+    list.addItem({ id: 'b', content: c2 });
+
+    // Close all should not throw
+    list.closeAll();
+    list.getItems().forEach(item => {
+      expect(item.isActionOpen()).toBe(false);
+    });
+  });
+
+  it('should forward action callbacks', () => {
+    const onAction = vi.fn();
+    list = new SwipeActionsList(
+      container,
+      { leftActions: [{ type: 'archive', label: 'Archive', color: '#6b7280' }] },
+      { onAction }
+    );
+
+    const content = document.createElement('div');
+    list.addItem({ id: 'item-1', content });
+
+    const actionBtn = container.querySelector('.swipeable-action-btn') as HTMLButtonElement;
+    actionBtn.click();
+
+    expect(onAction).toHaveBeenCalledWith(
+      { type: 'archive', label: 'Archive', color: '#6b7280' },
+      'item-1'
+    );
+  });
+
+  it('should clean up all items on destroy', () => {
+    list = new SwipeActionsList(container);
+    const c1 = document.createElement('div');
+    const c2 = document.createElement('div');
+    list.addItem({ id: 'a', content: c1 });
+    list.addItem({ id: 'b', content: c2 });
+
+    list.destroy();
+    expect(container.innerHTML).toBe('');
+    expect(list.getItems().size).toBe(0);
+  });
+});
