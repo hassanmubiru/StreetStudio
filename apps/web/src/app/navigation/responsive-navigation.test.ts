@@ -7,8 +7,25 @@
  * Requirements: 10.1, 10.2, 10.3
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ResponsiveNavigation, BreadcrumbItem } from './responsive-navigation.js';
+
+// Mock matchMedia for jsdom
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
 
 describe('ResponsiveNavigation', () => {
   let menuContainer: HTMLElement;

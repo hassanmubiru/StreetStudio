@@ -325,7 +325,9 @@ export class ResponsiveNavigation {
 
     if (isMobile && breadcrumbs.length > maxMobile) {
       // On mobile, show first and last items with "..." in between
-      itemsToShow = [breadcrumbs[0], breadcrumbs[breadcrumbs.length - 1]];
+      const first = breadcrumbs[0]!;
+      const last = breadcrumbs[breadcrumbs.length - 1]!;
+      itemsToShow = [first, last];
       hasCollapsed = true;
     } else {
       itemsToShow = breadcrumbs;

@@ -7,6 +7,8 @@
  * Requirements: 10.1, 10.2, 10.3
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   BREAKPOINTS,
@@ -19,6 +21,23 @@ import {
   setupResponsiveCSS,
   ResponsiveCSS,
 } from './responsive.js';
+
+// Mock matchMedia for jsdom
+const matchMediaMock = vi.fn().mockImplementation(query => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+}));
+
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: matchMediaMock,
+});
 
 describe('Responsive Design System', () => {
   describe('BREAKPOINTS', () => {
@@ -147,12 +166,12 @@ describe('Responsive Design System', () => {
 
   describe('isTouchDevice', () => {
     it('returns false when matchMedia returns false', () => {
-      (window.matchMedia as any).mockReturnValue({ matches: false });
+      matchMediaMock.mockReturnValue({ matches: false });
       expect(isTouchDevice()).toBe(false);
     });
 
     it('returns true when matchMedia detects coarse pointer', () => {
-      (window.matchMedia as any).mockReturnValue({ matches: true });
+      matchMediaMock.mockReturnValue({ matches: true });
       expect(isTouchDevice()).toBe(true);
     });
   });

@@ -7,8 +7,25 @@
  * Requirements: 10.1, 10.2, 10.3
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ResponsiveLayout } from './responsive-layout.js';
+
+// Mock matchMedia for jsdom
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
 
 describe('ResponsiveLayout', () => {
   let container: HTMLElement;
@@ -24,11 +41,11 @@ describe('ResponsiveLayout', () => {
     document.body.innerHTML = '';
   });
 
-  function createLayout(options?: Partial<Parameters<typeof ResponsiveLayout.prototype['initialize']>[0]>) {
+  function createLayout(options?: Partial<ConstructorParameters<typeof ResponsiveLayout>[0]>) {
     layout = new ResponsiveLayout({
       container,
-      ...options,
-    } as any);
+      ...(options || {}),
+    });
     layout.initialize();
     return layout;
   }
