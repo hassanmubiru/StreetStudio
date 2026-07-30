@@ -204,7 +204,7 @@ export class CollaborationSyncService {
    * Get currently typing users (excluding self).
    */
   public getTypingUsers(): TypingIndicator[] {
-    return [...this.typingMap.values()].filter(
+    return Array.from(this.typingMap.values()).filter(
       (t) => t.userId !== this.options.userId
     );
   }
