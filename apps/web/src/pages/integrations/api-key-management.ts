@@ -485,3 +485,210 @@ export class ApiKeyManagementPage {
     `;
     return form;
   }
+
+  private renderKeyList(): HTMLElement {
+    const section = document.createElement('section');
+    section.id = 'key-list';
+    section.setAttribute('aria-label', 'API keys list');
+
+    if (this.keys.length === 0) {
+      section.innerHTML = `
+        <div class="text-center py-12 bg-white border border-gray-200 rounded-lg">
+          <svg class="mx-auto w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          </svg>
+          <h3 class="mt-3 text-sm font-medium text-gray-900">No API keys</h3>
+          <p class="mt-1 text-sm text-gray-500">Generate a key to start using the StreetStudio API.</p>
+        </div>
+      `;
+      return section;
+    }
+
+    const keyRows = this.keys.map(key => this.renderKeyRow(key)).join('');
+    section.innerHTML = `
+      <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200" role="table" aria-label="API keys">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Used</th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            ${keyRows}
+          </tbody>
+        </table>
+      </div>
+    `;
+    return section;
+  }
+
+  private renderKeyRow(key: ApiKey): string {
+    const rateLimitPct = getRateLimitPercentage(key.rateLimitRemaining, key.rateLimitPerHour);
+    const statusColor = getStatusColor(key.status);
+    const isActive = key.status === 'active';
+
+    const rateLimitBarColor = rateLimitPct > 90 ? 'bg-red-500' :
+      rateLimitPct > 70 ? 'bg-amber-500' : 'bg-blue-500';
+
+    return `
+      <tr data-key-id="${key.id}" class="hover:bg-gray-50">
+        <td class="px-4 py-3">
+          <div class="flex flex-col">
+            <span class="text-sm font-medium text-gray-900">${this.escapeHtml(key.name)}</span>
+            <span class="text-xs text-gray-500">${key.scopes.length} scope${key.scopes.length !== 1 ? 's' : ''}</span>
+          </div>
+        </td>
+        <td class="px-4 py-3">
+          <code class="text-sm font-mono text-gray-600" aria-label="Masked API key ending in ${key.maskedKey.slice(-4)}">${this.escapeHtml(key.maskedKey)}</code>
+        </td>
+        <td class="px-4 py-3">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">
+            ${key.status.charAt(0).toUpperCase() + key.status.slice(1)}
+          </span>
+        </td>
+        <td class="px-4 py-3">
+          <div class="flex flex-col gap-1">
+            <span class="text-xs text-gray-600">${key.requestCount.toLocaleString()} requests</span>
+            <div class="flex items-center gap-2">
+              <div class="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden" role="progressbar" aria-valuenow="${rateLimitPct}" aria-valuemin="0" aria-valuemax="100" aria-label="Rate limit usage">
+                <div class="h-full ${rateLimitBarColor} rounded-full" style="width: ${rateLimitPct}%"></div>
+              </div>
+              <span class="text-xs text-gray-500">${rateLimitPct}%</span>
+            </div>
+            <span class="text-xs text-gray-400">${key.rateLimitRemaining}/${key.rateLimitPerHour} remaining/hr</span>
+          </div>
+        </td>
+        <td class="px-4 py-3">
+          <span class="text-sm text-gray-600">${formatKeyDate(key.lastUsedAt)}</span>
+        </td>
+        <td class="px-4 py-3 text-right">
+          <div class="flex items-center justify-end gap-1">
+            ${isActive ? `
+              <button
+                type="button"
+                class="btn-rotate-key px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                data-key-id="${key.id}"
+                aria-label="Rotate key ${this.escapeHtml(key.name)}"
+              >Rotate</button>
+              <button
+                type="button"
+                class="btn-revoke-key px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 rounded hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                data-key-id="${key.id}"
+                aria-label="Revoke key ${this.escapeHtml(key.name)}"
+              >Revoke</button>
+            ` : ''}
+            <button
+              type="button"
+              class="btn-delete-key px-2 py-1 text-xs font-medium text-red-700 bg-red-50 rounded hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500"
+              data-key-id="${key.id}"
+              aria-label="Delete key ${this.escapeHtml(key.name)}"
+            >Delete</button>
+          </div>
+          ${this.renderConfirmDialog(key.id)}
+        </td>
+      </tr>
+    `;
+  }
+
+  private renderConfirmDialog(keyId: Uuid): string {
+    if (this.confirmRevoke === keyId) {
+      return `
+        <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-left" role="alertdialog" aria-label="Confirm revoke">
+          <p class="text-xs text-amber-800 mb-2">Revoke this key? It cannot be undone.</p>
+          <div class="flex gap-1">
+            <button type="button" class="btn-confirm-revoke px-2 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500" data-key-id="${keyId}">Confirm</button>
+            <button type="button" class="btn-cancel-revoke px-2 py-1 text-xs bg-white text-gray-700 border rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500" data-key-id="${keyId}">Cancel</button>
+          </div>
+        </div>
+      `;
+    }
+    if (this.confirmDelete === keyId) {
+      return `
+        <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-left" role="alertdialog" aria-label="Confirm delete">
+          <p class="text-xs text-red-800 mb-2">Delete this key permanently?</p>
+          <div class="flex gap-1">
+            <button type="button" class="btn-confirm-delete px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500" data-key-id="${keyId}">Confirm</button>
+            <button type="button" class="btn-cancel-delete px-2 py-1 text-xs bg-white text-gray-700 border rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500" data-key-id="${keyId}">Cancel</button>
+          </div>
+        </div>
+      `;
+    }
+    return '';
+  }
+
+  private groupScopesByCategory(): [string, typeof AVAILABLE_SCOPES][] {
+    const map = new Map<string, typeof AVAILABLE_SCOPES>();
+    for (const scope of AVAILABLE_SCOPES) {
+      if (!map.has(scope.category)) {
+        map.set(scope.category, []);
+      }
+      map.get(scope.category)!.push(scope);
+    }
+    return Array.from(map.entries());
+  }
+
+  private setupEventListeners(): void {
+    // Create button
+    const createBtn = this.element.querySelector('#btn-create-key');
+    createBtn?.addEventListener('click', () => this.showCreate());
+
+    // Cancel create
+    const cancelBtn = this.element.querySelector('#btn-cancel-create');
+    cancelBtn?.addEventListener('click', () => this.hideCreate());
+
+    // Submit create
+    const submitBtn = this.element.querySelector('#btn-submit-create');
+    submitBtn?.addEventListener('click', () => this.createKey());
+
+    // Key name input
+    const nameInput = this.element.querySelector('#key-name-input') as HTMLInputElement | null;
+    nameInput?.addEventListener('input', (e) => {
+      this.createFormData.name = (e.target as HTMLInputElement).value;
+      this.hideError('name-error');
+    });
+
+    // Scope checkboxes
+    const scopeCheckboxes = this.element.querySelectorAll('.scope-checkbox');
+    scopeCheckboxes.forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const input = e.target as HTMLInputElement;
+        const scope = input.value as ApiKeyScope;
+        if (input.checked) {
+          this.createFormData.scopes.add(scope);
+        } else {
+          this.createFormData.scopes.delete(scope);
+        }
+        this.hideError('scope-error');
+      });
+    });
+
+    // Expiration select
+    const expirationSelect = this.element.querySelector('#expiration-select') as HTMLSelectElement | null;
+    expirationSelect?.addEventListener('change', (e) => {
+      this.createFormData.expiresInDays = parseInt((e.target as HTMLSelectElement).value, 10);
+    });
+
+    // Copy key button
+    const copyBtn = this.element.querySelector('#btn-copy-key');
+    copyBtn?.addEventListener('click', () => {
+      if (this.newKeyFullValue) {
+        navigator.clipboard?.writeText(this.newKeyFullValue).then(() => {
+          if (copyBtn) {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+          }
+        });
+      }
+    });
+
+    // Dismiss banner
+    const dismissBtn = this.element.querySelector('#btn-dismiss-banner');
+    dismissBtn?.addEventListener('click', () => {
+      this.newKeyFullValue = null;
+      this.render();
+    });
