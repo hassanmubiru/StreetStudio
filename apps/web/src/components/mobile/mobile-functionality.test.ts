@@ -398,3 +398,31 @@ describe('Touch Gestures and Mobile-Specific Interactions', () => {
       handler.destroy();
     });
   });
+
+  describe('pull-to-refresh mobile interaction', () => {
+    let ptrContainer: HTMLElement;
+
+    beforeEach(() => {
+      ptrContainer = document.createElement('div');
+      ptrContainer.style.height = '400px';
+      ptrContainer.style.overflow = 'auto';
+      Object.defineProperty(ptrContainer, 'scrollTop', { value: 0, writable: true });
+      document.body.appendChild(ptrContainer);
+    });
+
+    function createPtrTouchEvent(type: string, clientY: number): TouchEvent {
+      return new TouchEvent(type, {
+        touches: type === 'touchend' ? [] : [{ clientY, clientX: 100, identifier: 0 } as Touch],
+        changedTouches: [{ clientY, clientX: 100, identifier: 0 } as Touch],
+        bubbles: true,
+        cancelable: true,
+      });
+    }
+
+    it('applies resistance factor to pull distance', () => {
+      const onRefresh = vi.fn().mockResolvedValue(undefined);
+      const ptr = new PullToRefresh({
+        container: ptrContainer,
+        onRefresh,
+        resistance: 0.3,
+      });

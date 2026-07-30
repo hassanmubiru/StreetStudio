@@ -4,6 +4,8 @@
  * Tests for user preference storage, validation, and change notifications.
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { PreferenceManager } from './preference-manager.js';
 
