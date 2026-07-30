@@ -235,10 +235,10 @@ describe('DataImportPage', () => {
     await page.validateSource();
 
     const items = page.getDiscoveredItems();
-    expect(items[0].selected).toBe(true);
+    expect(items[0]!.selected).toBe(true);
 
-    page.toggleItemSelection(items[0].id);
-    expect(page.getDiscoveredItems()[0].selected).toBe(false);
+    page.toggleItemSelection(items[0]!.id);
+    expect(page.getDiscoveredItems()[0]!.selected).toBe(false);
   });
 
   it('select all / deselect all items', async () => {
