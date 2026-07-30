@@ -62,6 +62,9 @@ describe('End-to-End User Workflow Integration', () => {
     vi.clearAllMocks();
     document.body.innerHTML = '<div data-router-view><div data-main-content></div></div>';
 
+    // Mock fetch
+    global.fetch = vi.fn();
+
     // Setup window.history mock
     Object.defineProperty(window, 'history', {
       writable: true,
