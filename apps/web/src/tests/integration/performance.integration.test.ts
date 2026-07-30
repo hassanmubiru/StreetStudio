@@ -5,6 +5,8 @@
  * across the performance modules working together.
  *
  * Requirements: 12.1
+ *
+ * @vitest-environment jsdom
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -26,6 +28,7 @@ import {
   ModuleLoadError,
 } from '../../utils/code-splitting.js';
 import { CacheManager } from '../../services/cache-manager.js';
+import { WebSocketManager, ConnectionState } from '../../services/websocket.js';
 
 describe('Performance Benchmark Integration', () => {
   beforeEach(() => {
@@ -413,10 +416,7 @@ describe('Performance Benchmark Integration', () => {
     });
 
     it('should handle WebSocket manager cleanup without memory leaks', () => {
-      const wsManager = new (
-        // Import inline to avoid module-level WebSocket mocking issues
-        require('../../services/websocket.js').WebSocketManager
-      )({
+      const wsManager = new WebSocketManager({
         url: 'ws://localhost/ws',
         reconnect: false,
       });
@@ -431,7 +431,7 @@ describe('Performance Benchmark Integration', () => {
 
       // Disconnect should clean up
       wsManager.disconnect();
-      expect(wsManager.getState()).toBe('disconnected');
+      expect(wsManager.getState()).toBe(ConnectionState.Disconnected);
       expect(wsManager.getQueueSize()).toBe(0);
     });
   });

@@ -5,6 +5,8 @@
  * and viewport size adaptations across the application modules.
  *
  * Requirements: 10.1
+ *
+ * @vitest-environment jsdom
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';

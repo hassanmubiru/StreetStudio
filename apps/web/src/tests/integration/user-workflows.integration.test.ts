@@ -6,6 +6,8 @@
  * internal modules integrate correctly across the application.
  *
  * Requirements: 10.1, 11.1, 12.1
+ *
+ * @vitest-environment jsdom
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -42,6 +44,8 @@ vi.mock('../../app/client-logger.js', () => ({
     fatal: vi.fn(),
   },
 }));
+
+vi.mock('../../app/router-styles.js', () => ({}));
 
 // Import modules under test
 import { AuthStore } from '../../stores/auth-store.js';
