@@ -426,3 +426,35 @@ describe('Touch Gestures and Mobile-Specific Interactions', () => {
         onRefresh,
         resistance: 0.3,
       });
+
+      ptrContainer.dispatchEvent(createPtrTouchEvent('touchstart', 100));
+      ptrContainer.dispatchEvent(createPtrTouchEvent('touchmove', 200));
+
+      // 100px raw * 0.3 resistance = 30px
+      expect(ptr.getPullDistance()).toBe(30);
+      ptr.destroy();
+    });
+
+    it('does not trigger refresh during refreshing state', async () => {
+      let resolveRefresh: () => void;
+      const refreshPromise = new Promise<void>((resolve) => {
+        resolveRefresh = resolve;
+      });
+      const onRefresh = vi.fn().mockReturnValue(refreshPromise);
+
+      const ptr = new PullToRefresh({
+        container: ptrContainer,
+        onRefresh,
+        threshold: 40,
+      });
+
+      // First pull triggers refresh
+      ptrContainer.dispatchEvent(createPtrTouchEvent('touchstart', 100));
+      ptrContainer.dispatchEvent(createPtrTouchEvent('touchmove', 200));
+      ptrContainer.dispatchEvent(createPtrTouchEvent('touchend', 200));
+
+      expect(ptr.getState()).toBe('refreshing');
+
+      // Second pull should not trigger
+      ptrContainer.dispatchEvent(createPtrTouchEvent('touchstart', 100));
+      ptrContainer.dispatchEvent(createPtrTouchEvent('touchmove', 200));

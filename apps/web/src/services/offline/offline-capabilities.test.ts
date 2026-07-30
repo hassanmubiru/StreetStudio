@@ -117,3 +117,49 @@ describe('ServiceWorkerManager', () => {
 
 describe('ConnectivityStatusManager', () => {
   let ConnectivityStatusManager: any;
+
+  beforeEach(async () => {
+    // Reset navigator.onLine
+    Object.defineProperty(navigator, 'onLine', {
+      writable: true,
+      configurable: true,
+      value: true,
+    });
+
+    // Mock fetch for ping
+    (global.fetch as any).mockResolvedValue({ ok: true, status: 200 });
+
+    const mod = await import('./connectivity-status.js');
+    ConnectivityStatusManager = mod.ConnectivityStatusManager;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('should report online when navigator.onLine is true', () => {
+    const manager = new ConnectivityStatusManager();
+    expect(manager.isOnline()).toBe(true);
+    expect(manager.getState()).toBe('online');
+  });
+
+  it('should report offline when navigator.onLine is false', () => {
+    Object.defineProperty(navigator, 'onLine', {
+      writable: true,
+      configurable: true,
+      value: false,
+    });
+    const manager = new ConnectivityStatusManager();
+    expect(manager.isOnline()).toBe(false);
+    expect(manager.getState()).toBe('offline');
+  });
+
+  it('should call onOffline callback when going offline', () => {
+    const onOffline = vi.fn();
+    const manager = new ConnectivityStatusManager({ callbacks: { onOffline } });
+    manager.start();
+    // Simulate going offline
+    window.dispatchEvent(new Event('offline'));
+    expect(onOffline).toHaveBeenCalled();
+    manager.destroy();
+  });

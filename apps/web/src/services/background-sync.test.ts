@@ -4,6 +4,8 @@
  * Tests for offline operation queueing, retry logic, and sync processing.
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { BackgroundSyncManager } from './background-sync.js';
 
