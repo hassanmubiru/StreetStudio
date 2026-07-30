@@ -151,7 +151,7 @@ export class NotificationDeliveryService {
    */
   public clear(): void {
     this.queue = [];
-    for (const group of this.batchGroups.values()) {
+    for (const group of Array.from(this.batchGroups.values())) {
       if (group.timer) clearTimeout(group.timer);
     }
     this.batchGroups.clear();

@@ -120,3 +120,75 @@ describe('validateEventTimeRange', () => {
     expect(validateEventTimeRange(future, futureEnd).valid).toBe(true);
   });
 });
+
+describe('validateAttendeeEmail', () => {
+  it('rejects empty email', () => {
+    expect(validateAttendeeEmail('').valid).toBe(false);
+  });
+
+  it('rejects invalid email format', () => {
+    expect(validateAttendeeEmail('notanemail').valid).toBe(false);
+    expect(validateAttendeeEmail('missing@').valid).toBe(false);
+  });
+
+  it('accepts valid emails', () => {
+    expect(validateAttendeeEmail('user@example.com').valid).toBe(true);
+    expect(validateAttendeeEmail('name+tag@domain.co.uk').valid).toBe(true);
+  });
+});
+
+describe('formatEventTime', () => {
+  it('formats valid dates', () => {
+    const result = formatEventTime('2024-03-15T14:30:00Z');
+    expect(result).toBeTruthy();
+    expect(result).not.toBe('Invalid date');
+  });
+
+  it('returns "Invalid date" for invalid input', () => {
+    expect(formatEventTime('not-a-date')).toBe('Invalid date');
+  });
+});
+
+describe('getEventDurationMinutes', () => {
+  it('calculates duration correctly', () => {
+    expect(getEventDurationMinutes('2024-01-01T10:00:00Z', '2024-01-01T11:00:00Z')).toBe(60);
+    expect(getEventDurationMinutes('2024-01-01T10:00:00Z', '2024-01-01T10:30:00Z')).toBe(30);
+  });
+
+  it('returns 0 for invalid dates', () => {
+    expect(getEventDurationMinutes('invalid', '2024-01-01T11:00:00Z')).toBe(0);
+  });
+});
+
+describe('formatDuration', () => {
+  it('formats minutes correctly', () => {
+    expect(formatDuration(0)).toBe('0 min');
+    expect(formatDuration(30)).toBe('30 min');
+    expect(formatDuration(60)).toBe('1h');
+    expect(formatDuration(90)).toBe('1h 30m');
+  });
+});
+
+describe('getProviderInfo', () => {
+  it('returns correct info for known providers', () => {
+    expect(getProviderInfo('google').label).toBe('Google Calendar');
+    expect(getProviderInfo('outlook').label).toBe('Microsoft Outlook');
+  });
+});
+
+describe('getConnectionStatusColor', () => {
+  it('returns correct colors for each status', () => {
+    expect(getConnectionStatusColor('connected')).toContain('green');
+    expect(getConnectionStatusColor('disconnected')).toContain('gray');
+    expect(getConnectionStatusColor('error')).toContain('red');
+  });
+});
+
+describe('getEventStatusColor', () => {
+  it('returns correct colors for each status', () => {
+    expect(getEventStatusColor('scheduled')).toContain('blue');
+    expect(getEventStatusColor('in_progress')).toContain('yellow');
+    expect(getEventStatusColor('completed')).toContain('green');
+    expect(getEventStatusColor('cancelled')).toContain('gray');
+  });
+});
