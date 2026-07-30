@@ -192,3 +192,136 @@ describe('getEventStatusColor', () => {
     expect(getEventStatusColor('cancelled')).toContain('gray');
   });
 });
+
+// --- Component Tests ---
+
+describe('CalendarIntegrationPage', () => {
+  let page: CalendarIntegrationPage;
+  let callbacks: CalendarIntegrationCallbacks;
+
+  beforeEach(() => {
+    callbacks = createMockCallbacks();
+  });
+
+  it('renders with default empty state', () => {
+    page = new CalendarIntegrationPage();
+    const el = page.getElement();
+    expect(el.getAttribute('data-page')).toBe('calendar-integration');
+    expect(page.getConnections()).toEqual([]);
+    expect(page.getEvents()).toEqual([]);
+  });
+
+  it('renders with initial connections and events', () => {
+    const conn = createTestConnection();
+    const event = createTestEvent();
+    page = new CalendarIntegrationPage({ connections: [conn], events: [event] });
+    expect(page.getConnections()).toHaveLength(1);
+    expect(page.getEvents()).toHaveLength(1);
+  });
+
+  it('shows and hides create form', () => {
+    page = new CalendarIntegrationPage();
+    expect(page.isCreateFormVisible()).toBe(false);
+    page.showCreate();
+    expect(page.isCreateFormVisible()).toBe(true);
+    page.hideCreate();
+    expect(page.isCreateFormVisible()).toBe(false);
+  });
+
+  it('connects a calendar provider', async () => {
+    page = new CalendarIntegrationPage({ callbacks });
+    expect(page.getConnections()).toHaveLength(0);
+    await page.connectProvider('google');
+    expect(callbacks.onConnectProvider).toHaveBeenCalledWith('google');
+    expect(page.getConnections()).toHaveLength(1);
+  });
+
+  it('disconnects a provider', async () => {
+    const conn = createTestConnection();
+    page = new CalendarIntegrationPage({ connections: [conn], callbacks });
+    await page.disconnectProvider(conn.id);
+    expect(callbacks.onDisconnectProvider).toHaveBeenCalledWith(conn.id);
+    expect(page.getConnections()).toHaveLength(0);
+  });
+
+  it('syncs a calendar', async () => {
+    const conn = createTestConnection();
+    page = new CalendarIntegrationPage({ connections: [conn], callbacks });
+    await page.syncCalendar(conn.id);
+    expect(callbacks.onSyncCalendar).toHaveBeenCalledWith(conn.id);
+    const updated = page.getConnections().find(c => c.id === conn.id);
+    expect(updated?.lastSyncAt).toBeTruthy();
+  });
+
+  it('adds and removes attendees', () => {
+    page = new CalendarIntegrationPage();
+    page.showCreate();
+    const added = page.addAttendee('alice@example.com');
+    expect(added).toBe(true);
+    expect(page.getCreateFormData().attendees).toContain('alice@example.com');
+
+    page.removeAttendee('alice@example.com');
+    expect(page.getCreateFormData().attendees).not.toContain('alice@example.com');
+  });
+
+  it('rejects invalid attendee emails', () => {
+    page = new CalendarIntegrationPage();
+    page.showCreate();
+    expect(page.addAttendee('not-an-email')).toBe(false);
+    expect(page.getCreateFormData().attendees).toHaveLength(0);
+  });
+
+  it('rejects duplicate attendees', () => {
+    page = new CalendarIntegrationPage();
+    page.showCreate();
+    page.addAttendee('alice@example.com');
+    expect(page.addAttendee('alice@example.com')).toBe(false);
+    expect(page.getCreateFormData().attendees).toHaveLength(1);
+  });
+
+  it('creates an event successfully', async () => {
+    page = new CalendarIntegrationPage({ callbacks });
+    page.showCreate();
+
+    // Manually set form data for the test
+    const formData = page.getCreateFormData();
+    expect(formData.title).toBe('');
+
+    // The createEvent uses internal form data, so we test through the callback
+    // Mock valid form data through internal state
+    (page as any).createFormData.title = 'Test Recording';
+    const future = new Date(Date.now() + 86400000).toISOString();
+    const futureEnd = new Date(Date.now() + 90000000).toISOString();
+    (page as any).createFormData.startTime = future;
+    (page as any).createFormData.endTime = futureEnd;
+
+    await page.createEvent();
+    expect(callbacks.onCreateEvent).toHaveBeenCalled();
+    expect(page.getEvents()).toHaveLength(1);
+  });
+
+  it('deletes an event', async () => {
+    const event = createTestEvent();
+    page = new CalendarIntegrationPage({ events: [event], callbacks });
+    await page.deleteEvent(event.id);
+    expect(callbacks.onDeleteEvent).toHaveBeenCalledWith(event.id);
+    expect(page.getEvents()).toHaveLength(0);
+  });
+
+  it('generates a recording link', async () => {
+    const event = createTestEvent();
+    page = new CalendarIntegrationPage({ events: [event], callbacks });
+    await page.generateRecordingLink(event.id);
+    expect(callbacks.onGenerateRecordingLink).toHaveBeenCalledWith(event.id);
+    const updated = page.getEvents().find(e => e.id === event.id);
+    expect(updated?.recordingLink).toBe('https://record.streetstudio.io/abc123');
+  });
+
+  it('destroy cleans up state', () => {
+    const conn = createTestConnection();
+    page = new CalendarIntegrationPage({ connections: [conn] });
+    page.destroy();
+    expect(page.getConnections()).toHaveLength(0);
+    expect(page.getEvents()).toHaveLength(0);
+  });
+});

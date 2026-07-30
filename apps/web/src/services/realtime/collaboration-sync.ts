@@ -190,7 +190,7 @@ export class CollaborationSyncService {
       updatedAt: Date.now(),
     };
 
-    this.sendEvent('collaboration.playbackSync', fullState);
+    this.sendEvent('collaboration.playbackSync', fullState as unknown as Record<string, unknown>);
   }
 
   /**
