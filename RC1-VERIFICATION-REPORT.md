@@ -1,18 +1,34 @@
 # StreetStudio — Release Candidate (RC1) Verification Report
 
-**Verdict: ❌ NOT a Release Candidate.** Multiple hard completion criteria fail.
+**Verdict: ⚠️ Build + full test suite now PASS. RC still BLOCKED by INFRA-01** (real-infrastructure runtime validation, Phases 3–7/9, cannot run: ffmpeg + object storage + `.env` absent). No fabricated results.
 
 ---
 
-## Remediation progress (update)
+## Remediation progress (update 2 — build & tests fully green)
 
-Since the initial verification, the two config-level blockers were fixed and re-verified, which then **unmasked deeper pre-existing defects** that the earlier crashes were hiding:
+The two original config blockers were fixed, which **unmasked deeper pre-existing defects** (BUILD-02, TEST-03). Those have now **also been fully resolved** — the build (including the web client) and the **entire test suite pass with zero failures**, verified across multiple consecutive runs.
 
 | Item | Before | Now | Evidence |
 |---|---|---|---|
-| BUILD-01 — root `tsc -b` | 140 errors | ✅ **0 errors, build green** | `npm run build` exits 0 |
-| TEST-01 — web tests in `node` env | 611 failed | ✅ **env fixed**; now 312 failed | `environmentMatchGlobs` → jsdom; 0 `document`/`localStorage` errors; +299 tests recovered |
-| PROD-BUG-01 — `NavigationController` constructor calls undefined `setupRouteListener()` / `setupResizeListener()` | crash on construct | ✅ **implemented both** (with cleanup) | app + ~124 tests no longer crash on load |
+| BUILD-01 — root `tsc -b` | 140 errors | ✅ **0 errors** | `npm run typecheck` exits 0 |
+| BUILD-02 — `apps/web` typecheck (was ungated) | 1,150 errors | ✅ **0 errors, now gated** | `tsc -p apps/web/tsconfig.json --noEmit` exits 0; wired into `npm run typecheck` |
+| TEST-01 — web tests in `node` env | 611 failed | ✅ resolved | `environmentMatchGlobs` → jsdom |
+| TEST-03 — residual web test failures | 312 failed | ✅ **0 failed** | `npx vitest run` → **5315 passed / 0 failed / 71 skipped** (298 files), 3× consecutive green runs, exit 0 |
+| PROD-BUG-01 — `NavigationController` undefined constructor methods | crash on construct | ✅ implemented (with cleanup) | app + tests no longer crash |
+
+**Completion criteria status now:**
+
+| Criterion | Result | Evidence |
+|---|---|---|
+| All packages build | ✅ PASS | `npm run typecheck` (root `tsc -b` + `apps/web`) exits 0 |
+| All tests pass | ✅ PASS | `vitest run` → 5315 passed, 0 failed, 0 unhandled errors; stable across runs |
+| No critical architectural violations | ✅ PASS | `streetjs:check`, `boundary:check` (388 files), `graph:check` (acyclic) all OK |
+| StreetJS consumed as published packages only | ✅ PASS | `streetjs:check` OK |
+| Production workflows on real infra | ⛔ BLOCKED | ffmpeg missing, no object storage, no `.env` (INFRA-01) |
+| Security / a11y / performance (runtime) | ⛔ BLOCKED | require running app on real infra (INFRA-01) |
+| Deployment reproducible | ⛔ BLOCKED | `.env` absent; image must provide ffmpeg |
+
+**RC gate:** the code-level criteria (build, tests, architecture, StreetJS contract) are **met**. RC1 remains **blocked only by INFRA-01** — Phases 3–7 and 9 cannot be executed on real infrastructure in this environment, and per the "no mocks / no fabrication" rule those phases are **not** reported with invented results.
 
 **Fixes applied (evidence-backed, minimal, no feature additions):**
 - `tsconfig.base.json` unchanged; `packages/ui/tsconfig.json` → added `"lib": ["ES2022","DOM","DOM.Iterable"]`.
