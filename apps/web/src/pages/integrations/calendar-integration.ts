@@ -118,3 +118,59 @@ export const EVENT_TITLE_MAX_LENGTH = 200;
 export const EVENT_TITLE_MIN_LENGTH = 1;
 export const EVENT_DESCRIPTION_MAX_LENGTH = 2000;
 export const MAX_ATTENDEES = 50;
+
+// --- Utility Functions ---
+
+/**
+ * Validate an event title.
+ */
+export function validateEventTitle(title: string): { valid: boolean; error?: string } {
+  const trimmed = title.trim();
+  if (trimmed.length < EVENT_TITLE_MIN_LENGTH) {
+    return { valid: false, error: 'Event title is required' };
+  }
+  if (trimmed.length > EVENT_TITLE_MAX_LENGTH) {
+    return { valid: false, error: `Title must be ${EVENT_TITLE_MAX_LENGTH} characters or fewer` };
+  }
+  return { valid: true };
+}
+
+/**
+ * Validate event time range. Start must be before end, both must be in the future.
+ */
+export function validateEventTimeRange(
+  startTime: string,
+  endTime: string
+): { valid: boolean; error?: string } {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+
+  if (isNaN(start.getTime())) {
+    return { valid: false, error: 'Invalid start time' };
+  }
+  if (isNaN(end.getTime())) {
+    return { valid: false, error: 'Invalid end time' };
+  }
+  if (start >= end) {
+    return { valid: false, error: 'End time must be after start time' };
+  }
+  if (start.getTime() < Date.now()) {
+    return { valid: false, error: 'Start time must be in the future' };
+  }
+  return { valid: true };
+}
+
+/**
+ * Validate an email address for attendees.
+ */
+export function validateAttendeeEmail(email: string): { valid: boolean; error?: string } {
+  const trimmed = email.trim();
+  if (trimmed.length === 0) {
+    return { valid: false, error: 'Email is required' };
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(trimmed)) {
+    return { valid: false, error: 'Invalid email address' };
+  }
+  return { valid: true };
+}
