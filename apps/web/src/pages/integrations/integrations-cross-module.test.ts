@@ -402,3 +402,56 @@ describe('Cross-Module Integration: Webhook Events + Export/Share', () => {
       exportPage.destroy();
       webhookPage.destroy();
     });
+
+    it('should correlate export failure with video.failed webhook event', async () => {
+      const exportPage = new ExportSharingPage({
+        exportJobs: [createExportJob({ id: 'job-fail', status: 'processing' })],
+      });
+
+      exportPage.failExport('job-fail', 'Encoding error: unsupported codec');
+
+      const job = exportPage.getExportJobs().find(j => j.id === 'job-fail');
+      expect(job?.status).toBe('failed');
+      expect(job?.error).toContain('Encoding error');
+
+      // Webhook delivery for video.failed
+      const eventLabel = getEventLabel('video.failed');
+      expect(eventLabel).toBe('Video Failed');
+
+      exportPage.destroy();
+    });
+  });
+});
+
+describe('Cross-Module Integration: Export Permissions + Share Links', () => {
+  describe('Embed code generation tied to share permissions', () => {
+    it('should generate valid embed code for publicly shared videos', () => {
+      const shareLink = createShareLink({ permission: 'public', isActive: true });
+      const embedCode = generateIframeEmbed(shareLink.videoId, DEFAULT_EMBED_OPTIONS);
+
+      expect(embedCode).toContain(shareLink.videoId);
+      expect(embedCode).toContain('iframe');
+      expect(embedCode).toContain('allowfullscreen');
+    });
+
+    it('should generate embed code with all options combined', () => {
+      const opts: EmbedOptions = {
+        autoplay: true,
+        controls: true,
+        loop: true,
+        muted: true,
+        width: 1280,
+        height: 720,
+        showBranding: false,
+        responsive: false,
+        startTime: 45,
+      };
+
+      const iframeCode = generateIframeEmbed('shared-vid', opts);
+      expect(iframeCode).toContain('autoplay=1');
+      expect(iframeCode).toContain('loop=1');
+      expect(iframeCode).toContain('muted=1');
+      expect(iframeCode).toContain('branding=0');
+      expect(iframeCode).toContain('t=45');
+      expect(iframeCode).toContain('width="1280"');
+      expect(iframeCode).toContain('height="720"');

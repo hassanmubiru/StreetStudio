@@ -520,3 +520,49 @@ export class CalendarIntegrationPage {
     `;
     return header;
   }
+
+  private renderConnectionsSection(): HTMLElement {
+    const section = document.createElement('section');
+    section.id = 'calendar-connections';
+    section.className = 'mb-8';
+    section.setAttribute('aria-labelledby', 'connections-heading');
+
+    const connectedProviders = this.connections.map(c => c.provider);
+    const availableProviders = CALENDAR_PROVIDERS.filter(
+      p => !connectedProviders.includes(p.provider)
+    );
+
+    const connectionsHtml = this.connections.map(c => {
+      const info = getProviderInfo(c.provider);
+      const statusColor = getConnectionStatusColor(c.status);
+      return `
+        <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg" data-connection-id="${c.id}">
+          <div class="flex items-center gap-3">
+            <span class="text-lg font-medium text-gray-900">${this.escapeHtml(info.label)}</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">${c.status}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-500">${c.email}</span>
+            <button type="button" class="btn-sync-calendar px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500" data-connection-id="${c.id}" aria-label="Sync ${info.label}">Sync</button>
+            <button type="button" class="btn-disconnect px-2 py-1 text-xs font-medium text-red-700 bg-red-50 rounded hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500" data-connection-id="${c.id}" aria-label="Disconnect ${info.label}">Disconnect</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const availableHtml = availableProviders.map(p => `
+      <button type="button" class="btn-connect-provider flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" data-provider="${p.provider}" aria-label="Connect ${p.label}">
+        <span class="text-sm font-medium text-gray-700">Connect ${this.escapeHtml(p.label)}</span>
+      </button>
+    `).join('');
+
+    section.innerHTML = `
+      <h2 id="connections-heading" class="text-lg font-medium text-gray-900 mb-4">Connected Calendars</h2>
+      <div class="space-y-3 mb-4">${connectionsHtml || '<p class="text-sm text-gray-500">No calendars connected yet.</p>'}</div>
+      ${availableProviders.length > 0 ? `
+        <div class="flex flex-wrap gap-3">${availableHtml}</div>
+      ` : ''}
+      <p id="connect-error" class="mt-2 text-sm text-red-600 hidden" role="alert"></p>
+    `;
+    return section;
+  }
