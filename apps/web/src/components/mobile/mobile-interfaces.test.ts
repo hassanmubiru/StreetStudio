@@ -412,3 +412,63 @@ describe('MobileVideoPlayer', () => {
     expect(container.innerHTML).toBe('');
   });
 });
+
+// ===========================================================================
+// MobileCommentInput Tests
+// ===========================================================================
+
+describe('MobileCommentInput', () => {
+  let container: HTMLElement;
+  let commentInput: MobileCommentInput;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    commentInput?.destroy();
+    document.body.innerHTML = '';
+  });
+
+  it('should create accessible comment input', () => {
+    commentInput = new MobileCommentInput(container);
+
+    expect(container.getAttribute('role')).toBe('form');
+    expect(container.getAttribute('aria-label')).toBe('Comment');
+
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    expect(textarea).toBeTruthy();
+    expect(textarea.getAttribute('aria-label')).toBe('Comment text');
+    expect(textarea.placeholder).toBe('Add a comment...');
+  });
+
+  it('should use 16px font to prevent iOS zoom', () => {
+    commentInput = new MobileCommentInput(container);
+
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    expect(textarea.style.fontSize).toBe('16px');
+  });
+
+  it('should have touch-friendly submit button', () => {
+    commentInput = new MobileCommentInput(container);
+
+    const submitBtn = container.querySelector('.mobile-comment-submit') as HTMLElement;
+    expect(submitBtn).toBeTruthy();
+    expect(submitBtn.style.minWidth).toBe('44px');
+    expect(submitBtn.style.minHeight).toBe('44px');
+  });
+
+  it('should enable submit button when text is entered', () => {
+    commentInput = new MobileCommentInput(container);
+
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    const submitBtn = container.querySelector('.mobile-comment-submit') as HTMLButtonElement;
+
+    expect(submitBtn.disabled).toBe(true);
+
+    textarea.value = 'Hello';
+    textarea.dispatchEvent(new Event('input'));
+
+    expect(submitBtn.disabled).toBe(false);
+  });
