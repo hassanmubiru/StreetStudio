@@ -825,13 +825,30 @@ describe('PushNotificationService', () => {
       requestPermission: vi.fn(() => Promise.resolve('granted')),
     });
 
+    const mockSub = {
+      endpoint: 'https://push.example.com/sub/123',
+      expirationTime: null,
+      toJSON: () => ({
+        keys: { p256dh: 'test-p256dh', auth: 'test-auth' },
+      }),
+      unsubscribe: vi.fn(() => Promise.resolve(true)),
+    };
+
+    const inlineRegistration = {
+      pushManager: {
+        getSubscription: vi.fn(() => Promise.resolve(null)),
+        subscribe: vi.fn(() => Promise.resolve(mockSub)),
+      },
+      showNotification: vi.fn(() => Promise.resolve()),
+    };
+
     const service = new PushNotificationService({
-      vapidPublicKey: 'BNhJcX-bXwKEg3P1n3gE3rKa8tO93Y_us-cF4eFoSHPphHhg1JWRh-j9XmMt2QG6-mw1OPEIFqb1q-WaN0r1VY',
+      vapidPublicKey: 'BNhJcX-bXwKEg3P1n3gE3rKa8tO93Y_us-cF4eFoSHPphHhg1JWRh',
       subscriptionEndpoint: '/api/push/subscribe',
     });
 
-    // Manually set internal state since service worker registration may throw in test env
-    (service as any).serviceWorkerRegistration = mockRegistration;
+    // Set internal state directly to bypass service worker registration issues in Node test env
+    (service as any).serviceWorkerRegistration = inlineRegistration;
     (service as any).permissionStatus = 'granted';
 
     const sub = await service.subscribe();

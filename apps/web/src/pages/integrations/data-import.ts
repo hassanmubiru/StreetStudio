@@ -411,3 +411,77 @@ export class DataImportPage {
     this.callbacks = {};
     this.discoveredItems = [];
   }
+
+  // --- Private Rendering ---
+
+  private render(): void {
+    this.element.innerHTML = '';
+    this.element.appendChild(this.renderHeader());
+
+    if (this.showSourceForm) {
+      this.element.appendChild(this.renderSourceForm());
+      if (this.discoveredItems.length > 0) {
+        this.element.appendChild(this.renderItemSelection());
+      }
+    }
+
+    this.element.appendChild(this.renderJobHistory());
+  }
+
+  private renderHeader(): HTMLElement {
+    const header = document.createElement('header');
+    header.className = 'flex items-center justify-between mb-6';
+    header.innerHTML = `
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-900">Data Import</h1>
+        <p class="text-sm text-gray-500 mt-1">Import videos and projects from other platforms</p>
+      </div>
+      <button
+        id="btn-new-import"
+        type="button"
+        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        aria-label="Start new import"
+        ${this.showSourceForm ? 'disabled' : ''}
+      >New Import</button>
+    `;
+    return header;
+  }
+
+  private renderSourceForm(): HTMLElement {
+    const form = document.createElement('section');
+    form.id = 'source-form';
+    form.className = 'mb-6 p-6 bg-white border border-gray-200 rounded-lg shadow-sm';
+    form.setAttribute('aria-labelledby', 'source-form-heading');
+
+    const platformButtons = IMPORT_PLATFORMS.map(p => `
+      <button type="button" class="btn-select-platform flex flex-col items-center gap-2 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${this.sourceFormData.platform === p.platform ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:bg-gray-50'}" data-platform="${p.platform}" aria-pressed="${this.sourceFormData.platform === p.platform}">
+        <span class="text-sm font-medium text-gray-900">${this.escapeHtml(p.label)}</span>
+        <span class="text-xs text-gray-500 text-center">${this.escapeHtml(p.description)}</span>
+      </button>
+    `).join('');
+
+    const showUrlInput = this.sourceFormData.platform && this.sourceFormData.platform !== 'file';
+
+    form.innerHTML = `
+      <h2 id="source-form-heading" class="text-lg font-medium text-gray-900 mb-4">Select Import Source</h2>
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-3" role="group" aria-label="Import platform selection">
+          ${platformButtons}
+        </div>
+        <p id="platform-error" class="text-sm text-red-600 hidden" role="alert"></p>
+        ${showUrlInput ? `
+          <div>
+            <label for="import-url-input" class="block text-sm font-medium text-gray-700 mb-1">Source URL</label>
+            <input id="import-url-input" type="url" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="https://..." value="${this.escapeHtml(this.sourceFormData.url)}" aria-required="true" />
+            <p id="url-error" class="mt-1 text-sm text-red-600 hidden" role="alert"></p>
+          </div>
+        ` : ''}
+        <p id="validate-error" class="text-sm text-red-600 hidden" role="alert"></p>
+        <div class="flex items-center gap-3 pt-2">
+          <button id="btn-validate-source" type="button" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" ${this.isValidating ? 'disabled' : ''}>${this.isValidating ? 'Validating...' : 'Scan Source'}</button>
+          <button id="btn-cancel-source" type="button" class="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">Cancel</button>
+        </div>
+      </div>
+    `;
+    return form;
+  }
