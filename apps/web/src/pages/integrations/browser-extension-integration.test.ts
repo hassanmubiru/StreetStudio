@@ -61,3 +61,70 @@ describe('createMessage', () => {
     expect(msg.payload).toBeUndefined();
   });
 });
+
+describe('compareVersions', () => {
+  it('returns 0 for equal versions', () => {
+    expect(compareVersions('1.0.0', '1.0.0')).toBe(0);
+    expect(compareVersions('2.3.4', '2.3.4')).toBe(0);
+  });
+
+  it('returns -1 when first version is lower', () => {
+    expect(compareVersions('1.0.0', '2.0.0')).toBe(-1);
+    expect(compareVersions('1.0.0', '1.1.0')).toBe(-1);
+    expect(compareVersions('1.0.0', '1.0.1')).toBe(-1);
+  });
+
+  it('returns 1 when first version is higher', () => {
+    expect(compareVersions('2.0.0', '1.0.0')).toBe(1);
+    expect(compareVersions('1.1.0', '1.0.0')).toBe(1);
+    expect(compareVersions('1.0.1', '1.0.0')).toBe(1);
+  });
+
+  it('handles versions with different segment counts', () => {
+    expect(compareVersions('1.0', '1.0.0')).toBe(0);
+    expect(compareVersions('1.0.0', '1.0')).toBe(0);
+    expect(compareVersions('1.1', '1.0.1')).toBe(1);
+  });
+});
+
+describe('isVersionSupported', () => {
+  it('returns true for minimum version', () => {
+    expect(isVersionSupported(MIN_SUPPORTED_VERSION)).toBe(true);
+  });
+
+  it('returns true for higher versions', () => {
+    expect(isVersionSupported('2.0.0')).toBe(true);
+    expect(isVersionSupported('1.5.0')).toBe(true);
+  });
+
+  it('returns false for lower versions', () => {
+    expect(isVersionSupported('0.9.0')).toBe(false);
+    expect(isVersionSupported('0.0.1')).toBe(false);
+  });
+});
+
+describe('getExtensionStatusInfo', () => {
+  it('returns correct info for installed', () => {
+    const info = getExtensionStatusInfo('installed');
+    expect(info.label).toBe('Installed');
+    expect(info.color).toContain('green');
+  });
+
+  it('returns correct info for not_installed', () => {
+    const info = getExtensionStatusInfo('not_installed');
+    expect(info.label).toBe('Not Installed');
+    expect(info.color).toContain('gray');
+  });
+
+  it('returns correct info for outdated', () => {
+    const info = getExtensionStatusInfo('outdated');
+    expect(info.label).toBe('Update Available');
+    expect(info.color).toContain('yellow');
+  });
+
+  it('returns correct info for disabled', () => {
+    const info = getExtensionStatusInfo('disabled');
+    expect(info.label).toBe('Disabled');
+    expect(info.color).toContain('red');
+  });
+});
