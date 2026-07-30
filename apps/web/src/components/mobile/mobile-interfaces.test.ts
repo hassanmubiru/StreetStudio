@@ -34,3 +34,44 @@ function createTouchEvent(
     rotationAngle: 0,
     force: 1,
   })) as unknown as Touch[];
+
+  const changed = (changedTouches || touches).map((t, i) => ({
+    identifier: i,
+    clientX: t.clientX,
+    clientY: t.clientY,
+    pageX: t.clientX,
+    pageY: t.clientY,
+    screenX: t.clientX,
+    screenY: t.clientY,
+    target: document.body,
+    radiusX: 0,
+    radiusY: 0,
+    rotationAngle: 0,
+    force: 1,
+  })) as unknown as Touch[];
+
+  return new TouchEvent(type, {
+    touches: touchList,
+    changedTouches: changed,
+    bubbles: true,
+    cancelable: true,
+  });
+}
+
+function simulateSwipe(
+  element: HTMLElement,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  duration = 100
+): void {
+  const start = createTouchEvent('touchstart', [{ clientX: startX, clientY: startY }]);
+  element.dispatchEvent(start);
+
+  // Simulate passage of time (fast swipe)
+  vi.advanceTimersByTime(duration);
+
+  const end = createTouchEvent('touchend', [], [{ clientX: endX, clientY: endY }]);
+  element.dispatchEvent(end);
+}
