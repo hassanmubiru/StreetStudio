@@ -228,14 +228,29 @@ describe('DrawingToolbar', () => {
   });
 
   describe('Custom Configuration', () => {
+    // Each test uses its own dedicated container so the component is tested in
+    // isolation. The shared `container` from beforeEach already holds a toolbar
+    // (with its own click listener), so reusing it would double-count buttons
+    // and double-fire events.
+    let customContainer: HTMLElement;
+
+    beforeEach(() => {
+      customContainer = document.createElement('div');
+      document.body.appendChild(customContainer);
+    });
+
+    afterEach(() => {
+      customContainer.remove();
+    });
+
     it('should use custom tools list', () => {
       const customToolbar = new DrawingToolbar(
-        container,
+        customContainer,
         { tools: ['pen', 'highlighter'] },
         callbacks
       );
       
-      const toolButtons = container.querySelectorAll('.tool-btn');
+      const toolButtons = customContainer.querySelectorAll('.tool-btn');
       expect(toolButtons.length).toBe(2);
       
       customToolbar.destroy();
@@ -244,12 +259,12 @@ describe('DrawingToolbar', () => {
     it('should use custom colors', () => {
       const customColors = ['#ff0000', '#00ff00', '#0000ff'];
       const customToolbar = new DrawingToolbar(
-        container,
+        customContainer,
         { colors: customColors },
         callbacks
       );
       
-      const colorButtons = container.querySelectorAll('.color-btn');
+      const colorButtons = customContainer.querySelectorAll('.color-btn');
       expect(colorButtons.length).toBe(3);
       
       customToolbar.destroy();
@@ -258,12 +273,12 @@ describe('DrawingToolbar', () => {
     it('should use custom stroke widths', () => {
       const customWidths = [1, 3, 5];
       const customToolbar = new DrawingToolbar(
-        container,
+        customContainer,
         { strokeWidths: customWidths },
         callbacks
       );
       
-      const widthButtons = container.querySelectorAll('.width-btn');
+      const widthButtons = customContainer.querySelectorAll('.width-btn');
       expect(widthButtons.length).toBe(3);
       
       customToolbar.destroy();
@@ -275,12 +290,12 @@ describe('DrawingToolbar', () => {
       
       positions.forEach((position) => {
         const positionedToolbar = new DrawingToolbar(
-          container,
+          customContainer,
           { position },
           callbacks
         );
         
-        const toolbarElement = container.querySelector('.drawing-toolbar');
+        const toolbarElement = customContainer.querySelector('.drawing-toolbar');
         expect(toolbarElement).toBeTruthy();
         
         positionedToolbar.destroy();
@@ -289,12 +304,12 @@ describe('DrawingToolbar', () => {
 
     it('should render compact mode', () => {
       const compactToolbar = new DrawingToolbar(
-        container,
+        customContainer,
         { compact: true },
         callbacks
       );
       
-      const styleToggle = container.querySelector('.style-toggle');
+      const styleToggle = customContainer.querySelector('.style-toggle');
       expect(styleToggle).toBeTruthy();
       
       compactToolbar.destroy();
@@ -302,15 +317,26 @@ describe('DrawingToolbar', () => {
   });
 
   describe('Style Dropdown', () => {
+    let dropdownContainer: HTMLElement;
+
+    beforeEach(() => {
+      dropdownContainer = document.createElement('div');
+      document.body.appendChild(dropdownContainer);
+    });
+
+    afterEach(() => {
+      dropdownContainer.remove();
+    });
+
     it('should toggle style dropdown in compact mode', () => {
       const compactToolbar = new DrawingToolbar(
-        container,
+        dropdownContainer,
         { compact: true },
         callbacks
       );
       
-      const styleToggle = container.querySelector('.style-toggle') as HTMLButtonElement;
-      const styleDropdown = container.querySelector('.style-dropdown');
+      const styleToggle = dropdownContainer.querySelector('.style-toggle') as HTMLButtonElement;
+      const styleDropdown = dropdownContainer.querySelector('.style-dropdown');
       
       // Initially hidden
       expect(styleDropdown?.classList.contains('hidden')).toBe(true);

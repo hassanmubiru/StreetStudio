@@ -4,11 +4,13 @@
  * Simple tests to verify the error handling system works correctly.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setupErrorHandling, handleError } from './error-handler.js';
 
-// Mock toast
-vi.mock('@streetstudio/ui', () => ({
+// Mock toast. error-handler.ts imports toast from '../utils/toast.js',
+// so that is the module we must mock (mocking '@streetstudio/ui' would have
+// no effect and the real toast would call window.setTimeout).
+vi.mock('../utils/toast.js', () => ({
   toast: {
     error: vi.fn(),
     warning: vi.fn(),
@@ -31,34 +33,20 @@ vi.mock('./client-logger.js', () => ({
 describe('Error Handler Basic Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Mock crypto
-    Object.defineProperty(global, 'crypto', {
-      value: { randomUUID: vi.fn(() => 'test-uuid') },
-      configurable: true,
-    });
-    
-    // Mock window location
-    Object.defineProperty(global, 'window', {
-      value: {
-        location: {
-          href: 'https://test.com',
-          pathname: '/test',
-        },
-        addEventListener: vi.fn(),
-        navigator: { userAgent: 'test' },
-      },
-      configurable: true,
-    });
-    
-    // Mock navigator
-    Object.defineProperty(global, 'navigator', {
-      value: {
-        userAgent: 'test-agent',
-        onLine: true,
-      },
-      configurable: true,
-    });
+
+    // Use the real jsdom crypto but make randomUUID deterministic.
+    // Do NOT reassign global.crypto (read-only getter in jsdom/node).
+    vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
+      'test-uuid' as `${string}-${string}-${string}-${string}-${string}`
+    );
+
+    // Rely on the real jsdom window/navigator (which provide setTimeout,
+    // setInterval, addEventListener, location, onLine, etc.). jsdom already
+    // reports navigator.onLine === true, so no override is needed here.
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('should setup error handling without throwing', () => {
