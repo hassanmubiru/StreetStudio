@@ -137,3 +137,160 @@ describe('calculateImportProgress', () => {
     expect(calculateImportProgress(job)).toBe(100);
   });
 });
+
+describe('getImportStatusColor', () => {
+  it('returns correct colors', () => {
+    expect(getImportStatusColor('pending')).toContain('gray');
+    expect(getImportStatusColor('validating')).toContain('blue');
+    expect(getImportStatusColor('importing')).toContain('yellow');
+    expect(getImportStatusColor('completed')).toContain('green');
+    expect(getImportStatusColor('failed')).toContain('red');
+  });
+});
+
+describe('getImportPlatformInfo', () => {
+  it('returns correct info for known platforms', () => {
+    expect(getImportPlatformInfo('youtube').label).toBe('YouTube');
+    expect(getImportPlatformInfo('vimeo').label).toBe('Vimeo');
+    expect(getImportPlatformInfo('loom').label).toBe('Loom');
+  });
+});
+
+describe('formatFileSize', () => {
+  it('formats bytes correctly', () => {
+    expect(formatFileSize(500)).toBe('500 B');
+    expect(formatFileSize(1024)).toBe('1.0 KB');
+    expect(formatFileSize(1048576)).toBe('1.0 MB');
+    expect(formatFileSize(1073741824)).toBe('1.0 GB');
+  });
+});
+
+describe('formatImportDuration', () => {
+  it('formats seconds correctly', () => {
+    expect(formatImportDuration(30)).toBe('30s');
+    expect(formatImportDuration(60)).toBe('1m');
+    expect(formatImportDuration(90)).toBe('1m 30s');
+    expect(formatImportDuration(3600)).toBe('1h 0m');
+    expect(formatImportDuration(3661)).toBe('1h 1m');
+  });
+});
+
+// --- Component Tests ---
+
+describe('DataImportPage', () => {
+  let page: DataImportPage;
+  let callbacks: DataImportCallbacks;
+
+  beforeEach(() => {
+    callbacks = createMockCallbacks();
+  });
+
+  it('renders with default empty state', () => {
+    page = new DataImportPage();
+    const el = page.getElement();
+    expect(el.getAttribute('data-page')).toBe('data-import');
+    expect(page.getImportJobs()).toEqual([]);
+    expect(page.getDiscoveredItems()).toEqual([]);
+  });
+
+  it('renders with initial import jobs', () => {
+    const job = createTestImportJob();
+    page = new DataImportPage({ importJobs: [job] });
+    expect(page.getImportJobs()).toHaveLength(1);
+  });
+
+  it('shows and hides source form', () => {
+    page = new DataImportPage();
+    expect(page.isSourceFormVisible()).toBe(false);
+    page.showSource();
+    expect(page.isSourceFormVisible()).toBe(true);
+    page.hideSource();
+    expect(page.isSourceFormVisible()).toBe(false);
+  });
+
+  it('selects a platform', () => {
+    page = new DataImportPage();
+    page.showSource();
+    page.selectPlatform('youtube');
+    expect(page.getSourceFormData().platform).toBe('youtube');
+  });
+
+  it('validates a source and discovers items', async () => {
+    page = new DataImportPage({ callbacks });
+    page.showSource();
+    page.selectPlatform('youtube');
+    (page as any).sourceFormData.url = 'https://www.youtube.com/playlist?list=abc';
+
+    await page.validateSource();
+    expect(callbacks.onValidateSource).toHaveBeenCalled();
+    expect(page.getDiscoveredItems()).toHaveLength(2);
+    expect(page.getIsValidating()).toBe(false);
+  });
+
+  it('toggles item selection', async () => {
+    page = new DataImportPage({ callbacks });
+    page.showSource();
+    page.selectPlatform('youtube');
+    (page as any).sourceFormData.url = 'https://www.youtube.com/playlist?list=abc';
+    await page.validateSource();
+
+    const items = page.getDiscoveredItems();
+    expect(items[0].selected).toBe(true);
+
+    page.toggleItemSelection(items[0].id);
+    expect(page.getDiscoveredItems()[0].selected).toBe(false);
+  });
+
+  it('select all / deselect all items', async () => {
+    page = new DataImportPage({ callbacks });
+    page.showSource();
+    page.selectPlatform('youtube');
+    (page as any).sourceFormData.url = 'https://www.youtube.com/playlist?list=abc';
+    await page.validateSource();
+
+    page.deselectAllItems();
+    expect(page.getSelectedItemCount()).toBe(0);
+
+    page.selectAllItems();
+    expect(page.getSelectedItemCount()).toBe(2);
+  });
+
+  it('starts an import', async () => {
+    page = new DataImportPage({ callbacks });
+    page.showSource();
+    page.selectPlatform('youtube');
+    (page as any).sourceFormData.url = 'https://www.youtube.com/playlist?list=abc';
+    await page.validateSource();
+
+    await page.startImport();
+    expect(callbacks.onStartImport).toHaveBeenCalled();
+    expect(page.getImportJobs()).toHaveLength(1);
+    expect(page.isSourceFormVisible()).toBe(false);
+  });
+
+  it('cancels an import', async () => {
+    const job = createTestImportJob();
+    page = new DataImportPage({ importJobs: [job], callbacks });
+    await page.cancelImport(job.id);
+    expect(callbacks.onCancelImport).toHaveBeenCalledWith(job.id);
+    const updated = page.getImportJobs().find(j => j.id === job.id);
+    expect(updated?.status).toBe('failed');
+  });
+
+  it('refreshes job status', async () => {
+    const job = createTestImportJob({ completedItems: 2 });
+    page = new DataImportPage({ importJobs: [job], callbacks });
+    await page.refreshJobStatus(job.id);
+    expect(callbacks.onFetchJobStatus).toHaveBeenCalledWith(job.id);
+    const updated = page.getImportJobs().find(j => j.id === job.id);
+    expect(updated?.completedItems).toBe(4);
+  });
+
+  it('destroy cleans up state', () => {
+    const job = createTestImportJob();
+    page = new DataImportPage({ importJobs: [job] });
+    page.destroy();
+    expect(page.getImportJobs()).toHaveLength(0);
+    expect(page.getDiscoveredItems()).toHaveLength(0);
+  });
+});
