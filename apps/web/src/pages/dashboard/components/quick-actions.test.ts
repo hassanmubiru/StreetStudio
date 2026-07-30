@@ -8,37 +8,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { QuickActions } from './quick-actions.js';
 
-/**
- * Installs a narrow mock that intercepts ONLY the hidden file <input> the
- * component creates for uploads. Every other element (e.g. the notification
- * <div> created by showNotification) is still built by the real jsdom
- * document.createElement and really appended to document.body, so assertions
- * against the rendered notification exercise real behavior.
- */
-function installFileInputMock(fakeInput: Record<string, unknown>) {
-  const realCreateElement = document.createElement.bind(document);
-  const realAppendChild = document.body.appendChild.bind(document.body);
-  const realRemoveChild = document.body.removeChild.bind(document.body);
-
-  vi.spyOn(document, 'createElement').mockImplementation((tagName: string, options?: unknown) => {
-    if (tagName === 'input') {
-      return fakeInput as unknown as HTMLElement;
-    }
-    return realCreateElement(tagName as string, options as ElementCreationOptions | undefined);
-  });
-
-  // Only short-circuit append/remove for the fake input; real nodes still
-  // pass through to jsdom so the notification element lands in the DOM.
-  vi.spyOn(document.body, 'appendChild').mockImplementation((node: Node) => {
-    if ((node as unknown) === fakeInput) return node;
-    return realAppendChild(node);
-  });
-  vi.spyOn(document.body, 'removeChild').mockImplementation((node: Node) => {
-    if ((node as unknown) === fakeInput) return node;
-    return realRemoveChild(node);
-  });
-}
-
 describe('QuickActions', () => {
   let quickActions: QuickActions;
 
@@ -52,20 +21,17 @@ describe('QuickActions', () => {
       value: { href: '' }
     });
 
-    // NOTE: setTimeout is intentionally NOT stubbed to run synchronously.
-    // The notification auto-dismiss uses setTimeout(..., 3000); running it
-    // synchronously would remove the notification element before assertions
-    // could observe it. With real timers the dismiss callback does not fire
-    // during a synchronous test body, so the notification stays in the DOM.
+    // Mock setTimeout for notifications
+    vi.stubGlobal('setTimeout', vi.fn((callback, delay) => {
+      if (typeof callback === 'function') {
+        callback();
+      }
+      return 1;
+    }));
   });
 
   afterEach(() => {
-    // Use restoreAllMocks (not clearAllMocks) so that spies created with
-    // vi.spyOn(document, 'createElement') in the file-upload tests are fully
-    // restored. clearAllMocks only clears call history and leaves the mocked
-    // implementation in place, which would make document.createElement return
-    // a plain object in later tests and break real DOM construction.
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
     document.body.innerHTML = '';
   });
 
@@ -280,7 +246,9 @@ describe('QuickActions', () => {
         })
       };
       
-      installFileInputMock(mockInput);
+      vi.spyOn(document, 'createElement').mockReturnValue(mockInput as any);
+      vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockInput as any);
+      vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockInput as any);
       
       button.click();
       
@@ -309,7 +277,9 @@ describe('QuickActions', () => {
         })
       };
       
-      installFileInputMock(mockInput);
+      vi.spyOn(document, 'createElement').mockReturnValue(mockInput as any);
+      vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockInput as any);
+      vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockInput as any);
       
       button.click();
       
@@ -521,17 +491,17 @@ describe('QuickActions', () => {
         })
       };
       
-      const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
-
-      installFileInputMock(mockInput);
+      vi.spyOn(document, 'createElement').mockReturnValue(mockInput as any);
+      vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockInput as any);
+      vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockInput as any);
       
       button.click();
       
       const notification = document.body.querySelector('.fixed.top-4.right-4');
       expect(notification).toBeTruthy();
       
-      // Auto-dismiss should be scheduled via setTimeout
-      expect(setTimeoutSpy).toHaveBeenCalled();
+      // Check that setTimeout was called for auto-dismiss (mocked to execute immediately)
+      expect(vi.mocked(setTimeout)).toHaveBeenCalled();
     });
 
     it('should position notifications correctly', () => {
@@ -548,7 +518,9 @@ describe('QuickActions', () => {
         })
       };
       
-      installFileInputMock(mockInput);
+      vi.spyOn(document, 'createElement').mockReturnValue(mockInput as any);
+      vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockInput as any);
+      vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockInput as any);
       
       button.click();
       

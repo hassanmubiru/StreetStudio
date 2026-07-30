@@ -268,22 +268,12 @@ export class RecordingStore {
    */
   private notifyListeners(): void {
     this.listeners.forEach(listener => {
-      this.notifyListener(listener);
+      try {
+        listener(this.getState());
+      } catch (error) {
+        logger.error('Recording store listener error', { error });
+      }
     });
-  }
-
-  /**
-   * Invoke a single listener, isolating any error it throws so that one bad
-   * listener cannot break state propagation or the caller.
-   */
-  private notifyListener(listener: (state: RecordingStoreState) => void): void {
-    try {
-      listener(this.getState());
-    } catch (error) {
-      logger.error('Recording store listener error', {
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
   }
 
   /**
@@ -299,9 +289,8 @@ export class RecordingStore {
   public subscribe(listener: (state: RecordingStoreState) => void): () => void {
     this.listeners.add(listener);
     
-    // Send current state immediately, isolating listener errors so a throwing
-    // subscriber does not break the subscribe call itself.
-    this.notifyListener(listener);
+    // Send current state immediately
+    listener(this.getState());
     
     return () => {
       this.listeners.delete(listener);

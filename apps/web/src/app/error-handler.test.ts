@@ -15,11 +15,10 @@ import {
   type ErrorSeverity,
   type ErrorCategory
 } from './error-handler.js';
-import { toast } from '../utils/toast.js';
+import { toast } from '@streetstudio/ui';
 
-// Mock dependencies. error-handler.ts imports toast from '../utils/toast.js',
-// so that is the module we must mock for the spies to observe real calls.
-vi.mock('../utils/toast.js', () => ({
+// Mock dependencies
+vi.mock('@streetstudio/ui', () => ({
   toast: {
     error: vi.fn(),
     warning: vi.fn(),

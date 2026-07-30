@@ -207,11 +207,8 @@ describe('DrawingOverlay', () => {
         opacity: 0.8
       };
       
-      // Select the tool first (which applies the tool's default style), then
-      // apply the custom style on top — this mirrors the real toolbar flow
-      // where onToolChange fires before onStyleChange.
-      drawingOverlay.setTool('pen');
       drawingOverlay.setStyle(customStyle);
+      drawingOverlay.setTool('pen');
       
       const canvas = container.querySelector('.drawing-overlay') as HTMLCanvasElement;
       const mouseDown = new MouseEvent('mousedown', { clientX: 100, clientY: 100 });
@@ -315,22 +312,9 @@ describe('DrawingOverlay', () => {
       const initialWidth = canvas.width;
       const initialHeight = canvas.height;
       
-      // Resize container. jsdom has no layout engine, so getBoundingClientRect
-      // always reports 0. Stub only the specific measurement to reflect the new
-      // size the browser would report after this resize.
+      // Resize container
       container.style.width = '1000px';
       container.style.height = '800px';
-      vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({
-        width: 1000,
-        height: 800,
-        top: 0,
-        left: 0,
-        right: 1000,
-        bottom: 800,
-        x: 0,
-        y: 0,
-        toJSON: () => {}
-      } as DOMRect);
       
       // Trigger resize observer
       const resizeObserver = (window as any).ResizeObserver;

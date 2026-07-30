@@ -144,11 +144,6 @@ export class FolderManager {
         if (parent) {
           if (!parent.children) parent.children = [];
           parent.children.push(folder);
-        } else {
-          // Parent is not part of the loaded set (e.g. filtered or paginated
-          // results). Surface the folder at the root level instead of silently
-          // dropping it.
-          rootFolders.push(folder);
         }
       } else {
         rootFolders.push(folder);

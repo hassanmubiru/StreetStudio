@@ -6,6 +6,27 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NavigationController } from './navigation-controller';
 import type { OrganizationDto, MemberDto } from '@streetstudio/shared';
 
+// Mock DOM
+const mockDocument = {
+  getElementById: vi.fn(),
+  createElement: vi.fn(),
+  body: document.body,
+  addEventListener: vi.fn(),
+};
+
+// Mock window
+const mockWindow = {
+  location: { pathname: '/dashboard' },
+  addEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+  innerWidth: 1024,
+  localStorage: {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+  },
+};
+
 // Mock navigation components
 const mockTopNavigation = {
   initialize: vi.fn(),
@@ -60,28 +81,34 @@ describe('NavigationController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Create real DOM containers the controller looks up by id, and append
-    // them so document.getElementById resolves them against the real jsdom DOM.
-    document.body.innerHTML = '';
+    // Setup mock DOM elements
     mockHeaderContainer = document.createElement('div');
     mockHeaderContainer.id = 'app-header';
     mockSidebarContainer = document.createElement('div');
     mockSidebarContainer.id = 'app-sidebar';
-    const mainContainer = document.createElement('div');
-    mainContainer.id = 'app-main';
-    document.body.append(mockHeaderContainer, mockSidebarContainer, mainContainer);
 
-    // Spy on the real jsdom localStorage instead of replacing it wholesale.
-    vi.spyOn(window.localStorage, 'getItem').mockReturnValue('false');
-    vi.spyOn(window.localStorage, 'setItem');
+    // Mock document.getElementById
+    vi.mocked(document.getElementById).mockImplementation((id) => {
+      switch (id) {
+        case 'app-header':
+          return mockHeaderContainer;
+        case 'app-sidebar':
+          return mockSidebarContainer;
+        case 'app-main':
+          return document.createElement('div');
+        default:
+          return null;
+      }
+    });
+
+    // Mock localStorage
+    vi.mocked(window.localStorage.getItem).mockReturnValue('false');
 
     navigationController = new NavigationController();
   });
 
   afterEach(() => {
     navigationController?.destroy();
-    vi.restoreAllMocks();
-    document.body.innerHTML = '';
   });
 
   describe('initialization', () => {

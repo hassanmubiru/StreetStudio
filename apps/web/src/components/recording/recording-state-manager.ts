@@ -424,10 +424,6 @@ export class RecordingStateManager {
     ];
 
     this.keyboardShortcuts.register(shortcuts);
-
-    // Activate the recordings context so the shortcuts registered above (all
-    // scoped to the 'recordings' context) actually become active.
-    this.keyboardShortcuts.setContext('recordings');
     
     logger.debug('Recording keyboard shortcuts registered', { 
       shortcutCount: shortcuts.length 

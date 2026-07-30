@@ -43,9 +43,6 @@ export class FolderBreadcrumbs {
     container.className = 'folder-breadcrumbs flex items-center space-x-2 text-sm py-3 px-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700';
     container.setAttribute('aria-label', 'Folder navigation');
     
-    // Assign before rendering: renderBreadcrumbs relies on this.container and
-    // would otherwise early-return, leaving the element empty.
-    this.container = container;
     this.renderBreadcrumbs();
     return container;
   }
@@ -109,7 +106,7 @@ export class FolderBreadcrumbs {
             
             <!-- Depth indicator for folders -->
             ${item.type === 'folder' && item.depth !== undefined ? `
-              <span class="depth-indicator ml-2 text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+              <span class="ml-2 text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                 L${item.depth + 1}
               </span>
             ` : ''}

@@ -6,17 +6,16 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { RecordingStateManager, type RecordingEvents } from './recording-state-manager.js';
-import { RecordingStore, getRecordingStore } from '../../stores/recording-store.js';
+import { RecordingStore } from '../../stores/recording-store.js';
 import { KeyboardShortcuts } from '../../app/keyboard-shortcuts.js';
 
-// Mock dependencies.
-// vi.mock is hoisted, so the mock object it references must be hoisted too.
-const mockLogger = vi.hoisted(() => ({
+// Mock dependencies
+const mockLogger = {
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
   debug: vi.fn()
-}));
+};
 
 vi.mock('../../app/client-logger.js', () => ({
   logger: mockLogger
@@ -61,7 +60,7 @@ describe('RecordingStateManager', () => {
       destroy: vi.fn()
     };
 
-    vi.mocked(getRecordingStore).mockReturnValue(mockRecordingStore);
+    (require('../../stores/recording-store.js').getRecordingStore as Mock).mockReturnValue(mockRecordingStore);
 
     // Mock KeyboardShortcuts
     mockKeyboardShortcuts = {
@@ -413,7 +412,7 @@ describe('RecordingStateManager', () => {
       stateManager = guidedStateManager;
     });
 
-    it('should provide specific guidance for permission denied', async () => {
+    it('should provide specific guidance for permission denied', () => {
       const mockCreateElement = vi.spyOn(document, 'createElement').mockReturnValue({
         className: '',
         setAttribute: vi.fn(),
@@ -427,8 +426,7 @@ describe('RecordingStateManager', () => {
         error: 'Screen recording permission was denied. Please allow screen sharing to continue.'
       });
 
-      // startRecording is async; await it so onPermissionDenied has fired.
-      await stateManager.startRecording();
+      stateManager.startRecording();
 
       expect(mockEvents.onPermissionDenied).toHaveBeenCalledWith(
         expect.stringContaining('denied'),
@@ -439,13 +437,13 @@ describe('RecordingStateManager', () => {
       mockAppendChild.mockRestore();
     });
 
-    it('should provide guidance for unsupported browser', async () => {
+    it('should provide guidance for unsupported browser', () => {
       mockRecordingStore.requestScreenPermission.mockResolvedValue({
         success: false,
         error: 'Screen recording is not supported in this browser.'
       });
 
-      await stateManager.startRecording();
+      stateManager.startRecording();
 
       expect(mockEvents.onPermissionDenied).toHaveBeenCalledWith(
         expect.stringContaining('not supported'),
