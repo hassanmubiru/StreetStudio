@@ -880,3 +880,85 @@ describe('ExportSharingPage', () => {
       expect(state.expiration).toBe('2025-06-01T00:00');
     });
   });
+
+  describe('Share Link Creation', () => {
+    it('should call onGenerateShareLink with correct params', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ExportSharingPage({ callbacks });
+      page.showShare('vid-1');
+      page.setSharePermission('public');
+
+      await page.createShareLink();
+
+      expect(callbacks.onGenerateShareLink).toHaveBeenCalledWith(
+        'vid-1',
+        'public',
+        expect.objectContaining({ password: undefined, allowedMembers: undefined })
+      );
+    });
+
+    it('should include password for password-protected links', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ExportSharingPage({ callbacks });
+      page.showShare('vid-1');
+      page.setSharePermission('password');
+      page.setSharePassword('mysecret');
+
+      await page.createShareLink();
+
+      expect(callbacks.onGenerateShareLink).toHaveBeenCalledWith(
+        'vid-1',
+        'password',
+        expect.objectContaining({ password: 'mysecret' })
+      );
+    });
+
+    it('should include members for member-specific links', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ExportSharingPage({ callbacks });
+      page.showShare('vid-1');
+      page.setSharePermission('members');
+      page.setShareMembers(['user1@test.com', 'user2@test.com']);
+
+      await page.createShareLink();
+
+      expect(callbacks.onGenerateShareLink).toHaveBeenCalledWith(
+        'vid-1',
+        'members',
+        expect.objectContaining({ allowedMembers: ['user1@test.com', 'user2@test.com'] })
+      );
+    });
+
+    it('should add new link to shareLinks list', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ExportSharingPage({ callbacks });
+      page.showShare('vid-1');
+
+      await page.createShareLink();
+
+      expect(page.getShareLinks().length).toBe(1);
+      expect(page.getShareLinks()[0].id).toBe('new-link-1');
+    });
+
+    it('should hide share form after successful creation', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ExportSharingPage({ callbacks });
+      page.showShare('vid-1');
+
+      await page.createShareLink();
+
+      expect(page.isShareFormVisible()).toBe(false);
+    });
+
+    it('should not create link when password validation fails', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ExportSharingPage({ callbacks });
+      page.showShare('vid-1');
+      page.setSharePermission('password');
+      page.setSharePassword('ab'); // too short
+
+      await page.createShareLink();
+
+      expect(callbacks.onGenerateShareLink).not.toHaveBeenCalled();
+    });
+  });
