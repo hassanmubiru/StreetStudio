@@ -501,3 +501,86 @@ describe('ExportSharingPage', () => {
       expect(page.getExportOptions().resolution).toBe('4k');
     });
   });
+
+  describe('Export Execution', () => {
+    it('should call onStartExport for single video', async () => {
+      const callbacks = createMockCallbacks();
+      const videos = [createTestVideo({ id: 'v1' })];
+      page = new ExportSharingPage({ videos, callbacks });
+      page.showExport();
+      page.selectVideo('v1');
+
+      await page.startExport();
+
+      expect(callbacks.onStartExport).toHaveBeenCalledWith('v1', {
+        format: 'mp4',
+        quality: 'high',
+        resolution: '1080p',
+      });
+    });
+
+    it('should call onStartBatchExport for multiple videos', async () => {
+      const callbacks = createMockCallbacks();
+      const videos = [createTestVideo({ id: 'v1' }), createTestVideo({ id: 'v2' })];
+      page = new ExportSharingPage({ videos, callbacks });
+      page.showExport();
+      page.selectVideo('v1');
+      page.selectVideo('v2');
+
+      await page.startExport();
+
+      expect(callbacks.onStartBatchExport).toHaveBeenCalledWith(
+        expect.arrayContaining(['v1', 'v2']),
+        expect.objectContaining({ format: 'mp4' })
+      );
+    });
+
+    it('should add job to exportJobs after single export', async () => {
+      const callbacks = createMockCallbacks();
+      const videos = [createTestVideo({ id: 'v1' })];
+      page = new ExportSharingPage({ videos, callbacks });
+      page.showExport();
+      page.selectVideo('v1');
+
+      await page.startExport();
+
+      expect(page.getExportJobs().length).toBe(1);
+      expect(page.getExportJobs()[0].id).toBe('new-job-1');
+    });
+
+    it('should add multiple jobs after batch export', async () => {
+      const callbacks = createMockCallbacks();
+      const videos = [createTestVideo({ id: 'v1' }), createTestVideo({ id: 'v2' })];
+      page = new ExportSharingPage({ videos, callbacks });
+      page.showExport();
+      page.selectVideo('v1');
+      page.selectVideo('v2');
+
+      await page.startExport();
+
+      expect(page.getExportJobs().length).toBe(2);
+    });
+
+    it('should hide export form after successful export', async () => {
+      const callbacks = createMockCallbacks();
+      const videos = [createTestVideo({ id: 'v1' })];
+      page = new ExportSharingPage({ videos, callbacks });
+      page.showExport();
+      page.selectVideo('v1');
+
+      await page.startExport();
+
+      expect(page.isExportFormVisible()).toBe(false);
+    });
+
+    it('should not start export when no videos selected', async () => {
+      const callbacks = createMockCallbacks();
+      page = new ExportSharingPage({ videos: [createTestVideo()], callbacks });
+      page.showExport();
+
+      await page.startExport();
+
+      expect(callbacks.onStartExport).not.toHaveBeenCalled();
+      expect(callbacks.onStartBatchExport).not.toHaveBeenCalled();
+    });
+  });

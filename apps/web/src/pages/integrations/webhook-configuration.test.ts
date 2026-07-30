@@ -579,3 +579,66 @@ describe('WebhookConfigurationPage', () => {
       expect(page.getEditingWebhookId()).toBeNull();
     });
   });
+
+  describe('Webhook Deletion', () => {
+    it('should show confirmation dialog when delete is clicked', () => {
+      const webhook = createTestWebhook();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks: createMockCallbacks() });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const deleteBtn = el.querySelector('.btn-delete-webhook') as HTMLButtonElement;
+      deleteBtn.click();
+
+      expect(el.querySelector('[role="alertdialog"]')).toBeTruthy();
+      expect(el.textContent).toContain('Delete this webhook permanently');
+    });
+
+    it('should call onDeleteWebhook when confirmed', async () => {
+      const webhook = createTestWebhook({ id: 'wh-to-delete' });
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.deleteWebhook('wh-to-delete');
+
+      expect(callbacks.onDeleteWebhook).toHaveBeenCalledWith('wh-to-delete');
+    });
+
+    it('should remove webhook from list after deletion', async () => {
+      const webhook = createTestWebhook({ id: 'wh-to-delete' });
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.deleteWebhook('wh-to-delete');
+
+      expect(page.getWebhooks().length).toBe(0);
+    });
+  });
+
+  describe('Webhook Testing', () => {
+    it('should call onTestWebhook callback', async () => {
+      const webhook = createTestWebhook({ id: 'wh-test' });
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.testWebhook('wh-test');
+
+      expect(callbacks.onTestWebhook).toHaveBeenCalledWith('wh-test');
+    });
+
+    it('should display success test result banner', async () => {
+      const webhook = createTestWebhook();
+      const callbacks = createMockCallbacks();
+      page = new WebhookConfigurationPage({ webhooks: [webhook], callbacks });
+
+      await page.testWebhook(webhook.id);
+
+      const result = page.getTestResult();
+      expect(result).toBeTruthy();
+      expect(result!.success).toBe(true);
+      expect(result!.statusCode).toBe(200);
+
+      const el = page.getElement();
+      expect(el.querySelector('#test-result-banner')).toBeTruthy();
+      expect(el.textContent).toContain('Test Successful');
+    });
