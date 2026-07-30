@@ -118,12 +118,18 @@ describe('VideoLibraryComponent', () => {
       const sortButton = element.querySelector('[data-action="toggle-sort"]') as HTMLElement;
       const icon = sortButton?.querySelector('svg');
       
-      // Initially ascending (no rotation)
+      // Default sort direction is descending (newest first), so the icon
+      // starts rotated.
+      expect(icon?.classList.contains('rotate-180')).toBe(true);
+      
+      sortButton?.click();
+      
+      // Clicking toggles to ascending, removing the rotation.
       expect(icon?.classList.contains('rotate-180')).toBe(false);
       
       sortButton?.click();
       
-      // Should be descending now (rotated)
+      // Clicking again toggles back to descending, restoring the rotation.
       expect(icon?.classList.contains('rotate-180')).toBe(true);
     });
 

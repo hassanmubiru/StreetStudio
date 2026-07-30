@@ -65,6 +65,7 @@ describe('DashboardPage', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
     document.body.innerHTML = '';
   });
 
@@ -171,7 +172,9 @@ describe('DashboardPage', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const element = dashboardPage.getElement();
-      expect(element.innerHTML).toContain(`Welcome back, ${(mockMember as any).displayName}!`);
+      // MemberDto identifies a user by email (there is no displayName field),
+      // so the welcome message greets the member by their email address.
+      expect(element.innerHTML).toContain(`Welcome back, ${mockMember.email}!`);
     });
 
     it('should render quick actions section', async () => {
@@ -370,7 +373,8 @@ describe('DashboardPage', () => {
       
       dashboardPage = new DashboardPage(mockSession);
       
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Flush initialization (microtasks + any pending timers) under fake timers
+      await vi.advanceTimersByTimeAsync(100);
       
       const refreshSpy = vi.spyOn(dashboardPage, 'refresh');
       

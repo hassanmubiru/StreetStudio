@@ -8,10 +8,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NavigationController } from '../../app/navigation/navigation-controller.js';
 import type { OrganizationDto, MemberDto } from '@streetstudio/shared';
+import { TopNavigation } from '../../app/navigation/components/top-navigation.js';
+import { SidebarNavigation } from '../../app/navigation/components/sidebar-navigation.js';
+import { MobileNavigation } from '../../app/navigation/components/mobile-navigation.js';
+import { getWorkspaceStore } from '../../stores/workspace-store.js';
 
 // Mock the stores
-vi.mock('../../stores/workspace-store.js', () => ({
-  getWorkspaceStore: vi.fn(() => ({
+vi.mock('../../stores/workspace-store.js', () => {
+  // The real getWorkspaceStore() returns a singleton, so the mock must return
+  // the same store instance on every call. Tests rely on this identity to
+  // observe subscriptions made by a freshly-constructed controller.
+  const store = {
     subscribe: vi.fn(() => vi.fn()),
     setSidebarCollapsed: vi.fn(),
     setCurrentWorkspace: vi.fn(),
@@ -21,8 +28,9 @@ vi.mock('../../stores/workspace-store.js', () => ({
       breadcrumbs: [],
       sidebarCollapsed: false
     }))
-  }))
-}));
+  };
+  return { getWorkspaceStore: vi.fn(() => store) };
+});
 
 vi.mock('../../stores/notification-store.js', () => ({
   getNotificationStore: vi.fn(() => ({
@@ -187,9 +195,9 @@ describe('Dashboard Navigation State Management', () => {
       navigationController.initialize();
       
       // Verify components are created (mocked)
-      expect(vi.mocked(require('../../app/navigation/components/top-navigation.js').TopNavigation)).toHaveBeenCalled();
-      expect(vi.mocked(require('../../app/navigation/components/sidebar-navigation.js').SidebarNavigation)).toHaveBeenCalled();
-      expect(vi.mocked(require('../../app/navigation/components/mobile-navigation.js').MobileNavigation)).toHaveBeenCalled();
+      expect(vi.mocked(TopNavigation)).toHaveBeenCalled();
+      expect(vi.mocked(SidebarNavigation)).toHaveBeenCalled();
+      expect(vi.mocked(MobileNavigation)).toHaveBeenCalled();
     });
 
     it('should restore saved sidebar state', () => {
@@ -521,8 +529,9 @@ describe('Dashboard Navigation State Management', () => {
     });
 
     it('should handle store initialization errors gracefully', () => {
-      // Mock store to throw error
-      vi.mocked(require('../../stores/workspace-store.js').getWorkspaceStore).mockImplementation(() => {
+      // Mock store to throw error on the next construction only, so the
+      // failure does not leak into subsequent tests.
+      vi.mocked(getWorkspaceStore).mockImplementationOnce(() => {
         throw new Error('Store initialization failed');
       });
 

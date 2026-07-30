@@ -277,8 +277,13 @@ export class NavigationController {
   public onStateChange(listener: (state: NavigationState) => void): () => void {
     this.stateChangeListeners.add(listener);
     
-    // Immediately call with current state
-    listener(this.state);
+    // Immediately call with current state. Guard against listener errors so a
+    // single misbehaving subscriber cannot break registration for others.
+    try {
+      listener(this.state);
+    } catch (error) {
+      console.error('Navigation state change listener error:', error);
+    }
     
     return () => {
       this.stateChangeListeners.delete(listener);

@@ -49,6 +49,8 @@ export class UploadStore {
   private activeUploads: Map<string, AbortController> = new Map();
   private config: UploadConfig;
   private uploadQueue: string[] = [];
+  private queueProcessingScheduled = false;
+  private isDestroyed = false;
 
   private readonly DEFAULT_CONFIG: UploadConfig = {
     maxConcurrentUploads: 3,
@@ -115,8 +117,13 @@ export class UploadStore {
   public subscribe(listener: (state: UploadState) => void): () => void {
     this.listeners.add(listener);
     
-    // Send current state immediately
-    listener(this.getState());
+    // Send current state immediately. Guard against listener errors so that a
+    // faulty subscriber cannot break subscription (mirrors notifyListeners).
+    try {
+      listener(this.getState());
+    } catch (error) {
+      logger.error('Upload store listener error', { error });
+    }
     
     return () => {
       this.listeners.delete(listener);
@@ -180,28 +187,53 @@ export class UploadStore {
   }
 
   /**
-   * Process upload queue
+   * Schedule processing of the upload queue.
+   *
+   * Processing is deferred to a microtask so that the status mutations made by
+   * callers (addUpload/resumeUpload/retryUpload, etc.) settle to their intended
+   * state ('queued') before any queued item is promoted to 'uploading'. This
+   * keeps the store's synchronous post-conditions predictable: an item is
+   * observably 'queued' immediately after being enqueued, and transitions to
+   * 'uploading' on a subsequent tick when capacity allows.
    */
-  private async processQueue(): Promise<void> {
-    const activeUploadsCount = this.activeUploads.size;
-    
-    if (activeUploadsCount >= this.config.maxConcurrentUploads) {
+  private processQueue(): void {
+    if (this.isDestroyed) {
+      return;
+    }
+    if (this.queueProcessingScheduled) {
+      return;
+    }
+    this.queueProcessingScheduled = true;
+    queueMicrotask(() => {
+      this.queueProcessingScheduled = false;
+      void this.processQueueInternal();
+    });
+  }
+
+  /**
+   * Process upload queue, starting queued uploads up to the concurrency limit.
+   */
+  private async processQueueInternal(): Promise<void> {
+    if (this.isDestroyed) {
       return;
     }
 
-    const queuedUpload = this.uploadQueue.shift();
-    if (!queuedUpload) {
-      return;
-    }
+    while (this.activeUploads.size < this.config.maxConcurrentUploads) {
+      const queuedUpload = this.uploadQueue.shift();
+      if (!queuedUpload) {
+        return;
+      }
 
-    const uploadItem = this.state.uploads.find(u => u.id === queuedUpload);
-    if (!uploadItem || uploadItem.status !== 'queued') {
-      // Continue processing queue
-      this.processQueue();
-      return;
-    }
+      const uploadItem = this.state.uploads.find(u => u.id === queuedUpload);
+      if (!uploadItem || uploadItem.status !== 'queued') {
+        // Skip stale queue entries and keep filling available capacity.
+        continue;
+      }
 
-    await this.startUpload(queuedUpload);
+      // Start the upload without awaiting completion so multiple uploads can
+      // run concurrently up to the configured limit.
+      void this.startUpload(queuedUpload);
+    }
   }
 
   /**
@@ -599,6 +631,8 @@ export class UploadStore {
    * Destroy store and clean up resources
    */
   public destroy(): void {
+    this.isDestroyed = true;
+
     // Cancel all active uploads
     this.activeUploads.forEach((controller) => {
       controller.abort();

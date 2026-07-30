@@ -39,6 +39,30 @@ export class DashboardPage {
   private refreshTimer: number | null = null;
   private isLoading = false;
   private initializationPromise: Promise<void>;
+  private resizeHandler?: () => void;
+
+  /**
+   * Compute the responsive class list for the main content grid based on the
+   * current viewport width. jsdom-friendly: reads window.innerWidth so tests
+   * can drive breakpoints. Mobile deliberately avoids a 3-column grid so the
+   * dashboard stacks vertically on small screens.
+   */
+  private getMainGridClass(): string {
+    const width = typeof window !== 'undefined' && window.innerWidth
+      ? window.innerWidth
+      : 1024;
+
+    if (width < 640) {
+      // Mobile: single column, no multi-column grid
+      return 'grid grid-cols-1 gap-3 sm:gap-6';
+    }
+    if (width < 1024) {
+      // Tablet: up to three columns via the medium breakpoint
+      return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6';
+    }
+    // Desktop: three-column layout with a wide main column
+    return 'grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8';
+  }
 
   constructor(session: DashboardSession) {
     this.session = session;
@@ -78,8 +102,6 @@ export class DashboardPage {
    * Load dashboard data from API
    */
   private async loadDashboardData(): Promise<void> {
-    if (this.isLoading) return;
-    
     this.isLoading = true;
     try {
       // Get current member info
@@ -179,12 +201,12 @@ export class DashboardPage {
    */
   private renderDashboard(): void {
     this.element.innerHTML = `
-      <div class="p-4 sm:p-6 max-w-7xl mx-auto">
+      <div class="p-3 sm:p-6 max-w-7xl mx-auto">
         <!-- Page Header -->
         <div class="mb-8">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white truncate">
                 Welcome back, ${this.data?.currentMember?.email || 'User'}!
               </h1>
               <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -194,7 +216,9 @@ export class DashboardPage {
             <div class="mt-4 sm:mt-0">
               <button 
                 id="refresh-dashboard" 
-                class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Refresh dashboard"
+                style="min-height: 44px;"
+                class="inline-flex items-center justify-center min-h-[44px] px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 ${this.isLoading ? 'disabled' : ''}
               >
                 <svg class="w-4 h-4 mr-2 ${this.isLoading ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,24 +231,26 @@ export class DashboardPage {
         </div>
 
         <!-- Quick Actions -->
-        <div id="quick-actions-container" class="mb-8">
-          <!-- Quick actions component will be rendered here -->
+        <div id="quick-actions-container" class="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Quick Actions component will be rendered here -->
         </div>
 
         <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div class="${this.getMainGridClass()}">
           <!-- Main Content (Projects and Videos) -->
           <div class="lg:col-span-2 space-y-8">
             <!-- Recent Projects -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div class="group px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between">
-                  <h2 class="text-lg font-medium text-gray-900 dark:text-white">
+                  <h2 class="text-lg font-medium text-gray-900 dark:text-white truncate">
                     Recent Projects
                   </h2>
                   <a 
                     href="/projects" 
-                    class="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors"
+                    aria-label="View all projects"
+                    style="min-height: 44px;"
+                    class="inline-flex items-center min-h-[44px] rounded text-blue-600 hover:text-blue-500 group-hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     View all →
                   </a>
@@ -237,14 +263,16 @@ export class DashboardPage {
 
             <!-- Recent Videos -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div class="group px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between">
-                  <h2 class="text-lg font-medium text-gray-900 dark:text-white">
+                  <h2 class="text-lg font-medium text-gray-900 dark:text-white truncate">
                     Recent Videos
                   </h2>
                   <a 
                     href="/recordings" 
-                    class="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors"
+                    aria-label="View all recordings"
+                    style="min-height: 44px;"
+                    class="inline-flex items-center min-h-[44px] rounded text-blue-600 hover:text-blue-500 group-hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     View all →
                   </a>
@@ -257,10 +285,17 @@ export class DashboardPage {
           </div>
 
           <!-- Sidebar Content -->
-          <div class="space-y-6">
+          <div class="space-y-4 sm:space-y-6">
             <!-- Weekly Stats -->
-            <div id="stats-container">
-              <!-- Stats widget will be rendered here -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-white">
+                  This Week
+                </h2>
+              </div>
+              <div id="stats-container" class="p-6">
+                <!-- Stats widget will be rendered here -->
+              </div>
             </div>
 
             <!-- Activity Feed -->
@@ -289,7 +324,7 @@ export class DashboardPage {
     if (!this.data) return;
 
     // Render quick actions
-    const quickActionsContainer = document.getElementById('quick-actions-container');
+    const quickActionsContainer = this.element.querySelector('#quick-actions-container');
     if (quickActionsContainer) {
       const quickActions = new QuickActions();
       quickActionsContainer.innerHTML = '';
@@ -297,7 +332,7 @@ export class DashboardPage {
     }
 
     // Render project cards or empty state
-    const projectsContainer = document.getElementById('projects-container');
+    const projectsContainer = this.element.querySelector('#projects-container') as HTMLElement | null;
     if (projectsContainer) {
       if (this.data.recentProjects.length > 0) {
         const projectsGrid = document.createElement('div');
@@ -316,7 +351,7 @@ export class DashboardPage {
     }
 
     // Render video cards or empty state
-    const videosContainer = document.getElementById('videos-container');
+    const videosContainer = this.element.querySelector('#videos-container') as HTMLElement | null;
     if (videosContainer) {
       if (this.data.recentVideos.length > 0) {
         const videosGrid = document.createElement('div');
@@ -335,7 +370,7 @@ export class DashboardPage {
     }
 
     // Render stats widget
-    const statsContainer = document.getElementById('stats-container');
+    const statsContainer = this.element.querySelector('#stats-container');
     if (statsContainer) {
       const statsWidget = new DashboardStatsWidget(this.data.weeklyStats);
       statsContainer.innerHTML = '';
@@ -343,7 +378,7 @@ export class DashboardPage {
     }
 
     // Render activity feed
-    const activityContainer = document.getElementById('activity-feed-container');
+    const activityContainer = this.element.querySelector('#activity-feed-container');
     if (activityContainer) {
       const activityFeed = new ActivityFeed(this.data.notifications);
       activityContainer.innerHTML = '';
@@ -373,7 +408,26 @@ export class DashboardPage {
    */
   private renderLoadingState(): void {
     this.element.innerHTML = `
-      <div class="p-6 max-w-7xl mx-auto">
+      <div class="p-3 sm:p-6 max-w-7xl mx-auto">
+        <!-- Page header (kept visible during loading so the refresh control
+             stays available and reflects the loading state) -->
+        <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white truncate">
+            Welcome back, ${this.data?.currentMember?.email || 'User'}!
+          </h1>
+          <button
+            id="refresh-dashboard"
+            aria-label="Refresh dashboard"
+            style="min-height: 44px;"
+            class="mt-4 sm:mt-0 inline-flex items-center justify-center min-h-[44px] px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled
+          >
+            <svg class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Refresh
+          </button>
+        </div>
         <div class="animate-pulse">
           <!-- Header skeleton -->
           <div class="mb-8">
@@ -443,15 +497,8 @@ export class DashboardPage {
         </div>
       </div>
     `;
-    
-    // Add retry functionality
-    const retryButton = document.getElementById('retry-load');
-    if (retryButton) {
-      retryButton.addEventListener('click', async () => {
-        await this.loadDashboardData();
-        this.render();
-      });
-    }
+    // Retry clicks are handled by the delegated click listener registered in
+    // setupEventListeners(), which survives innerHTML re-renders.
   }
 
   private showErrorState(): void {
@@ -495,6 +542,13 @@ export class DashboardPage {
         this.refresh();
       }
     });
+
+    // Re-render on viewport changes so the responsive grid adapts to the
+    // current breakpoint (mobile stacks, tablet/desktop use multi-column).
+    this.resizeHandler = () => {
+      this.render();
+    };
+    window.addEventListener('resize', this.resizeHandler);
   }
 
   /**
@@ -555,7 +609,7 @@ export class DashboardPage {
    * Update activity feed without full re-render
    */
   private updateActivityFeed(): void {
-    const activityContainer = document.getElementById('activity-feed-container');
+    const activityContainer = this.element.querySelector('#activity-feed-container');
     if (activityContainer && this.data) {
       // Clear and re-render activity feed
       activityContainer.innerHTML = '';
@@ -617,7 +671,13 @@ export class DashboardPage {
    */
   public destroy(): void {
     this.stopAutoRefresh();
-    
+
+    // Remove the window resize listener
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = undefined;
+    }
+
     // Remove event listeners by replacing element content
     this.element.innerHTML = '';
     
