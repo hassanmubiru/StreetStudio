@@ -267,7 +267,7 @@ export class NotificationDeliveryService {
 
     // Prevent unbounded growth of delivered IDs set
     if (this.deliveredIds.size > 1000) {
-      const entries = [...this.deliveredIds];
+      const entries = Array.from(this.deliveredIds);
       this.deliveredIds = new Set(entries.slice(entries.length - 500));
     }
 
