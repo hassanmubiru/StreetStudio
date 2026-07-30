@@ -444,14 +444,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Create mobile notifications with permission handling
     - _Requirements: 10.6, 10.7, 10.8, 10.9_
 
-  - [ ] 13.5 Add offline capabilities
+  - [-] 13.5 Add offline capabilities
     - Implement service worker for offline functionality
     - Create local storage for recently viewed content
     - Build offline comment composition with sync when online
     - Add connectivity status display and offline indicators
     - _Requirements: 10.7_
 
-  - [ ] 13.6 Write unit tests for mobile functionality
+  - [-] 13.6 Write unit tests for mobile functionality
     - Test responsive layout behavior across breakpoints
     - Test touch gestures and mobile-specific interactions
     - Test offline capabilities and background sync
@@ -465,14 +465,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Build progressive loading for images and media content
     - _Requirements: 12.2, 12.5_
 
-  - [ ] 14.2 Build caching and data management system
+  - [-] 14.2 Build caching and data management system
     - Implement intelligent caching with cache-first and network-first strategies
     - Create cache invalidation logic for real-time data
     - Build local storage management for user preferences
     - Add background sync for offline actions and updates
     - _Requirements: 12.3, 12.6_
 
-  - [ ] 14.3 Implement performance monitoring
+  - [-] 14.3 Implement performance monitoring
     - Create Core Web Vitals tracking (LCP, FID, CLS)
     - Build custom performance metrics for video operations
     - Add performance budgets and monitoring alerts
@@ -493,7 +493,7 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - _Requirements: 12.2, 12.3, 12.4_
 
 - [ ] 15. Integration and API Management
-  - [ ] 15.1 Build API key management interface
+  - [-] 15.1 Build API key management interface
     - Create API key generation interface with scope selection
     - Implement API key display with partial masking for security
     - Build key revocation and rotation functionality
