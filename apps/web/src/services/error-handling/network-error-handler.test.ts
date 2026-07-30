@@ -26,11 +26,6 @@ import { NetworkErrorHandler, type NetworkErrorCategory, type RetryConfig } from
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
-// Mock crypto.randomUUID
-vi.stubGlobal('crypto', {
-  randomUUID: () => 'test-uuid-1234',
-});
-
 describe('NetworkErrorHandler', () => {
   let handler: NetworkErrorHandler;
 

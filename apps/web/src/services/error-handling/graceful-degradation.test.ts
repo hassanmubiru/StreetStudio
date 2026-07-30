@@ -5,6 +5,8 @@
  * for unavailable features.
  */
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GracefulDegradationService, type FeatureCheck } from './graceful-degradation.js';
 

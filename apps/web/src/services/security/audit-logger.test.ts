@@ -147,7 +147,7 @@ describe('AuditLogger', () => {
       logger.log('member.invited', { email: 'a@b.com' });
       await logger.flush();
 
-      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      const body = JSON.parse((fetchMock.mock.calls[0]![1] as any).body);
       expect(body.entries).toHaveLength(1);
       expect(body.entries[0].action).toBe('member.invited');
     });
@@ -255,8 +255,8 @@ describe('AuditLogger', () => {
       logger.log('member.invited', {});
       const queue = logger.getQueue();
       expect(queue).toHaveLength(2);
-      expect(queue[0].action).toBe('team.created');
-      expect(queue[1].action).toBe('member.invited');
+      expect(queue[0]!.action).toBe('team.created');
+      expect(queue[1]!.action).toBe('member.invited');
     });
 
     it('returns an independent copy', () => {
