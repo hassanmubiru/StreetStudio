@@ -462,24 +462,37 @@ describe('DashboardStatsWidget', () => {
       expect(element1).toBe(element2);
     });
 
-    it('should handle frequent updates efficiently', () => {
+    it('should handle frequent updates without leaking DOM nodes and reflect the final state', () => {
       statsWidget = new DashboardStatsWidget(mockStats);
-      const startTime = performance.now();
-      
-      // Perform many updates
-      for (let i = 0; i < 100; i++) {
+      const element = statsWidget.getElement();
+
+      // Baseline node count after the first render.
+      const baselineNodeCount = element.querySelectorAll('*').length;
+
+      // Perform many rapid updates.
+      const iterations = 100;
+      for (let i = 0; i < iterations; i++) {
         statsWidget.updateStats({
           videosCreated: i,
           commentsReceived: i * 2,
           teamMembers: Math.floor(i / 10)
         });
       }
-      
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-      
-      // Should complete quickly
-      expect(duration).toBeLessThan(100);
+
+      // Re-rendering must REPLACE content, not accumulate it: the node count
+      // after 100 updates must equal the baseline (guards against a regression
+      // that appends markup per update instead of replacing it).
+      expect(element.querySelectorAll('*').length).toBe(baselineNodeCount);
+
+      // The widget must reflect the final update's values (functional
+      // correctness under frequent updates). Last iteration: i = 99.
+      // Last iteration i = 99 → videosCreated=99, commentsReceived=198,
+      // teamMembers=Math.floor(99/10)=9. These are below formatNumber's 1K
+      // threshold, so they render as plain integers.
+      const values = Array.from(element.querySelectorAll('p.text-2xl')).map(
+        (p) => p.textContent?.trim()
+      );
+      expect(values).toEqual(['99', '198', '9']);
     });
   });
 

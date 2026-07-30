@@ -442,20 +442,23 @@ describe('UploadManagerComponent', () => {
       expect(errorContainer?.textContent).toContain(errorMessage);
     });
 
-    it('should auto-remove error messages', (done: any) => {
-      const errorMessage = 'Auto-remove test';
-      (component as any).showError(errorMessage);
-      
-      // Check error is visible
-      let errorContainer = container.querySelector('.error-container');
-      expect(errorContainer).toBeTruthy();
-      
-      // Wait for auto-removal (mocked setTimeout)
-      setTimeout(() => {
-        errorContainer = container.querySelector('.error-container');
-        // In real implementation, error would be removed
-        done();
-      }, 100);
+    it('should auto-remove error messages after the timeout', () => {
+      vi.useFakeTimers();
+      try {
+        const errorMessage = 'Auto-remove test';
+        (component as any).showError(errorMessage);
+
+        // Error is visible immediately after showError
+        expect(container.querySelector('.error-container')).toBeTruthy();
+
+        // Advance past the product's 5s auto-remove timer
+        vi.advanceTimersByTime(5000);
+
+        // Error element is removed once the timer fires
+        expect(container.querySelector('.error-container')).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 

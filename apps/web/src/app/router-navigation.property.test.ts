@@ -14,6 +14,13 @@ import fc from 'fast-check';
 import { Router } from './router.js';
 import { KeyboardShortcuts } from './keyboard-shortcuts.js';
 
+// These property tests each run 100 async iterations that await real router
+// navigation and timers. Under a fully parallel suite the default 5s per-test
+// timeout can be exceeded purely due to CPU contention (they pass comfortably
+// in isolation). Raise the timeout for this file so a loaded CI host does not
+// produce false negatives. This does not relax any property assertion.
+vi.setConfig({ testTimeout: 30000 });
+
 // Mock DOM and browser APIs
 Object.defineProperty(window, 'location', {
   value: { pathname: '/', search: '', hash: '' },
@@ -28,14 +35,28 @@ Object.defineProperty(window, 'history', {
 // Navigation element generator
 const navigationElementArb = fc.record({
   id: fc.string({ minLength: 1, maxLength: 20 }),
-  label: fc.string({ minLength: 1, maxLength: 50 }),
+  // A navigation element must have a non-blank accessible label. A whitespace-
+  // only label with no aria-label has no accessible name and is (correctly) not
+  // WCAG-compliant, so it is not a valid navigation element to model here.
+  label: fc.string({ minLength: 1, maxLength: 50 }).filter((s) => s.trim().length > 0),
+  // Generate well-formed, already-normalized routes (single leading slash,
+  // single-slash separators, no trailing slash). The router normalizes paths
+  // (collapsing "//", stripping trailing slashes), so a malformed generated
+  // route like "//" would never equal getCurrentPath() after navigation — that
+  // is a generator artifact, not a routing defect. Real routes are normalized
+  // slug paths, which is what this models.
   route: fc.oneof(
     fc.constant('/dashboard'),
     fc.constant('/projects'), 
     fc.constant('/recordings'),
     fc.constant('/settings'),
     fc.constant('/search'),
-    fc.stringMatching(/^\/[a-z0-9/-]{1,50}$/)
+    fc
+      .array(fc.stringMatching(/^[a-z][a-z0-9]{0,15}$/), {
+        minLength: 1,
+        maxLength: 3,
+      })
+      .map((segments) => '/' + segments.join('/'))
   ),
   isProtected: fc.boolean(),
   hasSubmenu: fc.boolean(),
