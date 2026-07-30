@@ -858,7 +858,7 @@ describe('WebhookConfigurationPage', () => {
       const el = page.getElement();
       container.appendChild(el);
 
-      const cards = el.querySelectorAll('[data-webhook-id]');
+      const cards = el.querySelectorAll('#webhook-list > div > div[data-webhook-id]');
       expect(cards.length).toBe(3);
     });
 

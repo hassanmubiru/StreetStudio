@@ -962,3 +962,68 @@ describe('ExportSharingPage', () => {
       expect(callbacks.onGenerateShareLink).not.toHaveBeenCalled();
     });
   });
+
+  describe('Share Links Display', () => {
+    it('should render share links section when links exist', () => {
+      const links = [createTestShareLink()];
+      page = new ExportSharingPage({ shareLinks: links });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('#share-links-list')).toBeTruthy();
+    });
+
+    it('should display link URL', () => {
+      const links = [createTestShareLink({ url: 'https://share.streetstudio.io/xyz' })];
+      page = new ExportSharingPage({ shareLinks: links });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('https://share.streetstudio.io/xyz');
+    });
+
+    it('should display permission label', () => {
+      const links = [createTestShareLink({ permission: 'organization' })];
+      page = new ExportSharingPage({ shareLinks: links });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('Organization members only');
+    });
+
+    it('should display view count', () => {
+      const links = [createTestShareLink({ viewCount: 42 })];
+      page = new ExportSharingPage({ shareLinks: links });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('42 views');
+    });
+
+    it('should show revoke button for active links', () => {
+      const links = [createTestShareLink({ isActive: true })];
+      page = new ExportSharingPage({ shareLinks: links });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('.btn-revoke-link')).toBeTruthy();
+    });
+
+    it('should not show revoke button for revoked links', () => {
+      const links = [createTestShareLink({ isActive: false })];
+      page = new ExportSharingPage({ shareLinks: links });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('.btn-revoke-link')).toBeFalsy();
+    });
+
+    it('should show "Revoked" label for inactive links', () => {
+      const links = [createTestShareLink({ isActive: false })];
+      page = new ExportSharingPage({ shareLinks: links });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.textContent).toContain('Revoked');
+    });
+  });
