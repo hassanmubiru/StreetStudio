@@ -103,3 +103,53 @@ function createExportJob(overrides?: Partial<ExportJob>): ExportJob {
     ...overrides,
   };
 }
+
+function createShareLink(overrides?: Partial<ShareLink>): ShareLink {
+  return {
+    id: 'link-1',
+    videoId: 'video-1',
+    url: 'https://share.streetstudio.io/abc123',
+    permission: 'public',
+    createdAt: '2024-01-15T10:00:00Z',
+    viewCount: 10,
+    isActive: true,
+    ...overrides,
+  };
+}
+
+function createVideo(overrides?: Partial<VideoForExport>): VideoForExport {
+  return {
+    id: 'video-1',
+    title: 'Integration Test Video',
+    duration: 180,
+    thumbnail: '/thumbs/vid-1.jpg',
+    ...overrides,
+  };
+}
+
+// --- Cross-Module Integration Tests ---
+
+describe('Cross-Module Integration: API Key + Webhook Authentication', () => {
+  describe('API key scopes affecting webhook operations', () => {
+    it('should validate that webhook-relevant scopes exist in scope list', () => {
+      // Webhooks respond to video, comment, member, and share events.
+      // API keys must have matching read scopes to receive these webhook payloads.
+      const scopeNames = AVAILABLE_SCOPES.map(s => s.scope);
+      const webhookEventCategories = new Set(
+        AVAILABLE_EVENTS.map(e => e.category.toLowerCase())
+      );
+
+      // Verify that for each webhook event category there's a matching read scope
+      expect(webhookEventCategories.has('videos')).toBe(true);
+      expect(scopeNames).toContain('read:videos');
+
+      expect(webhookEventCategories.has('comments')).toBe(true);
+      expect(scopeNames).toContain('read:comments');
+
+      expect(webhookEventCategories.has('members')).toBe(true);
+      expect(scopeNames).toContain('read:members');
+
+      expect(webhookEventCategories.has('sharing')).toBe(true);
+      // Sharing events correspond to videos scope since shares are on videos
+      expect(scopeNames).toContain('read:videos');
+    });

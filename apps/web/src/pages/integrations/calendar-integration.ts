@@ -174,3 +174,61 @@ export function validateAttendeeEmail(email: string): { valid: boolean; error?: 
   }
   return { valid: true };
 }
+
+/**
+ * Format a date/time for display.
+ */
+export function formatEventTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return 'Invalid date';
+  return date.toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+/**
+ * Calculate event duration in minutes.
+ */
+export function getEventDurationMinutes(startTime: string, endTime: string): number {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+  return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
+}
+
+/**
+ * Format duration in minutes to a human-readable string.
+ */
+export function formatDuration(minutes: number): string {
+  if (minutes < 1) return '0 min';
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const remaining = minutes % 60;
+  if (remaining === 0) return `${hours}h`;
+  return `${hours}h ${remaining}m`;
+}
+
+/**
+ * Get provider display info.
+ */
+export function getProviderInfo(provider: CalendarProvider): { label: string; icon: string } {
+  const info = CALENDAR_PROVIDERS.find(p => p.provider === provider);
+  return info ?? { label: provider, icon: 'calendar' };
+}
+
+/**
+ * Get connection status display color.
+ */
+export function getConnectionStatusColor(status: CalendarConnectionStatus): string {
+  switch (status) {
+    case 'connected': return 'bg-green-100 text-green-800';
+    case 'disconnected': return 'bg-gray-100 text-gray-600';
+    case 'error': return 'bg-red-100 text-red-800';
+    default: return 'bg-gray-100 text-gray-600';
+  }
+}
