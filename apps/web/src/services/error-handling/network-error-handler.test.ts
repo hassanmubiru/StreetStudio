@@ -254,14 +254,16 @@ describe('NetworkErrorHandler', () => {
 
       const responsePromise = handler.fetchWithRetry('/api/test');
       
+      // Attach rejection handler immediately to prevent unhandled rejection
+      const errorPromise = responsePromise.catch(e => e);
+      
       // Advance through all retry delays
       await vi.advanceTimersByTimeAsync(10000);
 
-      await expect(responsePromise).rejects.toThrow('HTTP 500');
+      const error = await errorPromise;
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('HTTP 500');
       expect(mockFetch).toHaveBeenCalledTimes(3); // initial + 2 retries
-
-      // Allow any pending microtasks to flush to avoid unhandled rejection
-      await vi.advanceTimersByTimeAsync(0);
     });
 
     it('does not retry non-retryable errors (401)', async () => {
@@ -306,14 +308,17 @@ describe('NetworkErrorHandler', () => {
       mockFetch.mockResolvedValue(new Response('', { status: 500, statusText: 'Error' }));
 
       const promise = handlerWithCallback.fetchWithRetry('/api/test');
+      
+      // Attach rejection handler immediately to prevent unhandled rejection
+      const errorPromise = promise.catch(e => e);
+      
       await vi.advanceTimersByTimeAsync(5000);
 
-      await expect(promise).rejects.toThrow('HTTP 500');
+      const error = await errorPromise;
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('HTTP 500');
       expect(onError).toHaveBeenCalled();
       expect(onError.mock.calls[0][0].category).toBe('server-error');
-
-      // Allow any pending microtasks to flush to avoid unhandled rejection
-      await vi.advanceTimersByTimeAsync(0);
     });
 
     it('calls onRetry callback on each retry attempt', async () => {
