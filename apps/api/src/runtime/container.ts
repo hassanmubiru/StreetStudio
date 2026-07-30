@@ -246,12 +246,33 @@ export function buildRuntime(config: PlatformConfig, pg: PgClient): Runtime {
       if (!event.organizationId || !event.memberId) {
         return;
       }
-      await auditLog.append({
-        actor: event.memberId,
-        action: `${event.operationId}:${event.outcome}`,
-        targetId: event.memberId,
-        orgId: event.organizationId,
-      });
+      // Best-effort at the sink boundary: for a real tenant this append is
+      // referentially valid and succeeds, so the Audit Log is authoritative for
+      // successes and for denials on existing organizations (R28). But an
+      // `authorization_denied` event may carry a caller-supplied organization
+      // id that does NOT exist (e.g. probing a random/foreign org) — that row
+      // has no valid `organization` FK target and cannot be written. An
+      // audit-infrastructure failure must never mask or corrupt the security
+      // decision itself, so it is logged/alerted here rather than turning a
+      // correct 403 denial (or an already-committed mutation) into a 500.
+      try {
+        await auditLog.append({
+          actor: event.memberId,
+          action: `${event.operationId}:${event.outcome}`,
+          targetId: event.memberId,
+          orgId: event.organizationId,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(
+          "[api] audit append failed for",
+          `${event.operationId}:${event.outcome}`,
+          "org",
+          event.organizationId,
+          "-",
+          error instanceof Error ? error.message : String(error),
+        );
+      }
     },
   };
 
