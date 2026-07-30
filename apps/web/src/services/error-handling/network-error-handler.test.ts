@@ -311,6 +311,9 @@ describe('NetworkErrorHandler', () => {
       await expect(promise).rejects.toThrow('HTTP 500');
       expect(onError).toHaveBeenCalled();
       expect(onError.mock.calls[0][0].category).toBe('server-error');
+
+      // Allow any pending microtasks to flush to avoid unhandled rejection
+      await vi.advanceTimersByTimeAsync(0);
     });
 
     it('calls onRetry callback on each retry attempt', async () => {
