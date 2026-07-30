@@ -1027,3 +1027,103 @@ describe('ExportSharingPage', () => {
       expect(el.textContent).toContain('Revoked');
     });
   });
+
+  describe('Share Link Revocation', () => {
+    it('should call onRevokeShareLink callback', async () => {
+      const callbacks = createMockCallbacks();
+      const links = [createTestShareLink({ id: 'link-1', isActive: true })];
+      page = new ExportSharingPage({ shareLinks: links, callbacks });
+
+      await page.revokeShareLink('link-1');
+
+      expect(callbacks.onRevokeShareLink).toHaveBeenCalledWith('link-1');
+    });
+
+    it('should mark link as inactive after revocation', async () => {
+      const callbacks = createMockCallbacks();
+      const links = [createTestShareLink({ id: 'link-1', isActive: true })];
+      page = new ExportSharingPage({ shareLinks: links, callbacks });
+
+      await page.revokeShareLink('link-1');
+
+      const link = page.getShareLinks().find(l => l.id === 'link-1');
+      expect(link?.isActive).toBe(false);
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should have aria-label on export progress bars', () => {
+      const jobs = [createTestJob({ videoTitle: 'My Video' })];
+      page = new ExportSharingPage({ exportJobs: jobs });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const progressBar = el.querySelector('[role="progressbar"]');
+      expect(progressBar?.getAttribute('aria-label')).toContain('My Video');
+    });
+
+    it('should have aria-label on video selection checkboxes', () => {
+      const videos = [createTestVideo({ id: 'v1', title: 'Demo Video' })];
+      page = new ExportSharingPage({ videos });
+      page.showExport();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const cb = el.querySelector('.video-select-checkbox');
+      expect(cb?.getAttribute('aria-label')).toContain('Demo Video');
+    });
+
+    it('should have role=group on video selection area', () => {
+      const videos = [createTestVideo()];
+      page = new ExportSharingPage({ videos });
+      page.showExport();
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const group = el.querySelector('#video-selection');
+      expect(group?.getAttribute('role')).toBe('group');
+    });
+
+    it('should have role=radiogroup on embed type selection', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const group = el.querySelector('[role="radiogroup"]');
+      expect(group).toBeTruthy();
+      expect(group?.getAttribute('aria-label')).toContain('Embed type');
+    });
+
+    it('should have aria-label on embed code textarea', () => {
+      page = new ExportSharingPage();
+      page.showEmbed('vid-1');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const textarea = el.querySelector('#embed-code-output');
+      expect(textarea?.getAttribute('aria-label')).toContain('embed code');
+    });
+
+    it('should have role=radiogroup on permission selection', () => {
+      page = new ExportSharingPage();
+      page.showShare('vid-1');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const group = el.querySelector('[role="radiogroup"]');
+      expect(group).toBeTruthy();
+      expect(group?.getAttribute('aria-label')).toContain('permission');
+    });
+
+    it('should have aria-label on cancel export buttons', () => {
+      const jobs = [createTestJob({ videoTitle: 'My Vid', status: 'processing' })];
+      page = new ExportSharingPage({ exportJobs: jobs });
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const cancelBtn = el.querySelector('.btn-cancel-job');
+      expect(cancelBtn?.getAttribute('aria-label')).toContain('My Vid');
+    });
+  });
+});
