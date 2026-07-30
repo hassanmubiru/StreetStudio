@@ -85,6 +85,10 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   // RBAC model end-to-end against the real ContentService).
   "projects.create",
   "folders.create",
+  // Notifications (personal/authenticated scope) + analytics (RBAC read).
+  "notifications.list",
+  "notifications.markRead",
+  "analytics.metrics",
 ];
 
 /** The slice's subset of {@link PUBLIC_OPERATIONS}, preserving their metadata. */
@@ -206,6 +210,21 @@ export function buildRuntime(config: PlatformConfig, pg: PgClient): Runtime {
   const contentService = new ContentService({
     store: repositoryContentStore(repositories),
     access: accessControl,
+  });
+  // Notifications (personal scope). The realtime emitter is a no-op here: the
+  // WebSocket realtime transport is not wired in this composition, so
+  // deliverPending is unused; list/markRead do not touch it.
+  const notificationStore = repositoryNotificationStore(repositories);
+  const notificationService = new NotificationService({
+    notifications: notificationStore,
+    preferences: repositoryNotificationPreferenceStore(repositories),
+    emitter: { async emit(): Promise<void> {} },
+  });
+  // Analytics reads — Administrator-gated via the same RBAC evaluator.
+  const analyticsService = new AnalyticsService({
+    store: repositoryViewEventStore(repositories),
+    videos: repositoryVideoOrganizationResolver(repositories),
+    authorizer: permissionAnalyticsAuthorizer(accessControl),
   });
 
   // The append-only Audit Log is tenant-scoped (audit_entry.organization_id is
@@ -354,6 +373,51 @@ export function buildRuntime(config: PlatformConfig, pg: PgClient): Runtime {
     return contentService.createFolder(auth, parent, name);
   };
 
+  // notifications.list (personal scope): the caller's own notifications.
+  // NotificationService exposes no list method, so this reads the same store of
+  // record it writes to (repository-backed), mapped to DTOs. Real data, no fake.
+  const listNotifications: ServiceInvocation = async (_request, context) => {
+    const auth = requireAuth(context);
+    const records = await notificationStore.listByMember(auth.memberId);
+    const notifications = records.map(toNotificationDto);
+    return { notifications, total: notifications.length };
+  };
+
+  // notifications.markRead (personal scope): ownership-checked by the service —
+  // a notification that doesn't exist or belongs to another member is NOT_FOUND
+  // and nothing changes (R12.3/R12.6).
+  const markNotificationRead: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const id = request.params?.["id"];
+    if (!id || !isUuid(id)) {
+      throw new AppError("VALIDATION_FAILED", {
+        details: { field: "id", reason: "must be a UUID path parameter" },
+      });
+    }
+    await notificationService.markRead(auth.memberId, id as Uuid);
+    return { success: true };
+  };
+
+  // analytics.metrics (RBAC: analytics:read, Administrator-only): aggregate
+  // playback metrics for the owning org over an optional [start,end] window
+  // (defaults to all-time). Deny-by-default and org-scoped — other tenants'
+  // data can never be included.
+  const analyticsMetrics: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const q = request.query ?? {};
+    const startRaw = typeof q["start"] === "string" ? (q["start"] as string) : undefined;
+    const endRaw = typeof q["end"] === "string" ? (q["end"] as string) : undefined;
+    const start = startRaw ? new Date(startRaw) : new Date(0);
+    const end = endRaw ? new Date(endRaw) : new Date();
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      throw new AppError("VALIDATION_FAILED", {
+        details: { reason: "start/end must be valid ISO timestamps" },
+      });
+    }
+    return analyticsService.aggregate(auth, orgId, { start, end });
+  };
+
   container
     .register<ServiceInvocation>("auth.register", register)
     .register<ServiceInvocation>("auth.login", login)
@@ -362,7 +426,10 @@ export function buildRuntime(config: PlatformConfig, pg: PgClient): Runtime {
     .register<ServiceInvocation>("organizations.create", createOrganization)
     .register<ServiceInvocation>("organizations.list", listOrganizations)
     .register<ServiceInvocation>("projects.create", createProject)
-    .register<ServiceInvocation>("folders.create", createFolder);
+    .register<ServiceInvocation>("folders.create", createFolder)
+    .register<ServiceInvocation>("notifications.list", listNotifications)
+    .register<ServiceInvocation>("notifications.markRead", markNotificationRead)
+    .register<ServiceInvocation>("analytics.metrics", analyticsMetrics);
 
   const operations = sliceOperations();
   const service = createApiService({
