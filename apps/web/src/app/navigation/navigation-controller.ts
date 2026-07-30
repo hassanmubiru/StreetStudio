@@ -65,6 +65,7 @@ export class NavigationController {
   private unsubscribeNotifications?: () => void;
   private unsubscribeUploads?: () => void;
   private routeChangeHandler?: () => void;
+  private customRouteChangeHandler?: (event: Event) => void;
   private resizeHandler?: () => void;
 
   constructor() {
@@ -96,6 +97,17 @@ export class NavigationController {
       }
     };
     window.addEventListener("popstate", this.routeChangeHandler);
+
+    // React to programmatic route changes dispatched by the router as a
+    // 'route:changed' custom event carrying the new path in its detail.
+    this.customRouteChangeHandler = (event: Event) => {
+      const path = (event as CustomEvent).detail?.path;
+      if (typeof path === "string" && path !== this.state.currentRoute) {
+        this.updateState({ currentRoute: path });
+        this.updateNavigationItems(this.getContextualNavigationItems());
+      }
+    };
+    window.addEventListener("route:changed", this.customRouteChangeHandler);
   }
 
   /**
@@ -643,19 +655,12 @@ export class NavigationController {
    * Show or update upload progress indicator in the header area
    */
   private updateUploadProgress(uploadState: any): void {
-    const headerContainer = document.getElementById('app-header');
-    if (!headerContainer) return;
-
     let indicator = document.getElementById('upload-progress-indicator');
 
     if (uploadState.isUploading) {
       // Create indicator if it doesn't exist
-      if (!indicator) {
-        indicator = document.createElement('div');
-        indicator.id = 'upload-progress-indicator';
-        indicator.className = 'upload-progress-indicator flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900 rounded text-sm';
-        headerContainer.appendChild(indicator);
-      }
+      indicator = this.createUploadProgressIndicator();
+      if (!indicator) return;
 
       const completedCount = uploadState.completedUploads || 0;
       const totalCount = uploadState.uploads?.length || 0;
@@ -667,7 +672,9 @@ export class NavigationController {
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
         </svg>
         <span class="text-blue-700 dark:text-blue-300">
-          Uploading ${completedCount}/${totalCount} (${progress}%)
+          Uploading ${completedCount}/${totalCount} (${progress}%)${
+            uploadState.totalSpeed ? ` · ${this.formatSpeed(uploadState.totalSpeed)}` : ''
+          }
         </span>
         <div class="w-20 h-1.5 bg-blue-200 dark:bg-blue-700 rounded-full overflow-hidden">
           <div class="h-full bg-blue-600 dark:bg-blue-400 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
@@ -685,12 +692,45 @@ export class NavigationController {
   }
 
   /**
+   * Create (or return the existing) upload progress indicator element in the
+   * header area. Returns null when there is no header container to host it.
+   */
+  private createUploadProgressIndicator(): HTMLElement | null {
+    const headerContainer = document.getElementById('app-header');
+    if (!headerContainer) return null;
+
+    let indicator = document.getElementById('upload-progress-indicator');
+    if (!indicator) {
+      indicator = document.createElement('div');
+      indicator.id = 'upload-progress-indicator';
+      indicator.className = 'upload-progress-indicator flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900 rounded text-sm';
+      indicator.setAttribute('role', 'progressbar');
+      headerContainer.appendChild(indicator);
+    }
+
+    return indicator;
+  }
+
+  /**
+   * Format an upload speed (in bytes per second) into a human-readable string.
+   */
+  private formatSpeed(bytesPerSecond: number): string {
+    if (bytesPerSecond < 1024) {
+      return `${bytesPerSecond} B/s`;
+    }
+    if (bytesPerSecond < 1024 * 1024) {
+      return `${Math.round(bytesPerSecond / 1024)} KB/s`;
+    }
+    return `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`;
+  }
+
+  /**
    * Register keyboard shortcuts for navigation
    */
   private setupKeyboardShortcuts(): void {
     const handler = (event: KeyboardEvent) => {
-      // Ctrl+/ or Cmd+/ to toggle sidebar
-      if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+      // Ctrl+B or Cmd+B to toggle sidebar
+      if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
         event.preventDefault();
         this.toggleSidebar();
         return;
@@ -854,6 +894,9 @@ export class NavigationController {
     // Remove window event listeners
     if (this.routeChangeHandler) {
       window.removeEventListener("popstate", this.routeChangeHandler);
+    }
+    if (this.customRouteChangeHandler) {
+      window.removeEventListener("route:changed", this.customRouteChangeHandler);
     }
     if (this.resizeHandler) {
       window.removeEventListener("resize", this.resizeHandler);

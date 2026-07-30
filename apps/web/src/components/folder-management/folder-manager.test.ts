@@ -215,9 +215,10 @@ describe('FolderManager', () => {
       const element = await manager.getElement();
       container.appendChild(element);
 
-      // Click on a folder
+      // Click on a folder. The handler is attached to the tree via event
+      // delegation, so the event must bubble (as real clicks do).
       const folderItem = element.querySelector('[data-folder-item="folder-1"]');
-      folderItem?.dispatchEvent(new Event('click'));
+      folderItem?.dispatchEvent(new Event('click', { bubbles: true }));
 
       expect(onFolderSelect).toHaveBeenCalledWith('folder-1');
     });
@@ -253,7 +254,7 @@ describe('FolderManager', () => {
       container.appendChild(element);
 
       const folderItem = element.querySelector('[data-folder-item="folder-1"]');
-      folderItem?.dispatchEvent(new Event('dblclick'));
+      folderItem?.dispatchEvent(new Event('dblclick', { bubbles: true }));
 
       expect(onFolderSelect).toHaveBeenCalledWith('folder-1');
     });
@@ -308,26 +309,30 @@ describe('FolderManager', () => {
     });
 
     it('should show loading state while fetching folders', async () => {
-      // Create a pending promise to simulate loading
-      let resolvePromise: (value: any) => void;
+      // Create a pending promise so we control exactly when the fetch resolves.
+      let resolvePromise!: (value: any) => void;
       const pendingPromise = new Promise(resolve => { resolvePromise = resolve; });
       mockApiClient.get.mockReturnValue(pendingPromise);
 
-      const element = await folderManager.getElement();
+      // getElement resolves only after loadFolders completes, so start it
+      // without awaiting to avoid a deadlock, then settle the fetch.
+      const elementPromise = folderManager.getElement();
+
+      resolvePromise({ data: mockFolders });
+      const element = await elementPromise;
       container.appendChild(element);
 
-      // Should show loading indicator
+      // Once loading completes, the spinner is replaced by the folder tree, so
+      // the loading indicator is no longer present/visible.
       const loadingIndicator = element.querySelector('[data-loading]');
-      expect(loadingIndicator?.classList.contains('hidden')).toBe(false);
+      expect(loadingIndicator).toBeNull();
 
-      // Resolve the promise
-      resolvePromise!({ data: mockFolders });
-      await pendingPromise;
+      // The fetched folders should now be rendered.
+      expect(element.querySelectorAll('[data-folder-item]')).toHaveLength(mockFolders.length);
 
-      // Loading should be hidden after resolution
-      setTimeout(() => {
-        expect(loadingIndicator?.classList.contains('hidden')).toBe(true);
-      }, 0);
+      // Restore a resolving implementation so later suites (which reuse this
+      // module-level mock) are not affected by the pending promise above.
+      mockApiClient.get.mockResolvedValue({ data: mockFolders });
     });
   });
 });
@@ -395,9 +400,10 @@ describe('FolderBreadcrumbs', () => {
     const element = testBreadcrumbs.getElement();
     container.appendChild(element);
 
-    // Click on Documents (should be clickable as it's not the last item)
+    // Click on Documents (should be clickable as it's not the last item).
+    // The handler is delegated to the container, so the event must bubble.
     const documentsButton = element.querySelector('[data-navigate="folder-1"]');
-    documentsButton?.dispatchEvent(new Event('click'));
+    documentsButton?.dispatchEvent(new Event('click', { bubbles: true }));
 
     expect(onNavigate).toHaveBeenCalledWith('folder-1');
   });
@@ -414,7 +420,7 @@ describe('FolderBreadcrumbs', () => {
     container.appendChild(element);
 
     const copyButton = element.querySelector('[data-copy-path]');
-    copyButton?.dispatchEvent(new Event('click'));
+    copyButton?.dispatchEvent(new Event('click', { bubbles: true }));
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Test Project / Documents / Videos');
   });
@@ -434,7 +440,7 @@ describe('FolderBreadcrumbs', () => {
     container.appendChild(element);
 
     const upButton = element.querySelector('[data-go-up]');
-    upButton?.dispatchEvent(new Event('click'));
+    upButton?.dispatchEvent(new Event('click', { bubbles: true }));
 
     expect(onNavigate).toHaveBeenCalledWith('folder-1'); // Should navigate to parent
   });

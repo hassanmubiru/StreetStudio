@@ -41,6 +41,9 @@ export class FolderPermissions {
     const container = document.createElement('div');
     container.className = 'folder-permissions bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4';
     
+    // Assign before rendering: renderPermissions relies on this.container and
+    // would otherwise early-return, leaving the element empty.
+    this.container = container;
     this.renderPermissions();
     return container;
   }

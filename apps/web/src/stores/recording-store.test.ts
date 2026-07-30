@@ -6,24 +6,28 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { RecordingStore, type RecordingState, type RecordingSession } from './recording-store.js';
+import { formatDuration } from '../utils/format-time.js';
 
-// Mock dependencies
-const mockLogger = {
+// Mock dependencies.
+// vi.mock is hoisted to the top of the file, so the mock object it references
+// must also be hoisted (via vi.hoisted) to exist when the factory runs.
+const mockLogger = vi.hoisted(() => ({
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
   debug: vi.fn()
-};
+}));
 
 vi.mock('../app/client-logger.js', () => ({
   logger: mockLogger
 }));
 
+// The store uses formatDuration from this module; mock that specific export.
 vi.mock('../utils/format-time.js', () => ({
-  formatTime: vi.fn().mockReturnValue('00:00')
+  formatDuration: vi.fn().mockReturnValue('00:00')
 }));
 
-// Mock MediaRecorder and related APIs
+// Mock MediaRecorder and related APIs (jsdom does not provide MediaRecorder).
 global.MediaRecorder = vi.fn().mockImplementation(() => ({
   start: vi.fn(),
   stop: vi.fn(),
@@ -36,6 +40,8 @@ global.MediaRecorder = vi.fn().mockImplementation(() => ({
   onstop: null,
   onerror: null
 })) as any;
+// Static method used by getPreferredMimeType() for codec negotiation.
+(global.MediaRecorder as any).isTypeSupported = vi.fn().mockReturnValue(true);
 
 Object.defineProperty(global.navigator, 'mediaDevices', {
   value: {
@@ -193,7 +199,6 @@ describe('RecordingStore', () => {
       expect(result.stream).toBe(mockStream);
       expect(navigator.mediaDevices.getDisplayMedia).toHaveBeenCalledWith({
         video: {
-          mediaSource: 'screen',
           width: { ideal: 1920, max: 1920 },
           height: { ideal: 1080, max: 1080 },
           frameRate: { ideal: 30 }
@@ -364,8 +369,7 @@ describe('RecordingStore', () => {
     });
 
     it('should format duration correctly', () => {
-      const mockFormatTime = require('../utils/format-time.js').formatTime;
-      mockFormatTime.mockReturnValue('02:30');
+      vi.mocked(formatDuration).mockReturnValue('02:30');
 
       store.createSession();
       const formatted = store.getFormattedDuration();
