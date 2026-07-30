@@ -344,3 +344,71 @@ describe('MobileVideoPlayer', () => {
     player.pause();
     expect(player.getState().isPlaying).toBe(false);
   });
+
+  it('should show/hide controls', () => {
+    player = new MobileVideoPlayer(container);
+
+    expect(player.getState().controlsVisible).toBe(true);
+
+    player.hideControls();
+    expect(player.getState().controlsVisible).toBe(false);
+
+    const overlay = container.querySelector('.mobile-video-controls') as HTMLElement;
+    expect(overlay.style.opacity).toBe('0');
+
+    player.showControls();
+    expect(player.getState().controlsVisible).toBe(true);
+    expect(overlay.style.opacity).toBe('1');
+  });
+
+  it('should seek to position', () => {
+    player = new MobileVideoPlayer(container);
+    const video = player.getVideoElement();
+
+    // Mock duration
+    Object.defineProperty(video, 'duration', { value: 120, writable: true });
+    video.dispatchEvent(new Event('durationchange'));
+
+    player.seek(30);
+    expect(video.currentTime).toBe(30);
+
+    // Should clamp to bounds
+    player.seek(-10);
+    expect(video.currentTime).toBe(0);
+  });
+
+  it('should seek relatively', () => {
+    player = new MobileVideoPlayer(container);
+    const video = player.getVideoElement();
+
+    Object.defineProperty(video, 'duration', { value: 120, writable: true });
+    video.dispatchEvent(new Event('durationchange'));
+    video.currentTime = 50;
+
+    player.seekRelative(10);
+    expect(video.currentTime).toBe(60);
+
+    player.seekRelative(-20);
+    expect(video.currentTime).toBe(40);
+  });
+
+  it('should show seek indicator on double tap', () => {
+    player = new MobileVideoPlayer(container, { enableDoubleTapSeek: true });
+    const seekIndicator = container.querySelector('.mobile-seek-indicator') as HTMLElement;
+
+    expect(seekIndicator).toBeTruthy();
+    expect(seekIndicator.style.opacity).toBe('0');
+  });
+
+  it('should load a new source', () => {
+    player = new MobileVideoPlayer(container);
+    player.loadSource('new-video.mp4');
+    expect(player.getVideoElement().src).toContain('new-video.mp4');
+  });
+
+  it('should clean up on destroy', () => {
+    player = new MobileVideoPlayer(container);
+    player.destroy();
+    expect(container.innerHTML).toBe('');
+  });
+});
