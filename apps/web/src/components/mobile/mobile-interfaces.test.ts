@@ -159,3 +159,50 @@ describe('TouchGestureHandler', () => {
     expect(onSwipeRight).toHaveBeenCalledTimes(1);
     expect(onSwipeRight.mock.calls[0][0].direction).toBe('right');
   });
+
+  it('should detect long press', () => {
+    const onLongPress = vi.fn();
+    handler = new TouchGestureHandler(container, { onLongPress }, { longPressDelay: 500 });
+
+    container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 100, clientY: 100 }]));
+    vi.advanceTimersByTime(600);
+
+    expect(onLongPress).toHaveBeenCalledTimes(1);
+    expect(onLongPress.mock.calls[0][0].type).toBe('longpress');
+  });
+
+  it('should cancel long press on move', () => {
+    const onLongPress = vi.fn();
+    handler = new TouchGestureHandler(container, { onLongPress }, { longPressDelay: 500, tapMaxDistance: 10 });
+
+    container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 100, clientY: 100 }]));
+    vi.advanceTimersByTime(200);
+    // Move past threshold
+    container.dispatchEvent(createTouchEvent('touchmove', [{ clientX: 150, clientY: 100 }]));
+    vi.advanceTimersByTime(400);
+
+    expect(onLongPress).not.toHaveBeenCalled();
+  });
+
+  it('should not fire swipe if below threshold distance', () => {
+    const onSwipe = vi.fn();
+    handler = new TouchGestureHandler(container, { onSwipe }, { swipeThreshold: 50 });
+
+    container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 100, clientY: 100 }]));
+    vi.advanceTimersByTime(100);
+    container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 120, clientY: 100 }]));
+
+    expect(onSwipe).not.toHaveBeenCalled();
+  });
+
+  it('should call detach and stop listening', () => {
+    const onTap = vi.fn();
+    handler = new TouchGestureHandler(container, { onTap });
+    handler.detach();
+
+    container.dispatchEvent(createTouchEvent('touchstart', [{ clientX: 100, clientY: 100 }]));
+    vi.advanceTimersByTime(50);
+    container.dispatchEvent(createTouchEvent('touchend', [], [{ clientX: 100, clientY: 100 }]));
+
+    expect(onTap).not.toHaveBeenCalled();
+  });
