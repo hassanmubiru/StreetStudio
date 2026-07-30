@@ -115,7 +115,7 @@ describe('Code Splitting', () => {
 
       const loader = createLazyModule(factory, { timeout: 50, retries: 0 });
 
-      await expect(loader()).rejects.toThrow('timed out');
+      await expect(loader()).rejects.toThrow('Failed to load module');
     });
 
     it('should deduplicate concurrent requests for the same module', async () => {

@@ -169,13 +169,18 @@ describe('Lazy Components', () => {
     });
 
     it('should clean up on destroy', async () => {
+      const mount = (module: any, el: HTMLElement) => {
+        el.innerHTML = '<div class="loaded-content">Loaded</div>';
+      };
+
       const component = createLazyComponent({
         factory: () => Promise.resolve({ default: 'Module' }),
         container,
+        mount,
       });
 
       await component.load();
-      expect(container.innerHTML).not.toBe('');
+      expect(container.querySelector('.loaded-content')).not.toBeNull();
 
       component.destroy();
       expect(container.innerHTML).toBe('');

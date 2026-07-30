@@ -184,3 +184,44 @@ export class MobileCommentInput {
     this.textareaEl.addEventListener('blur', () => this.handleBlur());
     this.textareaEl.addEventListener('keydown', (e) => this.handleKeydown(e));
     inputRow.appendChild(this.textareaEl);
+
+    // Submit button
+    this.submitBtn = document.createElement('button');
+    this.submitBtn.type = 'button';
+    this.submitBtn.className = 'mobile-comment-submit';
+    this.submitBtn.setAttribute('aria-label', 'Send comment');
+    this.submitBtn.disabled = true;
+    this.submitBtn.style.cssText = `
+      min-width: ${MIN_TOUCH_TARGET}px; min-height: ${MIN_TOUCH_TARGET}px;
+      background: #3b82f6; border: none; border-radius: 50%;
+      color: white; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      opacity: 0.5; transition: opacity 0.2s;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+    `;
+    this.submitBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
+    this.submitBtn.addEventListener('click', () => this.handleSubmit());
+    inputRow.appendChild(this.submitBtn);
+
+    this.wrapperEl.appendChild(inputRow);
+    this.container.appendChild(this.wrapperEl);
+  }
+
+  private setupKeyboardListeners(): void {
+    // Use Visual Viewport API for keyboard detection
+    if (window.visualViewport) {
+      this.visualViewportHandler = () => {
+        if (this.state.isFocused && window.visualViewport) {
+          const offset = window.innerHeight - window.visualViewport.height;
+          if (offset > 100) {
+            // Keyboard is visible - adjust position
+            this.wrapperEl.style.paddingBottom = `${offset}px`;
+          } else {
+            this.wrapperEl.style.paddingBottom = '';
+          }
+          this.callbacks.onHeightChange?.(offset);
+        }
+      };
+      window.visualViewport.addEventListener('resize', this.visualViewportHandler);
+    }
+  }
