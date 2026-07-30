@@ -40,14 +40,6 @@ describe('ErrorFeedbackService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Mock localStorage
-    const store: Record<string, string> = {};
-    vi.stubGlobal('localStorage', {
-      getItem: (key: string) => store[key] || null,
-      setItem: (key: string, value: string) => { store[key] = value; },
-      removeItem: (key: string) => { delete store[key]; },
-    });
 
     // Mock performance.memory
     Object.defineProperty(performance, 'memory', {
