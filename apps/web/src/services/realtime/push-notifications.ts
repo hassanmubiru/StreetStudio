@@ -334,7 +334,7 @@ export class PushNotificationService {
   private emit(event: string, data: unknown): void {
     const handlers = this.listeners.get(event);
     if (!handlers) return;
-    for (const handler of handlers) {
+    for (const handler of Array.from(handlers)) {
       try {
         handler(data);
       } catch {
