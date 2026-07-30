@@ -128,3 +128,189 @@ describe('getExtensionStatusInfo', () => {
     expect(info.color).toContain('red');
   });
 });
+
+// --- BrowserExtensionBridge Tests ---
+
+describe('BrowserExtensionBridge', () => {
+  let bridge: BrowserExtensionBridge;
+  let callbacks: Partial<BrowserExtensionCallbacks>;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    callbacks = {
+      onExtensionDetected: vi.fn(),
+      onExtensionLost: vi.fn(),
+      onRecordingStatusChange: vi.fn(),
+      onRecordingComplete: vi.fn(),
+      onError: vi.fn(),
+    };
+    bridge = new BrowserExtensionBridge({
+      callbacks,
+      pingIntervalMs: 5000,
+      pingTimeoutMs: 1000,
+    });
+  });
+
+  afterEach(() => {
+    bridge.stop();
+    vi.useRealTimers();
+  });
+
+  it('starts in not_installed state', () => {
+    expect(bridge.getStatus()).toBe('not_installed');
+    expect(bridge.isAvailable()).toBe(false);
+    expect(bridge.getExtensionInfo()).toBeNull();
+  });
+
+  it('starts listening on start()', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    bridge.start();
+    expect(addSpy).toHaveBeenCalledWith('message', expect.any(Function));
+    addSpy.mockRestore();
+  });
+
+  it('stops listening on stop()', () => {
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+    bridge.start();
+    bridge.stop();
+    expect(removeSpy).toHaveBeenCalledWith('message', expect.any(Function));
+    removeSpy.mockRestore();
+  });
+
+  it('does not double-start', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    bridge.start();
+    bridge.start();
+    // Should only add listener once
+    const messageCalls = addSpy.mock.calls.filter(c => c[0] === 'message');
+    expect(messageCalls.length).toBe(1);
+    addSpy.mockRestore();
+  });
+
+  it('detects extension via pong response', () => {
+    bridge.start();
+
+    // Simulate extension responding to a ping with a pong event
+    const pongEvent = new MessageEvent('message', {
+      data: {
+        source: EXTENSION_ORIGIN,
+        type: 'pong',
+        id: 'ext-msg-1',
+        payload: { version: '1.2.0', capabilities: ['recording', 'screenshot'] },
+      },
+    });
+    window.dispatchEvent(pongEvent);
+
+    expect(callbacks.onExtensionDetected).toHaveBeenCalled();
+    expect(bridge.getStatus()).toBe('installed');
+    expect(bridge.isAvailable()).toBe(true);
+    expect(bridge.getExtensionInfo()?.version).toBe('1.2.0');
+  });
+
+  it('marks extension as outdated for old versions', () => {
+    bridge.start();
+
+    const pongEvent = new MessageEvent('message', {
+      data: {
+        source: EXTENSION_ORIGIN,
+        type: 'pong',
+        id: 'ext-msg-1',
+        payload: { version: '0.5.0', capabilities: [] },
+      },
+    });
+    window.dispatchEvent(pongEvent);
+
+    expect(bridge.getStatus()).toBe('outdated');
+    expect(bridge.isAvailable()).toBe(false);
+  });
+
+  it('handles recording status events', () => {
+    bridge.start();
+
+    const statusEvent = new MessageEvent('message', {
+      data: {
+        source: EXTENSION_ORIGIN,
+        type: 'recording_status',
+        id: 'ext-msg-2',
+        payload: { isRecording: true, duration: 30, mode: 'screen', isPaused: false },
+      },
+    });
+    window.dispatchEvent(statusEvent);
+
+    expect(callbacks.onRecordingStatusChange).toHaveBeenCalledWith({
+      isRecording: true,
+      duration: 30,
+      mode: 'screen',
+      isPaused: false,
+    });
+  });
+
+  it('handles recording complete events', () => {
+    bridge.start();
+
+    const completeEvent = new MessageEvent('message', {
+      data: {
+        source: EXTENSION_ORIGIN,
+        type: 'recording_complete',
+        id: 'ext-msg-3',
+        payload: { videoId: 'video-1', duration: 120, fileSize: 5000000, uploadProgress: 100 },
+      },
+    });
+    window.dispatchEvent(completeEvent);
+
+    expect(callbacks.onRecordingComplete).toHaveBeenCalledWith({
+      videoId: 'video-1',
+      duration: 120,
+      fileSize: 5000000,
+      uploadProgress: 100,
+    });
+  });
+
+  it('handles error events', () => {
+    bridge.start();
+
+    const errorEvent = new MessageEvent('message', {
+      data: {
+        source: EXTENSION_ORIGIN,
+        type: 'error',
+        id: 'ext-msg-4',
+        payload: 'Permission denied',
+      },
+    });
+    window.dispatchEvent(errorEvent);
+
+    expect(callbacks.onError).toHaveBeenCalledWith('Permission denied');
+  });
+
+  it('ignores messages from other sources', () => {
+    bridge.start();
+
+    const otherEvent = new MessageEvent('message', {
+      data: {
+        source: 'other-app',
+        type: 'pong',
+        id: 'ext-msg-5',
+        payload: { version: '1.0.0' },
+      },
+    });
+    window.dispatchEvent(otherEvent);
+
+    expect(callbacks.onExtensionDetected).not.toHaveBeenCalled();
+    expect(bridge.getStatus()).toBe('not_installed');
+  });
+
+  it('returns false for operations when extension is not available', async () => {
+    bridge.start();
+    const settings: SettingsSyncPayload = {
+      defaultQuality: 'high',
+      defaultMode: 'screen',
+      audioEnabled: true,
+      cameraEnabled: false,
+      cursorHighlight: true,
+      countdownEnabled: true,
+      countdownSeconds: 3,
+    };
+    const result = await bridge.syncSettings(settings);
+    expect(result).toBe(false);
+  });
+});
