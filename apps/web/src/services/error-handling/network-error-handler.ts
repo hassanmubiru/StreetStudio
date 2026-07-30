@@ -276,7 +276,7 @@ export class NetworkErrorHandler {
 
           // Don't retry non-retryable errors
           if (!config.retryableCategories.includes(category)) {
-            const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+            const error = new Error(`HTTP ${response.status}: ${response.statusText}`) as Error & { __handled?: boolean };
             const info = this.createErrorInfo(error, response.status, url, attempt + 1);
             this.recordError(info);
             this.config.onError?.(info);
@@ -286,6 +286,7 @@ export class NetworkErrorHandler {
             }
 
             this.pendingRetries.delete(requestId);
+            error.__handled = true;
             throw error;
           }
 
@@ -321,6 +322,11 @@ export class NetworkErrorHandler {
       } catch (error) {
         if ((error as Error).message === 'Request was cancelled') {
           this.pendingRetries.delete(requestId);
+          throw error;
+        }
+
+        // If error was already handled (non-retryable HTTP errors), just rethrow
+        if ((error as any).__handled) {
           throw error;
         }
 
