@@ -807,3 +807,76 @@ describe('ExportSharingPage', () => {
       expect(code).toContain('https://my.embed.io');
     });
   });
+
+  describe('Sharing Controls', () => {
+    it('should show share form for a video', () => {
+      page = new ExportSharingPage();
+      page.showShare('vid-1');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(page.isShareFormVisible()).toBe(true);
+      expect(el.querySelector('#share-form')).toBeTruthy();
+    });
+
+    it('should hide share form', () => {
+      page = new ExportSharingPage();
+      page.showShare('vid-1');
+      page.hideShare();
+
+      expect(page.isShareFormVisible()).toBe(false);
+    });
+
+    it('should display permission radio buttons', () => {
+      page = new ExportSharingPage();
+      page.showShare('vid-1');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      const radios = el.querySelectorAll('.permission-radio');
+      expect(radios.length).toBe(4);
+    });
+
+    it('should show password input when password permission selected', () => {
+      page = new ExportSharingPage();
+      page.showShare('vid-1');
+      page.setSharePermission('password');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('#share-password')).toBeTruthy();
+    });
+
+    it('should show members input when members permission selected', () => {
+      page = new ExportSharingPage();
+      page.showShare('vid-1');
+      page.setSharePermission('members');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('#share-members')).toBeTruthy();
+    });
+
+    it('should display expiration input', () => {
+      page = new ExportSharingPage();
+      page.showShare('vid-1');
+      const el = page.getElement();
+      container.appendChild(el);
+
+      expect(el.querySelector('#share-expiration')).toBeTruthy();
+    });
+
+    it('should track share form state', () => {
+      page = new ExportSharingPage();
+      page.showShare('vid-1');
+      page.setSharePermission('password');
+      page.setSharePassword('secret123');
+      page.setShareExpiration('2025-06-01T00:00');
+
+      const state = page.getShareFormState();
+      expect(state.videoId).toBe('vid-1');
+      expect(state.permission).toBe('password');
+      expect(state.password).toBe('secret123');
+      expect(state.expiration).toBe('2025-06-01T00:00');
+    });
+  });
