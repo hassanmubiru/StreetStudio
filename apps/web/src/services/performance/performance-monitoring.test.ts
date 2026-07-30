@@ -720,8 +720,7 @@ describe('PerformanceMonitor (integration)', () => {
     monitor = new PerformanceMonitor({ onMetric });
     monitor.start();
 
-    const { videoMetrics: vm } = require('./video-metrics.js');
-    vm.recordSeekLatency('v1', 50);
+    videoMetrics.recordSeekLatency('v1', 50);
 
     expect(onMetric).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -736,19 +735,8 @@ describe('PerformanceMonitor (integration)', () => {
     monitor = new PerformanceMonitor({ onAlert, enableBudgets: true });
     monitor.start();
 
-    const { videoMetrics: vm } = require('./video-metrics.js');
-    vm.recordSeekLatency('v1', 50); // No budget for seek_latency
-
-    // Use video.load_time which has a budget
-    const { videoMetrics: vm2 } = require('./video-metrics.js');
-    vm2.startVideoLoad('v2');
-    // Immediately end to get a very small duration (within budget)
-    vm2.endVideoLoad('v2');
-
-    // The alert should NOT have been called for values within budget
-    // Let's test with a large value by using the monitor directly
-    const { performanceBudgets: pb } = require('./performance-budgets.js');
-    pb.checkMetric('LCP', 5000);
+    // Use performanceBudgets directly to trigger a critical alert
+    performanceBudgets.checkMetric('LCP', 5000);
 
     expect(onAlert).toHaveBeenCalledWith(
       expect.objectContaining({
