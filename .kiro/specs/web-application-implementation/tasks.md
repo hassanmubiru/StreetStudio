@@ -366,14 +366,14 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Create theme selection (light, dark, system) with preview
     - _Requirements: 9.4, 9.8, 11.4, 11.7_
 
-  - [ ] 11.4 Add privacy and data management controls
+  - [-] 11.4 Add privacy and data management controls
     - Create privacy settings with profile visibility controls
     - Build data export functionality with progress tracking
     - Implement data deletion options with confirmation workflows
     - Add activity sharing preferences and history controls
     - _Requirements: 9.5, 9.9_
 
-  - [ ] 11.5 Write unit tests for settings management
+  - [-] 11.5 Write unit tests for settings management
     - Test profile editing and preference updates
     - Test security settings and two-factor authentication
     - Test accessibility preferences and theme selection
@@ -387,32 +387,32 @@ The implementation focuses on creating a modern, accessible, and performant web 
     - Build search result display with previews and contextual information
     - _Requirements: 14.1, 14.3, 14.5_
 
-  - [-] 12.2 Write property tests for search functionality
+  - [x] 12.2 Write property tests for search functionality
     - **Property 11: Search Functionality Consistency**
     - **Validates: Requirements 14.1**
 
-  - [-] 12.3 Implement advanced search and filtering
+  - [x] 12.3 Implement advanced search and filtering
     - Create advanced search interface with multiple filter options
     - Build date range, content type, and creator filters
     - Add faceted search with dynamic filter options
     - Implement saved searches with bookmark functionality
     - _Requirements: 14.2, 14.7, 14.8_
 
-  - [ ] 12.4 Add content-specific search features
+  - [-] 12.4 Add content-specific search features
     - Implement transcript search within videos with timestamp navigation
     - Create project-scoped and organization-wide search options
     - Build natural language and semantic search capabilities
     - Add search result highlighting and context display
     - _Requirements: 14.4, 14.6, 14.9_
 
-  - [ ] 12.5 Create search discovery and recommendations
+  - [-] 12.5 Create search discovery and recommendations
     - Build "no results" page with alternative suggestions
     - Implement content discovery recommendations
     - Add popular content and trending search displays
     - Create search analytics and improvement suggestions
     - _Requirements: 14.10_
 
-  - [ ] 12.6 Write unit tests for search functionality
+  - [-] 12.6 Write unit tests for search functionality
     - Test global search activation and result display
     - Test advanced filtering and faceted search
     - Test transcript search and content-specific features
