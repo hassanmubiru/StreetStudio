@@ -123,7 +123,32 @@ Investigated the FK/schema-duplication landscape in the live DB and found the de
 
 **AUDIT-SCHEMA-01 / SCHEMA-DUP-01 status:** the running composition now uses a single canonical, FK-integral schema and the audit log is authoritative. (Follow-up hygiene, non-blocking: the unused plural `ensure*Schema` DDL and duplicate tables can be removed from the domain packages to prevent future confusion.)
 
-**Remaining for full RC:** API-CATALOG-COVERAGE-01 (implement the missing list/get/update/delete domain methods to wire the rest of the catalog), the object-storage/ffmpeg media pipeline (uploads→processing→playback; no concrete `Transcoder` exists), and the WebSocket realtime transport. RC1 remains **not met**; these are the concrete, evidence-backed gating items.
+---
+
+## Update 6 — Phase B (broadened surface): notifications + analytics wired on the canonical path
+
+Wired three more operations onto the reconciled canonical repository path and verified them end-to-end:
+
+| Operation | Authz | Result |
+|---|---|---|
+| `GET /notifications` (`notifications.list`) | authenticated | **200** `{notifications:[],total:0}` for a fresh member; **401** with no token |
+| `POST /notifications/:id/read` (`notifications.markRead`) | authenticated | **404** for a nonexistent/foreign notification (ownership check, R12.3/R12.6) |
+| `GET /analytics/metrics` (`analytics.metrics`) | RBAC `analytics:read` (Administrator-only) | **200** zeroed metrics for a fresh org as Administrator; **403** for a foreign org |
+
+`notifications.list` reads the caller's own notifications via the repository store (the service exposes no list method — API-CATALOG-COVERAGE-01); `markRead` and `analytics.aggregate` run through the real services with their ownership/authorization checks.
+
+**Audit sink refined to best-effort (documented posture):** the lifecycle audits `authorization_denied` with the caller-supplied organization id, which for a foreign/nonexistent org has no valid `organization` FK target — an authoritative write there would turn a correct **403** into a **500**. The sink now logs/alerts audit-append failures instead of failing the request, so an audit-infrastructure failure can never mask or corrupt the security decision. For real tenants the append is referentially valid and succeeds, so the Audit Log remains authoritative for successes and for denials on existing organizations (R28).
+
+**Wired operations to date (all real PostgreSQL, canonical schema, full lifecycle):** `auth.register/login/logout/currentMember`, `organizations.create/list`, `projects.create`, `folders.create`, `notifications.list/markRead`, `analytics.metrics` — 11 operations, with deny-by-default RBAC and tenant isolation verified.
+
+**Deferred with reason (not faked):**
+- `comments.create/react`, `playback.recordView` — the domain services require an existing **video**, and the video-creation path (uploads→processing→ffmpeg) is the deferred media pipeline. Wireable, but not verifiable without a real video.
+- `uploads.*`, `playback.manifest` — need object storage (MinIO available) + the media pipeline.
+- Most list/get/update/delete operations — **API-CATALOG-COVERAGE-01**: the domain services implement mainly create/write paths; these need new domain methods.
+- `realtime.connect` — WebSocket transport not wired (a no-op notification emitter is used).
+- Media `Transcoder` (ffmpeg) — no concrete implementation exists.
+
+RC1 remains **not met**. Gating items (evidence-backed): API-CATALOG-COVERAGE-01 (missing CRUD methods), the object-storage/ffmpeg media pipeline, and the WebSocket realtime transport. The core architecture, auth/RBAC/tenant-isolation, canonical persistence, and the append-only audit log are now proven on real infrastructure.
 
 ---
 
