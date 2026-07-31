@@ -94,6 +94,18 @@ const server = createServer((req, res) => {
   }
 
   const file = resolveFile(urlPath);
+  // SPA history fallback applies to NAVIGATION requests (client-side routes),
+  // not to missing asset files. A request for a path that looks like a file
+  // (has an extension, e.g. /manifest.json, /favicon.png) that doesn't exist
+  // must 404 — serving index.html for it makes the browser parse HTML as that
+  // asset (e.g. "Manifest: Syntax error").
+  const pathname = urlPath.split("?")[0].split("#")[0];
+  const looksLikeAsset = /\.[a-z0-9]+$/i.test(pathname.slice(pathname.lastIndexOf("/") + 1));
+  if (!file && looksLikeAsset) {
+    res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+    res.end("Not Found");
+    return;
+  }
   // A real asset request: serve the file. Anything else (client-side route)
   // falls back to index.html so the SPA router can handle it.
   const target = file ?? INDEX;
