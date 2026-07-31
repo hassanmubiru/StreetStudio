@@ -97,6 +97,9 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "projects.update",
   "projects.delete",
   "folders.create",
+  "folders.get",
+  "folders.listByProject",
+  "folders.delete",
   // Notifications (personal/authenticated scope) + analytics (RBAC read).
   "notifications.list",
   "notifications.markRead",
