@@ -29,6 +29,7 @@
     "@streetstudio/shared": "*",
     "@streetstudio/uploads": "*",
     "ffmpeg-static": "^5.2.0",
+    "ioredis": "5.4.1",
     "pg": "^8.13.0",
     "streetjs": "^1.2.7",
     "ws": "^8.18.0"
