@@ -114,12 +114,15 @@ EXPOSE 8080
 CMD ["node", "apps/api/dist/runtime/main.js"]
 
 # -----------------------------------------------------------------------------
-# worker: background workers — media pipeline, delivery retries, scheduler.
-# Shares the API build artifact and selects the worker role at runtime.
+# worker: media-processing worker — drains `queued` Videos from the canonical
+# `video` table and runs the real ffmpeg pipeline. Shares the API build
+# artifact and adapters; run alongside the API (with PROCESSING_INLINE=false on
+# the API) for a distributed deployment. The old CMD ran only the scaffold
+# (apps/api/dist/index.js) and drained nothing.
 # -----------------------------------------------------------------------------
 FROM runtime AS worker
 ENV STREETSTUDIO_ROLE=worker
-CMD ["node", "apps/api/dist/index.js"]
+CMD ["node", "apps/api/dist/runtime/worker-main.js"]
 
 # -----------------------------------------------------------------------------
 # web: Web_Client host (apps/web) — serves the Vite SPA bundle.
