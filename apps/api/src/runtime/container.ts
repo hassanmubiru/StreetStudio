@@ -1067,6 +1067,21 @@ export function buildRuntime(
       [videoId, actor.organizationId, "Untitled upload", durationSeconds, session.objectKey],
     );
     await media.enqueue(videoId);
+    // Single-node default: drain in-process so the response reflects the
+    // terminal outcome. Distributed default (`PROCESSING_INLINE=false`): leave
+    // the Video `queued` for a separate worker to claim and transcode.
+    if (!inlineProcessing) {
+      return {
+        id: session.id,
+        status: session.status,
+        objectKey: session.objectKey,
+        size: object.size,
+        videoId,
+        durationSeconds,
+        processing: "queued",
+        renditions: 0,
+      };
+    }
     const [result] = await media.drain();
     return {
       id: session.id,
