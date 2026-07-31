@@ -76,6 +76,8 @@ export interface WebhookStore {
     organizationId: Uuid,
     eventType: string,
   ): Promise<WebhookRecord[]>;
+  /** List every subscription in the organization (all event types). */
+  listByOrganization(organizationId: Uuid): Promise<WebhookRecord[]>;
   /** Remove a subscription by id, scoped to its organization. */
   deleteById(organizationId: Uuid, id: Uuid): Promise<void>;
 }
