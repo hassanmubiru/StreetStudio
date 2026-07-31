@@ -551,6 +551,40 @@ export function buildRuntime(
     organizationId: requireOrganizationId(context),
   });
 
+  // folders.get (RBAC: folder:read)
+  const getFolder: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const folderId = requireUuidPathParam(request, "id");
+    return contentService.getFolder(auth, orgId, folderId);
+  };
+
+  // folders.listByProject (RBAC: folder:read) — ?projectId=<uuid>.
+  const listFolders: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const projectIdRaw =
+      typeof request.query?.["projectId"] === "string"
+        ? (request.query["projectId"] as string)
+        : undefined;
+    if (!projectIdRaw || !isUuid(projectIdRaw)) {
+      throw new AppError("VALIDATION_FAILED", {
+        details: { field: "projectId", reason: "projectId query parameter (UUID) is required" },
+      });
+    }
+    const folders = await contentService.listFolders(auth, orgId, projectIdRaw as Uuid);
+    return { folders, total: folders.length };
+  };
+
+  // folders.delete (RBAC: folder:delete)
+  const deleteFolder: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const folderId = requireUuidPathParam(request, "id");
+    await contentService.deleteFolder(auth, orgId, folderId);
+    return { success: true };
+  };
+
   // uploads.create (RBAC upload:create): begin a chunked session. The final
   // assembled object key is derived server-side under the org's source prefix.
   const createUpload: ServiceInvocation = async (request, context) => {
