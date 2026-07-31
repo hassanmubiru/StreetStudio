@@ -71,6 +71,12 @@ COPY packages ./packages
 # Compile every project reference (`tsc -b` at the workspace root).
 RUN npm run build
 
+# Build the Web_Client SPA bundle (Vite). apps/web is not a `tsc -b` project
+# reference (it type-checks with noEmit and bundles with Vite), so it must be
+# built explicitly here to produce apps/web/dist (index.html + hashed assets).
+# Vite is a dev dependency, so this must run BEFORE the prod prune below.
+RUN npm run build -w @streetstudio/web
+
 # Drop dev dependencies so the runtime image carries production deps only.
 RUN --mount=type=cache,target=/root/.npm \
     npm prune --omit=dev
