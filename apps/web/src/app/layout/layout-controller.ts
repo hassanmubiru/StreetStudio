@@ -4,6 +4,8 @@
  * Manages application layout, themes, and page rendering.
  */
 
+import { ensureRouterTransitionStyles } from '../../styles/router-transitions.js';
+
 export class LayoutController {
   private container: HTMLElement;
   private currentLayout: 'app' | 'auth' | 'landing' = 'landing';
