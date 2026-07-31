@@ -47,7 +47,7 @@ Realtime (WebSocket)             █████████░  90%  authentica
 SDK (typed client)               ████████░░  80%   not yet run against a live server
 Client models (editor/timeline)  ██████░░░░  60%   model + reducer/ops implemented & tested; no UI
 Dashboard client logic           ██████░░░░  65%   session/scope, workspace/video/search/notification flows, uploads, sharing, reactions, edit-session; no UI
-Dashboard (web UI runtime)       ░░░░░░░░░░   0%   not built
+Dashboard (web UI runtime)       ███░░░░░░░  30%   Vite SPA now production-builds (es2022) + served by a zero-dep static host; not browser/e2e-verified against a live server
 Desktop client                   ░░░░░░░░░░   0%   scaffold entry only
 Recorder extension               ░░░░░░░░░░   0%   scaffold entry only
 De-seam remaining pkgs → StreetJS ████████░░  85%   composition wires domain services to canonical Postgres repositories on ONE schema; unused in-memory/plural-DDL seams retirement pending (ADR-0020)
