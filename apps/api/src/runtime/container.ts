@@ -646,7 +646,12 @@ export function buildRuntime(
     .register<ServiceInvocation>("folders.create", createFolder)
     .register<ServiceInvocation>("notifications.list", listNotifications)
     .register<ServiceInvocation>("notifications.markRead", markNotificationRead)
-    .register<ServiceInvocation>("analytics.metrics", analyticsMetrics);
+    .register<ServiceInvocation>("analytics.metrics", analyticsMetrics)
+    .register<ServiceInvocation>("uploads.create", createUpload)
+    .register<ServiceInvocation>("uploads.get", getUpload)
+    .register<ServiceInvocation>("uploads.complete", completeUpload)
+    .register<ServiceInvocation>("uploads.abort", abortUpload)
+    .register<ServiceInvocation>("playback.manifest", playbackManifest);
 
   const operations = sliceOperations();
   const service = createApiService({
@@ -657,5 +662,43 @@ export function buildRuntime(
     operations,
   });
 
-  return { service, operations };
+  // Bearer-credential resolution + raw byte routes for the HTTP transport.
+  const authenticate = async (
+    credential: string | undefined,
+  ): Promise<AuthContext | null> => {
+    if (!credential) return null;
+    try {
+      return await authService.verifyAccessToken(credential);
+    } catch {
+      return null;
+    }
+  };
+
+  const uploadPart: Runtime["uploadPart"] = async (
+    auth,
+    organizationId,
+    id,
+    partNumber,
+    bytes,
+  ) => {
+    const actor: UploadActor = { memberId: auth.memberId, organizationId };
+    const session = await uploadService.uploadPart(actor, id, partNumber, bytes);
+    return {
+      received: session.receivedParts.length,
+      total: session.totalParts,
+      status: session.status,
+    };
+  };
+
+  const resolveObject: Runtime["resolveObject"] = async (
+    auth,
+    organizationId,
+    objectKey,
+  ) => {
+    const actor: UploadActor = { memberId: auth.memberId, organizationId };
+    const resolved = await playbackService.resolve(actor, objectKey);
+    return resolved;
+  };
+
+  return { service, operations, authenticate, uploadPart, resolveObject };
 }
