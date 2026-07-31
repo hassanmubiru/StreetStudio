@@ -63,18 +63,31 @@ async function main(): Promise<void> {
   // `activate` ran to completion, so the client is initialized.
   const pgClient = pg as PgClient;
 
+  // WebSocket realtime transport. Built first so it can serve as both the
+  // NotificationService delivery emitter and the processing-status fan-out
+  // target; its bearer authenticator is wired from the runtime immediately
+  // after buildRuntime.
+  const realtime = new RealtimeHub();
+
   // Concrete media pipeline (real ffmpeg via ffmpeg-static + S3/MinIO storage),
-  // shared by uploads/playback and the processing pipeline.
+  // shared by uploads/playback and the processing pipeline. Processing-status
+  // transitions fan out to the owning organization over the realtime channel.
   const ffmpegPath = ffmpegStatic as unknown as string;
   const media = buildMediaRuntime(
     pgClient,
     mediaRuntimeConfigFromEnv(process.env, ffmpegPath),
+    {
+      emit(event) {
+        realtime.broadcastToOrg(event.organizationId, {
+          type: "processing-status",
+          videoId: event.videoId,
+          status: event.status,
+          at: event.at,
+          ...(event.failed ? { failed: true } : {}),
+        });
+      },
+    },
   );
-
-  // WebSocket realtime transport. Built before the runtime so it can serve as
-  // the NotificationService's delivery emitter; its bearer authenticator is
-  // wired from the runtime immediately after.
-  const realtime = new RealtimeHub();
 
   const { service, operations, authenticate, uploadPart, resolveObject } =
     buildRuntime(config, pgClient, media, realtime);
