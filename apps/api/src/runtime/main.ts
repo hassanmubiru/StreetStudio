@@ -25,11 +25,17 @@
  * schemas before the HTTP server begins accepting requests (R30.2, R30.3).
  */
 import { runMigrations, streetSqlClient } from "@streetstudio/database";
+import { ensureUploadsSchema } from "@streetstudio/uploads";
+import ffmpegStatic from "ffmpeg-static";
 import { startApiService } from "../ops/startup.js";
 import { buildRuntime } from "./container.js";
 import { envConfigSource } from "./env-config-source.js";
 import { createHttpServer } from "./http-server.js";
 import { PgClient } from "./pg-client.js";
+import {
+  buildMediaRuntime,
+  mediaRuntimeConfigFromEnv,
+} from "./media/pipeline-runtime.js";
 
 async function main(): Promise<void> {
   const configSource = envConfigSource();
