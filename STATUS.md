@@ -21,6 +21,8 @@
   zero-dependency static host (`apps/web/server.mjs`, with the Docker `web`
   target corrected); it is not yet browser/e2e-verified against a live server.
   Desktop/recorder native client runtimes are still not built here.
+  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–19)
+  for the full, evidence-backed verification.
 - **Version:** 0.1.0-dev
 - **Architecture:** Approved
 - **Product design:** Approved
@@ -46,7 +48,7 @@ Runnable API server (composition)█████████░  90%  env→conf
 Operation catalog wired (REST+WS)██████████ 100%  45/45 ops with a backing method, verified end-to-end on real infra
 Media pipeline (real ffmpeg)     ██████████ 100%  upload→duration-probe→transcode(thumb/preview/ABR)→storage→stream renditions(Range); in-process + distributed worker (SKIP LOCKED)
 Auth / RBAC / tenant isolation   ██████████ 100%  register/login/JWT, wildcard-admin RBAC, deny-by-default, cross-tenant 403s verified
-Realtime (WebSocket)             █████████░  90%  authenticated /realtime channel + notification & processing-status fan-out; distributed worker pending
+Realtime (WebSocket)             █████████░  90%  authenticated /realtime channel + notification & processing-status fan-out (in-process); cross-process bus (Redis pub/sub) pending
 SDK (typed client)               ████████░░  80%   not yet run against a live server
 Client models (editor/timeline)  ██████░░░░  60%   model + reducer/ops implemented & tested; no UI
 Dashboard client logic           ██████░░░░  65%   session/scope, workspace/video/search/notification flows, uploads, sharing, reactions, edit-session; no UI
@@ -131,6 +133,17 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 19):** a **distributed media-processing worker**
+  (`apps/api/src/runtime/worker-main.js`, the corrected Docker `worker` target)
+  that claims `queued` Videos from the canonical `video` table via
+  `FOR UPDATE SKIP LOCKED` (safe competing consumers) and runs the real ffmpeg
+  pipeline — gated by `PROCESSING_INLINE` (inline single-node default vs.
+  enqueue-only for dedicated workers); verified end-to-end (2 uploads left
+  `queued`, a worker drained both to `ready` with 3 renditions + thumbnail +
+  preview each, all 5 derivatives per Video present in MinIO). Also fixed
+  **PLAYBACK-OBJECT-01**: `GET /objects/*` now streams transcoded
+  renditions/assets (org-scoped via the canonical `rendition`/`asset` tables;
+  owner 206, foreign org 404) — previously only the source object was servable.
 - **Recently closed (Update 18):** the **web SPA production build** (a real
   defect — top-level await rejected by Vite's default `es2020` target; fixed by
   pinning `es2022`) and the **Docker `web` target** (it never built the SPA and
@@ -140,13 +153,14 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   guarding, immutable asset caching, `/healthz`). Verified locally against the
   real bundle; the full `docker build` itself is blocked here by a missing
   BuildKit/`buildx` (documented environment limitation).
-- **Remaining runtime gaps (deferred, documented):** a distributed worker
-  draining the processing queue (currently in-process — functionally complete for
-  single-node); browser/e2e verification of the web SPA against a live server;
-  and the INFRA-blocked runtime Phases 5 (perf under load) and 7 (a11y runtime).
-  The unused in-memory fakes and the parallel plural-DDL `ensure*Schema` seams
-  are pending retirement now that the composition uses the canonical schema
-  (ADR-0020).
+- **Remaining runtime gaps (deferred, documented):** browser/e2e verification of
+  the web SPA against a live server; the INFRA-blocked runtime Phases 5 (perf
+  under load) and 7 (a11y runtime); and the full Docker image build (blocked here
+  by missing BuildKit/`buildx`). Cross-process realtime fan-out for the worker
+  needs a shared bus (Redis pub/sub); worker stale-claim recovery needs a
+  claim-timestamp column. The unused in-memory fakes and the parallel plural-DDL
+  `ensure*Schema` seams are pending retirement now that the composition uses the
+  canonical schema (ADR-0020).
 - **SDK** is a complete typed client mirroring the operation catalog, but has not
   been exercised end-to-end against a live deployed server.
 - **Dashboard** now has client-side application logic (session/credential/scope
