@@ -218,6 +218,30 @@ Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (3
 
 ---
 
+## Update 9 — CRUD coverage: full Projects CRUD implemented (API-CATALOG-COVERAGE-01, first resource)
+
+Began closing API-CATALOG-COVERAGE-01 by implementing the missing read/update/delete domain methods for the first resource (Projects) and wiring the full CRUD surface.
+
+**Domain additions (`@streetstudio/projects`), all RBAC deny-by-default + org-scoped:**
+- `ContentStore` port: `listProjects(org)`, `updateProject(record)`, `deleteProject(org, id)`.
+- `ContentService`: `listProjects`, `getProject`, `updateProject` (rename, name-validated), `deleteProject` — each gated via the RBAC evaluator in the owning org's scope (`content:read/update/delete_project`).
+- Both store adapters implemented: `repositoryContentStore` (canonical repositories: `listByOrganization`/`update`/`deleteById`) and `postgresContentStore` (parameterized SQL).
+
+**Wired operations:** `projects.list` / `projects.get` / `projects.update` / `projects.delete` (added to the 16 already live → 20 operations).
+
+**Verified end-to-end over real HTTP (RBAC + tenant isolation):**
+create → `list` (1 project) → `get` → `update` (renamed Alpha→Beta, confirmed) → `delete` (200) → `get` **404** → `list` empty → foreign-org `list` **403**.
+
+Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (397 files) green. No regressions from the domain changes.
+
+**Pattern established for the remaining resources:** the same three-part change (ContentStore/Service method + repository adapter + postgres adapter, then wire the catalog op) applies to folders (`get`/`listByProject`/`move`/`delete` — note `folders` is a `GlobalRepository`, so a project-scoped list query must be added), videos, comments, sharing, webhooks, api-keys. Each is mechanical but touches its tested domain package.
+
+**Wired operations to date (20):** auth ×4, organizations ×2, projects ×5 (create/list/get/update/delete), folders.create, notifications ×2, analytics.metrics, uploads ×4, playback.manifest + the part-upload & object-stream byte routes.
+
+**Remaining for full RC:** the rest of API-CATALOG-COVERAGE-01 (folders/videos/comments/sharing/webhooks/api-keys CRUD, following the proven pattern) and the WebSocket realtime transport + distributed worker.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
