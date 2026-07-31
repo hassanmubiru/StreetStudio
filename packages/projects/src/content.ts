@@ -216,6 +216,87 @@ export class ContentService {
   }
 
   /**
+   * List the Projects in `orgId`. The actor must hold read permission in the
+   * Organization; otherwise no Projects are returned (deny-by-default).
+   */
+  async listProjects(actor: AuthContext, orgId: Uuid): Promise<ProjectDto[]> {
+    await this.requireProjectPermission(actor, orgId, READ_PROJECT_PERMISSION);
+    const records = await this.store.listProjects(orgId);
+    return records.map((r) => this.toProjectDto(r));
+  }
+
+  /**
+   * Get a single Project by id within `orgId`. Requires read permission; an
+   * absent Project (or one in another Organization) is `NOT_FOUND`.
+   */
+  async getProject(
+    actor: AuthContext,
+    orgId: Uuid,
+    projectId: Uuid,
+  ): Promise<ProjectDto> {
+    await this.requireProjectPermission(actor, orgId, READ_PROJECT_PERMISSION);
+    const record = await this.store.findProject(orgId, projectId);
+    if (!record) {
+      throw new AppError("NOT_FOUND");
+    }
+    return this.toProjectDto(record);
+  }
+
+  /**
+   * Rename a Project. Requires update permission and a valid name (1–255);
+   * an absent Project is `NOT_FOUND` and nothing changes.
+   */
+  async updateProject(
+    actor: AuthContext,
+    orgId: Uuid,
+    projectId: Uuid,
+    name: string,
+  ): Promise<ProjectDto> {
+    await this.requireProjectPermission(actor, orgId, UPDATE_PROJECT_PERMISSION);
+    if (!isValidName(name)) {
+      throw new AppError("VALIDATION_FAILED");
+    }
+    const record = await this.store.findProject(orgId, projectId);
+    if (!record) {
+      throw new AppError("NOT_FOUND");
+    }
+    const updated = await this.store.updateProject({ ...record, name });
+    return this.toProjectDto(updated);
+  }
+
+  /**
+   * Delete a Project. Requires delete permission; an absent Project is
+   * `NOT_FOUND`.
+   */
+  async deleteProject(
+    actor: AuthContext,
+    orgId: Uuid,
+    projectId: Uuid,
+  ): Promise<void> {
+    await this.requireProjectPermission(actor, orgId, DELETE_PROJECT_PERMISSION);
+    const record = await this.store.findProject(orgId, projectId);
+    if (!record) {
+      throw new AppError("NOT_FOUND");
+    }
+    await this.store.deleteProject(orgId, projectId);
+  }
+
+  /** Deny-by-default permission gate scoped to the owning Organization. */
+  private async requireProjectPermission(
+    actor: AuthContext,
+    orgId: Uuid,
+    permission: string,
+  ): Promise<void> {
+    const permitted = await this.access.can(actor, permission, {
+      organizationId: orgId,
+      type: "project",
+    });
+    if (!permitted) {
+      throw new AppError("AUTHORIZATION_DENIED");
+    }
+  }
+
+  /**
    * Create a Folder scoped to `parent.projectId`, optionally nested under
    * `parent.folderId`. The name must be 1–255 characters (R5.2, R5.8), the
    * actor must hold create permission in the owning Organization (R5.6), the
