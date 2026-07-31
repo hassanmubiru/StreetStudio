@@ -52,12 +52,11 @@ const CLIENTS = 30;
 const PER_CLIENT = 90; // < 100/60s rate-limit budget per token
 const CONCURRENCY = 50;
 
-console.log(`Provisioning ${CLIENTS} distinct clients...`);
-const tokens = [];
-for (let k = 0; k < CLIENTS; k++) tokens.push(await makeClient());
-
-// Build the task list: PER_CLIENT authenticated reads per token, interleaved.
-function loadTest(path, label) {
+// Build the task list with a FRESH set of tokens per sub-test so each
+// measurement starts with a clean per-client rate-limit budget.
+async function loadTest(path, label) {
+  const tokens = [];
+  for (let k = 0; k < CLIENTS; k++) tokens.push(await makeClient());
   const tasks = [];
   for (let c = 0; c < CLIENTS; c++) {
     for (let n = 0; n < PER_CLIENT; n++) {
@@ -65,13 +64,12 @@ function loadTest(path, label) {
       tasks.push(() => req("GET", path, { token }));
     }
   }
-  // Shuffle so clients interleave.
   for (let j = tasks.length - 1; j > 0; j--) { const r = Math.floor(Math.random() * (j + 1)); [tasks[j], tasks[r]] = [tasks[r], tasks[j]]; }
   return { tasks, total: tasks.length, path, label };
 }
 
 for (const { path, label } of [ { path: "/auth/me", label: "auth.currentMember (PK lookup)" }, { path: "/organizations", label: "organizations.list (JOIN)" } ]) {
-  const { tasks, total } = loadTest(path, label);
+  const { tasks, total } = await loadTest(path, label);
   const wall0 = Date.now();
   const results = await runPool(tasks, CONCURRENCY);
   const wallMs = Date.now() - wall0;
