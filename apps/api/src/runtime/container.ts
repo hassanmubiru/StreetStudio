@@ -110,6 +110,11 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "videos.get",
   "videos.update",
   "videos.delete",
+  "comments.list",
+  "comments.create",
+  "comments.delete",
+  "comments.react",
+  "comments.unreact",
   // Notifications (personal/authenticated scope) + analytics (RBAC read).
   "notifications.list",
   "notifications.markRead",
