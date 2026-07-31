@@ -94,6 +94,15 @@ export const READ_FOLDER_PERMISSION = "content:read_folder";
 /** Permission to delete a Folder. */
 export const DELETE_FOLDER_PERMISSION = "content:delete_folder";
 
+/** Permission to read Videos. */
+export const READ_VIDEO_PERMISSION = "content:read_video";
+
+/** Permission to update a Video (rename / move). */
+export const UPDATE_VIDEO_PERMISSION = "content:update_video";
+
+/** Permission to delete a Video. */
+export const DELETE_VIDEO_PERMISSION = "content:delete_video";
+
 /**
  * A reference to a location within the content hierarchy.
  *
