@@ -65,6 +65,12 @@ import { VIEW_VIDEO_PERMISSION } from "@streetstudio/media";
  */
 export const POST_COMMENT_PERMISSION = "content:comment";
 
+/** Permission to read comments on a Video. */
+export const READ_COMMENT_PERMISSION = "content:read_comment";
+
+/** Permission to delete a comment. */
+export const DELETE_COMMENT_PERMISSION = "content:delete_comment";
+
 /** Minimum length, in characters, of a comment/reply body (R11.1, R11.8). */
 export const COMMENT_BODY_MIN_LENGTH = 1;
 
