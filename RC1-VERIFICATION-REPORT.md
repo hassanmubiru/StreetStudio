@@ -479,6 +479,26 @@ Gates: typecheck + `streetjs:check` + `boundary:check` (401 files) green; full s
 
 ---
 
+## Update 20 — Cross-process realtime bus (Redis pub/sub): worker status events reach WebSocket clients
+
+Closed the remaining realtime gap. The `RealtimeHub` only fans events to the WS clients of *one* process, so processing-status transitions produced by the **separate media worker** (Update 19) never reached the API's connected clients. Added a Redis pub/sub bus that carries org-scoped realtime events across the process boundary.
+
+**Built** (`apps/api/src/runtime/realtime-bus.ts`, `ioredis@5.4.1` added to `apps/api`):
+- `RedisRealtimeBus` — separate publisher/subscriber Redis connections on channel `streetstudio:realtime`; `publish(orgId, event)` / `onMessage(handler)`; connection errors isolated (realtime is best-effort; the authoritative status is the DB).
+- `NullRealtimeBus` + `createRealtimeBus(REDIS_URL?)` — when no `REDIS_URL` is set the bus is a no-op and callers fall back to a **direct in-process broadcast**, so single-node realtime keeps working unchanged.
+
+**Wired:**
+- `main.ts` — subscribes to the bus and forwards every received event to `RealtimeHub.broadcastToOrg`. The media status emitter now **publishes to the bus when distributed** (Redis round-trips back to this and every other API instance → exactly-once per client) and broadcasts **in-process when not** (no Redis). Bus closed on shutdown.
+- `worker-main.ts` — the worker (which holds no WS clients) **publishes** each processing-status transition to the bus, so subscribed API instances deliver them to the right org's sockets.
+
+**Verified end-to-end with real Redis + two processes:** API started with `REDIS_URL` + `PROCESSING_INLINE=false`; a client opened an authenticated `/realtime?organizationId=…` WebSocket; a real upload left the Video `queued`; a **separate** `worker-main.js` process claimed and transcoded it. The WS client received, in order: `connected`, then `processing-status` `queued` (from the API's enqueue, round-tripped through Redis), `processing`, and `ready` — the last two **produced by the worker process and delivered via Redis** (`collected statuses: ["queued","processing","ready"]` → PASS). Single-node fallback (no `REDIS_URL` → in-process broadcast) is preserved by the `NullRealtimeBus` path and unchanged from Update 16.
+
+Gates: typecheck + `streetjs:check` + `boundary:check` (402 files) green; full suite **5315 passed / 0 failed**.
+
+**Remaining for full RC (all environment-blocked or a documented schema follow-up):** Phase 5 (perf under load), Phase 7 (a11y runtime), browser/e2e of the web SPA against a live server, and the full Docker image build (missing BuildKit/`buildx` here); plus worker **stale-claim recovery** (reclaiming a Video left `processing` by a crashed worker) which needs a claim-timestamp column on the `video` table — a change to the heavily-tested `@streetstudio/database` schema, deliberately deferred rather than destabilize it. The complete product surface — every catalog operation, the full media lifecycle (upload → transcode → stream renditions), auth/RBAC/tenant-isolation, the append-only audit log, in-process **and** distributed processing, and cross-process realtime — is now proven on real infrastructure.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
