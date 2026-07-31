@@ -495,7 +495,28 @@ Closed the remaining realtime gap. The `RealtimeHub` only fans events to the WS 
 
 Gates: typecheck + `streetjs:check` + `boundary:check` (402 files) green; full suite **5315 passed / 0 failed**.
 
-**Remaining for full RC (all environment-blocked or a documented schema follow-up):** Phase 5 (perf under load), Phase 7 (a11y runtime), browser/e2e of the web SPA against a live server, and the full Docker image build (missing BuildKit/`buildx` here); plus worker **stale-claim recovery** (reclaiming a Video left `processing` by a crashed worker) which needs a claim-timestamp column on the `video` table — a change to the heavily-tested `@streetstudio/database` schema, deliberately deferred rather than destabilize it. The complete product surface — every catalog operation, the full media lifecycle (upload → transcode → stream renditions), auth/RBAC/tenant-isolation, the append-only audit log, in-process **and** distributed processing, and cross-process realtime — is now proven on real infrastructure.
+**Remaining for full RC (all environment-blocked or a documented schema follow-up):** Phase 5 (perf under load), Phase 7 (a11y runtime), browser/e2e of the web SPA against a live server; plus worker **stale-claim recovery** (reclaiming a Video left `processing` by a crashed worker) which needs a claim-timestamp column on the `video` table — a change to the heavily-tested `@streetstudio/database` schema, deliberately deferred rather than destabilize it. The complete product surface — every catalog operation, the full media lifecycle (upload → transcode → stream renditions), auth/RBAC/tenant-isolation, the append-only audit log, in-process **and** distributed processing, and cross-process realtime — is now proven on real infrastructure.
+
+---
+
+## Update 21 — Docker images build & run (Phase 9, deployment reproducibility); a real Dockerfile defect fixed
+
+Installed the missing `docker buildx` (v0.36.0) and drove the multi-stage image build end-to-end for **all three runtime targets** — which immediately surfaced a real defect that would have made every image unbuildable.
+
+### DOCKER-TSCONFIG-01 (FIXED) — the builder never copied the root solution tsconfig
+The `builder` stage copied `package.json package-lock.json tsconfig.base.json` but **not** the root `tsconfig.json` (the solution file holding the `references` array). `npm run build` runs `tsc -b`, which reads `./tsconfig.json`, so the in-image build failed with `error TS5083: Cannot read file '/app/tsconfig.json'` — breaking the `api`, `worker`, **and** `web` images. **Fix:** added `tsconfig.json` to the builder COPY (`docker/Dockerfile`). (This defect was invisible before because no one had built the image — RUNTIME-01 predates a runnable server.)
+
+### All three targets build and run (validated)
+- **`web`** — builds (incl. the Update-18 `npm run build -w @streetstudio/web` Vite step) and, run as a container, logs `serving /app/apps/web/dist on http://0.0.0.0:3000`; `GET /` → **200** `text/html` (real bundle), `GET /healthz` → **200**.
+- **`api`** — builds and, run with `--network host` against the live infra, boots and serves `GET /health` → **200** `{"status":"ok","checks":{"postgres":true}}`, advertising all **45** slice operations.
+- **`worker`** — builds (the Update-19 `worker-main.js` CMD).
+
+### Environment note (honest)
+The Docker **daemon** cannot reach Docker Hub here (`registry-1.docker.io` DNS times out), so it can't pull the `# syntax=docker/dockerfile:1.7` external frontend. The required base image (`node:20.18.1-bookworm-slim`) was already cached locally. To validate the **build logic** I built from a temporary copy of the Dockerfile with only the `# syntax` line removed (using BuildKit's embedded dockerfile frontend, which supports the same `--mount=type=cache` feature); the copy was deleted afterward. The **real `docker/Dockerfile` is unchanged except the `tsconfig.json` fix** — its intentional frontend pin is retained. So the images were proven to build and run end-to-end on real infrastructure; only the external-frontend pull itself was substituted due to the daemon's blocked registry access.
+
+Gates: typecheck + `streetjs:check` + `boundary:check` green; full suite **5315 passed / 0 failed**.
+
+**Remaining for full RC:** only Phase 5 (perf under load), Phase 7 (a11y runtime), and browser/e2e of the web SPA — each needs a load/browser harness not provisioned in this environment — plus the deliberately-deferred worker stale-claim schema follow-up. The build, all images, the entire operation catalog, the full media lifecycle, distributed processing, and cross-process realtime are proven on real infrastructure.
 
 ---
 

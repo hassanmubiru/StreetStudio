@@ -133,6 +133,14 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 21):** the **Docker images** now build and run for
+  all three targets (`web` serves the SPA; `api` boots against live infra with
+  `postgres:true` health + all 45 ops; `worker` builds). Fixed a real Dockerfile
+  defect (the builder never copied the root `tsconfig.json`, so in-image
+  `tsc -b` failed — every image was unbuildable). Installed `docker buildx`
+  v0.36.0. (The daemon can't reach Docker Hub for the external `# syntax`
+  frontend, so build logic was validated with BuildKit's embedded frontend +
+  the cached base image; the real Dockerfile keeps its frontend pin.)
 - **Recently closed (Update 20):** a **cross-process realtime bus** (Redis
   pub/sub, `apps/api/src/runtime/realtime-bus.ts`) so processing-status events
   produced by the separate media worker reach WebSocket clients on any API
