@@ -7,6 +7,6 @@
  * lives in `../styles/router-transitions.ts` and is injected inline (no fetch,
  * no CSP `connect-src` issue).
  */
-import { ensureRouterTransitionStyles } from '../styles/router-transitions.js';
+import { ensureRouterTransitionStyles } from '../styles/router-transitions';
 
 ensureRouterTransitionStyles();
