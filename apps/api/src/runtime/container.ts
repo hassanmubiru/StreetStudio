@@ -114,6 +114,7 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "folders.create",
   "folders.get",
   "folders.listByProject",
+  "folders.move",
   "folders.delete",
   "videos.list",
   "videos.get",
@@ -1046,6 +1047,7 @@ export function buildRuntime(
     .register<ServiceInvocation>("folders.create", createFolder)
     .register<ServiceInvocation>("folders.get", getFolder)
     .register<ServiceInvocation>("folders.listByProject", listFolders)
+    .register<ServiceInvocation>("folders.move", moveFolder)
     .register<ServiceInvocation>("folders.delete", deleteFolder)
     .register<ServiceInvocation>("videos.list", listVideos)
     .register<ServiceInvocation>("videos.get", getVideo)
