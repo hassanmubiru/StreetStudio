@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1099.0",
+    "@streetjs/storage": "^1.0.2",
     "@streetstudio/analytics": "*",
     "@streetstudio/auth": "*",
     "@streetstudio/comments": "*",
@@ -19,6 +20,7 @@
     "@streetstudio/media": "*",
     "@streetstudio/notifications": "*",
     "@streetstudio/organizations": "*",
+    "@streetstudio/playback": "*",
     "@streetstudio/plugins": "*",
     "@streetstudio/processing": "*",
     "@streetstudio/projects": "*",
@@ -26,14 +28,13 @@
     "@streetstudio/search": "*",
     "@streetstudio/shared": "*",
     "@streetstudio/uploads": "*",
-    "@streetstudio/playback": "*",
-    "@streetjs/storage": "^1.0.2",
     "ffmpeg-static": "^5.2.0",
     "pg": "^8.13.0",
     "streetjs": "^1.2.7"
   },
   "devDependencies": {
-    "@types/pg": "^8.11.10"
+    "@types/pg": "^8.11.10",
+    "@types/ws": "^8.5.12"
   },
   "peerDependencies": {
     "@streetjs/core": "^0.1.0"
