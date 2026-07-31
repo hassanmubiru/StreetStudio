@@ -69,6 +69,15 @@ async function main(): Promise<void> {
   // after buildRuntime.
   const realtime = new RealtimeHub();
 
+  // Cross-process realtime bus (Redis pub/sub) when REDIS_URL is set; otherwise
+  // a no-op bus and we broadcast in-process (single-node). This is how
+  // processing-status events produced by a SEPARATE media worker (or another
+  // API instance) reach the WebSocket clients connected to THIS process.
+  const realtimeBus = createRealtimeBus(process.env["REDIS_URL"]);
+  realtimeBus.onMessage((organizationId, event) =>
+    realtime.broadcastToOrg(organizationId, event),
+  );
+
   // Concrete media pipeline (real ffmpeg via ffmpeg-static + S3/MinIO storage),
   // shared by uploads/playback and the processing pipeline. Processing-status
   // transitions fan out to the owning organization over the realtime channel.
@@ -78,13 +87,20 @@ async function main(): Promise<void> {
     mediaRuntimeConfigFromEnv(process.env, ffmpegPath),
     {
       emit(event) {
-        realtime.broadcastToOrg(event.organizationId, {
+        const payload = {
           type: "processing-status",
           videoId: event.videoId,
           status: event.status,
           at: event.at,
           ...(event.failed ? { failed: true } : {}),
-        });
+        };
+        if (realtimeBus.distributed) {
+          // Publish to Redis; every subscribed API instance (including this
+          // one) broadcasts to its local sockets — exactly-once per client.
+          realtimeBus.publish(event.organizationId, payload);
+        } else {
+          realtime.broadcastToOrg(event.organizationId, payload);
+        }
       },
     },
   );
