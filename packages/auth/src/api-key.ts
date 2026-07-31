@@ -423,6 +423,9 @@ export function repositoryApiKeyStore(
     findById(organizationId: Uuid, keyId: Uuid): Promise<ApiKeyRecord | null> {
       return apiKeys.findById(organizationId, keyId);
     },
+    listByOrganization(organizationId: Uuid): Promise<ApiKeyRecord[]> {
+      return apiKeys.listByOrganization(organizationId);
+    },
     async markRevoked(
       record: ApiKeyRecord,
       revokedAt: IsoTimestamp,
