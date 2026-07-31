@@ -355,7 +355,14 @@ export function createHttpServer(deps: HttpServerDeps): Server {
 
   function respondWithError(res: ServerResponse, error: unknown): void {
     if (error instanceof AppError) {
-      writeJson(res, error.status, { error: error.toDto() });
+      // Surface the retry-after hint (e.g. RATE_LIMITED → 429) as the standard
+      // HTTP `Retry-After` header so clients know when they may retry (R29.1).
+      const retryAfter = (error as { retryAfterSeconds?: unknown }).retryAfterSeconds;
+      const headers =
+        typeof retryAfter === "number" && Number.isFinite(retryAfter)
+          ? { "retry-after": String(Math.max(0, Math.ceil(retryAfter))) }
+          : undefined;
+      writeJson(res, error.status, { error: error.toDto() }, headers);
       return;
     }
     // StreetJS HTTP exceptions (thrown by the uploads/playback services) carry
