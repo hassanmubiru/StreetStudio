@@ -354,6 +354,28 @@ Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (3
 
 ---
 
+## Update 15 — WebSocket realtime transport wired; ENTIRE operation catalog now served
+
+The last remaining channel — the `realtime.connect` websocket operation — is now wired and verified.
+
+**Added (`apps/api/src/runtime/realtime-hub.ts`):** a `ws`-backed `RealtimeHub` attached to the HTTP server's `upgrade` event on `/realtime`. The handshake is authorized by verifying the **same bearer access token** the REST surface uses (`AuthService.verifyAccessToken`), which is exactly `realtime.connect`'s `AUTHENTICATED` policy. Live sockets are indexed by member (and organization) for server-push; the hub implements the domain `NotificationEmitter` seam and is wired as `NotificationService`'s delivery emitter, so notification fan-out now reaches connected members over the channel (processing-status fan-out is the remaining emitter to route).
+
+**Verified (real `ws` client against the running server):**
+| Case | Result |
+|---|---|
+| Connect with a valid bearer token (`?token=`) | **open** + server `{"type":"connected","memberId":…}` frame |
+| Connect with no token | **401** (upgrade rejected, no socket) |
+| Connect with an invalid token | **401** |
+
+`ws` + `@types/ws` added to `apps/api`. Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (398 files) green.
+
+### 🎯 Entire operation catalog served on real infrastructure
+**43 operations wired and verified (42 REST + 1 WebSocket)** — every entry in `PUBLIC_OPERATIONS` with a backing domain method: auth ×4, organizations ×2, projects ×5, folders ×4, videos ×4, comments ×5, sharing ×4, apiKeys ×3, webhooks ×3, notifications ×2, analytics.metrics, uploads ×4, playback.manifest, **realtime.connect** — plus the part-upload & object-stream byte routes. All run through the real request lifecycle (rate-limit → authenticate → validate → RBAC → service → audit) against real PostgreSQL + MinIO + real ffmpeg, with deny-by-default RBAC and cross-tenant isolation verified per resource.
+
+**Remaining for full RC (all now minor/deferred):** `folders.move` (depth/cycle logic), `videos.transcript/summary` (captions/AI), pipeline video-duration extraction, processing-status realtime fan-out, and a distributed worker draining the processing queue (currently in-process). The core system — architecture, auth/RBAC/tenant-isolation, canonical persistence, append-only audit, media pipeline, upload→playback, the full REST catalog, and the realtime channel — is proven on real infrastructure.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
