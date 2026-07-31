@@ -148,7 +148,39 @@ Wired three more operations onto the reconciled canonical repository path and ve
 - `realtime.connect` — WebSocket transport not wired (a no-op notification emitter is used).
 - Media `Transcoder` (ffmpeg) — no concrete implementation exists.
 
-RC1 remains **not met**. Gating items (evidence-backed): API-CATALOG-COVERAGE-01 (missing CRUD methods), the object-storage/ffmpeg media pipeline, and the WebSocket realtime transport. The core architecture, auth/RBAC/tenant-isolation, canonical persistence, and the append-only audit log are now proven on real infrastructure.
+---
+
+## Update 7 — Media pipeline built and proven with REAL ffmpeg + object storage (INFRA-01 media path resolved)
+
+The previously-missing concrete media pipeline now exists and is verified end-to-end against real infrastructure.
+
+**Infrastructure provisioned (real, no fakes):**
+- **ffmpeg 6.0** obtained via `ffmpeg-static` (no sudo needed) — a genuine, runnable binary at `node_modules/ffmpeg-static/ffmpeg`.
+- **MinIO** (S3-compatible object storage) started via the existing `docker/docker-compose.yml`; bucket `streetstudio-media` created and reachable on `:9000`.
+
+**Concrete adapters built (`apps/api/src/runtime/media/`):**
+- `s3-storage-driver.ts` — a real `StorageDriver` (per `@streetjs/storage`'s interface) backed by S3/MinIO (`@streetjs/storage` ships only memory/local drivers; cloud drivers are supplied by the composition root, so this is the intended extension point). Wired through `createStorage({ provider: "s3", driver })`.
+- `ffmpeg-transcoder.ts` — a real `Transcoder` (the seam the processing core explicitly leaves to "outside core"): downloads the source object, runs `ffmpeg` to produce a thumbnail, a 3–10s preview, and ≥3 ABR renditions, and uploads each output back to storage.
+- `pipeline-runtime.ts` — composes `MediaPipeline` (`repositoryProcessingStore` over the canonical schema) with the ffmpeg transcoder + S3 driver, an in-process queue, and a no-op realtime emitter (honest injectable seams for the not-yet-wired distributed worker / WebSocket transport).
+
+**Verified end-to-end (independently reproduced) against real ffmpeg + MinIO + Postgres:**
+1. Generated a real 5s H.264/AAC test video (82 KB) with ffmpeg; uploaded it to MinIO as the source object.
+2. Seeded an org + `video` row (status `uploaded`, `source_object_key`) on the canonical schema.
+3. Ran `MediaPipeline.enqueue` → `process`: real ffmpeg produced a thumbnail, a preview clip, and 480p/720p/1080p renditions.
+4. Result: `status: ready, attempts: 1, thumbnail: ✓, preview: ✓, renditions: 3`; `video.status → ready`.
+5. Canonical DB rows persisted: `asset` (thumbnail, preview) + 3 `rendition` rows (480p/720p/1080p).
+6. **Every output object verified present and non-empty in MinIO** — thumbnail 13 KB, preview 80 KB, renditions 857 KB / 1.24 MB / 2.09 MB.
+
+Full monorepo suite after the change: **5315 passed / 0 failed**; typecheck + streetjs + boundary (397 files) all green. `@streetjs/storage` + `ffmpeg-static` added to `apps/api`.
+
+**What this resolves:** the media pipeline (transcoding/thumbnails/preview/ABR) — previously the deepest part of INFRA-01 and flagged as "no concrete ffmpeg/transcoder exists" — is now real and proven. This also unblocks the video-dependent operations (`comments.*`, `playback.recordView`) since real `video` records with derivatives can now be produced.
+
+**Remaining for full RC (evidence-backed):**
+- Wire the chunked-**upload** HTTP flow (uploads→object storage→video record→`pipeline.enqueue`) and the **playback** streaming endpoints on top of the now-proven storage+pipeline (transport wiring).
+- **API-CATALOG-COVERAGE-01:** implement the missing list/get/update/delete domain methods to wire the rest of the catalog.
+- **WebSocket realtime** transport (`realtime.connect`) + a distributed worker draining the queue (both are injectable seams today).
+
+RC1 remains **not met**, but the core architecture, auth/RBAC/tenant-isolation, canonical persistence, the append-only audit log, **and now the real media pipeline** are all proven on real infrastructure.
 
 ---
 
