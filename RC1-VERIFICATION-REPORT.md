@@ -334,6 +334,26 @@ Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (3
 
 ---
 
+## Update 14 — CRUD coverage: Sharing (create/get/revoke/resolve) — all REST catalog resource groups now wired
+
+Seventh resource for API-CATALOG-COVERAGE-01, completing every REST resource group in the catalog.
+
+**Domain additions (`@streetstudio/media` `ShareService`):**
+- Added `ShareService.getLink` (metadata read, RBAC-gated in the bound Video's org; passcode never disclosed) alongside the existing `createLink`/`revoke`/`resolve`. Backed by `repositoryShareStore` (canonical `shareLinks` + `videos` repos over the `share_link` table).
+
+**Wired operations (4):** `sharing.create` (RBAC `share:create`) / `sharing.get` (`share:read`) / `sharing.revoke` (`share:revoke`) / `sharing.resolve` (**PUBLIC** credential exchange).
+
+**Verified end-to-end** (a real video via upload→process): create link → **201** (credential, `passcodeProtected:false`) → `get` → **200** → **public `resolve` (no auth)** → **201** `{videoId}` → `revoke` → **200** → resolve after revoke → **410** (`SHARE_LINK_EXPIRED`) → resolve unknown credential → **410** (uniform non-disclosing denial).
+
+Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (397 files) green; `packages/media` tests pass (72).
+
+### REST catalog coverage complete
+**Wired operations to date (42):** auth ×4, organizations ×2, projects ×5, folders ×4, videos ×4, comments ×5, sharing ×4, apiKeys ×3, webhooks ×3, notifications ×2, analytics.metrics, uploads ×4, playback.manifest — plus the part-upload & object-stream byte routes. **Every REST operation in `PUBLIC_OPERATIONS` that has a backing domain method is now wired and verified against real infrastructure**, with deny-by-default RBAC + tenant isolation throughout.
+
+**Remaining for full RC:** only the deferred items — `folders.move` (depth/cycle logic), `videos.transcript/summary` (captions/AI), pipeline video-duration extraction — and the **WebSocket realtime transport** (`realtime.connect`, the sole `websocket`-channel operation) + a distributed worker draining the processing queue.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
