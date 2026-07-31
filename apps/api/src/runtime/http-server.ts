@@ -139,6 +139,32 @@ export interface HttpServerDeps {
   readonly router: RestRouter;
   readonly operations: readonly PublicOperation[];
   readonly pg: PgClient;
+  /** Bearer-credential resolver for the raw byte routes. */
+  readonly authenticate: Runtime["authenticate"];
+  /** Backs `PUT /uploads/:id/parts/:n` (binary body). */
+  readonly uploadPart: Runtime["uploadPart"];
+  /** Backs `GET /objects/*` (authorized byte streaming with Range). */
+  readonly resolveObject: Runtime["resolveObject"];
+}
+
+/** Read the entire request body as raw bytes. */
+async function readRawBody(req: IncomingMessage): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(chunk as Buffer);
+  }
+  return Buffer.concat(chunks);
+}
+
+/** Resolve the owning organization for a raw byte route (header required). */
+function requireOrgHeader(req: IncomingMessage): Uuid {
+  const org = headerValue(req, "x-organization-id");
+  if (!org) {
+    throw new AppError("VALIDATION_FAILED", {
+      details: { reason: "X-Organization-Id header is required" },
+    });
+  }
+  return org as Uuid;
 }
 
 /**
