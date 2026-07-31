@@ -54,16 +54,31 @@ async function main(): Promise<void> {
       // applied migrations). This is the single source of truth every service
       // is wired to via createRepositories (SCHEMA-DUP-01 reconciliation).
       await runMigrations(streetSqlClient(pg));
+      // Upload sessions live in their own table (not part of runMigrations).
+      await ensureUploadsSchema(pg.asPgPool());
     },
   });
 
   // `activate` ran to completion, so the client is initialized.
   const pgClient = pg as PgClient;
-  const { service, operations } = buildRuntime(config, pgClient);
+
+  // Concrete media pipeline (real ffmpeg via ffmpeg-static + S3/MinIO storage),
+  // shared by uploads/playback and the processing pipeline.
+  const ffmpegPath = ffmpegStatic as unknown as string;
+  const media = buildMediaRuntime(
+    pgClient,
+    mediaRuntimeConfigFromEnv(process.env, ffmpegPath),
+  );
+
+  const { service, operations, authenticate, uploadPart, resolveObject } =
+    buildRuntime(config, pgClient, media);
   const server = createHttpServer({
     router: service.router,
     operations,
     pg: pgClient,
+    authenticate,
+    uploadPart,
+    resolveObject,
   });
 
   await new Promise<void>((resolve) => {
@@ -87,6 +102,11 @@ async function main(): Promise<void> {
     // eslint-disable-next-line no-console
     console.log(`[api] received ${signal}, shutting down`);
     server.close(() => {
+      try {
+        media.close();
+      } catch {
+        /* best-effort */
+      }
       void pgClient
         .close()
         .catch(() => undefined)
