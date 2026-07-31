@@ -40,7 +40,7 @@ async function auditRoute(path, label) {
   const bySeverity = axe.violations.reduce((m, v) => ((m[v.impact || "unknown"] = (m[v.impact || "unknown"] || 0) + 1), m), {});
   const critical = axe.violations.filter((v) => v.impact === "critical" || v.impact === "serious");
   console.log(`  axe: ${axe.violations.length} violation rule(s); by impact ${JSON.stringify(bySeverity)}`);
-  for (const v of axe.violations) console.log(`    - [${v.impact}] ${v.id}: ${v.help} (${v.nodes.length} node(s))`);
+  for (const v of axe.violations) console.log(`    - [${v.impact}] ${v.id}: ${v.help} (${v.nodes.length} node(s)) targets=${JSON.stringify(v.nodes.map((n) => n.target).flat().slice(0, 4))}`);
   check(`${label}: no console/page errors`, consoleErrors.length === 0, consoleErrors.slice(0, 2).join(" | "));
   await page.close();
   return { critical: critical.length, total: axe.violations.length };
