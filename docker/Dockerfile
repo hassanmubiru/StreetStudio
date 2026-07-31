@@ -122,12 +122,19 @@ ENV STREETSTUDIO_ROLE=worker
 CMD ["node", "apps/api/dist/index.js"]
 
 # -----------------------------------------------------------------------------
-# web: Web_Client host (apps/web).
+# web: Web_Client host (apps/web) — serves the Vite SPA bundle.
+#
+# apps/web builds to STATIC assets (index.html + hashed JS/CSS in dist/assets),
+# NOT a Node server module, so the old `node apps/web/dist/index.js` CMD could
+# never work (that file is not produced by the Vite build). Instead we run a
+# tiny zero-dependency Node static host (apps/web/server.mjs) that serves the
+# bundle with SPA history fallback and immutable caching for hashed assets.
 # -----------------------------------------------------------------------------
 FROM runtime AS web
 ENV STREETSTUDIO_ROLE=web
+ENV PORT=3000
 EXPOSE 3000
-CMD ["node", "apps/web/dist/index.js"]
+CMD ["node", "apps/web/server.mjs"]
 
 # -----------------------------------------------------------------------------
 # docs: documentation site (apps/docs).
