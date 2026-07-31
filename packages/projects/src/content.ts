@@ -709,6 +709,10 @@ export function repositoryContentStore(
     deleteFolder: (folderId) => folders.deleteById(folderId),
     findVideo: (organizationId, videoId) =>
       videos.findById(organizationId, videoId),
+    listVideos: (organizationId) => videos.listByOrganization(organizationId),
+    updateVideo: (record) => videos.update(record),
+    deleteVideo: (organizationId, videoId) =>
+      videos.deleteById(organizationId, videoId),
     async updateVideoFolder(video, folderId) {
       await videos.deleteById(video.organizationId, video.id);
       const updated: VideoRecord = { ...video, folderId };
