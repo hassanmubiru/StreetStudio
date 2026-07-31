@@ -125,11 +125,17 @@ function headerValue(req: IncomingMessage, name: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
-function writeJson(res: ServerResponse, status: number, body: unknown): void {
+function writeJson(
+  res: ServerResponse,
+  status: number,
+  body: unknown,
+  extraHeaders?: Record<string, string>,
+): void {
   const payload = JSON.stringify(body);
   res.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
     "content-length": Buffer.byteLength(payload),
+    ...(extraHeaders ?? {}),
   });
   res.end(payload);
 }
