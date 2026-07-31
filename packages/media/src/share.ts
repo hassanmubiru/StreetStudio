@@ -318,6 +318,33 @@ export class ShareService {
   }
 
   /**
+   * Get a share link's metadata by id. The actor must hold share permission in
+   * the bound Video's owning Organization; an unknown link (or Video) is
+   * `NOT_FOUND`. The credential is included (it is the link's public handle),
+   * but the passcode is never disclosed (the DTO carries only
+   * `passcodeProtected`).
+   */
+  async getLink(actor: AuthContext, linkId: Uuid): Promise<ShareLinkDto> {
+    const link = await this.store.findById(linkId);
+    if (!link) {
+      throw new AppError("NOT_FOUND");
+    }
+    const video = await this.store.findVideo(link.videoId);
+    if (!video) {
+      throw new AppError("NOT_FOUND");
+    }
+    const permitted = await this.access.can(actor, SHARE_VIDEO_PERMISSION, {
+      organizationId: video.organizationId,
+      type: "video",
+      id: video.id,
+    });
+    if (!permitted) {
+      throw new AppError("AUTHORIZATION_DENIED");
+    }
+    return toShareLinkDto(link);
+  }
+
+  /**
    * Resolve `credential` to the Video it grants access to, enforcing expiry,
    * revocation, passcode, and lockout. Grants access IF AND ONLY IF the link is
    * not revoked, not at/after its expiry, not currently locked, and — when
