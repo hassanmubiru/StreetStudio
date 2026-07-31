@@ -389,6 +389,96 @@ export class ContentService {
   }
 
   /**
+   * Move a Folder under a new parent (`null` = the Project root), within the
+   * same Project. Requires update permission. Rejects a move onto the folder
+   * itself or any of its descendants (cycle prevention), and any move whose
+   * resulting subtree would exceed the {@link MAX_FOLDER_NESTING_DEPTH} nesting
+   * cap. Recomputes the depth of the moved folder AND every descendant so the
+   * hierarchy stays consistent. An absent folder/parent is `NOT_FOUND`.
+   */
+  async moveFolder(
+    actor: AuthContext,
+    orgId: Uuid,
+    folderId: Uuid,
+    newParentFolderId: Uuid | null,
+  ): Promise<FolderDto> {
+    await this.requireProjectPermission(actor, orgId, UPDATE_FOLDER_PERMISSION);
+    const folder = await this.store.findFolder(folderId);
+    if (!folder) {
+      throw new AppError("NOT_FOUND");
+    }
+    const project = await this.store.findProject(orgId, folder.projectId);
+    if (!project) {
+      throw new AppError("NOT_FOUND");
+    }
+
+    const all = await this.store.listFoldersByProject(folder.projectId);
+    const childrenOf = new Map<Uuid | null, FolderRecord[]>();
+    for (const f of all) {
+      const key = f.parentFolderId;
+      const list = childrenOf.get(key) ?? [];
+      list.push(f);
+      childrenOf.set(key, list);
+    }
+
+    // Collect the moved folder's descendants (for cycle check + depth recompute).
+    const subtree: FolderRecord[] = [];
+    const descendantIds = new Set<Uuid>();
+    const walk = (id: Uuid): void => {
+      for (const child of childrenOf.get(id) ?? []) {
+        descendantIds.add(child.id);
+        subtree.push(child);
+        walk(child.id);
+      }
+    };
+    walk(folder.id);
+
+    let newDepth: number;
+    if (newParentFolderId === null) {
+      newDepth = 0;
+    } else {
+      if (newParentFolderId === folder.id || descendantIds.has(newParentFolderId)) {
+        // Moving under self or a descendant would create a cycle.
+        throw new AppError("VALIDATION_FAILED");
+      }
+      const parent = all.find((f) => f.id === newParentFolderId);
+      if (!parent) {
+        throw new AppError("NOT_FOUND");
+      }
+      newDepth = parent.depth + 1;
+    }
+
+    // Recompute depths for the moved folder and its descendants (BFS).
+    const newDepthById = new Map<Uuid, number>([[folder.id, newDepth]]);
+    const queue: Uuid[] = [folder.id];
+    while (queue.length > 0) {
+      const currentId = queue.shift() as Uuid;
+      const currentDepth = newDepthById.get(currentId) as number;
+      if (currentDepth >= MAX_FOLDER_NESTING_DEPTH) {
+        throw new AppError("VALIDATION_FAILED");
+      }
+      for (const child of childrenOf.get(currentId) ?? []) {
+        newDepthById.set(child.id, currentDepth + 1);
+        queue.push(child.id);
+      }
+    }
+
+    // Persist: reparent + re-depth the moved folder, then re-depth descendants.
+    const moved = await this.store.updateFolder({
+      ...folder,
+      parentFolderId: newParentFolderId,
+      depth: newDepth,
+    });
+    for (const desc of subtree) {
+      const depth = newDepthById.get(desc.id);
+      if (depth !== undefined && depth !== desc.depth) {
+        await this.store.updateFolder({ ...desc, depth });
+      }
+    }
+    return this.toFolderDto(moved);
+  }
+
+  /**
    * List the Videos in `orgId`. Requires read permission in the Organization.
    */
   async listVideos(actor: AuthContext, orgId: Uuid): Promise<VideoDto[]> {
@@ -698,6 +788,7 @@ export function repositoryContentStore(
       const all = await folders.list();
       return all.filter((f) => f.projectId === projectId);
     },
+    updateFolder: (record) => folders.update(record),
     deleteFolder: (folderId) => folders.deleteById(folderId),
     findVideo: (organizationId, videoId) =>
       videos.findById(organizationId, videoId),

@@ -166,6 +166,13 @@ export function postgresContentStore(pool: PgPool): ContentStore {
       );
       return (rows as Row[]).map(mapFolder);
     },
+    async updateFolder(record) {
+      await pool.query(
+        `UPDATE folders SET parent_folder_id = $2, depth = $3, name = $4 WHERE id = $1`,
+        [record.id, record.parentFolderId, record.depth, record.name],
+      );
+      return record;
+    },
     async deleteFolder(folderId) {
       await pool.query(`DELETE FROM folders WHERE id = $1`, [folderId]);
     },
