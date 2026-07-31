@@ -588,6 +588,59 @@ export function buildRuntime(
     return { success: true };
   };
 
+  // videos.list (RBAC: video:read)
+  const listVideos: ServiceInvocation = async (_request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const videos = await contentService.listVideos(auth, orgId);
+    return { videos, total: videos.length };
+  };
+
+  // videos.get (RBAC: video:read)
+  const getVideo: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const videoId = requireUuidPathParam(request, "id");
+    return contentService.getVideo(auth, orgId, videoId);
+  };
+
+  // videos.update (RBAC: video:update) — rename and/or move (folderId: uuid|null).
+  const updateVideo: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const videoId = requireUuidPathParam(request, "id");
+    const body =
+      typeof request.body === "object" && request.body !== null
+        ? (request.body as Record<string, unknown>)
+        : {};
+    const changes: { name?: string; folderId?: Uuid | null } = {};
+    if (typeof body["title"] === "string") {
+      changes.name = body["title"] as string;
+    }
+    if ("folderId" in body) {
+      const raw = body["folderId"];
+      if (raw === null) {
+        changes.folderId = null;
+      } else if (typeof raw === "string" && isUuid(raw)) {
+        changes.folderId = raw as Uuid;
+      } else {
+        throw new AppError("VALIDATION_FAILED", {
+          details: { field: "folderId", reason: "must be a UUID or null" },
+        });
+      }
+    }
+    return contentService.updateVideo(auth, orgId, videoId, changes);
+  };
+
+  // videos.delete (RBAC: video:delete)
+  const deleteVideo: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const videoId = requireUuidPathParam(request, "id");
+    await contentService.deleteVideo(auth, orgId, videoId);
+    return { success: true };
+  };
+
   // uploads.create (RBAC upload:create): begin a chunked session. The final
   // assembled object key is derived server-side under the org's source prefix.
   const createUpload: ServiceInvocation = async (request, context) => {
