@@ -714,10 +714,7 @@ export function buildRuntime(
       typeof request.body === "object" && request.body !== null
         ? (request.body as Record<string, unknown>)
         : {};
-    const opts: ShareOptions = {};
-    if (typeof body["passcode"] === "string") {
-      opts.passcode = body["passcode"] as string;
-    }
+    let expiresAt: Date | undefined;
     if (typeof body["expiresAt"] === "string") {
       const d = new Date(body["expiresAt"] as string);
       if (Number.isNaN(d.getTime())) {
@@ -725,8 +722,14 @@ export function buildRuntime(
           details: { field: "expiresAt", reason: "must be an ISO timestamp" },
         });
       }
-      opts.expiresAt = d;
+      expiresAt = d;
     }
+    const passcode =
+      typeof body["passcode"] === "string" ? (body["passcode"] as string) : undefined;
+    const opts: ShareOptions = {
+      ...(passcode !== undefined ? { passcode } : {}),
+      ...(expiresAt !== undefined ? { expiresAt } : {}),
+    };
     return shareService.createLink(auth, videoId, opts);
   };
 
