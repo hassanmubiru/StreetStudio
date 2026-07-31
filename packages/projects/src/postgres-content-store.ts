@@ -159,6 +159,16 @@ export function postgresContentStore(pool: PgPool): ContentStore {
       const row = await one(`SELECT * FROM folders WHERE id = $1`, [folderId]);
       return row ? mapFolder(row) : null;
     },
+    async listFoldersByProject(projectId) {
+      const { rows } = await pool.query(
+        `SELECT * FROM folders WHERE project_id = $1 ORDER BY depth ASC, name ASC`,
+        [projectId],
+      );
+      return (rows as Row[]).map(mapFolder);
+    },
+    async deleteFolder(folderId) {
+      await pool.query(`DELETE FROM folders WHERE id = $1`, [folderId]);
+    },
     async findVideo(organizationId, videoId) {
       const row = await one(`SELECT * FROM videos WHERE organization_id = $1 AND id = $2`, [organizationId, videoId]);
       return row ? mapVideo(row) : null;
