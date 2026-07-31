@@ -173,6 +173,26 @@ export function postgresContentStore(pool: PgPool): ContentStore {
       const row = await one(`SELECT * FROM videos WHERE organization_id = $1 AND id = $2`, [organizationId, videoId]);
       return row ? mapVideo(row) : null;
     },
+    async listVideos(organizationId) {
+      const { rows } = await pool.query(
+        `SELECT * FROM videos WHERE organization_id = $1 ORDER BY created_at DESC`,
+        [organizationId],
+      );
+      return (rows as Row[]).map(mapVideo);
+    },
+    async updateVideo(record) {
+      await pool.query(
+        `UPDATE videos SET title = $3, folder_id = $4 WHERE organization_id = $1 AND id = $2`,
+        [record.organizationId, record.id, record.title, record.folderId],
+      );
+      return record;
+    },
+    async deleteVideo(organizationId, videoId) {
+      await pool.query(`DELETE FROM videos WHERE organization_id = $1 AND id = $2`, [
+        organizationId,
+        videoId,
+      ]);
+    },
     async updateVideoFolder(video, folderId) {
       await pool.query(`UPDATE videos SET folder_id = $2 WHERE id = $1`, [video.id, folderId]);
       return { ...video, folderId };
