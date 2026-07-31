@@ -312,6 +312,28 @@ Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (3
 
 ---
 
+## Update 13 — CRUD coverage: API keys + Webhooks
+
+Fifth and sixth resources for API-CATALOG-COVERAGE-01, both with correct security semantics verified.
+
+**API keys (`@streetstudio/auth` `ApiKeyService`):**
+- Added `ApiKeyStore.listByOrganization` + `ApiKeyService.list` (metadata only) + `repositoryApiKeyStore` impl.
+- Wired `apiKeys.create` / `apiKeys.list` / `apiKeys.revoke` (RBAC `apikey:*`; service-level authorizer omitted since the HTTP lifecycle RBAC gates management).
+- **Verified:** create → **201** with the plaintext secret returned **exactly once**; `list` → **200** metadata only (**no secret disclosed**); revoke → **200** (subsequent list shows `revokedAt`); foreign-org list → **403**.
+
+**Webhooks (`apps/api` `WebhookService`):**
+- Added `WebhookStore.listByOrganization` + `WebhookService.list` + extended `repositoryWebhookStore` (canonical `webhooks` TenantRepository over the `webhook` table).
+- Wired `webhooks.create` / `webhooks.list` / `webhooks.delete` (RBAC `webhook:*`; org scope bound onto the principal, since `WebhookService` reads `ctx.organizationId`).
+- **Verified:** create (HTTPS) → **201** with **no signing-secret disclosed**; non-HTTPS URL → **400**; unsupported event type → **400**; list → **200**; delete → **200**; foreign-org list → **403**.
+
+Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (397 files) green; auth + webhooks tests pass.
+
+**Wired operations to date (38):** auth ×4, organizations ×2, projects ×5, folders ×4, videos ×4, comments ×5, apiKeys ×3, webhooks ×3, notifications ×2, analytics.metrics, uploads ×4, playback.manifest + the part-upload & object-stream byte routes.
+
+**Remaining for full RC:** sharing CRUD (create/get/revoke/resolve — the last resource), the deferred `folders.move` / `videos.transcript/summary` / pipeline duration extraction, and the WebSocket realtime transport + distributed worker.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
