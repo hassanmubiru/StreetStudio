@@ -503,5 +503,18 @@ export function repositoryCommentStore(
     async insertReaction(record) {
       await reactions.insert(record);
     },
+    async listByVideo(videoId) {
+      // `comments` is a GlobalRepository (comment ids are globally unique) with
+      // no video-scoped list; filter by videoId. Callers authorize the Video
+      // against its owning org first, so this discloses no other tenant.
+      const all = await comments.list();
+      return all
+        .filter((c) => c.videoId === videoId)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    },
+    deleteComment: (id) => comments.deleteById(id),
+    async deleteReaction(record) {
+      await reactions.remove(record);
+    },
   };
 }
