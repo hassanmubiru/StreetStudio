@@ -606,6 +606,65 @@ export function buildRuntime(
     return { success: true };
   };
 
+  // Parse a { targetType, targetId } reaction target from a JSON body.
+  const readReactionTarget = (body: unknown): ReactionTarget => {
+    const targetType = requireStringField(body, "targetType");
+    const targetId = requireUuidField(body, "targetId");
+    if (targetType !== "video" && targetType !== "comment") {
+      throw new AppError("VALIDATION_FAILED", {
+        details: { field: "targetType", reason: "must be 'video' or 'comment'" },
+      });
+    }
+    return { type: targetType as ReactionTargetType, id: targetId };
+  };
+
+  // comments.list (RBAC: comment:read) — GET /videos/:videoId/comments
+  const listComments: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const videoId = requireUuidPathParam(request, "videoId");
+    const comments = await commentService.listComments(auth, videoId);
+    return { comments, total: comments.length };
+  };
+
+  // comments.create (RBAC: comment:create) — POST /videos/:videoId/comments
+  const createComment: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const videoId = requireUuidPathParam(request, "videoId");
+    const body = requireStringField(request.body, "body");
+    const tsRaw =
+      typeof request.body === "object" && request.body !== null
+        ? (request.body as Record<string, unknown>)["timestamp"]
+        : undefined;
+    const timestamp = typeof tsRaw === "number" ? tsRaw : undefined;
+    return commentService.post(auth, videoId, body, timestamp);
+  };
+
+  // comments.delete (RBAC: comment:delete) — DELETE /comments/:id
+  const deleteComment: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const commentId = requireUuidPathParam(request, "id");
+    await commentService.deleteComment(auth, commentId);
+    return { success: true };
+  };
+
+  // comments.react (RBAC: reaction:create) — POST /reactions
+  const react: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const target = readReactionTarget(request.body);
+    const type = requireStringField(request.body, "type");
+    await commentService.react(auth, target, type);
+    return { success: true };
+  };
+
+  // comments.unreact (RBAC: reaction:delete) — DELETE /reactions
+  const unreact: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const target = readReactionTarget(request.body);
+    const type = requireStringField(request.body, "type");
+    await commentService.unreact(auth, target, type);
+    return { success: true };
+  };
+
   // videos.list (RBAC: video:read)
   const listVideos: ServiceInvocation = async (_request, context) => {
     const auth = requireAuth(context);
