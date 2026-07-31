@@ -82,9 +82,9 @@ for (const { path, label } of [ { path: "/auth/me", label: "auth.currentMember (
   console.log(`  latency ms  mean=${pct.mean.toFixed(1)} p50=${pct.p50.toFixed(1)} p90=${pct.p90.toFixed(1)} p95=${pct.p95.toFixed(1)} p99=${pct.p99.toFixed(1)} max=${pct.max.toFixed(1)}`);
 }
 
-// Part 2 — rate limiting under burst (R29.1) on a SINGLE client.
-console.log(`\n=== rate limiting under burst (single client, 130 rapid reqs) ===`);
-const burstToken = tokens[0];
+// Part 2 — rate limiting under burst (R29.1) on a SINGLE fresh client.
+console.log(`\n=== rate limiting under burst (single fresh client, 130 rapid reqs) ===`);
+const burstToken = await makeClient();
 const burst = await runPool(Array.from({ length: 130 }, () => () => req("GET", "/auth/me", { token: burstToken })), 20);
 const bcodes = burst.reduce((m, r) => ((m[r.status] = (m[r.status] || 0) + 1), m), {});
 const limited = burst.filter((r) => r.status === 429);
