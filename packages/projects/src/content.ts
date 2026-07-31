@@ -509,6 +509,10 @@ export function repositoryContentStore(
     insertFolder: (record) => folders.insert(record),
     findProject: (organizationId, projectId) =>
       projects.findById(organizationId, projectId),
+    listProjects: (organizationId) => projects.listByOrganization(organizationId),
+    updateProject: (record) => projects.update(record),
+    deleteProject: (organizationId, projectId) =>
+      projects.deleteById(organizationId, projectId),
     findFolder: (folderId) => folders.findById(folderId),
     findVideo: (organizationId, videoId) =>
       videos.findById(organizationId, videoId),
