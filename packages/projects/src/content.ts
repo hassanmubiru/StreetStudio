@@ -91,6 +91,9 @@ export const CREATE_FOLDER_PERMISSION = "content:create_folder";
 /** Permission to read Folders. */
 export const READ_FOLDER_PERMISSION = "content:read_folder";
 
+/** Permission to move/update a Folder. */
+export const UPDATE_FOLDER_PERMISSION = "content:update_folder";
+
 /** Permission to delete a Folder. */
 export const DELETE_FOLDER_PERMISSION = "content:delete_folder";
 

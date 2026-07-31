@@ -964,6 +964,7 @@ export function buildRuntime(
       objectKey: session.objectKey,
       size: object.size,
       videoId,
+      durationSeconds,
       processing: result?.status ?? "unknown",
       renditions: result?.renditions.length ?? 0,
     };
