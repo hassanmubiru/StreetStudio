@@ -73,6 +73,15 @@ export const MAX_FOLDER_NESTING_DEPTH = 10;
  */
 export const CREATE_PROJECT_PERMISSION = "content:create_project";
 
+/** Permission to read Projects/Folders within an Organization. */
+export const READ_PROJECT_PERMISSION = "content:read_project";
+
+/** Permission to rename/update a Project. */
+export const UPDATE_PROJECT_PERMISSION = "content:update_project";
+
+/** Permission to delete a Project. */
+export const DELETE_PROJECT_PERMISSION = "content:delete_project";
+
 /**
  * Permission a Role must grant to create a Folder within a Project (R5.6).
  * Evaluated in the owning Organization's scope.
