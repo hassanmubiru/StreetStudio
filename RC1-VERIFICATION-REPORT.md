@@ -446,6 +446,39 @@ RUNTIME-01 flagged the Docker `web` target CMD as wrong (`node apps/web/dist/ind
 
 ---
 
+## Update 19 — Distributed media worker built + PLAYBACK-OBJECT-01 fixed (transcoded renditions now streamable)
+
+Closed the last functional deferred item — a distributed processing worker — and, while verifying it, surfaced and fixed a real byte-serving gap that had made the pipeline's transcoded outputs unreachable through the API.
+
+### Distributed media-processing worker (was a scaffold)
+The Docker `worker` target ran `node apps/api/dist/index.js` — the scaffold that only re-exports domain constants and **drained nothing**. The in-process `InProcessQueue` (used by `uploads.complete`'s inline `media.drain()`) is in-memory and cannot be shared across processes, so a separate worker needs a **durable** claim source. The canonical `video.status` column is exactly that.
+
+**Built** (`apps/api/src/runtime/`):
+- `media/media-worker.ts` — `MediaWorker` polls the `video` table and claims the oldest `queued` row with a single atomic statement using `FOR UPDATE SKIP LOCKED` (`UPDATE video SET status='processing' WHERE id=(SELECT id … WHERE status='queued' ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING …`), so N workers are safe competing consumers (no double-processing). The claimed Video is handed to the real `MediaPipeline.process` (real ffmpeg + S3/MinIO).
+- `worker-main.ts` — worker entrypoint: connects Postgres, runs `runMigrations` (idempotent), builds the concrete media runtime, and loops until SIGTERM/SIGINT.
+- `container.ts` / `main.ts` — added a `PROCESSING_INLINE` switch: `uploads.complete` drains inline for single-node (default, unchanged) or **enqueue-only** (`PROCESSING_INLINE=false`) so a dedicated worker owns transcoding.
+- `docker/Dockerfile` — `worker` target CMD → `node apps/api/dist/runtime/worker-main.js`.
+
+**Verified end-to-end (real Postgres + MinIO + ffmpeg):** API started with `PROCESSING_INLINE=false`; 2 real uploads returned `processing: queued`, `renditions: 0`, and the DB showed both Videos `queued` with no renditions. A separate `worker-main.js` process then logged `claimed → processing → ready` for each and `processed … status:ready attempts:1 renditions:3`. Post-drain: both Videos `ready`, **3 renditions + thumbnail + preview each** in the DB, and **all 5 derivative objects per Video present & non-empty in MinIO** (1080p 1.5 MB / 720p 724 KB / 480p 444 KB / preview 55 KB / thumbnail 8.9 KB — confirmed independently via the S3 API).
+
+**Honest seams/limits (documented, not faked):** cross-process realtime fan-out needs a shared bus (Redis pub/sub); the worker logs status transitions and the **authoritative status lives in the DB** (it does not invent an in-memory realtime channel). Stale-claim recovery (a worker crashing mid-transcode leaves a Video `processing`) needs a claim-timestamp column and is a documented follow-up; claiming only `queued` rows is the core distributed-safe behavior.
+
+### PLAYBACK-OBJECT-01 (FIXED) — the playback manifest advertised rendition keys the byte route couldn't serve
+Verifying the worker surfaced that `GET /objects/*` returned **404 for every derivative** (renditions, thumbnail, preview) even to the owning org, so a transcoded rendition was **not actually streamable through the API**. Root cause: the byte route's `resolveObject` delegated solely to `PlaybackService.resolve`, which authorizes an object key only if it matches a **completed upload session** for the org — i.e. the *source* object. Derivative keys are never upload-session keys.
+
+**Fix (composition layer only — the tested `@streetstudio/playback` package is unchanged):** `resolveObject` now first tries the source-object path (unchanged), then, for a non-source key, resolves the derivative's **owning Video's organization** from the canonical `rendition`/`asset` tables (`… JOIN video …`) and serves the bytes only when that org **exactly matches** the caller's org — deny-by-default, no cross-org disclosure. Content-type is taken from storage metadata or inferred from the key extension.
+
+**Verified end-to-end (two tenants):** owner A streamed all 3 renditions + thumbnail + preview via HTTP `Range` (**206**, `Content-Range` totals matching the MinIO object sizes exactly), foreign org B was **blocked (404)** for every derivative key, and the source object still served (**206**).
+
+### Suite note (pre-existing, not a regression)
+`vitest run` reports `Errors  1 error` alongside **5315 passed / 0 failed** (exit 0). This is `apps/web/src/app/error-handler.test.ts > "should handle unhandled promise rejections"` **deliberately** emitting `Unhandled promise rejection: Error: Test unhandled rejection` to exercise the global handler — a passing test. It predates this work and lives in `apps/web` (untouched by these `apps/api`/Docker changes).
+
+Gates: typecheck + `streetjs:check` + `boundary:check` (401 files) green; full suite **5315 passed / 0 failed**.
+
+**Remaining for full RC:** only INFRA-blocked runtime phases — Phase 5 (perf under load), Phase 7 (a11y runtime), browser/e2e of the web SPA against a live server, and the full Docker image build (blocked here by missing BuildKit/`buildx`). Every catalog operation, the full media lifecycle (upload → transcode → **stream renditions**), realtime, and now **distributed processing** are proven on real infrastructure.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
