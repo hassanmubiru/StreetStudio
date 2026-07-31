@@ -688,6 +688,36 @@ export function buildRuntime(
     return { success: true };
   };
 
+  // The WebhookService reads the org scope from the AuthContext, so bind the
+  // request's organization onto the principal for these handlers.
+  const orgScopedAuth = (context: RequestContext): AuthContext => ({
+    ...requireAuth(context),
+    organizationId: requireOrganizationId(context),
+  });
+
+  // webhooks.create (RBAC: webhook:create)
+  const createWebhook: ServiceInvocation = async (request, context) => {
+    const ctx = orgScopedAuth(context);
+    const eventType = requireStringField(request.body, "eventType");
+    const url = requireStringField(request.body, "url");
+    return webhookService.register(ctx, eventType, url);
+  };
+
+  // webhooks.list (RBAC: webhook:read) — never discloses signing secrets.
+  const listWebhooks: ServiceInvocation = async (_request, context) => {
+    const ctx = orgScopedAuth(context);
+    const webhooks = await webhookService.list(ctx);
+    return { webhooks, total: webhooks.length };
+  };
+
+  // webhooks.delete (RBAC: webhook:delete)
+  const deleteWebhook: ServiceInvocation = async (request, context) => {
+    const ctx = orgScopedAuth(context);
+    const id = requireUuidPathParam(request, "id");
+    await webhookService.delete(ctx, id);
+    return { success: true };
+  };
+
   // apiKeys.create (RBAC: apikey:create) — returns the plaintext secret ONCE.
   const createApiKey: ServiceInvocation = async (request, context) => {
     const auth = requireAuth(context);
