@@ -421,6 +421,31 @@ Gates: full suite **5315 passed / 0 failed** (71 skipped DB-integration); typech
 
 ---
 
+## Update 18 — Web_Client production bundle fixed + Docker `web` target corrected (RUNTIME-01 `web` sub-blocker resolved)
+
+RUNTIME-01 flagged the Docker `web` target CMD as wrong (`node apps/web/dist/index.js` — a file the Vite build never emits). Investigating it surfaced a **deeper, real defect: the web SPA could not be production-built at all.**
+
+**WEB-BUILD-01 (FIXED) — top-level await broke the production bundle.** `npm run build -w @streetstudio/web` (`tsc -b && vite build`) failed: the app's async bootstrap (`src/main.ts`) and dynamic `import()` route preloads use **top-level await**, but Vite/esbuild's default build target (`es2020` / `chrome87` …) rejects it (`Top-level await is not available in the configured target environment`). The typecheck passed (it doesn't lower/bundle), so this was invisible until an actual bundle build. **Fix:** pinned `build.target: 'es2022'` in `apps/web/vite.config.ts` (a modern baseline that supports top-level await). **Verified:** the bundle now builds — `dist/index.html` + code-split hashed assets (`main-*.js` 337 kB, per-page chunks), `✓ built in ~750ms`. The `test` config is untouched (vitest still runs under jsdom); full suite **5315 passed / 0 failed**.
+
+**DOCKER-WEB-01 (FIXED) — the `web` image never built the SPA and pointed at a nonexistent server.** Two problems: (1) the root build is `tsc -b`, and `apps/web` is **not** a `tsc -b` project reference (it type-checks with `noEmit` and bundles with Vite), so the builder never produced `apps/web/dist` at all; (2) the SPA is **static assets**, not a Node server, so `node apps/web/dist/index.js` could never serve it. **Fix:**
+- **`docker/Dockerfile`** — added `RUN npm run build -w @streetstudio/web` in the builder stage (before `npm prune --omit=dev`, since Vite is a dev dep) so the image carries the real bundle; changed the `web` target CMD to `node apps/web/server.mjs` and set `ENV PORT=3000`.
+- **`apps/web/server.mjs` (new)** — a zero-dependency Node static host (built-ins only, so it survives the prod prune): serves `apps/web/dist` with SPA history fallback, path-traversal guarding, immutable caching for content-hashed assets, `no-cache` for `index.html`, a `/healthz` endpoint, and `405` for non-GET/HEAD.
+
+**Verified locally against the real bundle** (`PORT=3123 node apps/web/server.mjs`):
+
+| Check | Result |
+|---|---|
+| `GET /` | **200** `text/html`, real `<!DOCTYPE html>` bundle |
+| `GET /assets/main-<hash>.js` | **200** `text/javascript`, `cache-control: public, max-age=31536000, immutable` |
+| `GET /dashboard/deep/route` (client route) | **200** → `index.html` (SPA fallback) |
+| `GET /../../../../etc/passwd` | **200** → served `index.html`, **no** `/etc/passwd` leak (traversal blocked) |
+| `GET /healthz` | **200** `{"status":"ok"}` |
+| `POST /` | **405** |
+
+**Environment limitation (honest):** the full `docker build --target web` could **not** be executed here — the Dockerfile uses BuildKit `--mount=type=cache` (`# syntax=docker/dockerfile:1.7`) and this host has **no `buildx`/BuildKit** (`docker buildx` → "unknown command"; legacy builder → "the --mount option requires BuildKit"). So the image was not built end-to-end in this environment. Every constituent piece is nonetheless proven on real artifacts: the Vite bundle builds, and the exact `server.mjs` the CMD runs serves that bundle correctly. Gates: typecheck + `streetjs:check` + `boundary:check` (399 files) green; full suite **5315 passed / 0 failed**.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
