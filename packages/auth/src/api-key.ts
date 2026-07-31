@@ -105,6 +105,8 @@ export interface ApiKeyStore {
   create(record: ApiKeyRecord): Promise<ApiKeyRecord>;
   /** Find a key by id, scoped to its organization, or null when absent. */
   findById(organizationId: Uuid, keyId: Uuid): Promise<ApiKeyRecord | null>;
+  /** List every API key in an organization (metadata only). */
+  listByOrganization(organizationId: Uuid): Promise<ApiKeyRecord[]>;
   /**
    * Mark `record` revoked as of `revokedAt`, retaining its metadata. Idempotent
    * with respect to an already-revoked key.
