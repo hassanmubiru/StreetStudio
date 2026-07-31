@@ -114,7 +114,7 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   and **real ffmpeg**, behind an HTTP + WebSocket transport. All 45 catalog
   operations with a backing domain method are wired and each was exercised
   end-to-end (register→login→…→create/read/update/delete, upload→transcode→
-  playback, realtime handshake) — see `RC1-VERIFICATION-REPORT.md` updates 3–15
+  playback, realtime handshake) — see `RC1-VERIFICATION-REPORT.md` updates 3–21
   for per-operation evidence.
 - **The domain packages remain thoroughly unit/property tested** (the full suite
   is **5315 passing / 0 failing**; `build / graph / boundary / streetjs` gates
