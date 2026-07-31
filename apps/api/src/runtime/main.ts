@@ -89,8 +89,11 @@ async function main(): Promise<void> {
     },
   );
 
+  // Processing placement: inline (single-node default) unless a distributed
+  // worker is running (PROCESSING_INLINE=false → uploads.complete enqueues only).
+  const inlineProcessing = process.env["PROCESSING_INLINE"] !== "false";
   const { service, operations, authenticate, uploadPart, resolveObject } =
-    buildRuntime(config, pgClient, media, realtime);
+    buildRuntime(config, pgClient, media, realtime, { inlineProcessing });
   realtime.setAuthenticator(authenticate);
 
   const server = createHttpServer({
