@@ -16,10 +16,13 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { AppError } from "@streetstudio/shared";
 import type { Uuid } from "@streetstudio/shared";
+import type { AuthContext } from "@streetstudio/auth";
+import { parseRange } from "@streetstudio/playback";
 import { restOperations, type PublicOperation } from "../http/operations.js";
 import type { ApiRequest } from "../http/lifecycle.js";
 import type { RestRouter } from "../http/controllers.js";
 import type { PgClient } from "./pg-client.js";
+import type { Runtime } from "./container.js";
 
 /** A compiled route: its operation plus the template split into segments. */
 interface CompiledRoute {
