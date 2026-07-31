@@ -95,6 +95,8 @@ export interface MediaRuntime {
   process(job: ProcessingJob): Promise<ProcessingResult>;
   /** Drain the queue, processing every job in FIFO order. */
   drain(): Promise<ProcessingResult[]>;
+  /** Probe the integer-second duration of a stored media object (0 if unknown). */
+  probeDurationSeconds(objectKey: string): Promise<number>;
   /** Release the S3 client sockets. */
   close(): void;
 }
