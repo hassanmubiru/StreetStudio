@@ -131,11 +131,22 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 18):** the **web SPA production build** (a real
+  defect — top-level await rejected by Vite's default `es2020` target; fixed by
+  pinning `es2022`) and the **Docker `web` target** (it never built the SPA and
+  pointed `node apps/web/dist/index.js` at a file Vite doesn't emit; now the
+  builder runs the Vite build and the target serves the bundle via a new
+  zero-dependency static host `apps/web/server.mjs` — SPA fallback, traversal
+  guarding, immutable asset caching, `/healthz`). Verified locally against the
+  real bundle; the full `docker build` itself is blocked here by a missing
+  BuildKit/`buildx` (documented environment limitation).
 - **Remaining runtime gaps (deferred, documented):** a distributed worker
   draining the processing queue (currently in-process — functionally complete for
-  single-node). The unused in-memory fakes and the parallel plural-DDL
-  `ensure*Schema` seams are pending retirement now that the composition uses the
-  canonical schema (ADR-0020).
+  single-node); browser/e2e verification of the web SPA against a live server;
+  and the INFRA-blocked runtime Phases 5 (perf under load) and 7 (a11y runtime).
+  The unused in-memory fakes and the parallel plural-DDL `ensure*Schema` seams
+  are pending retirement now that the composition uses the canonical schema
+  (ADR-0020).
 - **SDK** is a complete typed client mirroring the operation catalog, but has not
   been exercised end-to-end against a live deployed server.
 - **Dashboard** now has client-side application logic (session/credential/scope
