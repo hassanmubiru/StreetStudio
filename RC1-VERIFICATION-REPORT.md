@@ -376,6 +376,22 @@ The last remaining channel — the `realtime.connect` websocket operation — is
 
 ---
 
+## Update 16 — Deferred items closed: duration extraction, folders.move, processing-status realtime fan-out
+
+Three of the deferred gaps are now implemented and verified end-to-end.
+
+**1. Video duration extraction (unblocks timestamped comments).** `FfmpegTranscoder.probeDurationSeconds` runs `ffmpeg -i <object>` and parses the `Duration:` line (`ffmpeg-static` ships ffmpeg, not ffprobe); exposed on the media runtime and called in `uploads.complete` to persist the real `duration_seconds` on the video (and feed the transcoder's preview clamp). **Verified:** a 5s upload → `durationSeconds: 5`; comment `@t=2` → **201**; comment `@t=9999` → **400** (correctly rejected against the real duration — the earlier limitation is resolved).
+
+**2. `folders.move` (RBAC `folder:update`).** Added `ContentStore.updateFolder` + `ContentService.moveFolder`: reparent a folder (or move to root) within its project, with **cycle prevention** (rejects a move onto the folder itself or any descendant), **subtree depth recomputation** (BFS), and the `MAX_FOLDER_NESTING_DEPTH` cap. Both adapters implemented; wired `folders.move` (PATCH `/folders/:id`). **Verified:** a→b→c chain (depths 0/1/2); moving `a` under its descendant `c` → **400** (cycle); moving `b` to root → **200** with depths recomputed (`b=0, c=1`).
+
+**3. Processing-status realtime fan-out.** The `MediaPipeline`'s `ProcessingStatusEmitter` is now routed to the `RealtimeHub`, broadcasting `processing-status` events (`queued`/`processing`/`ready`/`failed`) to the owning organization's connected sockets. **Verified:** a WS client subscribed with `?organizationId=` received `["queued","processing","ready"]` during a real transcode.
+
+Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (398 files) green; projects + processing package tests pass.
+
+**Remaining for full RC:** only `videos.transcript/summary` (captions/AI) and a distributed worker draining the processing queue (currently in-process, which is functionally complete for single-node). Every catalog operation and the full media + realtime lifecycle are proven on real infrastructure.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
