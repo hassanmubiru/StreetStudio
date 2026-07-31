@@ -262,20 +262,9 @@ export class LayoutController {
    * Load router transition styles
    */
   private async loadRouterStyles(): Promise<void> {
-    try {
-      const response = await fetch(new URL('../../styles/router-transitions.css', import.meta.url));
-      const css = await response.text();
-      
-      let styleElement = document.getElementById('router-transitions') as HTMLStyleElement;
-      if (!styleElement) {
-        styleElement = document.createElement('style');
-        styleElement.id = 'router-transitions';
-        document.head.appendChild(styleElement);
-      }
-      
-      styleElement.textContent = css;
-    } catch (error) {
-      console.warn('Failed to load router transition styles:', error);
-    }
+    // Inject the transition CSS inline (no network fetch). Fetching the
+    // stylesheet URL previously broke under CSP because Vite inlines it as a
+    // `data:` URL that `connect-src` blocks; inline injection avoids that.
+    ensureRouterTransitionStyles();
   }
 }
