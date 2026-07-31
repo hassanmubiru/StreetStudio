@@ -1225,14 +1225,62 @@ export function buildRuntime(
     };
   };
 
+  // Infer a content-type from an object key's extension (fallback when the
+  // storage layer carries no metadata content-type).
+  const contentTypeForKey = (key: string): string => {
+    const ext = key.slice(key.lastIndexOf(".")).toLowerCase();
+    switch (ext) {
+      case ".mp4":
+        return "video/mp4";
+      case ".jpg":
+      case ".jpeg":
+        return "image/jpeg";
+      case ".png":
+        return "image/png";
+      case ".webp":
+        return "image/webp";
+      default:
+        return "application/octet-stream";
+    }
+  };
+
   const resolveObject: Runtime["resolveObject"] = async (
     auth,
     organizationId,
     objectKey,
   ) => {
+    // 1) Source objects: authorized via a completed upload session for the org
+    //    (tested @streetstudio/playback authorization, unchanged).
     const actor: UploadActor = { memberId: auth.memberId, organizationId };
-    const resolved = await playbackService.resolve(actor, objectKey);
-    return resolved;
+    const fromSource = await playbackService.resolve(actor, objectKey);
+    if (fromSource) {
+      return fromSource;
+    }
+    // 2) Pipeline-produced derivatives (renditions/assets): the byte route must
+    //    serve the transcoded outputs the playback manifest advertises, but only
+    //    when the derivative's owning Video belongs to the caller's org — so
+    //    resolve the owning org from the canonical rendition/asset tables and
+    //    require an exact org match (deny-by-default; no cross-org disclosure).
+    const owner = await pg.query<{ organization_id: string }>(
+      `SELECT v.organization_id FROM rendition r JOIN video v ON v.id = r.video_id WHERE r.object_key = $1
+       UNION
+       SELECT v.organization_id FROM asset a JOIN video v ON v.id = a.video_id WHERE a.object_key_or_body = $1
+       LIMIT 1`,
+      [objectKey],
+    );
+    const ownerOrg = owner.rows[0]?.organization_id;
+    if (!ownerOrg || ownerOrg !== organizationId) {
+      return null; // absent, or belongs to another tenant → 404
+    }
+    const got = await media.storage.get(objectKey);
+    if (!got.found || !got.bytes) {
+      return null;
+    }
+    return {
+      bytes: got.bytes,
+      contentType: got.metadata?.contentType ?? contentTypeForKey(objectKey),
+      size: got.bytes.length,
+    };
   };
 
   return { service, operations, authenticate, uploadPart, resolveObject };
