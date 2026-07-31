@@ -290,6 +290,28 @@ Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (3
 
 ---
 
+## Update 12 — CRUD coverage: Comments + Reactions (list/create/delete/react/unreact)
+
+Fourth resource for API-CATALOG-COVERAGE-01.
+
+**Domain additions (`@streetstudio/comments` `CommentService`/`CommentStore`), RBAC deny-by-default in the Video's owning org:**
+- `CommentStore`: `listByVideo(videoId)`, `deleteComment(id)`, `deleteReaction(record)`.
+- `CommentService`: `listComments`, `deleteComment`, `unreact` (idempotent) — added alongside the existing `post`/`react`.
+- Both adapters implemented (`repositoryCommentStore`: `comments` is a `GlobalRepository`, so `listByVideo` filters `list()` by videoId; `reactions.remove` for unreact; and `postgresCommentStore` scoped SQL).
+
+**Wired operations (5):** `comments.list` / `comments.create` / `comments.delete` / `comments.react` / `comments.unreact`.
+
+**Verified end-to-end** (a real video produced via upload→process): create comment → **201** → `list` (1) → `react` on the comment → **201** → `unreact` → **200** → `delete` → **200** → list empty → foreign-org list **403**.
+- Also confirmed correct product validation: a comment with a `timestamp` beyond the video's `durationSeconds` is rejected **400** (the pipeline currently leaves `durationSeconds=0`, so only untimed comments are accepted until duration extraction is added — noted).
+
+Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (397 files) green; `packages/comments` tests pass.
+
+**Wired operations to date (32):** auth ×4, organizations ×2, projects ×5, folders ×4, videos ×4, comments ×5, notifications ×2, analytics.metrics, uploads ×4, playback.manifest + the part-upload & object-stream byte routes.
+
+**Remaining for full RC:** `folders.move`, `videos.transcript/summary`, sharing/webhooks/api-keys CRUD (same proven pattern), video duration extraction in the pipeline, and the WebSocket realtime transport + distributed worker.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
