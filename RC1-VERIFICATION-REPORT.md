@@ -242,6 +242,29 @@ Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (3
 
 ---
 
+## Update 10 — CRUD coverage: Folders (get/listByProject/delete)
+
+Second resource for API-CATALOG-COVERAGE-01.
+
+**Domain additions (`@streetstudio/projects`), RBAC deny-by-default + org-scoped (via the Folder's Project → Organization):**
+- `ContentStore`: `listFoldersByProject(projectId)`, `deleteFolder(folderId)`.
+- `ContentService`: `getFolder`, `listFolders`, `deleteFolder` — each verifies the Folder's Project belongs to the caller's org (else `NOT_FOUND`, no cross-org disclosure).
+- Both adapters implemented: `repositoryContentStore` (`folders` is a `GlobalRepository`, so `listFoldersByProject` filters `list()` by projectId — correct, since the Project is authorized against the org first; documented inefficiency) and `postgresContentStore` (scoped `WHERE project_id = $1`).
+
+**Wired operations:** `folders.get` / `folders.listByProject` (`?projectId=`) / `folders.delete`.
+
+**Verified end-to-end:** create folder → `get` → `listByProject` (1) → `delete` (200) → `get` **404** → list empty → foreign-org list **403**.
+
+`folders.move` deferred (documented): it needs depth recomputation + parent-cycle prevention — a domain-logic addition beyond the mechanical CRUD pattern.
+
+Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (397 files) green.
+
+**Wired operations to date (23):** auth ×4, organizations ×2, projects ×5, folders ×4 (create/get/listByProject/delete), notifications ×2, analytics.metrics, uploads ×4, playback.manifest + the part-upload & object-stream byte routes.
+
+**Remaining for full RC:** `folders.move` + videos/comments/sharing/webhooks/api-keys CRUD (same proven pattern), and the WebSocket realtime transport + distributed worker.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
