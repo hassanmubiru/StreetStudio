@@ -127,5 +127,21 @@ export function postgresCommentStore(pool: PgPool): CommentStore {
         [record.targetType, record.targetId, record.memberId, record.type],
       );
     },
+    async listByVideo(videoId) {
+      const { rows } = await pool.query(
+        `SELECT * FROM comments WHERE video_id = $1 ORDER BY created_at ASC`,
+        [videoId],
+      );
+      return (rows as Row[]).map(mapComment);
+    },
+    async deleteComment(id) {
+      await pool.query(`DELETE FROM comments WHERE id = $1`, [id]);
+    },
+    async deleteReaction(record) {
+      await pool.query(
+        `DELETE FROM reactions WHERE target_type = $1 AND target_id = $2 AND member_id = $3 AND type = $4`,
+        [record.targetType, record.targetId, record.memberId, record.type],
+      );
+    },
   };
 }
