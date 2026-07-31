@@ -45,7 +45,7 @@ export type Authenticate = (
 ) => Promise<AuthContext | null>;
 
 interface Connection {
-  readonly socket: WebSocket;
+  readonly socket: RealtimeSocket;
   readonly memberId: Uuid;
   readonly organizationId?: Uuid;
 }
@@ -114,7 +114,8 @@ export class RealtimeHub {
     const organizationId =
       orgParam !== undefined ? (orgParam as Uuid) : undefined;
 
-    this.wss.handleUpgrade(req, socket, head, (ws) => {
+    this.wss.handleUpgrade(req, socket, head, (rawWs) => {
+      const ws = rawWs as unknown as RealtimeSocket;
       const connection: Connection = organizationId
         ? { socket: ws, memberId: auth.memberId, organizationId }
         : { socket: ws, memberId: auth.memberId };
