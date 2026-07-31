@@ -184,6 +184,40 @@ RC1 remains **not met**, but the core architecture, auth/RBAC/tenant-isolation, 
 
 ---
 
+## Update 8 — Upload → process → playback wired and proven over real HTTP
+
+The full media lifecycle is now reachable through the running API and verified end-to-end with real bytes (Postgres + MinIO + real ffmpeg).
+
+**Wired (canonical repository path, shared MinIO `Storage` facade + pipeline):**
+- `uploads.create` / `uploads.get` / `uploads.abort` / `uploads.complete` (RBAC `upload:*`) via `UploadService` + `UploadSessionRepository`.
+- `uploads.complete` assembles the object, creates the canonical `video` row (`source_object_key`), then runs the media pipeline in-process (production drains the queue in a separate worker) — producing derivatives.
+- `playback.manifest` (RBAC `video:read`) returns the video's renditions + thumbnail/preview from the canonical schema.
+- Two documented catalog-gap byte routes served directly by the transport: `PUT /uploads/:id/parts/:n` (binary chunk) and `GET /objects/*` (authorized streaming with HTTP `Range`).
+
+**Verified end-to-end (real 58 KB H.264/AAC clip, 2 chunks):**
+| Step | Result |
+|---|---|
+| `POST /uploads` (totalParts=2) | 201 session |
+| `PUT /uploads/:id/parts/1,2` (binary) | 200 each; real bytes stored |
+| `POST /uploads/:id/complete` | 201; assembled size = 57986 = source; `processing: ready`, 3 renditions |
+| `GET /videos/:id/playback` | 200; 480p/720p/1080p + thumbnail + preview |
+| `GET /objects/<key>` `Range: bytes=0-99` | **206** `Content-Range: bytes 0-99/57986`, 100-byte body |
+| `GET /objects/<key>` (full) | 200; size matches source exactly |
+| `POST /uploads` foreign org | 403 (tenant isolation) |
+| Persistence | `video.status=ready`; `asset` (thumbnail, preview) + 3 `rendition` rows; 5 derivative objects in MinIO (9 KB–2 MB) |
+
+**Real defects found & fixed while wiring (only observable with the live `pg` driver / real HTTP):**
+- **DB-JSONB-READ (uploads):** `UploadSessionRepository.parseParts` re-ran `JSON.parse` on the already-parsed `received_parts` jsonb array (crashing every part upload/complete). Fixed to accept array-or-string (same class as the earlier RBAC/org fixes). `packages/uploads` tests still pass.
+- **Transport error mapping:** the uploads/playback services throw StreetJS `HttpException`s (numeric `.status`), which the transport mapped to 500. `respondWithError` now honors any `Error` with a numeric HTTP `status` (no framework coupling), so their 403/404 surface correctly.
+
+Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (397 files) green. `@streetstudio/uploads` + `@streetstudio/playback` added to `apps/api`.
+
+**Wired operations to date (16):** auth ×4, organizations ×2, projects.create, folders.create, notifications ×2, analytics.metrics, uploads ×4, playback.manifest — plus the part-upload and object-stream byte routes. All real PostgreSQL + MinIO, full lifecycle, deny-by-default RBAC + tenant isolation.
+
+**Remaining for full RC:** API-CATALOG-COVERAGE-01 (implement the missing list/get/update/delete domain methods across resources) and the WebSocket realtime transport + distributed worker. The upload/playback and media pipeline are now proven.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
