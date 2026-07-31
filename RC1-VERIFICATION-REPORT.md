@@ -520,6 +520,30 @@ Gates: typecheck + `streetjs:check` + `boundary:check` green; full suite **5315 
 
 ---
 
+## Update 22 — Phase 5 (performance under load) executed; R29.1 verified; a real rate-limit header gap fixed
+
+Ran a real concurrent load test against the running API (real Postgres/Redis/MinIO). Because the per-client rate limiter keys on `credential ?? remoteAddress`, load was spread across **many distinct authenticated clients** (distinct bearer tokens → independent 100/60s budgets), giving genuine sustained concurrency on the success path with no rate-limit noise.
+
+**Measured (1350 requests each, 50 concurrent, 100% `200`):**
+
+| Endpoint | Throughput | p50 | p95 | p99 | max |
+|---|---|---|---|---|---|
+| `auth.currentMember` (`GET /auth/me`, PK lookup) | **3534 req/s** | 12.6 ms | 27.5 ms | 43.8 ms | 46.3 ms |
+| `organizations.list` (`GET /organizations`, membership→organization JOIN) | **2993 req/s** | 17.4 ms | 23.3 ms | 27.7 ms | 30.2 ms |
+
+Both run the full request lifecycle (rate-limit → authenticate → validate → RBAC → service → audit) against real PostgreSQL; sub-30 ms p95 with several thousand req/s on a single node.
+
+**Rate limiting under burst (R29.1) verified:** a single fresh client firing 130 rapid requests got **exactly 100 `200` then 30 `429`** — the 100/60s per-client budget enforced precisely, with a `Retry-After: 60` header on every rejection.
+
+### RATELIMIT-HEADER-01 (FIXED) — 429s carried no `Retry-After` header
+The `RATE_LIMITED` `AppError` carries `retryAfterSeconds`, but the runtime transport's error responder dropped it, so 429s reached clients with **no retry hint** (R29.1 says the rejection "carries a retry-after hint telling the client when it may retry"). **Fix** (`apps/api/src/runtime/http-server.ts`): `writeJson` now accepts extra headers and the error responder emits `Retry-After: <ceil(retryAfterSeconds)>` for any `AppError` carrying the hint. Verified live: `Retry-After: 60` on the burst 429s (first run, before the fix, showed `n/a`).
+
+Gates: typecheck + `streetjs:check` + `boundary:check` (402 files) green; full suite **5315 passed / 0 failed**.
+
+**Remaining for full RC:** Phase 7 (a11y runtime) + browser e2e of the web SPA, and the deferred worker stale-claim schema follow-up.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
