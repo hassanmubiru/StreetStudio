@@ -179,14 +179,15 @@ export class RealtimeHub {
 
   // --- Domain emitter seams --------------------------------------------------
 
-  /** {@link NotificationEmitter}: deliver a notification to its recipient. */
-  async emit(notification: {
-    readonly memberId: Uuid;
-    readonly [key: string]: unknown;
-  }): Promise<void> {
+  /**
+   * {@link NotificationEmitter}: deliver a notification to its recipient. Typed
+   * against the minimal `{ memberId }` shape so any notification DTO satisfies
+   * it; the full record is serialized to the client at runtime.
+   */
+  async emit(notification: { readonly memberId: Uuid }): Promise<void> {
     this.sendToMember(notification.memberId, {
       type: "notification",
-      notification,
+      notification: notification as unknown as Record<string, unknown>,
     });
   }
 
