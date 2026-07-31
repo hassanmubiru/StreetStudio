@@ -291,7 +291,13 @@ export function buildRuntime(
   pg: PgClient,
   media: MediaRuntime,
   notificationEmitter: NotificationEmitter,
+  options: { readonly inlineProcessing?: boolean } = {},
 ): Runtime {
+  // Whether `uploads.complete` runs the transcode in-process (single-node,
+  // default) or only enqueues it (`queued`) for a separate distributed worker
+  // (the Docker `worker` target) to drain. Set `PROCESSING_INLINE=false` when
+  // running dedicated workers so the API returns immediately after enqueue.
+  const inlineProcessing = options.inlineProcessing ?? true;
   // Single canonical schema (SCHEMA-DUP-01 reconciliation): every service is
   // wired to the database package's repository-backed store adapters over the
   // ONE migration-managed schema (`createRepositories` → member/organization/
