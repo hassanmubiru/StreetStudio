@@ -349,6 +349,12 @@ export function buildRuntime(
   const webhookService = new WebhookService({
     store: repositoryWebhookStore(repositories),
   });
+  // Share links (passcode/expiry/revocation). create/revoke/get are RBAC-gated
+  // (share:*); resolve is a PUBLIC credential exchange (no org scope).
+  const shareService = new ShareService({
+    store: repositoryShareStore(repositories),
+    access: accessControl,
+  });
 
   // The append-only Audit Log is tenant-scoped (audit_entry.organization_id is
   // NOT NULL with an FK to the organization table). The slice's auditable
