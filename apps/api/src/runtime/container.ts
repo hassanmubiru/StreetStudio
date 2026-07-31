@@ -120,6 +120,8 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "videos.get",
   "videos.update",
   "videos.delete",
+  "videos.transcript",
+  "videos.summary",
   "comments.list",
   "comments.create",
   "comments.delete",
@@ -1131,6 +1133,8 @@ export function buildRuntime(
     .register<ServiceInvocation>("videos.get", getVideo)
     .register<ServiceInvocation>("videos.update", updateVideo)
     .register<ServiceInvocation>("videos.delete", deleteVideo)
+    .register<ServiceInvocation>("videos.transcript", getVideoTranscript)
+    .register<ServiceInvocation>("videos.summary", getVideoSummary)
     .register<ServiceInvocation>("comments.list", listComments)
     .register<ServiceInvocation>("comments.create", createComment)
     .register<ServiceInvocation>("comments.delete", deleteComment)
