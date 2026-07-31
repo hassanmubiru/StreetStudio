@@ -38,20 +38,47 @@ Architecture & ADRs              ██████████ 100%
 Product design                   ██████████ 100%
 Spec (requirements/design/tasks) ██████████ 100%
 Documentation                    ████████░░  80%
-Backend domain + API (ref build) ████████░░  80%   implemented & tested behind in-memory seams
-Recordings (real, on StreetJS)   ███░░░░░░░  25%   1st real slice: domain+persistence+HTTP+JWT auth on real streetjs+Postgres
-Uploads (real, on StreetJS)      ███░░░░░░░  25%   2nd real slice: chunked upload sessions + real object storage (assembled bytes verified)
-Playback (real, on StreetJS)     ███░░░░░░░  25%   3rd real slice: authorized byte-range streaming of completed uploads (200/206/416)
-Identity (real, on StreetJS)     ████░░░░░░  40%   real register/login (Argon2id) + JWT issuance; shared auth helpers reused by all slices
+Backend domain + API (ref build) ██████████ 100%  domain logic implemented & tested (5315 tests passing)
+Runnable API server (composition)█████████░  90%  env→config→migrations→listen; HTTP+WS transport; real pg/MinIO/ffmpeg
+Operation catalog wired (REST+WS)██████████ 100%  43/43 ops with a backing method, verified end-to-end on real infra
+Media pipeline (real ffmpeg)     █████████░  90%  upload→assemble→transcode(thumb/preview/ABR)→storage→playback(Range); duration extraction + distributed worker pending
+Auth / RBAC / tenant isolation   ██████████ 100%  register/login/JWT, wildcard-admin RBAC, deny-by-default, cross-tenant 403s verified
+Realtime (WebSocket)             ███████░░░  70%  authenticated /realtime channel + notification fan-out; processing-status fan-out + distributed worker pending
 SDK (typed client)               ████████░░  80%   not yet run against a live server
 Client models (editor/timeline)  ██████░░░░  60%   model + reducer/ops implemented & tested; no UI
 Dashboard client logic           ██████░░░░  65%   session/scope, workspace/video/search/notification flows, uploads, sharing, reactions, edit-session; no UI
 Dashboard (web UI runtime)       ░░░░░░░░░░   0%   not built
 Desktop client                   ░░░░░░░░░░   0%   scaffold entry only
 Recorder extension               ░░░░░░░░░░   0%   scaffold entry only
-De-seam remaining pkgs → StreetJS ████████░░  85%   auth + organizations + content + comments + media pipeline + search + notifications now on real Postgres stores; in-memory seam retirement pending (ADR-0020)
+De-seam remaining pkgs → StreetJS ████████░░  85%   composition wires domain services to canonical Postgres repositories on ONE schema; unused in-memory/plural-DDL seams retirement pending (ADR-0020)
 Published repo + npm releases    ░░░░░░░░░░   0%   not released
 ```
+
+## Runnable API server (composition root)
+
+`apps/api/src/runtime/` — boots and serves the full catalog on real infra
+(verified in [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md)):
+
+- **Wired operations (43):** auth ×4, organizations ×2, projects ×5, folders ×4,
+  videos ×4, comments ×5, sharing ×4, apiKeys ×3, webhooks ×3, notifications ×2,
+  analytics.metrics, uploads ×4, playback.manifest, realtime.connect — plus
+  binary part-upload (`PUT /uploads/:id/parts/:n`) and authorized object
+  streaming (`GET /objects/*`, HTTP Range 200/206/416).
+- **Real infrastructure:** PostgreSQL (canonical migrated schema, one FK-integral
+  family), MinIO/S3 object storage, ffmpeg (via `ffmpeg-static`) for real
+  transcoding. Append-only audit log authoritative for org-scoped events.
+- **Security:** every request runs the shared lifecycle; RBAC is deny-by-default
+  and org-scoped; cross-tenant access returns 403; API-key/webhook/share secrets
+  are never disclosed on reads.
+- **Run it:** `node apps/api/dist/runtime/main.js` with `DATABASE_URL`,
+  `AUTH_JWT_SECRET`, `HTTP_PORT`, `INSTANCE_ID`, and `S3_*` env (see the RC report
+  for the exact command); `docker compose -f docker/docker-compose.yml up -d
+  postgres minio` provides the backing services.
+- **Real integration defects found & fixed while wiring** (only observable with
+  the live `pg` driver / real HTTP): jsonb double-parse in the RBAC / org /
+  uploads stores and the repository write path; audit-log FK / schema-duplication
+  reconciliation onto the canonical schema; RBAC role-seeding (wildcard admin);
+  StreetJS `HttpException`→HTTP status mapping in the transport.
 
 ## Measured metrics (this workspace)
 
