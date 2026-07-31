@@ -88,6 +88,12 @@ export const DELETE_PROJECT_PERMISSION = "content:delete_project";
  */
 export const CREATE_FOLDER_PERMISSION = "content:create_folder";
 
+/** Permission to read Folders. */
+export const READ_FOLDER_PERMISSION = "content:read_folder";
+
+/** Permission to delete a Folder. */
+export const DELETE_FOLDER_PERMISSION = "content:delete_folder";
+
 /**
  * A reference to a location within the content hierarchy.
  *
