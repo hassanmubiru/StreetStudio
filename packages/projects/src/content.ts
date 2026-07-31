@@ -141,6 +141,10 @@ export interface ContentStore {
   deleteProject(organizationId: Uuid, projectId: Uuid): Promise<void>;
   /** Find a Folder by id, or null when absent. */
   findFolder(folderId: Uuid): Promise<FolderRecord | null>;
+  /** List every Folder in a Project. */
+  listFoldersByProject(projectId: Uuid): Promise<FolderRecord[]>;
+  /** Delete a Folder by id. */
+  deleteFolder(folderId: Uuid): Promise<void>;
   /** Find a Video by id within an Organization, or null when absent. */
   findVideo(
     organizationId: Uuid,
