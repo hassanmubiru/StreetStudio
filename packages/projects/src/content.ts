@@ -159,6 +159,12 @@ export interface ContentStore {
     organizationId: Uuid,
     videoId: Uuid,
   ): Promise<VideoRecord | null>;
+  /** List every Video in an Organization (tenant-scoped). */
+  listVideos(organizationId: Uuid): Promise<VideoRecord[]>;
+  /** Persist an updated Video (same id), returning the updated record. */
+  updateVideo(record: VideoRecord): Promise<VideoRecord>;
+  /** Delete a Video by id within its Organization. */
+  deleteVideo(organizationId: Uuid, videoId: Uuid): Promise<void>;
   /**
    * Move `video` into `folderId` (or the Project root when null), preserving
    * the Video's identity and every other field, and return the updated record.
