@@ -67,6 +67,7 @@ import {
   type ReactionTarget,
 } from "@streetstudio/comments";
 import type { ReactionTargetType } from "@streetstudio/shared";
+import { WebhookService, repositoryWebhookStore } from "../webhooks/index.js";
 import type { OrganizationRecord } from "@streetstudio/database";
 import { newUuid } from "@streetstudio/database";
 import type { MediaRuntime } from "./media/pipeline-runtime.js";
@@ -333,6 +334,12 @@ export function buildRuntime(
   // service's optional authorizer seam is omitted here.
   const apiKeyService = new ApiKeyService({
     store: repositoryApiKeyStore(repositories),
+  });
+  // Outbound webhook subscriptions. Management authorization is enforced by the
+  // HTTP request lifecycle's RBAC (webhook:create/delete); the service's
+  // optional authorizer seam is omitted here.
+  const webhookService = new WebhookService({
+    store: repositoryWebhookStore(repositories),
   });
 
   // The append-only Audit Log is tenant-scoped (audit_entry.organization_id is
