@@ -97,6 +97,14 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "notifications.list",
   "notifications.markRead",
   "analytics.metrics",
+  // Uploads (RBAC) + playback manifest (RBAC). The raw part-upload and
+  // object-stream byte routes are served directly by the HTTP transport (the
+  // public catalog has no byte-transfer route — a documented gap).
+  "uploads.create",
+  "uploads.get",
+  "uploads.complete",
+  "uploads.abort",
+  "playback.manifest",
 ];
 
 /** The slice's subset of {@link PUBLIC_OPERATIONS}, preserving their metadata. */
@@ -125,6 +133,17 @@ function requireUuidField(body: unknown, field: string): Uuid {
   if (!isUuid(value)) {
     throw new AppError("VALIDATION_FAILED", {
       details: { field, reason: "must be a UUID" },
+    });
+  }
+  return value as Uuid;
+}
+
+/** Read a required UUID path parameter (e.g. `:id`) from the request. */
+function requireUuidPathParam(request: ApiRequest, name: string): Uuid {
+  const value = request.params?.[name];
+  if (!value || !isUuid(value)) {
+    throw new AppError("VALIDATION_FAILED", {
+      details: { field: name, reason: "must be a UUID path parameter" },
     });
   }
   return value as Uuid;
@@ -180,17 +199,51 @@ function toMemberDto(record: {
   return { id: record.id, email: record.email, createdAt: record.createdAt };
 }
 
+/** A resolved, authorized object for byte streaming (playback). */
+export interface ResolvedObject {
+  readonly bytes: Uint8Array;
+  readonly contentType: string;
+  readonly size: number;
+}
+
 /** Everything the HTTP transport needs to serve the slice. */
 export interface Runtime {
   readonly service: ApiService;
   readonly operations: readonly PublicOperation[];
+  /**
+   * Resolve a bearer credential to its authenticated principal, for the raw
+   * byte routes the JSON catalog dispatch does not cover (part upload, object
+   * stream). Returns null when absent/invalid.
+   */
+  authenticate(credential: string | undefined): Promise<AuthContext | null>;
+  /** Store one upload part (raw bytes) — backs `PUT /uploads/:id/parts/:n`. */
+  uploadPart(
+    auth: AuthContext,
+    organizationId: Uuid,
+    id: Uuid,
+    partNumber: number,
+    bytes: Uint8Array,
+  ): Promise<{ received: number; total: number; status: string }>;
+  /**
+   * Resolve an object for authorized byte streaming — backs `GET /objects/*`.
+   * Returns null (→ 404) when unauthorized/absent (no cross-org disclosure).
+   */
+  resolveObject(
+    auth: AuthContext,
+    organizationId: Uuid,
+    objectKey: string,
+  ): Promise<ResolvedObject | null>;
 }
 
 /**
  * Build the slice runtime: construct the domain services on pg-backed stores,
  * register the slice handlers, and assemble the {@link ApiService}.
  */
-export function buildRuntime(config: PlatformConfig, pg: PgClient): Runtime {
+export function buildRuntime(
+  config: PlatformConfig,
+  pg: PgClient,
+  media: MediaRuntime,
+): Runtime {
   // Single canonical schema (SCHEMA-DUP-01 reconciliation): every service is
   // wired to the database package's repository-backed store adapters over the
   // ONE migration-managed schema (`createRepositories` → member/organization/
@@ -234,6 +287,12 @@ export function buildRuntime(config: PlatformConfig, pg: PgClient): Runtime {
     videos: repositoryVideoOrganizationResolver(repositories),
     authorizer: permissionAnalyticsAuthorizer(accessControl),
   });
+  // Uploads (chunked/resumable) + playback stream over the SAME MinIO/S3
+  // Storage facade the media pipeline uses, and the canonical uploads repo.
+  const uploadsPool = pg.asPgPool();
+  const uploadsRepo = new UploadSessionRepository(uploadsPool);
+  const uploadService = new UploadService(uploadsRepo, media.storage);
+  const playbackService = new PlaybackService(media.storage, uploadsRepo);
 
   // The append-only Audit Log is tenant-scoped (audit_entry.organization_id is
   // NOT NULL with an FK to the organization table). The slice's auditable
@@ -445,6 +504,135 @@ export function buildRuntime(config: PlatformConfig, pg: PgClient): Runtime {
       });
     }
     return analyticsService.aggregate(auth, orgId, { start, end });
+  };
+
+  // The uploads/playback Actor is the authenticated principal scoped to the
+  // owning organization (from X-Organization-Id).
+  const toUploadActor = (context: RequestContext): UploadActor => ({
+    memberId: requireAuth(context).memberId,
+    organizationId: requireOrganizationId(context),
+  });
+
+  // uploads.create (RBAC upload:create): begin a chunked session. The final
+  // assembled object key is derived server-side under the org's source prefix.
+  const createUpload: ServiceInvocation = async (request, context) => {
+    const actor = toUploadActor(context);
+    const totalPartsRaw =
+      typeof request.body === "object" && request.body !== null
+        ? (request.body as Record<string, unknown>)["totalParts"]
+        : undefined;
+    const totalParts =
+      typeof totalPartsRaw === "number" && Number.isInteger(totalPartsRaw)
+        ? totalPartsRaw
+        : Number.parseInt(String(totalPartsRaw ?? ""), 10);
+    if (!Number.isInteger(totalParts) || totalParts < 1) {
+      throw new AppError("VALIDATION_FAILED", {
+        details: { field: "totalParts", reason: "must be a positive integer" },
+      });
+    }
+    const contentType = optionalStringField(request.body, "contentType");
+    const id = newUuid();
+    const objectKey = `sources/${id}/original`;
+    const session = await uploadService.begin(actor, {
+      id,
+      objectKey,
+      totalParts,
+      ...(contentType !== undefined ? { contentType } : {}),
+    });
+    return {
+      id: session.id,
+      objectKey: session.objectKey,
+      totalParts: session.totalParts,
+      status: session.status,
+    };
+  };
+
+  // uploads.get (RBAC upload:read)
+  const getUpload: ServiceInvocation = async (request, context) => {
+    const actor = toUploadActor(context);
+    const id = requireUuidPathParam(request, "id");
+    const session = await uploadService.get(actor, id);
+    return {
+      id: session.id,
+      objectKey: session.objectKey,
+      totalParts: session.totalParts,
+      receivedParts: session.receivedParts,
+      status: session.status,
+    };
+  };
+
+  // uploads.abort (RBAC upload:write)
+  const abortUpload: ServiceInvocation = async (request, context) => {
+    const actor = toUploadActor(context);
+    const id = requireUuidPathParam(request, "id");
+    const session = await uploadService.abort(actor, id);
+    return { id: session.id, status: session.status };
+  };
+
+  // uploads.complete (RBAC upload:write): assemble the final object, create the
+  // canonical video record (source_object_key), then run the media pipeline
+  // in-process (production drains the queue in a separate worker). Returns the
+  // new videoId and the terminal processing status.
+  const completeUpload: ServiceInvocation = async (request, context) => {
+    const actor = toUploadActor(context);
+    const id = requireUuidPathParam(request, "id");
+    const { session, object } = await uploadService.complete(actor, id);
+
+    const videoId = newUuid();
+    await pg.query(
+      `INSERT INTO video (id, organization_id, title, duration_seconds, status, source_object_key, created_at)
+       VALUES ($1, $2, $3, $4, 'uploaded', $5, now())`,
+      [videoId, actor.organizationId, "Untitled upload", 0, session.objectKey],
+    );
+    await media.enqueue(videoId);
+    const [result] = await media.drain();
+    return {
+      id: session.id,
+      status: session.status,
+      objectKey: session.objectKey,
+      size: object.size,
+      videoId,
+      processing: result?.status ?? "unknown",
+      renditions: result?.renditions.length ?? 0,
+    };
+  };
+
+  // playback.manifest (RBAC video:read): the video's playable outputs — its
+  // renditions plus thumbnail/preview assets — read from the canonical schema.
+  const playbackManifest: ServiceInvocation = async (request, context) => {
+    requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const videoId = requireUuidPathParam(request, "videoId");
+    const video = await pg.query<{ status: string; source_object_key: string | null }>(
+      `SELECT status, source_object_key FROM video WHERE id = $1 AND organization_id = $2`,
+      [videoId, orgId],
+    );
+    if (video.rows.length === 0) {
+      throw new AppError("NOT_FOUND");
+    }
+    const rends = await pg.query<{ quality: string; object_key: string; bitrate: number }>(
+      `SELECT quality, object_key, bitrate FROM rendition WHERE video_id = $1 ORDER BY bitrate`,
+      [videoId],
+    );
+    const assets = await pg.query<{ type: string; object_key_or_body: string | null }>(
+      `SELECT type, object_key_or_body FROM asset WHERE video_id = $1`,
+      [videoId],
+    );
+    const row0 = video.rows[0];
+    return {
+      videoId,
+      status: row0?.status,
+      sourceObjectKey: row0?.source_object_key ?? null,
+      renditions: rends.rows.map((r) => ({
+        quality: r.quality,
+        objectKey: r.object_key,
+        bitrate: r.bitrate,
+      })),
+      assets: assets.rows.map((a) => ({
+        type: a.type,
+        objectKey: a.object_key_or_body,
+      })),
+    };
   };
 
   container
