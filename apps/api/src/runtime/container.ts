@@ -902,6 +902,84 @@ export function buildRuntime(
     return { success: true };
   };
 
+  // videos.transcript (RBAC video:read): the video's timed transcript segments,
+  // read from the canonical `transcript` table. The video is resolved scoped to
+  // the caller's org (404 for a missing/foreign video, no cross-org disclosure);
+  // a video that exists but has no transcript yet also yields 404.
+  const getVideoTranscript: ServiceInvocation = async (request, context) => {
+    requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const videoId = requireUuidPathParam(request, "id");
+    const video = await pg.query(
+      `SELECT id FROM video WHERE id = $1 AND organization_id = $2`,
+      [videoId, orgId],
+    );
+    if (video.rows.length === 0) {
+      throw new AppError("NOT_FOUND");
+    }
+    const transcript = await pg.query<{
+      id: string;
+      video_id: string;
+      segments: unknown;
+      indexed_at: string | null;
+    }>(
+      `SELECT id, video_id, segments, indexed_at FROM transcript WHERE video_id = $1`,
+      [videoId],
+    );
+    const row = transcript.rows[0];
+    if (!row) {
+      throw new AppError("NOT_FOUND");
+    }
+    // `segments` is a jsonb column; node-postgres auto-parses it to an array.
+    // Accept an already-parsed value or a JSON string (defensive, mirrors the
+    // jsonb read coercion elsewhere in the runtime).
+    const segments =
+      typeof row.segments === "string"
+        ? JSON.parse(row.segments)
+        : (row.segments ?? []);
+    return {
+      id: row.id,
+      videoId: row.video_id,
+      segments,
+      ...(row.indexed_at !== null ? { indexedAt: row.indexed_at } : {}),
+    };
+  };
+
+  // videos.summary (RBAC video:read): the video's provider-produced summary,
+  // read from the canonical `summary` table. Same org-scoped resolution as the
+  // transcript endpoint; a video with no summary yet yields 404.
+  const getVideoSummary: ServiceInvocation = async (request, context) => {
+    requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const videoId = requireUuidPathParam(request, "id");
+    const video = await pg.query(
+      `SELECT id FROM video WHERE id = $1 AND organization_id = $2`,
+      [videoId, orgId],
+    );
+    if (video.rows.length === 0) {
+      throw new AppError("NOT_FOUND");
+    }
+    const summary = await pg.query<{
+      id: string;
+      video_id: string;
+      body: string;
+      source_plugin_id: string;
+    }>(
+      `SELECT id, video_id, body, source_plugin_id FROM summary WHERE video_id = $1`,
+      [videoId],
+    );
+    const row = summary.rows[0];
+    if (!row) {
+      throw new AppError("NOT_FOUND");
+    }
+    return {
+      id: row.id,
+      videoId: row.video_id,
+      body: row.body,
+      sourcePluginId: row.source_plugin_id,
+    };
+  };
+
   // uploads.create (RBAC upload:create): begin a chunked session. The final
   // assembled object key is derived server-side under the org's source prefix.
   const createUpload: ServiceInvocation = async (request, context) => {
