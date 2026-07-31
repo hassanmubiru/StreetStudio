@@ -1,0 +1,18 @@
+{
+  "name": "StreetStudio",
+  "short_name": "StreetStudio",
+  "description": "Record, review, and collaborate on videos with your team.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
