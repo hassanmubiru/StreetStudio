@@ -310,6 +310,14 @@ export function buildRuntime(
   const uploadsRepo = new UploadSessionRepository(uploadsPool);
   const uploadService = new UploadService(uploadsRepo, media.storage);
   const playbackService = new PlaybackService(media.storage, uploadsRepo);
+  // Comments/threads/reactions. The mention notifier is a no-op here (the
+  // realtime/notification fan-out for mentions is not wired in this HTTP
+  // composition); post/list/delete/react/unreact do not depend on it.
+  const commentService = new CommentService({
+    store: repositoryCommentStore(repositories),
+    access: accessControl,
+    notifier: { async notifyMention(): Promise<void> {} },
+  });
 
   // The append-only Audit Log is tenant-scoped (audit_entry.organization_id is
   // NOT NULL with an FK to the organization table). The slice's auditable
