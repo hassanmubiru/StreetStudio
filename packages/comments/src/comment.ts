@@ -325,6 +325,71 @@ export class CommentService {
   }
 
   /**
+   * List the comments/replies on `videoId`. The actor must hold read permission
+   * in the Video's owning Organization; an unknown Video is `NOT_FOUND`.
+   */
+  async listComments(actor: AuthContext, videoId: Uuid): Promise<CommentDto[]> {
+    const video = await this.store.findVideo(videoId);
+    if (!video) {
+      throw new AppError("NOT_FOUND");
+    }
+    await this.requirePermission(actor, READ_COMMENT_PERMISSION, {
+      organizationId: video.organizationId,
+      type: "video",
+      id: video.id,
+    });
+    const records = await this.store.listByVideo(videoId);
+    return records.map(toCommentDto);
+  }
+
+  /**
+   * Delete a comment. Requires delete permission in the comment's Video's
+   * owning Organization; an unknown comment (or Video) is `NOT_FOUND`.
+   */
+  async deleteComment(actor: AuthContext, commentId: Uuid): Promise<void> {
+    const comment = await this.store.findComment(commentId);
+    if (!comment) {
+      throw new AppError("NOT_FOUND");
+    }
+    const video = await this.store.findVideo(comment.videoId);
+    if (!video) {
+      throw new AppError("NOT_FOUND");
+    }
+    await this.requirePermission(actor, DELETE_COMMENT_PERMISSION, {
+      organizationId: video.organizationId,
+      type: "comment",
+      id: comment.id,
+    });
+    await this.store.deleteComment(commentId);
+  }
+
+  /**
+   * Remove `actor`'s reaction of `type` from `target`. Requires comment
+   * permission in the target's owning Organization. Idempotent: removing a
+   * reaction that was never recorded is a no-op.
+   */
+  async unreact(
+    actor: AuthContext,
+    target: ReactionTarget,
+    type: string,
+  ): Promise<void> {
+    const video = await this.resolveTargetVideo(target);
+    await this.requirePermission(actor, POST_COMMENT_PERMISSION, {
+      organizationId: video.organizationId,
+      type: target.type,
+      id: target.id,
+    });
+    const existing = await this.store.listReactions(target.type, target.id);
+    const match = existing.find(
+      (r) => r.memberId === actor.memberId && r.type === type,
+    );
+    if (!match) {
+      return;
+    }
+    await this.store.deleteReaction(match);
+  }
+
+  /**
    * Create a notification for `mentionedMemberId` about comment `commentId` IF
    * AND ONLY IF that Member has view access to the comment's Video (R11.4). A
    * mentioned Member without view access receives no notification. An unknown
