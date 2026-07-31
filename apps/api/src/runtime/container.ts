@@ -59,6 +59,12 @@ import {
   type Actor as UploadActor,
 } from "@streetstudio/uploads";
 import { PlaybackService } from "@streetstudio/playback";
+import {
+  CommentService,
+  repositoryCommentStore,
+  type ReactionTarget,
+} from "@streetstudio/comments";
+import type { ReactionTargetType } from "@streetstudio/shared";
 import type { OrganizationRecord } from "@streetstudio/database";
 import { newUuid } from "@streetstudio/database";
 import type { MediaRuntime } from "./media/pipeline-runtime.js";
