@@ -19,10 +19,9 @@
   for the full, evidence-backed verification.
   The web SPA now production-builds (Vite, es2022 target) and is served by a
   zero-dependency static host (`apps/web/server.mjs`, with the Docker `web`
-  target corrected); it is not yet browser/e2e-verified against a live server.
+  target corrected, and the full Docker image validated to build & run — see
+  update 21); it is not yet browser/e2e-verified against a live server.
   Desktop/recorder native client runtimes are still not built here.
-  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–19)
-  for the full, evidence-backed verification.
 - **Version:** 0.1.0-dev
 - **Architecture:** Approved
 - **Product design:** Approved
