@@ -137,7 +137,7 @@ export function buildMediaRuntime(
     store: repositoryProcessingStore(repositories),
     queue,
     transcoder,
-    emitter: noopEmitter,
+    emitter: statusEmitter,
   });
 
   return {
