@@ -195,6 +195,20 @@ export function createHttpServer(deps: HttpServerDeps): Server {
       return;
     }
 
+    // --- Raw byte routes (not in the JSON catalog; documented gaps) --------
+    // Chunked part upload: PUT /uploads/:id/parts/:partNumber  (binary body).
+    const partMatch = /^\/uploads\/([^/]+)\/parts\/(\d+)$/.exec(pathname);
+    if (method === "PUT" && partMatch) {
+      await handlePartUpload(req, res, partMatch[1] as string, partMatch[2] as string);
+      return;
+    }
+    // Authorized object streaming with HTTP Range: GET /objects/<key...>
+    if (method === "GET" && pathname.startsWith("/objects/")) {
+      const objectKey = decodeURIComponent(pathname.slice("/objects/".length));
+      await handleObjectStream(req, res, objectKey);
+      return;
+    }
+
     const match = matchRoute(routes, method, pathname);
     if (!match) {
       respondWithError(res, new AppError("NOT_FOUND"));
@@ -237,6 +251,83 @@ export function createHttpServer(deps: HttpServerDeps): Server {
       const result = await deps.router.dispatch(request);
       const status = method === "POST" ? 201 : 200;
       writeJson(res, status, result ?? null);
+    } catch (error) {
+      respondWithError(res, error);
+    }
+  }
+
+  async function requireAuth(req: IncomingMessage): Promise<AuthContext> {
+    const auth = await deps.authenticate(bearerToken(req));
+    if (!auth) {
+      throw new AppError("AUTHENTICATION_REQUIRED");
+    }
+    return auth;
+  }
+
+  async function handlePartUpload(
+    req: IncomingMessage,
+    res: ServerResponse,
+    id: string,
+    partNumberRaw: string,
+  ): Promise<void> {
+    try {
+      const auth = await requireAuth(req);
+      const organizationId = requireOrgHeader(req);
+      const partNumber = Number.parseInt(partNumberRaw, 10);
+      const bytes = await readRawBody(req);
+      const result = await deps.uploadPart(
+        auth,
+        organizationId,
+        id as Uuid,
+        partNumber,
+        new Uint8Array(bytes),
+      );
+      writeJson(res, 200, result);
+    } catch (error) {
+      respondWithError(res, error);
+    }
+  }
+
+  async function handleObjectStream(
+    req: IncomingMessage,
+    res: ServerResponse,
+    objectKey: string,
+  ): Promise<void> {
+    try {
+      const auth = await requireAuth(req);
+      const organizationId = requireOrgHeader(req);
+      const obj = await deps.resolveObject(auth, organizationId, objectKey);
+      if (!obj) {
+        respondWithError(res, new AppError("NOT_FOUND"));
+        return;
+      }
+      const rangeHeader = headerValue(req, "range");
+      const range = parseRange(rangeHeader, obj.size);
+      if (range === "unsatisfiable") {
+        res.writeHead(416, {
+          "content-range": `bytes */${obj.size}`,
+          "accept-ranges": "bytes",
+        });
+        res.end();
+        return;
+      }
+      if (range === null) {
+        res.writeHead(200, {
+          "content-type": obj.contentType,
+          "content-length": obj.size,
+          "accept-ranges": "bytes",
+        });
+        res.end(Buffer.from(obj.bytes));
+        return;
+      }
+      const slice = Buffer.from(obj.bytes).subarray(range.start, range.end + 1);
+      res.writeHead(206, {
+        "content-type": obj.contentType,
+        "content-range": `bytes ${range.start}-${range.end}/${obj.size}`,
+        "accept-ranges": "bytes",
+        "content-length": slice.length,
+      });
+      res.end(slice);
     } catch (error) {
       respondWithError(res, error);
     }
