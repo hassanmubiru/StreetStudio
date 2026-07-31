@@ -92,6 +92,10 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   // Content hierarchy — RBAC-gated create paths (proves the wildcard-admin
   // RBAC model end-to-end against the real ContentService).
   "projects.create",
+  "projects.list",
+  "projects.get",
+  "projects.update",
+  "projects.delete",
   "folders.create",
   // Notifications (personal/authenticated scope) + analytics (RBAC read).
   "notifications.list",
