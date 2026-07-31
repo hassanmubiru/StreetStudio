@@ -26,9 +26,11 @@ import {
   AuthService,
   HmacAccessTokenIssuer,
   RbacAccessControl,
+  ApiKeyService,
   repositoryAuthStores,
   repositoryMemberStore,
   repositoryRbacStore,
+  repositoryApiKeyStore,
   type AuthContext,
 } from "@streetstudio/auth";
 import {
