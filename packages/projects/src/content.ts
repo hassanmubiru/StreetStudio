@@ -307,6 +307,68 @@ export class ContentService {
   }
 
   /**
+   * Get a Folder by id within `orgId`. Requires read permission; a Folder whose
+   * Project is not in `orgId` (or is absent) is `NOT_FOUND` — no cross-org
+   * disclosure.
+   */
+  async getFolder(
+    actor: AuthContext,
+    orgId: Uuid,
+    folderId: Uuid,
+  ): Promise<FolderDto> {
+    await this.requireProjectPermission(actor, orgId, READ_FOLDER_PERMISSION);
+    const folder = await this.store.findFolder(folderId);
+    if (!folder) {
+      throw new AppError("NOT_FOUND");
+    }
+    // Verify the Folder's Project belongs to the caller's Organization.
+    const project = await this.store.findProject(orgId, folder.projectId);
+    if (!project) {
+      throw new AppError("NOT_FOUND");
+    }
+    return this.toFolderDto(folder);
+  }
+
+  /**
+   * List the Folders in `projectId` within `orgId`. Requires read permission
+   * and that the Project belongs to the Organization.
+   */
+  async listFolders(
+    actor: AuthContext,
+    orgId: Uuid,
+    projectId: Uuid,
+  ): Promise<FolderDto[]> {
+    await this.requireProjectPermission(actor, orgId, READ_FOLDER_PERMISSION);
+    const project = await this.store.findProject(orgId, projectId);
+    if (!project) {
+      throw new AppError("NOT_FOUND");
+    }
+    const folders = await this.store.listFoldersByProject(projectId);
+    return folders.map((f) => this.toFolderDto(f));
+  }
+
+  /**
+   * Delete a Folder within `orgId`. Requires delete permission; a Folder whose
+   * Project is not in `orgId` (or is absent) is `NOT_FOUND`.
+   */
+  async deleteFolder(
+    actor: AuthContext,
+    orgId: Uuid,
+    folderId: Uuid,
+  ): Promise<void> {
+    await this.requireProjectPermission(actor, orgId, DELETE_FOLDER_PERMISSION);
+    const folder = await this.store.findFolder(folderId);
+    if (!folder) {
+      throw new AppError("NOT_FOUND");
+    }
+    const project = await this.store.findProject(orgId, folder.projectId);
+    if (!project) {
+      throw new AppError("NOT_FOUND");
+    }
+    await this.store.deleteFolder(folderId);
+  }
+
+  /**
    * Create a Folder scoped to `parent.projectId`, optionally nested under
    * `parent.folderId`. The name must be 1–255 characters (R5.2, R5.8), the
    * actor must hold create permission in the owning Organization (R5.6), the
