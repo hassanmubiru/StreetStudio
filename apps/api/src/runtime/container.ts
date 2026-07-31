@@ -146,6 +146,9 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "sharing.get",
   "sharing.revoke",
   "sharing.resolve",
+  // Realtime channel (websocket) — the handshake authorization is wired here;
+  // the live socket is served by the RealtimeHub transport.
+  "realtime.connect",
 ];
 
 /** The slice's subset of {@link PUBLIC_OPERATIONS}, preserving their metadata. */
@@ -1032,6 +1035,14 @@ export function buildRuntime(
     .register<ServiceInvocation>("sharing.get", getShareLink)
     .register<ServiceInvocation>("sharing.revoke", revokeShareLink)
     .register<ServiceInvocation>("sharing.resolve", resolveShareLink)
+    // realtime.connect (AUTHENTICATED, websocket): the handshake is authorized
+    // through this handler by the shared lifecycle; the live socket itself is
+    // owned by the WebSocket transport (RealtimeHub), which authenticates the
+    // same bearer token. The returned GatewayConnection is a lightweight handle.
+    .register<ServiceInvocation>("realtime.connect", async (_request, context) => {
+      requireAuth(context);
+      return { connected: true };
+    })
     .register<ServiceInvocation>("notifications.list", listNotifications)
     .register<ServiceInvocation>("notifications.markRead", markNotificationRead)
     .register<ServiceInvocation>("analytics.metrics", analyticsMetrics)

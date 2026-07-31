@@ -36,6 +36,7 @@ import {
   buildMediaRuntime,
   mediaRuntimeConfigFromEnv,
 } from "./media/pipeline-runtime.js";
+import { RealtimeHub } from "./realtime-hub.js";
 
 async function main(): Promise<void> {
   const configSource = envConfigSource();
