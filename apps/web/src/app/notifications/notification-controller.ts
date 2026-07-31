@@ -207,6 +207,11 @@ export class NotificationController {
   private createToastContainer(): HTMLElement {
     const container = document.createElement('div');
     container.className = 'toast-container';
+    // A labelled landmark role: `aria-label` is prohibited on a generic <div>
+    // (its implicit role), so declare `role="region"` — which requires an
+    // accessible name (supplied by aria-label) and also contains the live
+    // notifications in a landmark (fixes axe `aria-prohibited-attr`).
+    container.setAttribute('role', 'region');
     container.setAttribute('aria-label', 'Notifications');
     container.setAttribute('aria-live', 'polite');
     container.setAttribute('aria-relevant', 'additions removals');
