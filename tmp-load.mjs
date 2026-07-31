@@ -48,7 +48,7 @@ async function runPool(tasks, concurrency) {
   return results;
 }
 
-const CLIENTS = 30;
+const CLIENTS = 15; // keeps IP-keyed register/login provisioning under the 100/60s budget
 const PER_CLIENT = 90; // < 100/60s rate-limit budget per token
 const CONCURRENCY = 50;
 
