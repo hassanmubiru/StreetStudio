@@ -15,6 +15,13 @@ import * as fc from 'fast-check';
 import { SearchService, type SearchResponse } from './search.js';
 import { GlobalSearchModal } from '../components/workspace/global-search-modal.js';
 
+// These property tests run 100 async iterations that drive the jsdom-backed
+// search modal. Under the fully-parallel suite the default 5s per-test timeout
+// can be exceeded purely from CPU contention (they pass comfortably in
+// isolation). Raise the file's timeout so a loaded CI host does not produce a
+// false negative. This does not relax any property assertion.
+vi.setConfig({ testTimeout: 30000 });
+
 // Mock fetch for API calls
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
