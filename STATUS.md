@@ -122,9 +122,15 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   extraction** (ffmpeg probe at upload-complete — unblocks timestamped comments),
   and **processing-status realtime fan-out** (a subscribed WS client receives
   `queued → processing → ready` for its org during transcode).
-- **Remaining runtime gaps (deferred, documented):** `videos.transcript/summary`
-  (captions/AI), and a distributed worker draining the processing queue
-  (currently in-process). The unused in-memory fakes and the parallel plural-DDL
+- **Recently closed (Update 17):** `videos.transcript` + `videos.summary` read
+  endpoints are now wired on the canonical schema (org-scoped resolution, 404 for
+  missing/foreign video or absent derivative, cross-tenant isolation verified) —
+  **every REST + WebSocket catalog operation with backing persistence is now
+  served.** The AI write side (transcription/summarization) remains a
+  provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Remaining runtime gaps (deferred, documented):** a distributed worker
+  draining the processing queue (currently in-process — functionally complete for
+  single-node). The unused in-memory fakes and the parallel plural-DDL
   `ensure*Schema` seams are pending retirement now that the composition uses the
   canonical schema (ADR-0020).
 - **SDK** is a complete typed client mirroring the operation catalog, but has not
