@@ -290,6 +290,9 @@ export function repositoryWebhookStore(
       const all = await webhooks.listByOrganization(organizationId);
       return all.filter((w) => w.eventType === eventType);
     },
+    listByOrganization(organizationId: Uuid): Promise<WebhookRecord[]> {
+      return webhooks.listByOrganization(organizationId);
+    },
     deleteById(organizationId: Uuid, id: Uuid): Promise<void> {
       return webhooks.deleteById(organizationId, id);
     },
