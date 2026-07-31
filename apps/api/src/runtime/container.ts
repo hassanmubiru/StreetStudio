@@ -117,6 +117,9 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "comments.delete",
   "comments.react",
   "comments.unreact",
+  "apiKeys.create",
+  "apiKeys.list",
+  "apiKeys.revoke",
   // Notifications (personal/authenticated scope) + analytics (RBAC read).
   "notifications.list",
   "notifications.markRead",
@@ -324,6 +327,12 @@ export function buildRuntime(
     store: repositoryCommentStore(repositories),
     access: accessControl,
     notifier: { async notifyMention(): Promise<void> {} },
+  });
+  // API keys. Management authorization is enforced by the HTTP request
+  // lifecycle's RBAC (apikey:create/revoke) before the handler runs, so the
+  // service's optional authorizer seam is omitted here.
+  const apiKeyService = new ApiKeyService({
+    store: repositoryApiKeyStore(repositories),
   });
 
   // The append-only Audit Log is tenant-scoped (audit_entry.organization_id is
@@ -672,6 +681,38 @@ export function buildRuntime(
     return { success: true };
   };
 
+  // apiKeys.create (RBAC: apikey:create) — returns the plaintext secret ONCE.
+  const createApiKey: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const name = requireStringField(request.body, "name");
+    const permsRaw =
+      typeof request.body === "object" && request.body !== null
+        ? (request.body as Record<string, unknown>)["permissions"]
+        : undefined;
+    const permissions = Array.isArray(permsRaw)
+      ? permsRaw.filter((p): p is string => typeof p === "string")
+      : [];
+    return apiKeyService.create(orgId, auth.memberId, name, permissions);
+  };
+
+  // apiKeys.list (RBAC: apikey:read) — metadata only, never the secret.
+  const listApiKeys: ServiceInvocation = async (_request, context) => {
+    requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const apiKeys = await apiKeyService.list(orgId);
+    return { apiKeys, total: apiKeys.length };
+  };
+
+  // apiKeys.revoke (RBAC: apikey:revoke)
+  const revokeApiKey: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const keyId = requireUuidPathParam(request, "id");
+    await apiKeyService.revoke(orgId, keyId, auth.memberId);
+    return { success: true };
+  };
+
   // videos.list (RBAC: video:read)
   const listVideos: ServiceInvocation = async (_request, context) => {
     const auth = requireAuth(context);
@@ -872,6 +913,9 @@ export function buildRuntime(
     .register<ServiceInvocation>("comments.delete", deleteComment)
     .register<ServiceInvocation>("comments.react", react)
     .register<ServiceInvocation>("comments.unreact", unreact)
+    .register<ServiceInvocation>("apiKeys.create", createApiKey)
+    .register<ServiceInvocation>("apiKeys.list", listApiKeys)
+    .register<ServiceInvocation>("apiKeys.revoke", revokeApiKey)
     .register<ServiceInvocation>("notifications.list", listNotifications)
     .register<ServiceInvocation>("notifications.markRead", markNotificationRead)
     .register<ServiceInvocation>("analytics.metrics", analyticsMetrics)
