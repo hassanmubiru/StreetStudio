@@ -220,6 +220,16 @@ export class WebhookService {
     await this.store.deleteById(organizationId, subId);
   }
 
+  /**
+   * List the webhook subscriptions in the caller's organization. The signing
+   * secret is never disclosed (the {@link WebhookDto} omits it).
+   */
+  async list(ctx: AuthContext): Promise<WebhookDto[]> {
+    const organizationId = this.requireOrganization(ctx);
+    const records = await this.store.listByOrganization(organizationId);
+    return records.map(toWebhookDto);
+  }
+
   /* -------------------------- internals -------------------------------- */
 
   private requireOrganization(ctx: AuthContext): Uuid {
