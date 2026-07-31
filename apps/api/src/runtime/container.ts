@@ -48,6 +48,7 @@ import {
   repositoryNotificationStore,
   repositoryNotificationPreferenceStore,
   toNotificationDto,
+  type NotificationEmitter,
 } from "@streetstudio/notifications";
 import {
   AnalyticsService,
