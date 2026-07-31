@@ -108,6 +108,7 @@ export interface MediaRuntime {
 export function buildMediaRuntime(
   pg: PgClient,
   config: MediaRuntimeConfig,
+  statusEmitter: ProcessingStatusEmitter = noopEmitter,
 ): MediaRuntime {
   const repositories = createRepositories(streetSqlClient(pg));
 
