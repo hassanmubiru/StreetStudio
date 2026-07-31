@@ -265,6 +265,31 @@ Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (3
 
 ---
 
+## Update 11 — CRUD coverage: Videos (list/get/update/delete)
+
+Third resource for API-CATALOG-COVERAGE-01.
+
+**Domain additions (`@streetstudio/projects` `ContentService`/`ContentStore`), RBAC deny-by-default + tenant-scoped:**
+- `ContentStore`: `listVideos(org)`, `updateVideo(record)`, `deleteVideo(org, id)`.
+- `ContentService`: `listVideos`, `getVideo`, `updateVideo` (rename and/or move — a supplied destination `folderId` must belong to a Project in the same org; `null` = project root), `deleteVideo`.
+- Both adapters implemented (`repositoryContentStore` canonical + `postgresContentStore` SQL).
+
+**Wired operations:** `videos.list` / `videos.get` / `videos.update` / `videos.delete`.
+
+**Verified end-to-end** (a real video was produced via the upload→process flow first): create-via-upload → `list` (1) → `get` → `update` (rename → "My Clip") → `delete` (200) → `get` **404** → foreign-org `list` **403**.
+
+`videos.transcript` / `videos.summary` deferred (documented): they depend on captions/AI (knowledge) outputs, not the CRUD store.
+
+**Also fixed:** `apps/web/src/services/search-functionality.property.test.ts` intermittently timed out at 5s under full-suite parallel load (passes 8/8 in isolation) — raised its per-file timeout to 30s (same robustness fix applied earlier to the router-navigation property test; no assertion change).
+
+Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (397 files) green.
+
+**Wired operations to date (27):** auth ×4, organizations ×2, projects ×5, folders ×4, videos ×4, notifications ×2, analytics.metrics, uploads ×4, playback.manifest + the part-upload & object-stream byte routes.
+
+**Remaining for full RC:** `folders.move`, `videos.transcript/summary`, comments/sharing/webhooks/api-keys CRUD (same proven pattern), and the WebSocket realtime transport + distributed worker.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
