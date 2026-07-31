@@ -15,7 +15,7 @@
   published yet (only `@streetjs/storage`), the composition root adapts standard
   drivers (`pg`, `ws`, `ffmpeg-static`) through the existing structural seams —
   a deliberate, reversible decision documented in `apps/api/src/runtime/main.ts`.
-  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–18)
+  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–21)
   for the full, evidence-backed verification.
   The web SPA now production-builds (Vite, es2022 target) and is served by a
   zero-dependency static host (`apps/web/server.mjs`, with the Docker `web`
