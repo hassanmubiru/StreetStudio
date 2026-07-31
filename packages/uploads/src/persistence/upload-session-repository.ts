@@ -16,10 +16,16 @@ function toIso(value: string | null): IsoTimestamp | undefined {
   return value === null ? undefined : (new Date(value).toISOString() as IsoTimestamp);
 }
 
-function parseParts(value: string | null): number[] {
-  if (!value) return [];
-  const parsed = JSON.parse(value) as unknown;
-  return Array.isArray(parsed) ? parsed.filter((n): n is number => typeof n === "number") : [];
+function parseParts(value: unknown): number[] {
+  if (value === null || value === undefined) return [];
+  // A `jsonb` column may arrive already-parsed as a JS array (node-postgres
+  // auto-parses json/jsonb) or as a raw JSON string (some client adapters).
+  // Only JSON.parse when it is still a string; otherwise use it as-is.
+  const parsed: unknown =
+    typeof value === "string" ? (JSON.parse(value) as unknown) : value;
+  return Array.isArray(parsed)
+    ? parsed.filter((n): n is number => typeof n === "number")
+    : [];
 }
 
 function mapRow(row: Row): UploadSession {
