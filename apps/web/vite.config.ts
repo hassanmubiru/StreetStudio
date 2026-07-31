@@ -4,6 +4,11 @@ import { resolve } from 'path';
 export default defineConfig({
   build: {
     outDir: 'dist',
+    // The application uses top-level await (async bootstrap in src/main.ts and
+    // dynamic `import()` preloads), which requires an ES2022+ / modern-browser
+    // target. The Vite/esbuild default (es2020 / chrome87 …) rejects top-level
+    // await, so pin a modern baseline that supports it.
+    target: 'es2022',
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
