@@ -119,8 +119,8 @@
   </style>
 </head>
 <body>
-  <!-- App root -->
-  <div id="app" role="main">
+  <!-- App root (also the skip-link target; tabindex=-1 makes it focusable) -->
+  <div id="app" role="main" tabindex="-1">
     <!-- Loading state -->
     <div class="loading-container" id="loading">
       <div class="loading-spinner" role="status" aria-label="Loading StreetStudio">
