@@ -586,6 +586,14 @@ export function repositoryContentStore(
     deleteProject: (organizationId, projectId) =>
       projects.deleteById(organizationId, projectId),
     findFolder: (folderId) => folders.findById(folderId),
+    async listFoldersByProject(projectId) {
+      // `folders` is a GlobalRepository (folder ids are globally unique); it has
+      // no project-scoped list, so filter by projectId. Callers authorize the
+      // Project against the owning org first, so this discloses no other tenant.
+      const all = await folders.list();
+      return all.filter((f) => f.projectId === projectId);
+    },
+    deleteFolder: (folderId) => folders.deleteById(folderId),
     findVideo: (organizationId, videoId) =>
       videos.findById(organizationId, videoId),
     async updateVideoFolder(video, folderId) {
