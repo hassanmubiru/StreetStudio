@@ -146,8 +146,8 @@ export class RealtimeHub {
     }
   }
 
-  private sendRaw(ws: WebSocket, payload: unknown): void {
-    if (ws.readyState === WebSocket.OPEN) {
+  private sendRaw(ws: RealtimeSocket, payload: unknown): void {
+    if (ws.readyState === WS_OPEN) {
       ws.send(JSON.stringify(payload));
     }
   }
