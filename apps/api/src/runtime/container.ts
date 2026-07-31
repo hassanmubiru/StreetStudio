@@ -141,6 +141,10 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "uploads.complete",
   "uploads.abort",
   "playback.manifest",
+  "sharing.create",
+  "sharing.get",
+  "sharing.revoke",
+  "sharing.resolve",
 ];
 
 /** The slice's subset of {@link PUBLIC_OPERATIONS}, preserving their metadata. */
