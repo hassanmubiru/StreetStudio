@@ -384,6 +384,91 @@ export class ContentService {
   }
 
   /**
+   * List the Videos in `orgId`. Requires read permission in the Organization.
+   */
+  async listVideos(actor: AuthContext, orgId: Uuid): Promise<VideoDto[]> {
+    await this.requireProjectPermission(actor, orgId, READ_VIDEO_PERMISSION);
+    const records = await this.store.listVideos(orgId);
+    return records.map((r) => this.toVideoDto(r));
+  }
+
+  /**
+   * Get a Video by id within `orgId`. Requires read permission; an absent Video
+   * (or one in another Organization) is `NOT_FOUND`.
+   */
+  async getVideo(
+    actor: AuthContext,
+    orgId: Uuid,
+    videoId: Uuid,
+  ): Promise<VideoDto> {
+    await this.requireProjectPermission(actor, orgId, READ_VIDEO_PERMISSION);
+    const record = await this.store.findVideo(orgId, videoId);
+    if (!record) {
+      throw new AppError("NOT_FOUND");
+    }
+    return this.toVideoDto(record);
+  }
+
+  /**
+   * Update a Video's title (and, optionally, its Folder). Requires update
+   * permission and a valid title (1–255); an absent Video is `NOT_FOUND`. When
+   * `folderId` is provided, the destination Folder must belong to the same
+   * Project's Organization (validated by scoping the Folder's Project to
+   * `orgId`); `null` moves the Video to the Project root.
+   */
+  async updateVideo(
+    actor: AuthContext,
+    orgId: Uuid,
+    videoId: Uuid,
+    changes: { name?: string; folderId?: Uuid | null },
+  ): Promise<VideoDto> {
+    await this.requireProjectPermission(actor, orgId, UPDATE_VIDEO_PERMISSION);
+    const record = await this.store.findVideo(orgId, videoId);
+    if (!record) {
+      throw new AppError("NOT_FOUND");
+    }
+    let next: VideoRecord = record;
+    if (changes.name !== undefined) {
+      if (!isValidName(changes.name)) {
+        throw new AppError("VALIDATION_FAILED");
+      }
+      next = { ...next, title: changes.name };
+    }
+    if (changes.folderId !== undefined) {
+      if (changes.folderId !== null) {
+        const folder = await this.store.findFolder(changes.folderId);
+        // The destination Folder must exist and belong to a Project in orgId.
+        if (
+          !folder ||
+          !(await this.store.findProject(orgId, folder.projectId))
+        ) {
+          throw new AppError("NOT_FOUND");
+        }
+      }
+      next = { ...next, folderId: changes.folderId };
+    }
+    const updated = await this.store.updateVideo(next);
+    return this.toVideoDto(updated);
+  }
+
+  /**
+   * Delete a Video within `orgId`. Requires delete permission; an absent Video
+   * is `NOT_FOUND`.
+   */
+  async deleteVideo(
+    actor: AuthContext,
+    orgId: Uuid,
+    videoId: Uuid,
+  ): Promise<void> {
+    await this.requireProjectPermission(actor, orgId, DELETE_VIDEO_PERMISSION);
+    const record = await this.store.findVideo(orgId, videoId);
+    if (!record) {
+      throw new AppError("NOT_FOUND");
+    }
+    await this.store.deleteVideo(orgId, videoId);
+  }
+
+  /**
    * Create a Folder scoped to `parent.projectId`, optionally nested under
    * `parent.folderId`. The name must be 1–255 characters (R5.2, R5.8), the
    * actor must hold create permission in the owning Organization (R5.6), the
