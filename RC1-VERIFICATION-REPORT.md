@@ -392,6 +392,35 @@ Gates: full suite **5315 passed / 0 failed**; typecheck + streetjs + boundary (3
 
 ---
 
+## Update 17 — Last unwired REST operations closed: `videos.transcript` + `videos.summary` (ENTIRE REST + WS catalog now served)
+
+The two remaining unwired catalog operations are now live and verified end-to-end, so **every operation in the public catalog with backing persistence is wired** (45 operations: 44 REST + 1 WebSocket).
+
+**Wired (canonical repository path, RBAC `video:read`):**
+- `videos.transcript` (GET `/videos/:id/transcript`) — returns the video's timed transcript segments from the canonical `transcript` table (`TranscriptDto`: `{id, videoId, segments[], indexedAt?}`).
+- `videos.summary` (GET `/videos/:id/summary`) — returns the provider-produced summary from the canonical `summary` table (`SummaryDto`: `{id, videoId, body, sourcePluginId}`).
+
+Both resolve the video **scoped to the caller's organization** first (missing/foreign video → 404, no cross-org disclosure), then read the derivative; a video that exists but has no transcript/summary yet also yields 404. The `segments` jsonb column is read defensively (accepts the node-postgres auto-parsed array or a JSON string, mirroring the jsonb read coercion used elsewhere in the runtime). These are **read** endpoints; the write side (AI transcription/summarization) is produced by `@streetstudio/ai` provider plugins, which remain a plugin-integration concern — no fake data is generated.
+
+**Verified end-to-end (real PostgreSQL, two tenants):**
+
+| Check | Result |
+|---|---|
+| `GET /videos/:id/transcript` — video exists, no transcript | **404** |
+| `GET /videos/:id/summary` — video exists, no summary | **404** |
+| `GET /videos/:missing/transcript` | **404** |
+| `GET /videos/:id/transcript` — no token | **401** |
+| `GET /videos/:id/transcript` — foreign org (video owned by tenant A) | **404** (tenant isolation, no disclosure) |
+| After seeding a 2-segment transcript: `GET …/transcript` | **200** — 2 segments in order, `indexedAt` present, `videoId` matches |
+| After seeding a summary: `GET …/summary` | **200** — `body` + `sourcePluginId` returned, `videoId` matches |
+| Foreign org after seed | **404** (isolation holds) |
+
+Gates: full suite **5315 passed / 0 failed** (71 skipped DB-integration); typecheck + streetjs + boundary (398 files) green.
+
+**Remaining for full RC:** a distributed worker draining the processing queue (currently in-process `media.drain()` in `uploads.complete` — functionally complete for single-node), and the still-INFRA-blocked runtime Phases 5 (perf under load), 7 (a11y runtime), and 9 (Docker `web` static-asset serving). The entire REST + WebSocket operation catalog is now served and verified on real infrastructure.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
