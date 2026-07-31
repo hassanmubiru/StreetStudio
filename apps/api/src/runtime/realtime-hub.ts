@@ -17,9 +17,24 @@
  */
 import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
-import { WebSocketServer, WebSocket } from "ws";
+import { WebSocketServer } from "ws";
 import type { AuthContext } from "@streetstudio/auth";
 import type { Uuid } from "@streetstudio/shared";
+
+/** WebSocket readyState OPEN. */
+const WS_OPEN = 1;
+
+/**
+ * The minimal structural view of a live socket the hub uses. Declared locally to
+ * avoid the dual-resolution `@types/ws` `WebSocket` class mismatch under
+ * NodeNext module resolution.
+ */
+interface RealtimeSocket {
+  readonly readyState: number;
+  send(data: string): void;
+  close(): void;
+  on(event: string, listener: (...args: unknown[]) => void): void;
+}
 
 /** The realtime channel path. */
 export const REALTIME_PATH = "/realtime";
