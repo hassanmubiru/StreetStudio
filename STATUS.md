@@ -1,12 +1,23 @@
 # StreetStudio — Status
 
-- **Repository state:** **Active — productionizing on published StreetJS**
-  (ADR-0018/0019). The framework is published (`streetjs@1.2.7` + `@streetjs/*`),
-  so real product slices are now built on it. The **first real vertical slice —
-  `@streetstudio/recordings`** — runs on the real StreetJS HTTP/DI + a native
-  PostgreSQL driver against a real Postgres (verified by an integration test).
-  The remaining reference-build packages still run behind in-memory seams pending
-  their own de-seam slices; UI/native client runtimes are still not set up here.
+- **Repository state:** **Active — runnable API server; full operation catalog
+  served on real infrastructure.** A composition root + HTTP/WebSocket transport
+  now exist in `apps/api/src/runtime/`: the API server boots (env → config →
+  PostgreSQL migrations → dependency activation → listen), and **all 43 catalog
+  operations (42 REST + 1 WebSocket) that have a backing domain method are wired
+  and verified end-to-end** against **real PostgreSQL, real MinIO object storage,
+  and real ffmpeg**, through the full request lifecycle (rate-limit →
+  authenticate → validate → RBAC → service → audit) with deny-by-default RBAC and
+  cross-tenant isolation. The media pipeline (chunked upload → assemble → ffmpeg
+  transcode: thumbnail + preview + ABR renditions → object storage → playback
+  with HTTP Range) runs on real infrastructure. Because the granular
+  `@streetjs/*` framework packages (postgres/redis/websocket/media) are not
+  published yet (only `@streetjs/storage`), the composition root adapts standard
+  drivers (`pg`, `ws`, `ffmpeg-static`) through the existing structural seams —
+  a deliberate, reversible decision documented in `apps/api/src/runtime/main.ts`.
+  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–15)
+  for the full, evidence-backed verification.
+  UI/native client runtimes are still not built here.
 - **Version:** 0.1.0-dev
 - **Architecture:** Approved
 - **Product design:** Approved
