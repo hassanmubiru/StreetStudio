@@ -61,7 +61,9 @@ ENV NODE_ENV=development
 
 # Reuse the installed workspace + manifests from deps.
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json tsconfig.base.json ./
+# Both the base config AND the root solution tsconfig (project references) are
+# required: `npm run build` runs `tsc -b`, which reads ./tsconfig.json.
+COPY package.json package-lock.json tsconfig.base.json tsconfig.json ./
 
 # Now the full sources.
 COPY apps ./apps
