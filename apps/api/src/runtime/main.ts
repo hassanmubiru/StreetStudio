@@ -71,8 +71,15 @@ async function main(): Promise<void> {
     mediaRuntimeConfigFromEnv(process.env, ffmpegPath),
   );
 
+  // WebSocket realtime transport. Built before the runtime so it can serve as
+  // the NotificationService's delivery emitter; its bearer authenticator is
+  // wired from the runtime immediately after.
+  const realtime = new RealtimeHub();
+
   const { service, operations, authenticate, uploadPart, resolveObject } =
-    buildRuntime(config, pgClient, media);
+    buildRuntime(config, pgClient, media, realtime);
+  realtime.setAuthenticator(authenticate);
+
   const server = createHttpServer({
     router: service.router,
     operations,
@@ -80,6 +87,13 @@ async function main(): Promise<void> {
     authenticate,
     uploadPart,
     resolveObject,
+  });
+
+  // Route HTTP upgrades on /realtime to the WebSocket hub; reject others.
+  server.on("upgrade", (req, socket, head) => {
+    if (!realtime.handleUpgrade(req, socket, head)) {
+      socket.destroy();
+    }
   });
 
   await new Promise<void>((resolve) => {
@@ -102,6 +116,11 @@ async function main(): Promise<void> {
     shuttingDown = true;
     // eslint-disable-next-line no-console
     console.log(`[api] received ${signal}, shutting down`);
+    try {
+      realtime.close();
+    } catch {
+      /* best-effort */
+    }
     server.close(() => {
       try {
         media.close();
