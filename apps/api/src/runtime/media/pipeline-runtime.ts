@@ -155,6 +155,8 @@ export function buildMediaRuntime(
       }
       return results;
     },
+    probeDurationSeconds: (objectKey) =>
+      transcoder.probeDurationSeconds(objectKey),
     close(): void {
       driver.destroy();
     },

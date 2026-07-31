@@ -943,11 +943,18 @@ export function buildRuntime(
     const id = requireUuidPathParam(request, "id");
     const { session, object } = await uploadService.complete(actor, id);
 
+    // Probe the real source duration (best-effort) so the video carries an
+    // accurate length — this is what timestamped comments validate against and
+    // what the transcoder uses to clamp the preview.
+    const durationSeconds = await media
+      .probeDurationSeconds(session.objectKey)
+      .catch(() => 0);
+
     const videoId = newUuid();
     await pg.query(
       `INSERT INTO video (id, organization_id, title, duration_seconds, status, source_object_key, created_at)
        VALUES ($1, $2, $3, $4, 'uploaded', $5, now())`,
-      [videoId, actor.organizationId, "Untitled upload", 0, session.objectKey],
+      [videoId, actor.organizationId, "Untitled upload", durationSeconds, session.objectKey],
     );
     await media.enqueue(videoId);
     const [result] = await media.drain();
