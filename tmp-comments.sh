@@ -11,7 +11,7 @@ USID=$(curl -s --max-time 8 -X POST $B/uploads -H "$A" -H "$O" -H 'Content-Type:
 curl -s --max-time 8 -X PUT "$B/uploads/$USID/parts/1" -H "$A" -H "$O" --data-binary @/tmp/c.mp4 >/dev/null
 VID=$(curl -s --max-time 30 -X POST "$B/uploads/$USID/complete" -H "$A" -H "$O" | sed -n 's/.*"videoId":"\([^"]*\)".*/\1/p')
 echo "video=$VID"
-CRE=$(curl -s --max-time 8 -w '|%{http_code}' -X POST "$B/videos/$VID/comments" -H "$A" -H "$O" -H 'Content-Type: application/json' -d '{"body":"Great clip!","timestamp":1}')
+CRE=$(curl -s --max-time 8 -w '|%{http_code}' -X POST "$B/videos/$VID/comments" -H "$A" -H "$O" -H 'Content-Type: application/json' -d '{"body":"Great clip!"}')
 echo "comments.create => $CRE"
 CID=$(echo "$CRE" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')
 echo "comments.list => $(curl -s --max-time 8 -w '|%{http_code}' "$B/videos/$VID/comments" -H "$A" -H "$O")"
