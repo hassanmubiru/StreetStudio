@@ -111,6 +111,13 @@ export async function setupGlobalCSS(): Promise<void> {
 }
 
 async function loadProjectStyles(): Promise<void> {
+  // `/src/styles/projects.css` is only served by the Vite dev server; in a
+  // production build the sources are bundled and this path 404s. Skip the
+  // fetch outside dev so the console stays clean.
+  const isDev = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
+  if (!isDev) {
+    return;
+  }
   try {
     const response = await fetch('/src/styles/projects.css');
     if (response.ok) {
