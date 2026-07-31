@@ -155,6 +155,8 @@ export interface ContentStore {
   findFolder(folderId: Uuid): Promise<FolderRecord | null>;
   /** List every Folder in a Project. */
   listFoldersByProject(projectId: Uuid): Promise<FolderRecord[]>;
+  /** Persist an updated Folder (same id): parent, depth, name. */
+  updateFolder(record: FolderRecord): Promise<FolderRecord>;
   /** Delete a Folder by id. */
   deleteFolder(folderId: Uuid): Promise<void>;
   /** Find a Video by id within an Organization, or null when absent. */
