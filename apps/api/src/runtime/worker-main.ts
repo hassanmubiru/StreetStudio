@@ -53,13 +53,38 @@ async function main(): Promise<void> {
   // worker start independently (and first) in a distributed deployment.
   await runMigrations(streetSqlClient(pg));
 
+  // Cross-process realtime bus (Redis pub/sub). The worker holds no WebSocket
+  // clients, so it PUBLISHES processing-status transitions to the bus; every
+  // subscribed API instance then fans them out to its connected clients. With
+  // no REDIS_URL the bus is a no-op and status lives only in the DB.
+  const realtimeBus = createRealtimeBus(process.env["REDIS_URL"]);
+  const statusEmitter: ProcessingStatusEmitter = {
+    emit(event): void {
+      // eslint-disable-next-line no-console
+      console.log(
+        `[worker] processing-status`,
+        JSON.stringify({
+          videoId: event.videoId,
+          organizationId: event.organizationId,
+          status: event.status,
+          ...(event.failed ? { failed: true } : {}),
+        }),
+      );
+      realtimeBus.publish(event.organizationId, {
+        type: "processing-status",
+        videoId: event.videoId,
+        status: event.status,
+        at: event.at,
+        ...(event.failed ? { failed: true } : {}),
+      });
+    },
+  };
+
   const ffmpegPath = ffmpegStatic as unknown as string;
   const media = buildMediaRuntime(
     pg,
     mediaRuntimeConfigFromEnv(process.env, ffmpegPath),
-    // No shared realtime bus across processes: log status transitions; the
-    // authoritative status lives in the DB (updated by the pipeline).
-    loggingStatusEmitter(),
+    statusEmitter,
   );
 
   const worker = new MediaWorker(pg, media, { pollIntervalMs });
@@ -73,6 +98,7 @@ async function main(): Promise<void> {
     // eslint-disable-next-line no-console
     console.log(`[worker] received ${signal}, stopping`);
     worker.stop();
+    void realtimeBus.close().catch(() => undefined);
     // Give the in-flight job a moment, then release resources and exit.
     setTimeout(() => {
       try {
