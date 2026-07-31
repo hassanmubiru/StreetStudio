@@ -40,7 +40,7 @@ Spec (requirements/design/tasks) ██████████ 100%
 Documentation                    ████████░░  80%
 Backend domain + API (ref build) ██████████ 100%  domain logic implemented & tested (5315 tests passing)
 Runnable API server (composition)█████████░  90%  env→config→migrations→listen; HTTP+WS transport; real pg/MinIO/ffmpeg
-Operation catalog wired (REST+WS)██████████ 100%  43/43 ops with a backing method, verified end-to-end on real infra
+Operation catalog wired (REST+WS)██████████ 100%  45/45 ops with a backing method, verified end-to-end on real infra
 Media pipeline (real ffmpeg)     █████████░  95%  upload→duration-probe→transcode(thumb/preview/ABR)→storage→playback(Range); distributed worker pending
 Auth / RBAC / tenant isolation   ██████████ 100%  register/login/JWT, wildcard-admin RBAC, deny-by-default, cross-tenant 403s verified
 Realtime (WebSocket)             █████████░  90%  authenticated /realtime channel + notification & processing-status fan-out; distributed worker pending
