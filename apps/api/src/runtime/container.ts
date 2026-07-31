@@ -68,6 +68,11 @@ import {
 } from "@streetstudio/comments";
 import type { ReactionTargetType } from "@streetstudio/shared";
 import { WebhookService, repositoryWebhookStore } from "../webhooks/index.js";
+import {
+  ShareService,
+  repositoryShareStore,
+  type ShareOptions,
+} from "@streetstudio/media";
 import type { OrganizationRecord } from "@streetstudio/database";
 import { newUuid } from "@streetstudio/database";
 import type { MediaRuntime } from "./media/pipeline-runtime.js";
