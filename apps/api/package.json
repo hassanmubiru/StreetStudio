@@ -30,7 +30,8 @@
     "@streetstudio/uploads": "*",
     "ffmpeg-static": "^5.2.0",
     "pg": "^8.13.0",
-    "streetjs": "^1.2.7"
+    "streetjs": "^1.2.7",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/pg": "^8.11.10",
