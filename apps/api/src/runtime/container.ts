@@ -441,6 +441,40 @@ export function buildRuntime(
     return contentService.createProject(auth, orgId, name);
   };
 
+  // projects.list (RBAC: project:read)
+  const listProjects: ServiceInvocation = async (_request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const projects = await contentService.listProjects(auth, orgId);
+    return { projects, total: projects.length };
+  };
+
+  // projects.get (RBAC: project:read)
+  const getProject: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const projectId = requireUuidPathParam(request, "id");
+    return contentService.getProject(auth, orgId, projectId);
+  };
+
+  // projects.update (RBAC: project:update) — rename.
+  const updateProject: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const projectId = requireUuidPathParam(request, "id");
+    const name = requireStringField(request.body, "name");
+    return contentService.updateProject(auth, orgId, projectId, name);
+  };
+
+  // projects.delete (RBAC: project:delete)
+  const deleteProject: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const projectId = requireUuidPathParam(request, "id");
+    await contentService.deleteProject(auth, orgId, projectId);
+    return { success: true };
+  };
+
   // folders.create (RBAC: folder:create) — parent addresses a project (and
   // optionally a parent folder) within the owning organization.
   const createFolder: ServiceInvocation = async (request, context) => {
