@@ -255,6 +255,15 @@ export class ApiKeyService {
   }
 
   /**
+   * List the API keys in `organizationId` as metadata only — the secret is
+   * never disclosed through a read (R18.2).
+   */
+  async list(organizationId: Uuid): Promise<ApiKeyDto[]> {
+    const records = await this.store.listByOrganization(organizationId);
+    return records.map(toApiKeyDto);
+  }
+
+  /**
    * Authenticate a presented secret. Succeeds only for a well-formed secret
    * that resolves to a known, non-revoked, non-expired key whose random
    * component matches the stored salted hash, returning the key's organization
