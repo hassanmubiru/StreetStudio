@@ -41,9 +41,9 @@ Documentation                    ████████░░  80%
 Backend domain + API (ref build) ██████████ 100%  domain logic implemented & tested (5315 tests passing)
 Runnable API server (composition)█████████░  90%  env→config→migrations→listen; HTTP+WS transport; real pg/MinIO/ffmpeg
 Operation catalog wired (REST+WS)██████████ 100%  43/43 ops with a backing method, verified end-to-end on real infra
-Media pipeline (real ffmpeg)     █████████░  90%  upload→assemble→transcode(thumb/preview/ABR)→storage→playback(Range); duration extraction + distributed worker pending
+Media pipeline (real ffmpeg)     █████████░  95%  upload→duration-probe→transcode(thumb/preview/ABR)→storage→playback(Range); distributed worker pending
 Auth / RBAC / tenant isolation   ██████████ 100%  register/login/JWT, wildcard-admin RBAC, deny-by-default, cross-tenant 403s verified
-Realtime (WebSocket)             ███████░░░  70%  authenticated /realtime channel + notification fan-out; processing-status fan-out + distributed worker pending
+Realtime (WebSocket)             █████████░  90%  authenticated /realtime channel + notification & processing-status fan-out; distributed worker pending
 SDK (typed client)               ████████░░  80%   not yet run against a live server
 Client models (editor/timeline)  ██████░░░░  60%   model + reducer/ops implemented & tested; no UI
 Dashboard client logic           ██████░░░░  65%   session/scope, workspace/video/search/notification flows, uploads, sharing, reactions, edit-session; no UI
