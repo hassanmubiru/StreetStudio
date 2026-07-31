@@ -25,8 +25,9 @@
     "@streetstudio/realtime": "*",
     "@streetstudio/search": "*",
     "@streetstudio/shared": "*",
+    "@streetstudio/uploads": "*",
+    "@streetstudio/playback": "*",
     "@streetjs/storage": "^1.0.2",
-    "@aws-sdk/client-s3": "^3.1099.0",
     "ffmpeg-static": "^5.2.0",
     "pg": "^8.13.0",
     "streetjs": "^1.2.7"
