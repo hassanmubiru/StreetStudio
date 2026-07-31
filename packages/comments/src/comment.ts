@@ -133,6 +133,12 @@ export interface CommentStore {
   ): Promise<ReactionRecord[]>;
   /** Persist a new reaction. */
   insertReaction(record: ReactionRecord): Promise<void>;
+  /** List every comment/reply on a Video, in creation order. */
+  listByVideo(videoId: Uuid): Promise<CommentRecord[]>;
+  /** Delete a comment by id. */
+  deleteComment(id: Uuid): Promise<void>;
+  /** Remove a previously-recorded reaction. */
+  deleteReaction(record: ReactionRecord): Promise<void>;
 }
 
 /** Dependencies required to construct a {@link CommentService}. */
