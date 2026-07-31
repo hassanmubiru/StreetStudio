@@ -37,6 +37,7 @@ import {
   mediaRuntimeConfigFromEnv,
 } from "./media/pipeline-runtime.js";
 import { RealtimeHub } from "./realtime-hub.js";
+import { createRealtimeBus } from "./realtime-bus.js";
 
 async function main(): Promise<void> {
   const configSource = envConfigSource();
@@ -153,6 +154,7 @@ async function main(): Promise<void> {
     } catch {
       /* best-effort */
     }
+    void realtimeBus.close().catch(() => undefined);
     server.close(() => {
       try {
         media.close();

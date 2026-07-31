@@ -25,7 +25,9 @@ import {
   buildMediaRuntime,
   mediaRuntimeConfigFromEnv,
 } from "./media/pipeline-runtime.js";
-import { MediaWorker, loggingStatusEmitter } from "./media/media-worker.js";
+import { MediaWorker } from "./media/media-worker.js";
+import { createRealtimeBus } from "./realtime-bus.js";
+import type { ProcessingStatusEmitter } from "@streetstudio/processing";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
