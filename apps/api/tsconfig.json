@@ -19,6 +19,8 @@
     { "path": "../../packages/processing" },
     { "path": "../../packages/notifications" },
     { "path": "../../packages/plugins" },
-    { "path": "../../packages/analytics" }
+    { "path": "../../packages/analytics" },
+    { "path": "../../packages/uploads" },
+    { "path": "../../packages/playback" }
   ]
 }
