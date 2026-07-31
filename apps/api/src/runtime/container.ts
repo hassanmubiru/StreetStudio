@@ -121,6 +121,9 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "apiKeys.create",
   "apiKeys.list",
   "apiKeys.revoke",
+  "webhooks.create",
+  "webhooks.list",
+  "webhooks.delete",
   // Notifications (personal/authenticated scope) + analytics (RBAC read).
   "notifications.list",
   "notifications.markRead",
