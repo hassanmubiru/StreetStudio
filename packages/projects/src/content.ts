@@ -654,19 +654,6 @@ export class ContentService {
       createdAt: record.createdAt,
     };
   }
-
-  private toVideoDto(record: VideoRecord): VideoDto {
-    return {
-      id: record.id,
-      organizationId: record.organizationId,
-      ...(record.folderId !== null ? { folderId: record.folderId } : {}),
-      title: record.title,
-      durationSeconds: record.durationSeconds,
-      status: record.status,
-      developerMode: record.developerMode,
-      createdAt: record.createdAt,
-    };
-  }
 }
 
 /**
