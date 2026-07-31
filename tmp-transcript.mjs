@@ -22,7 +22,7 @@ async function makeTenant() {
   const reg = await j("POST", "/auth/register", { body: { email, password: "password12345", displayName: "T" } });
   if (reg.status !== 201) throw new Error("register failed: " + JSON.stringify(reg));
   const login = await j("POST", "/auth/login", { body: { email, password: "password12345" } });
-  const token = login.data.token;
+  const token = login.data.accessToken ?? login.data.token;
   const org = await j("POST", "/organizations", { token, body: { name: "Org " + rand() } });
   if (org.status !== 201) throw new Error("createOrg failed: " + JSON.stringify(org));
   return { token, orgId: org.data.id ?? org.data.organizationId ?? org.data.organization?.id };
