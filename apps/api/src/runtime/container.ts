@@ -645,6 +645,29 @@ export function buildRuntime(
     return { folders, total: folders.length };
   };
 
+  // folders.move (RBAC: folder:update) — PATCH /folders/:id, body {parentFolderId: uuid|null}.
+  const moveFolder: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireOrganizationId(context);
+    const folderId = requireUuidPathParam(request, "id");
+    const body =
+      typeof request.body === "object" && request.body !== null
+        ? (request.body as Record<string, unknown>)
+        : {};
+    const raw = body["parentFolderId"];
+    let newParentFolderId: Uuid | null;
+    if (raw === null || raw === undefined) {
+      newParentFolderId = null;
+    } else if (typeof raw === "string" && isUuid(raw)) {
+      newParentFolderId = raw as Uuid;
+    } else {
+      throw new AppError("VALIDATION_FAILED", {
+        details: { field: "parentFolderId", reason: "must be a UUID or null" },
+      });
+    }
+    return contentService.moveFolder(auth, orgId, folderId, newParentFolderId);
+  };
+
   // folders.delete (RBAC: folder:delete)
   const deleteFolder: ServiceInvocation = async (request, context) => {
     const auth = requireAuth(context);
