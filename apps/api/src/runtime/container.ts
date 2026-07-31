@@ -702,6 +702,53 @@ export function buildRuntime(
     return { success: true };
   };
 
+  // sharing.create (RBAC: share:create) — POST /videos/:videoId/share-links.
+  const createShareLink: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const videoId = requireUuidPathParam(request, "videoId");
+    const body =
+      typeof request.body === "object" && request.body !== null
+        ? (request.body as Record<string, unknown>)
+        : {};
+    const opts: ShareOptions = {};
+    if (typeof body["passcode"] === "string") {
+      opts.passcode = body["passcode"] as string;
+    }
+    if (typeof body["expiresAt"] === "string") {
+      const d = new Date(body["expiresAt"] as string);
+      if (Number.isNaN(d.getTime())) {
+        throw new AppError("VALIDATION_FAILED", {
+          details: { field: "expiresAt", reason: "must be an ISO timestamp" },
+        });
+      }
+      opts.expiresAt = d;
+    }
+    return shareService.createLink(auth, videoId, opts);
+  };
+
+  // sharing.get (RBAC: share:read) — GET /share-links/:id.
+  const getShareLink: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const linkId = requireUuidPathParam(request, "id");
+    return shareService.getLink(auth, linkId);
+  };
+
+  // sharing.revoke (RBAC: share:revoke) — DELETE /share-links/:id.
+  const revokeShareLink: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const linkId = requireUuidPathParam(request, "id");
+    await shareService.revoke(auth, linkId);
+    return { success: true };
+  };
+
+  // sharing.resolve (PUBLIC) — POST /shared/resolve. Exchanges a share
+  // credential (+ optional passcode) for the video it grants access to.
+  const resolveShareLink: ServiceInvocation = async (request) => {
+    const credential = requireStringField(request.body, "credential");
+    const passcode = optionalStringField(request.body, "passcode");
+    return shareService.resolve(credential, passcode);
+  };
+
   // The WebhookService reads the org scope from the AuthContext, so bind the
   // request's organization onto the principal for these handlers.
   const orgScopedAuth = (context: RequestContext): AuthContext => ({
@@ -970,6 +1017,10 @@ export function buildRuntime(
     .register<ServiceInvocation>("webhooks.create", createWebhook)
     .register<ServiceInvocation>("webhooks.list", listWebhooks)
     .register<ServiceInvocation>("webhooks.delete", deleteWebhook)
+    .register<ServiceInvocation>("sharing.create", createShareLink)
+    .register<ServiceInvocation>("sharing.get", getShareLink)
+    .register<ServiceInvocation>("sharing.revoke", revokeShareLink)
+    .register<ServiceInvocation>("sharing.resolve", resolveShareLink)
     .register<ServiceInvocation>("notifications.list", listNotifications)
     .register<ServiceInvocation>("notifications.markRead", markNotificationRead)
     .register<ServiceInvocation>("analytics.metrics", analyticsMetrics)
