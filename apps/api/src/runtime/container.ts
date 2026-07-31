@@ -53,7 +53,15 @@ import {
   repositoryVideoOrganizationResolver,
   permissionAnalyticsAuthorizer,
 } from "@streetstudio/analytics";
+import {
+  UploadService,
+  UploadSessionRepository,
+  type Actor as UploadActor,
+} from "@streetstudio/uploads";
+import { PlaybackService } from "@streetstudio/playback";
 import type { OrganizationRecord } from "@streetstudio/database";
+import { newUuid } from "@streetstudio/database";
+import type { MediaRuntime } from "./media/pipeline-runtime.js";
 import { isUuid } from "@streetstudio/database";
 import type { Uuid } from "@streetstudio/shared";
 import {
