@@ -352,6 +352,18 @@ export function createHttpServer(deps: HttpServerDeps): Server {
       writeJson(res, error.status, { error: error.toDto() });
       return;
     }
+    // StreetJS HTTP exceptions (thrown by the uploads/playback services) carry
+    // a numeric `status`; map them to that HTTP status without coupling to the
+    // framework's exception classes.
+    if (error instanceof Error) {
+      const status = (error as { status?: unknown }).status;
+      if (typeof status === "number" && status >= 400 && status < 600) {
+        writeJson(res, status, {
+          error: { code: error.name, message: error.message, status },
+        });
+        return;
+      }
+    }
     // Unexpected failure — do not leak internals to the client, but log the
     // real cause server-side so operators can diagnose it.
     // eslint-disable-next-line no-console
