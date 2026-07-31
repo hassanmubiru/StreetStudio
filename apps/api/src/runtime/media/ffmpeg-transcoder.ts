@@ -217,6 +217,53 @@ export class FfmpegTranscoder implements Transcoder {
     }
   }
 
+  /**
+   * Probe the integer-second duration of a stored media object using ffmpeg.
+   * `ffmpeg-static` ships ffmpeg (not ffprobe), so this runs `ffmpeg -i <file>`
+   * (which prints `Duration: HH:MM:SS.ss` to stderr and exits non-zero for lack
+   * of an output) and parses that line. Returns 0 when the duration cannot be
+   * determined (best-effort; never throws).
+   */
+  async probeDurationSeconds(objectKey: string): Promise<number> {
+    const fetched = await this.storage.get(objectKey);
+    if (!fetched.found) {
+      return 0;
+    }
+    const workDir = await mkdtemp(join(tmpdir(), "streetstudio-probe-"));
+    try {
+      const path = join(workDir, "probe.bin");
+      await writeFile(path, fetched.bytes);
+      return await this.durationOf(path);
+    } finally {
+      await rm(workDir, { recursive: true, force: true });
+    }
+  }
+
+  private durationOf(path: string): Promise<number> {
+    return new Promise<number>((resolve) => {
+      const child = spawn(this.ffmpegPath, ["-i", path], {
+        stdio: ["ignore", "ignore", "pipe"],
+      });
+      let stderr = "";
+      child.stderr.on("data", (chunk: Buffer) => {
+        stderr += chunk.toString();
+      });
+      child.on("error", () => resolve(0));
+      child.on("close", () => {
+        const m = /Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/.exec(stderr);
+        if (!m) {
+          resolve(0);
+          return;
+        }
+        const hours = Number(m[1]);
+        const minutes = Number(m[2]);
+        const seconds = Number(m[3]);
+        const total = hours * 3600 + minutes * 60 + seconds;
+        resolve(Number.isFinite(total) ? Math.floor(total) : 0);
+      });
+    });
+  }
+
   /* --------------------------- internals ------------------------------- */
 
   /** Read a produced file and upload it to storage under `key`. */
