@@ -168,9 +168,9 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   real bundle; the full `docker build` itself is blocked here by a missing
   BuildKit/`buildx` (documented environment limitation).
 - **Remaining runtime gaps (all environment-blocked or a documented schema
-  follow-up):** browser/e2e verification of the web SPA against a live server;
-  the INFRA-blocked runtime Phases 5 (perf under load) and 7 (a11y runtime); and
-  the full Docker image build (blocked here by missing BuildKit/`buildx`). Worker
+  follow-up):** the INFRA-blocked runtime Phases 5 (perf under load) and 7 (a11y
+  runtime), and browser/e2e verification of the web SPA — each needs a load or
+  headless-browser harness not provisioned in this environment. Worker
   **stale-claim recovery** (reclaiming a Video left `processing` by a crashed
   worker) needs a claim-timestamp column on the `video` table — a change to the
   heavily-tested `@streetstudio/database` schema, deliberately deferred. The
