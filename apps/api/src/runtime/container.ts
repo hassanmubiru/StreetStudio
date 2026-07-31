@@ -284,6 +284,7 @@ export function buildRuntime(
   config: PlatformConfig,
   pg: PgClient,
   media: MediaRuntime,
+  notificationEmitter: NotificationEmitter,
 ): Runtime {
   // Single canonical schema (SCHEMA-DUP-01 reconciliation): every service is
   // wired to the database package's repository-backed store adapters over the
@@ -320,7 +321,9 @@ export function buildRuntime(
   const notificationService = new NotificationService({
     notifications: notificationStore,
     preferences: repositoryNotificationPreferenceStore(repositories),
-    emitter: { async emit(): Promise<void> {} },
+    // Realtime delivery over the WebSocket hub (falls back to a no-op emitter
+    // if the transport is not wired).
+    emitter: notificationEmitter,
   });
   // Analytics reads — Administrator-gated via the same RBAC evaluator.
   const analyticsService = new AnalyticsService({
