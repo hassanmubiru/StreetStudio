@@ -127,6 +127,12 @@ export interface ContentStore {
     organizationId: Uuid,
     projectId: Uuid,
   ): Promise<ProjectRecord | null>;
+  /** List every Project in an Organization (tenant-scoped). */
+  listProjects(organizationId: Uuid): Promise<ProjectRecord[]>;
+  /** Persist an updated Project (same id), returning the updated record. */
+  updateProject(record: ProjectRecord): Promise<ProjectRecord>;
+  /** Delete a Project by id within its Organization. */
+  deleteProject(organizationId: Uuid, projectId: Uuid): Promise<void>;
   /** Find a Folder by id, or null when absent. */
   findFolder(folderId: Uuid): Promise<FolderRecord | null>;
   /** Find a Video by id within an Organization, or null when absent. */
