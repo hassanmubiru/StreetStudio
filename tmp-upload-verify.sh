@@ -22,15 +22,15 @@ echo "org=$OID token_len=${#TOKEN}"
 # 3) uploads.create (totalParts=2)
 CREATE=$(curl -s --max-time 8 -w '|%{http_code}' -X POST $B/uploads -H "$AUTH" -H "$ORG" -H 'Content-Type: application/json' -d '{"totalParts":2,"contentType":"video/mp4"}')
 echo "uploads.create => $CREATE"
-UID=$(echo "$CREATE" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')
+USID=$(echo "$CREATE" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')
 OKEY=$(echo "$CREATE" | sed -n 's/.*"objectKey":"\([^"]*\)".*/\1/p')
 
 # 4) PUT parts (binary)
-echo "part1 => $(curl -s --max-time 8 -w '|%{http_code}' -X PUT "$B/uploads/$UID/parts/1" -H "$AUTH" -H "$ORG" --data-binary @/tmp/uppart.00)"
-echo "part2 => $(curl -s --max-time 8 -w '|%{http_code}' -X PUT "$B/uploads/$UID/parts/2" -H "$AUTH" -H "$ORG" --data-binary @/tmp/uppart.01)"
+echo "part1 => $(curl -s --max-time 8 -w '|%{http_code}' -X PUT "$B/uploads/$USID/parts/1" -H "$AUTH" -H "$ORG" --data-binary @/tmp/uppart.00)"
+echo "part2 => $(curl -s --max-time 8 -w '|%{http_code}' -X PUT "$B/uploads/$USID/parts/2" -H "$AUTH" -H "$ORG" --data-binary @/tmp/uppart.01)"
 
 # 5) complete (assemble + create video + process)
-COMPLETE=$(curl -s --max-time 30 -w '|%{http_code}' -X POST "$B/uploads/$UID/complete" -H "$AUTH" -H "$ORG")
+COMPLETE=$(curl -s --max-time 30 -w '|%{http_code}' -X POST "$B/uploads/$USID/complete" -H "$AUTH" -H "$ORG")
 echo "uploads.complete => $COMPLETE"
 VID=$(echo "$COMPLETE" | sed -n 's/.*"videoId":"\([^"]*\)".*/\1/p')
 
