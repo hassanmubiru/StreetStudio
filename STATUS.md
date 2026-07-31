@@ -133,6 +133,12 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 20):** a **cross-process realtime bus** (Redis
+  pub/sub, `apps/api/src/runtime/realtime-bus.ts`) so processing-status events
+  produced by the separate media worker reach WebSocket clients on any API
+  instance; verified end-to-end (a WS client received `queued → processing →
+  ready`, the last two produced by a separate worker process via Redis). Falls
+  back to in-process broadcast when no `REDIS_URL` is set (single-node).
 - **Recently closed (Update 19):** a **distributed media-processing worker**
   (`apps/api/src/runtime/worker-main.js`, the corrected Docker `worker` target)
   that claims `queued` Videos from the canonical `video` table via
@@ -153,14 +159,16 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   guarding, immutable asset caching, `/healthz`). Verified locally against the
   real bundle; the full `docker build` itself is blocked here by a missing
   BuildKit/`buildx` (documented environment limitation).
-- **Remaining runtime gaps (deferred, documented):** browser/e2e verification of
-  the web SPA against a live server; the INFRA-blocked runtime Phases 5 (perf
-  under load) and 7 (a11y runtime); and the full Docker image build (blocked here
-  by missing BuildKit/`buildx`). Cross-process realtime fan-out for the worker
-  needs a shared bus (Redis pub/sub); worker stale-claim recovery needs a
-  claim-timestamp column. The unused in-memory fakes and the parallel plural-DDL
-  `ensure*Schema` seams are pending retirement now that the composition uses the
-  canonical schema (ADR-0020).
+- **Remaining runtime gaps (all environment-blocked or a documented schema
+  follow-up):** browser/e2e verification of the web SPA against a live server;
+  the INFRA-blocked runtime Phases 5 (perf under load) and 7 (a11y runtime); and
+  the full Docker image build (blocked here by missing BuildKit/`buildx`). Worker
+  **stale-claim recovery** (reclaiming a Video left `processing` by a crashed
+  worker) needs a claim-timestamp column on the `video` table — a change to the
+  heavily-tested `@streetstudio/database` schema, deliberately deferred. The
+  unused in-memory fakes and the parallel plural-DDL `ensure*Schema` seams are
+  pending retirement now that the composition uses the canonical schema
+  (ADR-0020).
 - **SDK** is a complete typed client mirroring the operation catalog, but has not
   been exercised end-to-end against a live deployed server.
 - **Dashboard** now has client-side application logic (session/credential/scope
