@@ -20,6 +20,7 @@
  */
 import { runMigrations, streetSqlClient } from "@streetstudio/database";
 import ffmpegStatic from "ffmpeg-static";
+import ffprobeStatic from "ffprobe-static";
 import { PgClient } from "./pg-client.js";
 import {
   buildMediaRuntime,
@@ -81,9 +82,10 @@ async function main(): Promise<void> {
   };
 
   const ffmpegPath = ffmpegStatic as unknown as string;
+  const ffprobePath = ffprobeStatic.path;
   const media = await buildMediaRuntime(
     pg,
-    mediaRuntimeConfigFromEnv(process.env, ffmpegPath),
+    mediaRuntimeConfigFromEnv(process.env, ffmpegPath, ffprobePath),
     statusEmitter,
   );
 
