@@ -568,6 +568,20 @@ Gates: typecheck + `streetjs:check` + `boundary:check` (403 files) green; full s
 
 ---
 
+## Update 24 — SDK exercised against the live server; two real API/SDK parity defects fixed
+
+Ran the **real published `@streetstudio/sdk` typed client** against the running API on real infrastructure — the "SDK not yet run against a live server" gap. A single script drove 24 checks through the SDK's resource methods (no raw HTTP): `auth.register/login/currentMember`, `organizations.create/list`, full `projects` CRUD, `folders` create/list/delete, `videos.list`, `notifications.list`, `analytics.metrics`, `apiKeys` create/list/revoke, `webhooks` create/list/delete, and a cross-tenant denial — **24/24 passing**. Getting there surfaced and fixed two genuine parity defects (only observable when the real client talks to the real server):
+
+### SDK-LIST-SHAPE-01 (FIXED) — list endpoints returned an envelope the SDK couldn't consume
+The SDK's list methods are typed `Promise<T[]>` (bare arrays), but the runtime handlers returned `{ <resource>: [...], total }` envelopes, so `organizations.list()` (etc.) yielded a non-array (`orgs.some is not a function`). Aligned the server to the SDK contract: the 8 list handlers (`organizations`, `projects`, `folders`, `videos`, `comments`, `notifications`, `webhooks`, `apiKeys`) now return **bare arrays** (`apps/api/src/runtime/container.ts`).
+
+### SDK-ERROR-ENVELOPE-01 (FIXED) — the SDK mis-mapped *every* server error to `VALIDATION_FAILED`
+The API serializes errors as `{ "error": ErrorDto }`, but the SDK's `errorFromResponse` read `dto.code` at the top level — always `undefined` against the real server — so every non-2xx collapsed to `VALIDATION_FAILED/400`, discarding the real code/status. A cross-tenant `projects.list` that the server correctly answered **403 `AUTHORIZATION_DENIED`** surfaced in the SDK as `VALIDATION_FAILED/400`. Fixed `errorFromResponse` (`packages/sdk/src/client.ts`) to unwrap the `{ error }` envelope (still accepting a bare `ErrorDto`, so the existing SDK test stays green). After the fix the SDK reports `code=AUTHORIZATION_DENIED status=403` for the denied cross-tenant read.
+
+**Verified:** 24/24 SDK checks pass end-to-end against real Postgres/Redis/MinIO, including secret-once API-key reveal (list never exposes the secret) and deny-by-default cross-tenant isolation through the typed client. Gates: typecheck + `streetjs:check` + `boundary:check` (403 files) green; SDK package tests **11/11**; full suite **5315 passed / 0 failed**.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
