@@ -48,13 +48,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   were removed. See `RC1-VERIFICATION-REPORT.md` updates 27–33 and ADR-0022/0023.
 
 - **ADR-0021 completion: Repository seams retirement:** Completed store-of-record
-  convergence by repointing the final organizations domain to the canonical
-  repository layer (`assemblePostgresOrganizations`) and reclassifying 
-  direct-PgPool adapters as integration test utilities. All domains now use
-  the canonical `@streetstudio/database` repository layer in production via
-  their respective `assemblePostgres*` functions, with in-memory clients
-  confined to unit/property tests. The "repository seams" retirement refers to
-  completing this convergence, not removing the repository pattern itself.
+  convergence — all domains use the canonical `@streetstudio/database` repository
+  layer in production, with in-memory clients confined to unit/property tests.
+  The "repository seams" retirement refers to completing this convergence, not
+  removing the repository pattern itself.
+  **Mechanism correction:** production is wired in `apps/api/src/runtime/container.ts`
+  via each domain's `repository*Store(createRepositories(streetSqlClient(pg)))`
+  **directly** — NOT through the `assemblePostgres*` functions (those, and the
+  direct-`PgPool` `postgres<Domain>Store` adapters they compose, are referenced
+  only by integration tests). Genuine remaining gaps: `search` is unwired in
+  production, and `uploads`/`playback` use a separate `UploadSessionRepository`
+  rather than the canonical layer. See ADR-0021 in `docs/DECISIONS.md`.
 
 - **Store-of-record repoint: media pipeline on the canonical repository layer
   (ADR-0021, step 3):** `apps/api/src/processing/postgres-processing.ts`
