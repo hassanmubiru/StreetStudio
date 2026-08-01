@@ -80,11 +80,12 @@ Published repo + npm releases    ░░░░░░░░░░   0%   not relea
 `apps/api/src/runtime/` — boots and serves the full catalog on real infra
 (verified in [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md)):
 
-- **Wired operations (46):** auth ×4, organizations ×2, projects ×5, folders ×4,
+- **Wired operations (55 — the full catalog):** auth ×4, organizations ×7
+  (create/list/get/update/listMembers/listRoles/invite), projects ×5, folders ×4,
   videos ×6 (list/get/update/delete/transcript/summary), search.videos,
-  comments ×5, sharing ×4,
-  apiKeys ×3, webhooks ×3, notifications ×2, analytics.metrics, uploads ×4,
-  playback.manifest, realtime.connect — plus
+  comments ×5, sharing ×4, apiKeys ×3, webhooks ×3, notifications ×4
+  (list/markRead/listPreferences/updatePreference), analytics.metrics,
+  uploads ×4, playback ×2 (manifest/recordView), realtime.connect — plus
   binary part-upload (`PUT /uploads/:id/parts/:n`) and authorized object
   streaming (`GET /objects/*`, HTTP Range 200/206/416).
 - **Real infrastructure:** PostgreSQL (canonical migrated schema, one FK-integral
