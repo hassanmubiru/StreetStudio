@@ -26,7 +26,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 ## Tasks
 
-- [-] 1. Write bug condition exploration test (BEFORE any fix)
+- [x] 1. Write bug condition exploration test (BEFORE any fix)
   - **Property 1: Bug Condition** - API/data calls cannot reach the live backend
   - **CRITICAL**: This test MUST FAIL on unfixed code — failure confirms the bug exists
   - **DO NOT attempt to fix the test or the code when it fails**
