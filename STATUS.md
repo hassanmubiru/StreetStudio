@@ -129,8 +129,8 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   infrastructure.** A composition root (`apps/api/src/runtime/`) wires the domain
   services to the **canonical PostgreSQL repositories** (one FK-integral schema
   via `runMigrations` + `createRepositories`), a real **MinIO/S3** object store,
-  and **real ffmpeg**, behind an HTTP + WebSocket transport. All 46 catalog
-  operations with a backing domain method are wired and each was exercised
+  and **real ffmpeg**, behind an HTTP + WebSocket transport. All 55 catalog
+  operations (the entire public surface) are wired and each was exercised
   end-to-end (register→login→…→create/read/update/delete, upload→transcode→
   playback, realtime handshake) — see `RC1-VERIFICATION-REPORT.md` updates 3–21
   for per-operation evidence.
