@@ -61,7 +61,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 3. Slice 1 — Dev connectivity (Vite proxy)
 
-  - [-] 3.1 Add `server.proxy` for `/api` in `apps/web/vite.config.ts`
+  - [x] 3.1 Add `server.proxy` for `/api` in `apps/web/vite.config.ts`
     - Add a `server.proxy['/api']` entry: `target` = `process.env.API_ORIGIN` with a sensible dev default (`http://localhost:8080`), `changeOrigin: true`, `rewrite: (path) => path.replace(/^\/api/, '')` so the backend receives ROOT paths, `ws` left unset/false (WebSocket upgrade scoped out)
     - Mirror the identical `proxy` block under `preview` so `vite preview` behaves like dev
     - Leave every other Vite config (build target, resolve alias, test block) untouched
