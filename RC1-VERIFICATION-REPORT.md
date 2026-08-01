@@ -736,6 +736,20 @@ Gates: typecheck + `streetjs:check` (recognizes `@streetjs/realtime/redis` + `st
 
 ---
 
+## Update 33 — ADR-0022 slice 7: observability adopted (`streetjs` `MetricsRegistry` + `HealthCheckRegistry`)
+
+Moved the runtime's operational endpoints onto the framework's built-in observability. Verified against `streetjs`'s `.d.ts`: the Prometheus `MetricsRegistry` (`Counter`/`Gauge`/`Histogram`, `.collect()`, `PROMETHEUS_CONTENT_TYPE`) and the `HealthCheckRegistry` (`addCheck`/`runLiveness`/`runReadiness`) are **bare `streetjs` exports** — no new package needed, boundary/streetjs gates stay green. (`createDbReadinessCheck` is not re-exported from the bare entry, so the readiness check is a plain `CheckFn` that pings PostgreSQL.)
+
+**Consumption (`http-server.ts`):** the hand-rolled `ops/metrics.ts` `MetricsRegistry` (JSON snapshot) is replaced by the framework registry — `http_requests_total`/`http_errors_total` counters + `process_uptime_seconds`/`process_rss_bytes`/`process_heap_used_bytes` gauges — and `GET /metrics` now serves the Prometheus text exposition. `GET /health` is backed by the framework `HealthCheckRegistry` (a readiness `postgres` check) and **kept at its path** (still `200` when ready), with `GET /health/live` + `GET /health/ready` added.
+
+**Non-breaking:** nothing programmatic consumed the old `/metrics` JSON, and `/health` stays at its path so `docker/docker-compose.yml`'s healthcheck (`fetch('…/health')` → `r.ok`) is unaffected — no Docker change required. The in-house `ops/{metrics,health}.ts` registries are now unused by the runtime; they remain exported/tested and are retired alongside the other unused in-memory seams (ADR-0020 follow-up), so the suite count is unchanged.
+
+**Verified live on real PostgreSQL:** two `401` API requests → `/metrics` reported `http_requests_total 2` + `http_errors_total 2` (the `/metrics` and `/health` scrapes themselves uncounted) with `content-type: text/plain; version=0.0.4; charset=utf-8` and the three process gauges; `/health`, `/health/live`, `/health/ready` each returned `200` (`postgres` up). Gates: typecheck + `streetjs:check` + `boundary:check` (401 files) + `infra:ratchet` (0) green; full suite **5315 passed / 0 failed**.
+
+**ADR-0022 fully complete.** Every runtime infrastructure concern — HTTP host, DB pool, object storage, media transcode, queue, realtime, and now metrics/health — is consumed from the published StreetJS framework. The product repo hand-rolls no reusable infrastructure (`infra:ratchet` locked at 0).
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 

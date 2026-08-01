@@ -890,24 +890,24 @@ exact `req.url === options.path` check that a `?organizationId=` query string
 fails, so the adapter omits `path` and gates `/realtime` in its `authenticate`
 hook.
 
-² **Slice 7 is DEFERRED by decision (not blocked).** `/metrics` and `/health`
-are served by the small, fully-tested in-house `apps/api/src/ops/` registries
-(`MetricsRegistry`, `HealthChecker`) written against structural StreetJS seams
-(`StreetMetricsInterface`/`StreetHealthInterface`, the ADR-0012 pre-framework
-stand-in pattern). These are in-memory tallies, NOT a flagged raw infrastructure
-driver (`pg`/`ws`/`ioredis`/`createServer`), so the anti-reimplementation ratchet
-deliberately does not count them and the migration's mandate is fully met at
-**ratchet 0** without this slice. Adopting `streetjs`'s `MetricsRegistry`/
-`HealthCheckRegistry` (both bare `streetjs` exports; no new package needed) is
-genuine framework-native polish, but it is a *breaking* change — it moves
-`/metrics` from JSON to Prometheus text, reshapes `/health` (and would relocate
-it to `/health/live`+`/health/ready` under `registerHealthRoutes`, breaking the
-Docker Compose healthcheck that pins `GET /health`), and requires reworking the
-tested `ops/` module. Per the charter (challenge poor decisions; avoid churn
-without justification; do not force-fit), that coordinated change is deferred
-rather than forced for zero ratchet benefit. When undertaken it must ship
-together with the `/metrics` format change, the `/health` probe-path change, and
-the corresponding `docker/docker-compose.yml` healthcheck update.
+² **Slice 7 does not move the ratchet (the in-house registries were never
+flagged), but was done anyway for framework-native observability.** The runtime
+composition root (`apps/api/src/runtime/http-server.ts`) now consumes `streetjs`'s
+built-in Prometheus `MetricsRegistry` (`Counter`/`Gauge`, rendered via
+`.collect()` with `PROMETHEUS_CONTENT_TYPE`) and `HealthCheckRegistry` (a
+readiness check that pings PostgreSQL) — both **bare `streetjs` exports**, so no
+new package was needed and the boundary/streetjs gates stay green. It was
+implemented **non-breakingly**: `GET /metrics` moved from a JSON snapshot to the
+Prometheus text exposition (nothing programmatic consumed the JSON), and `GET
+/health` is retained at its path (still `200` when ready, so the Docker Compose
+healthcheck is unaffected) with `GET /health/live` + `GET /health/ready` added as
+the framework-native liveness/readiness probes. The small in-house
+`apps/api/src/ops/{metrics,health}.ts` registries (the ADR-0012 structural
+stand-ins) are no longer used by the runtime; they remain exported and tested
+and are retired alongside the other unused in-memory seams (ADR-0020 follow-up).
+Verified live: `/metrics` renders the exact counters (`http_requests_total`,
+`http_errors_total` — scrapes uncounted) + process gauges in Prometheus format;
+`/health`, `/health/live`, `/health/ready` all return `200` on real PostgreSQL.
 
 ¹ **Slice 5 leaves the ratchet at 2 by design.** The retired `MediaWorker`
 reached the durable backlog with raw SQL through the framework pool (not a
