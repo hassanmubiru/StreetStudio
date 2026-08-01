@@ -29,6 +29,7 @@ run npm run build
 run npm run graph:check
 run npm run boundary:check
 run npm run streetjs:check
+run npm run infra:ratchet
 
 # The DB-gated integration tests (e.g. packages/recordings, packages/uploads)
 # run against a real PostgreSQL when STREETSTUDIO_IT_DATABASE_URL is set, and
