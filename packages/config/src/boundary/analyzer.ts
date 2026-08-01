@@ -243,6 +243,7 @@ export function analyzeProject(
 ): AnalysisResult {
   const config: BoundaryConfig = {
     ...defaultBoundaryConfig(workspaceRoot),
+    streetjsPublicSubpaths: discoverStreetjsPublicSubpaths(workspaceRoot),
     ...overrides,
   };
   const packages = discoverPackages(workspaceRoot);
