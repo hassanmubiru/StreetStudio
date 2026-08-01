@@ -890,10 +890,24 @@ exact `req.url === options.path` check that a `?organizationId=` query string
 fails, so the adapter omits `path` and gates `/realtime` in its `authenticate`
 hook.
 
-² **Slice 7 does not move the ratchet.** `/metrics` and `/health` use small
-in-house registries, not a flagged raw infrastructure driver (`pg`/`ws`/`ioredis`/
-`createServer`), so adopting `@streetjs/metrics`/`@streetjs/health` is optional
-polish that leaves the count at 0.
+² **Slice 7 is DEFERRED by decision (not blocked).** `/metrics` and `/health`
+are served by the small, fully-tested in-house `apps/api/src/ops/` registries
+(`MetricsRegistry`, `HealthChecker`) written against structural StreetJS seams
+(`StreetMetricsInterface`/`StreetHealthInterface`, the ADR-0012 pre-framework
+stand-in pattern). These are in-memory tallies, NOT a flagged raw infrastructure
+driver (`pg`/`ws`/`ioredis`/`createServer`), so the anti-reimplementation ratchet
+deliberately does not count them and the migration's mandate is fully met at
+**ratchet 0** without this slice. Adopting `streetjs`'s `MetricsRegistry`/
+`HealthCheckRegistry` (both bare `streetjs` exports; no new package needed) is
+genuine framework-native polish, but it is a *breaking* change — it moves
+`/metrics` from JSON to Prometheus text, reshapes `/health` (and would relocate
+it to `/health/live`+`/health/ready` under `registerHealthRoutes`, breaking the
+Docker Compose healthcheck that pins `GET /health`), and requires reworking the
+tested `ops/` module. Per the charter (challenge poor decisions; avoid churn
+without justification; do not force-fit), that coordinated change is deferred
+rather than forced for zero ratchet benefit. When undertaken it must ship
+together with the `/metrics` format change, the `/health` probe-path change, and
+the corresponding `docker/docker-compose.yml` healthcheck update.
 
 ¹ **Slice 5 leaves the ratchet at 2 by design.** The retired `MediaWorker`
 reached the durable backlog with raw SQL through the framework pool (not a
