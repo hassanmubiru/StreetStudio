@@ -730,22 +730,36 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
 
 ## ADR-0021: Standardize on the `SqlClient` repository layer as the single store of record; retire the direct-`PgPool` adapters after convergence
 
-- **Status:** Accepted — steps 1–2 foundation executed (canonical schema proven
-  on real Postgres and a real `SqlClient` repository layer wired at the `apps/api`
-  composition root via `ensureCanonicalSchema`/`assemblePostgresRepositories`,
-  verified by a DB-gated integration test: idempotent migrations, entity
-  round-trip through the canonical singular/FK'd tables, and real FK enforcement).
-  Step 3 is under way: the **notifications**, **comments**, and **media pipeline**
-  domains' production defaults are repointed onto the canonical repository layer
-  (`assemblePostgresNotifications`, `assemblePostgresComments`,
-  `assemblePostgresMediaPipeline`), each verified by a DB-gated integration test.
-  Two repository-layer gaps against the real driver were surfaced and fixed in the
-  process: (a) type coercion (booleans/`jsonb`/numerics), and (b) an in-place
-  `update` (replacing delete-then-insert), so a video status transition no longer
-  cascade-deletes its FK-owned assets/renditions. The remaining domains (search,
-  content, organizations, auth) repoint the same way, then steps 4–5 (reclassify/remove superseded
-  direct-`PgPool` adapters; confirm the in-memory client is test-only). No code
-  deleted.
+- **Status:** Accepted — **convergence achieved in production.** Ground-truth
+  correction (verified by reading `apps/api/src/runtime/container.ts`, the only
+  wiring `main.ts` invokes): the production composition builds `const repositories
+  = createRepositories(streetSqlClient(pg))` once and wires **every** domain via
+  its `repository*Store(repositories)` adapter over the single canonical
+  `SqlClient` — auth, organizations, projects/content, comments, notifications,
+  analytics, media/sharing, processing. The in-memory `SqlClient` is confined to
+  `packages/database` unit tests (step 5 satisfied by construction). The
+  repository-layer gaps found while converging (type coercion for
+  booleans/`jsonb`/numerics; in-place `update` so a video status change no longer
+  cascade-deletes its FK-owned assets/renditions) are fixed.
+  - **Docs correction:** earlier `ADR-0021-COMPLETION.md`/`CHANGELOG` text saying
+    production runs "through the `assemblePostgres*` functions" is **inaccurate
+    about the mechanism** — those `assemblePostgres*` helpers (and the
+    direct-`PgPool` `postgres<Domain>Store` adapters they compose) are referenced
+    only by `*.integration.test.ts`; production uses container's `repository*Store`
+    wiring directly. The convergence *outcome* the docs claim is real; the named
+    *mechanism* was not.
+  - **[reclassified] Step 4:** the 8 direct-`PgPool` `postgres<Domain>Store` +
+    `ensure<Domain>Schema` adapters are test-only and doc-tagged as integration
+    fixtures / reference DDL; they are retained (not deleted) as fast DB-gated
+    integration proofs.
+  - **Genuine remaining convergence gaps (not blockers):** (a) `search.videos`
+    is not wired in production (absent from `SLICE_OPERATION_IDS`) and its only
+    `SearchIndex` impl is the direct-`PgPool` `postgresSearchIndex` (no
+    repository-backed index yet); (b) `uploads`/`playback` persist via
+    `UploadSessionRepository` (a direct-`PgPool` repo on `upload_sessions`,
+    provisioned by `ensureUploadsSchema` in `main.ts`) rather than the canonical
+    repository layer — a `repositoryUploadStore` exists in `@streetstudio/media`
+    but is unused. Both are scoped follow-ups.
 - **Context:** The domain-by-domain de-seam (ADR-0020, tracked as spec task 43)
   added a real `postgres<Domain>Store` adapter beside each domain's in-memory
   default, each composing the published `streetjs` `PgPool` directly with its own
