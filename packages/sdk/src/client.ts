@@ -318,14 +318,25 @@ interface RequestOptions {
  * generic validation failure while retaining the raw payload in `details`.
  */
 function errorFromResponse(status: number, rawBody: string | undefined): AppError {
-  let dto: Partial<ErrorDto> | undefined;
+  let parsed: unknown;
   if (rawBody) {
     try {
-      dto = JSON.parse(rawBody) as Partial<ErrorDto>;
+      parsed = JSON.parse(rawBody);
     } catch {
-      dto = undefined;
+      parsed = undefined;
     }
   }
+  // The API_Service serializes errors as `{ "error": ErrorDto }`; also accept a
+  // bare `ErrorDto` body. Unwrap the envelope so the machine-readable `code`
+  // (and `details`/`retryAfterSeconds`) survive round-trip instead of every
+  // non-2xx collapsing to VALIDATION_FAILED.
+  const dto: Partial<ErrorDto> | undefined =
+    parsed && typeof parsed === "object"
+      ? ((parsed as { error?: unknown }).error &&
+        typeof (parsed as { error?: unknown }).error === "object"
+          ? ((parsed as { error: Partial<ErrorDto> }).error)
+          : (parsed as Partial<ErrorDto>))
+      : undefined;
   const code: ErrorCode =
     dto && isErrorCode(dto.code) ? dto.code : "VALIDATION_FAILED";
   const options: {
