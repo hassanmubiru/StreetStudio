@@ -903,8 +903,15 @@ Prometheus text exposition (nothing programmatic consumed the JSON), and `GET
 healthcheck is unaffected) with `GET /health/live` + `GET /health/ready` added as
 the framework-native liveness/readiness probes. The small in-house
 `apps/api/src/ops/{metrics,health}.ts` registries (the ADR-0012 structural
-stand-ins) are no longer used by the runtime; they remain exported and tested
-and are retired alongside the other unused in-memory seams (ADR-0020 follow-up).
+stand-ins) were **retired** once the runtime consumed the framework: the two
+source files and their unit tests were deleted, the `ops/index.ts` barrel (and
+thus the `@streetstudio/api` surface) no longer re-exports them, and
+`ops.integration.test.ts` was rewritten to exercise readiness through the
+framework `HealthCheckRegistry` (startup + HA coverage unchanged). `ops/ha.ts`
+is retained — it is an as-yet-unwired R30.5/R30.6 capability (a future
+`streetjs/pg-ha` slice), not a framework-replaced stand-in. The suite dropped
+from 5315 → 5296 tests (the removed tests covered the deleted dead code); 0
+failures.
 Verified live: `/metrics` renders the exact counters (`http_requests_total`,
 `http_errors_total` — scrapes uncounted) + process gauges in Prometheus format;
 `/health`, `/health/live`, `/health/ready` all return `200` on real PostgreSQL.
