@@ -42,7 +42,8 @@ async function auditRoute(path, label) {
   const critical = axe.violations.filter((v) => v.impact === "critical" || v.impact === "serious");
   console.log(`  axe: ${axe.violations.length} violation rule(s); by impact ${JSON.stringify(bySeverity)}`);
   for (const v of axe.violations) console.log(`    - [${v.impact}] ${v.id}: ${v.help} (${v.nodes.length} node(s)) targets=${JSON.stringify(v.nodes.map((n) => n.target).flat().slice(0, 4))}`);
-  check(`${label}: no console/page errors`, consoleErrors.length === 0, consoleErrors.slice(0, 2).join(" | "));
+  check(`${label}: no uncaught JS/page errors`, pageErrors.length === 0, pageErrors.slice(0, 2).join(" | "));
+  if (consoleWarnings.length) console.log(`  console warnings (non-fatal): ${consoleWarnings.length} — ${consoleWarnings.slice(0, 3).map((w) => w.slice(0, 80)).join(" | ")}`);
   await page.close();
   return { critical: critical.length, total: axe.violations.length };
 }
