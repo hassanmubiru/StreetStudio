@@ -86,28 +86,6 @@ function matchRoute(
   return undefined;
 }
 
-/** Read the entire request body and parse it as JSON (empty body → undefined). */
-async function readJsonBody(req: IncomingMessage): Promise<unknown> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of req) {
-    chunks.push(chunk as Buffer);
-  }
-  if (chunks.length === 0) {
-    return undefined;
-  }
-  const raw = Buffer.concat(chunks).toString("utf8").trim();
-  if (raw.length === 0) {
-    return undefined;
-  }
-  try {
-    return JSON.parse(raw);
-  } catch {
-    throw new AppError("VALIDATION_FAILED", {
-      details: { reason: "request body is not valid JSON" },
-    });
-  }
-}
-
 /** Extract a bearer token from the Authorization header, if present. */
 function bearerToken(req: IncomingMessage): string | undefined {
   const header = req.headers["authorization"];
