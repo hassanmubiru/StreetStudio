@@ -80,8 +80,9 @@ Published repo + npm releases    ░░░░░░░░░░   0%   not relea
 `apps/api/src/runtime/` — boots and serves the full catalog on real infra
 (verified in [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md)):
 
-- **Wired operations (45):** auth ×4, organizations ×2, projects ×5, folders ×4,
-  videos ×6 (list/get/update/delete/transcript/summary), comments ×5, sharing ×4,
+- **Wired operations (46):** auth ×4, organizations ×2, projects ×5, folders ×4,
+  videos ×6 (list/get/update/delete/transcript/summary), search.videos,
+  comments ×5, sharing ×4,
   apiKeys ×3, webhooks ×3, notifications ×2, analytics.metrics, uploads ×4,
   playback.manifest, realtime.connect — plus
   binary part-upload (`PUT /uploads/:id/parts/:n`) and authorized object
