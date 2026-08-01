@@ -14,7 +14,13 @@
  * reachability (a real `SELECT 1` against PostgreSQL).
  */
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { streetApp } from "streetjs";
+import {
+  streetApp,
+  MetricsRegistry,
+  HealthCheckRegistry,
+  createDbReadinessCheck,
+  PROMETHEUS_CONTENT_TYPE,
+} from "streetjs";
 import { AppError } from "@streetstudio/shared";
 import type { Uuid } from "@streetstudio/shared";
 import type { AuthContext } from "@streetstudio/auth";
