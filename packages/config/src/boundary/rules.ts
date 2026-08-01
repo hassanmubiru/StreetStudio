@@ -212,15 +212,22 @@ export function classifyImport(
   const pkgName = packageNameOf(spec);
   const subpath = subpathOf(spec, pkgName);
 
-  // 2a. StreetJS boundary: only the bare public entry point is permitted.
+  // 2a. StreetJS boundary: the bare public entry point is always permitted; a
+  // subpath is permitted only when it is a *published* export of that package
+  // (declared in its `exports` map). Deep/internal paths remain forbidden.
   if (isStreetjsPackage(pkgName, config)) {
     if (subpath !== "") {
+      const published = config.streetjsPublicSubpaths?.get(pkgName);
+      if (published?.has(subpath)) {
+        return null;
+      }
       return violation(
         BoundaryErrorCode.DISALLOWED_STREETJS_IMPORT,
         ref,
         ctx,
         `Import "${spec}" reaches into a StreetJS internal module. ` +
-          `Only the public entry point "${pkgName}" may be imported.`
+          `Only the public entry point "${pkgName}" or one of its published ` +
+          `subpath exports may be imported.`
       );
     }
     return null;

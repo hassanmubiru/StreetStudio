@@ -166,6 +166,49 @@ function readPackageInfo(dir: string): PackageInfo | undefined {
   };
 }
 
+/**
+ * Discover the *published* subpath exports of every installed StreetJS package
+ * (`streetjs` and each `@streetjs/*`) by reading its `package.json` `exports`.
+ * A `@streetjs/<pkg>/<sub>` import is permitted only when `<sub>` is one of
+ * these declared exports (ADR-0022) — deep/internal paths are still forbidden.
+ */
+export function discoverStreetjsPublicSubpaths(
+  workspaceRoot: string
+): Map<string, Set<string>> {
+  const result = new Map<string, Set<string>>();
+  const nodeModules = path.join(workspaceRoot, "node_modules");
+
+  const record = (pkgName: string, dir: string): void => {
+    let manifest: RawManifest;
+    try {
+      manifest = JSON.parse(
+        fs.readFileSync(path.join(dir, "package.json"), "utf8")
+      ) as RawManifest;
+    } catch {
+      return;
+    }
+    const subpaths = entryPointsFromExports(manifest.exports);
+    if (subpaths.length > 0) result.set(pkgName, new Set(subpaths));
+  };
+
+  // The unscoped `streetjs` package.
+  record("streetjs", path.join(nodeModules, "streetjs"));
+
+  // Every installed `@streetjs/*` package.
+  try {
+    const scopeDir = path.join(nodeModules, "@streetjs");
+    for (const entry of fs.readdirSync(scopeDir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        record(`@streetjs/${entry.name}`, path.join(scopeDir, entry.name));
+      }
+    }
+  } catch {
+    /* no @streetjs scope installed */
+  }
+
+  return result;
+}
+
 /** Discover every workspace package declared in the root manifest. */
 export function discoverPackages(workspaceRoot: string): PackageInfo[] {
   const rootManifestPath = path.join(workspaceRoot, "package.json");
