@@ -83,7 +83,7 @@ async function main(): Promise<void> {
   // shared by uploads/playback and the processing pipeline. Processing-status
   // transitions fan out to the owning organization over the realtime channel.
   const ffmpegPath = ffmpegStatic as unknown as string;
-  const media = buildMediaRuntime(
+  const media = await buildMediaRuntime(
     pgClient,
     mediaRuntimeConfigFromEnv(process.env, ffmpegPath),
     {
