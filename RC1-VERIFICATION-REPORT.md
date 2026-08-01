@@ -766,6 +766,17 @@ Gates: typecheck + `streetjs:check` + `boundary:check` (401 files) + `infra:ratc
 
 ---
 
+## Update 35 — full public catalog wired; API-CATALOG-COVERAGE-01 closed
+
+The last 8 catalog operations that were advertised in `PUBLIC_OPERATIONS`/the SDK but not served are now wired, so `SLICE_OPERATION_IDS == PUBLIC_OPERATIONS` (**55/55**; the composition-root parity test enforces this). Two gated slices, each verified end-to-end on real PostgreSQL:
+
+- **Slice A (reads):** `organizations.get`/`listMembers`/`listRoles` (canonical-schema queries, consistent with the existing `organizations.list` handler) and `notifications.listPreferences` (preference store). Verified: correct payloads, wildcard-admin role present, and cross-org `organizations.get` → **403** (deny-by-default).
+- **Slice B (writes):** `organizations.update` (canonical `organizations` repository — rename+settings, persisted; empty name → 400), `organizations.invite` (real `OrgService.invite`; 201 with **no secret token leaked** in the DTO; invalid email → 400), `playback.recordView` (real `AnalyticsService.recordView`; reflected in `analytics.metrics` totalViews=1; unknown video → 404), and `notifications.updatePreference` (the tested `NotificationPreferenceRepository.upsert` on the `(member_id, event_type)` PK — idempotent, invalid `enabled` → 400).
+
+No domain-package changes were needed — every op reused existing backing (services/repositories), so this was pure composition wiring. Gates: typecheck + `streetjs:check` + `boundary:check` (401 files) + `infra:ratchet` (0) green; full suite **5308 passed / 0 failed**. **API-CATALOG-COVERAGE-01** (domain services implement mostly create/write paths; catalog not fully served) is thereby closed for the API surface — the reads it lacked were served via canonical-schema queries at the composition root.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
