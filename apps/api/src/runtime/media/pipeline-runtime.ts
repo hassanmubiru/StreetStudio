@@ -61,28 +61,10 @@ export interface MediaRuntimeConfig {
   readonly ffmpegPath: string;
   /** Absolute path to the ffprobe binary. */
   readonly ffprobePath: string;
+  /** `REDIS_URL` for the durable queue driver; Memory driver when unset. */
+  readonly redisUrl?: string | undefined;
   /** Optional evidence hook forwarded to the transcoder. */
   readonly onFfmpegInvocation?: (invocation: FfmpegInvocation) => void;
-}
-
-/** A minimal in-process FIFO {@link ProcessingQueue}. */
-export class InProcessQueue implements ProcessingQueue {
-  private readonly jobs: ProcessingJob[] = [];
-
-  /** Place a job on the queue. */
-  enqueue(job: ProcessingJob): void {
-    this.jobs.push(job);
-  }
-
-  /** Remove and return the next job, or `undefined` when empty. */
-  dequeue(): ProcessingJob | undefined {
-    return this.jobs.shift();
-  }
-
-  /** Number of jobs currently queued. */
-  get size(): number {
-    return this.jobs.length;
-  }
 }
 
 /** A no-op {@link ProcessingStatusEmitter} (no realtime transport is wired). */
