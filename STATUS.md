@@ -61,7 +61,7 @@ Spec (requirements/design/tasks) ██████████ 100%
 Documentation                    ████████░░  80%
 Backend domain + API (ref build) ██████████ 100%  domain logic implemented & tested (5315 tests passing)
 Runnable API server (composition)██████████ 100%  env→config→migrations→listen; HTTP+WS; real pg/MinIO/ffmpeg; /health + /metrics (R30.4) + graceful shutdown
-Operation catalog wired (REST+WS)██████████ 100%  45/45 ops with a backing method, verified end-to-end on real infra
+Operation catalog wired (REST+WS)██████████ 100%  46/46 ops with a backing method (incl. search.videos over the canonical schema), verified end-to-end on real infra
 Media pipeline (real ffmpeg)     ██████████ 100%  upload→duration-probe→transcode(thumb/preview/ABR)→storage→stream renditions(Range); framework @streetjs/queue (Redis) drives inline + distributed workers with visibility-lease crash recovery
 Auth / RBAC / tenant isolation   ██████████ 100%  register/login/JWT, wildcard-admin RBAC, deny-by-default, cross-tenant 403s verified
 Realtime (WebSocket)             ██████████ 100%  published @streetjs/realtime (rooms + RedisAdapter over streetjs/websocket): authenticated /realtime channel + notification & processing-status fan-out; cross-process delivery via the framework cluster adapter; MemoryAdapter fallback
@@ -71,7 +71,7 @@ Dashboard client logic           ██████░░░░  65%   session/s
 Dashboard (web UI runtime)       ████░░░░░░  40%   Vite SPA production-builds (es2022), served by a zero-dep static host, and browser-verified in real Chrome (renders/routes, 0 critical/serious axe a11y); Docker web image runs
 Desktop client                   ░░░░░░░░░░   0%   scaffold entry only
 Recorder extension               ░░░░░░░░░░   0%   scaffold entry only
-De-seam remaining pkgs → StreetJS █████████░  90%   prod wires all domains to canonical Postgres repositories on ONE schema (ADR-0021 converged); auth on real Postgres + JWT via streetjs JwtService (ADR-0020 step 2); gaps: streetjs auth session/refresh/api-key subpaths unpublished (README gap #6), search unwired, uploads/playback on separate repo
+De-seam remaining pkgs → StreetJS █████████░  90%   prod wires all domains to canonical Postgres repositories on ONE schema (ADR-0021 converged); auth on real Postgres + JWT via streetjs JwtService (ADR-0020 step 2); gaps: streetjs auth session/refresh/api-key subpaths unpublished (README gap #6), uploads/playback on separate repo
 Published repo + npm releases    ░░░░░░░░░░   0%   not released
 ```
 
