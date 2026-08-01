@@ -1436,6 +1436,7 @@ export function buildRuntime(
     .register<ServiceInvocation>("notifications.list", listNotifications)
     .register<ServiceInvocation>("notifications.markRead", markNotificationRead)
     .register<ServiceInvocation>("notifications.listPreferences", listNotificationPreferences)
+    .register<ServiceInvocation>("notifications.updatePreference", updateNotificationPreference)
     .register<ServiceInvocation>("analytics.metrics", analyticsMetrics)
     .register<ServiceInvocation>("uploads.create", createUpload)
     .register<ServiceInvocation>("uploads.get", getUpload)
