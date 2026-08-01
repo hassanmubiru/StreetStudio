@@ -111,12 +111,12 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
 | ------------------- | ------- |
 | Apps                | 6       |
 | Packages            | 44      |
-| Source files        | 396     |
-| Source LOC          | 120,002 |
-| Test files          | 319     |
+| Source files        | 398     |
+| Source LOC          | 120,264 |
+| Test files          | 321     |
 | Property-test files | 103     |
-| Test LOC            | 103,933 |
-| Tests               | 5,296 passing / 0 failing (71 skipped) — `npx vitest run` |
+| Test LOC            | 104,115 |
+| Tests               | 5,308 passing / 0 failing (71 skipped) — `npx vitest run` |
 | build / typecheck / graph / boundary / streetjs / infra:ratchet gates | passing |
 
 *Regenerate the counts with `npm run status`; regenerate pass/coverage with
