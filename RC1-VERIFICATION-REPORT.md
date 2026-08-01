@@ -700,6 +700,22 @@ Replaced the hand-rolled ffmpeg transcoder (raw `child_process.spawn` + product-
 
 ---
 
+## Update 31 — ADR-0022 slice 5: media queue adopted (`@streetjs/queue`); hand-rolled SKIP-LOCKED worker retired
+
+Replaced the hand-rolled processing queue — the in-memory `InProcessQueue` and the bespoke `MediaWorker` (a Postgres `FOR UPDATE SKIP LOCKED` poll loop with a `processing_claim` table + `reclaimStale` recovery) — with the **published** `@streetjs/queue`. Verified against the installed `.d.ts`: `@streetjs/queue@1.0.1` is a durable job queue with reserve-with-visibility-lease, at-least-once delivery, bounded retry, dead-lettering, and multi-worker crash recovery, exposing `createQueue({ driver })` → `dispatch`/`register`/`work`. Its `@streetjs/queue/redis` `RedisDriver` runs over the framework's `RedisClient` (a boundary-clean bare `streetjs` export that satisfies the driver's `RedisClientLike`), parsed from `REDIS_URL`.
+
+**Consumption:** a new `media/street-queue.ts` composes the framework `Queue` and exposes the small product surface — the `ProcessingQueue` seam the `MediaPipeline` enqueues onto, handler registration, a `work()` runner, and `init()`/`close()`. Backend selection: durable `RedisDriver` when `REDIS_URL` is set, else the framework's zero-dependency `MemoryDriver` — so **no hand-rolled queue remains on either path**. `pipeline-runtime.ts` wires it; `worker-main.ts` now runs `queue.work()` (the framework worker's reservation loop) instead of the deleted `MediaWorker`; the `processing_claim` table and `reclaimStale` bookkeeping are gone (the driver's visibility-lease reclaim supersedes them). `media-worker.ts` was deleted.
+
+**Dual-source-of-truth handling (the design decision approved for this slice):** Postgres `video.status` stays authoritative for domain status; Redis is authoritative only for job delivery. `enqueue` marks the video `queued` **and** dispatches a job; the registered handler is idempotent — an at-least-once redelivery of an already-`ready` video is acked without reprocessing (guarding against duplicate rendition/asset rows). The inline single-node path (`PROCESSING_INLINE` default) runs an in-process worker and a per-video completion promise so `uploads.complete` still returns the terminal result synchronously; the distributed path (`PROCESSING_INLINE=false`) enqueues only and one or more separate workers drain the Redis queue.
+
+**Verified end-to-end on real Redis + Postgres + MinIO + ffmpeg:**
+- **Inline:** upload → `uploads.complete` returned `processing=ready` with 3 renditions synchronously (in-process worker consumed the Redis queue via the completion registry). 9/9.
+- **Distributed:** API with `PROCESSING_INLINE=false` returned `processing=queued`; a **separate** `worker-main.js` process reserved the job from Redis and emitted `processing → ready` (worker log confirms cross-process handoff); the video reached `ready` with a 3-rendition playback manifest. 10/10.
+
+Gates: typecheck + `streetjs:check` (recognizes the published `@streetjs/queue/redis` subpath) + `boundary:check` (402 files) + `infra:ratchet` green. Full suite **5315 passed / 0 failed**. The ratchet is unchanged at **2**: the queue worker uses raw SQL through the framework pool, not a flagged driver, so slice 5 retires hand-rolled queue *infrastructure* without moving the count — the remaining 2 (`realtime-bus.ts`/`ioredis`, `realtime-hub.ts`/`ws`) fall in slice 6 (`@streetjs/realtime`).
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
