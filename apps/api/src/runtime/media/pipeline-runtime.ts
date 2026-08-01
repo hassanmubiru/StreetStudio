@@ -138,6 +138,7 @@ export async function buildMediaRuntime(
   const transcoder = new FfmpegTranscoder({
     storage: driver,
     ffmpegPath: config.ffmpegPath,
+    ffprobePath: config.ffprobePath,
     ...(config.onFfmpegInvocation
       ? { onInvocation: config.onFfmpegInvocation }
       : {}),
@@ -180,11 +181,12 @@ export async function buildMediaRuntime(
  * Read the media runtime configuration from environment variables, applying the
  * confirmed local-infra defaults (MinIO on :9000, bucket `streetstudio-media`)
  * and resolving the ffmpeg binary from `ffmpeg-static` when `FFMPEG_PATH` is
- * unset.
+ * unset, and ffprobe from `ffprobe-static` when `FFPROBE_PATH` is unset.
  */
 export function mediaRuntimeConfigFromEnv(
   env: NodeJS.ProcessEnv,
   ffmpegPath: string,
+  ffprobePath: string,
 ): MediaRuntimeConfig {
   return {
     s3Endpoint: env["S3_ENDPOINT"] ?? "http://localhost:9000",
@@ -194,5 +196,6 @@ export function mediaRuntimeConfigFromEnv(
     s3Bucket: env["S3_BUCKET"] ?? "streetstudio-media",
     s3ForcePathStyle: true,
     ffmpegPath: env["FFMPEG_PATH"] ?? ffmpegPath,
+    ffprobePath: env["FFPROBE_PATH"] ?? ffprobePath,
   };
 }
