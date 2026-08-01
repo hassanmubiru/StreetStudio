@@ -43,6 +43,17 @@ export interface MediaWorkerOptions {
   readonly pollIntervalMs?: number;
   /** Structured log sink; defaults to `console`. */
   readonly log?: (message: string, fields?: Record<string, unknown>) => void;
+  /**
+   * Stable identifier for this worker instance, recorded on each claim so an
+   * operator can see which worker holds a Video. Defaults to a random id.
+   */
+  readonly workerId?: string;
+  /**
+   * How long a claimed Video may stay `processing` before another worker may
+   * reclaim it (crash recovery). Default 300000 (5 min). A claim older than
+   * this is assumed to belong to a dead worker and its Video is requeued.
+   */
+  readonly claimTimeoutMs?: number;
 }
 
 /**
