@@ -113,23 +113,87 @@ export class MediaWorker {
    * is empty. Uses `FOR UPDATE SKIP LOCKED` for safe competing consumers.
    */
   async claimNext(): Promise<ClaimedJob | null> {
-    const result = await this.pg.query<{ id: string; organization_id: string }>(
-      `UPDATE video
-          SET status = 'processing'
-        WHERE id = (
-          SELECT id FROM video
-           WHERE status = 'queued'
-           ORDER BY created_at ASC
-           FOR UPDATE SKIP LOCKED
-           LIMIT 1
-        )
-      RETURNING id, organization_id`,
-    );
-    const row = result.rows[0];
-    if (!row) {
-      return null;
+    await this.ensureClaimTable();
+    // Claim the Video and record the claim atomically in one transaction, so a
+    // crash can never leave a `processing` Video without a claim row (which
+    // would make it un-reclaimable). `FOR UPDATE SKIP LOCKED` keeps N workers as
+    // safe competing consumers.
+    return this.pg.transaction(async (tx) => {
+      const result = await tx.query<{ id: string; organization_id: string }>(
+        `UPDATE video
+            SET status = 'processing'
+          WHERE id = (
+            SELECT id FROM video
+             WHERE status = 'queued'
+             ORDER BY created_at ASC
+             FOR UPDATE SKIP LOCKED
+             LIMIT 1
+          )
+        RETURNING id, organization_id`,
+      );
+      const row = result.rows[0];
+      if (!row) {
+        return null;
+      }
+      await tx.query(
+        `INSERT INTO processing_claim (video_id, organization_id, worker_id, claimed_at)
+         VALUES ($1, $2, $3, now())
+         ON CONFLICT (video_id) DO UPDATE SET worker_id = EXCLUDED.worker_id, claimed_at = now()`,
+        [row.id, row.organization_id, this.workerId],
+      );
+      return {
+        videoId: row.id as Uuid,
+        organizationId: row.organization_id as Uuid,
+      };
+    });
+  }
+
+  /** Release a Video's claim row once processing reaches a terminal state. */
+  private async releaseClaim(videoId: Uuid): Promise<void> {
+    try {
+      await this.pg.query(`DELETE FROM processing_claim WHERE video_id = $1`, [videoId]);
+    } catch (error) {
+      this.log("claim release failed", {
+        videoId,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-    return { videoId: row.id as Uuid, organizationId: row.organization_id as Uuid };
+  }
+
+  /**
+   * Requeue Videos whose claim is older than {@link claimTimeoutMs} — i.e. held
+   * by a worker that crashed mid-transcode — so another worker can pick them up.
+   * Only rows still `processing` are reset (a Video that finished after the
+   * cutoff is left alone); the stale claims are then removed. Returns the count
+   * requeued. Runs in a transaction for atomicity.
+   */
+  async reclaimStale(): Promise<number> {
+    await this.ensureClaimTable();
+    const seconds = Math.max(1, Math.ceil(this.claimTimeoutMs / 1000));
+    return this.pg.transaction(async (tx) => {
+      const reset = await tx.query<{ id: string }>(
+        `UPDATE video SET status = 'queued'
+          WHERE status = 'processing'
+            AND id IN (
+              SELECT video_id FROM processing_claim
+               WHERE claimed_at < now() - make_interval(secs => $1)
+            )
+        RETURNING id`,
+        [seconds],
+      );
+      await tx.query(
+        `DELETE FROM processing_claim WHERE claimed_at < now() - make_interval(secs => $1)`,
+        [seconds],
+      );
+      const count = reset.rows.length;
+      if (count > 0) {
+        this.log("reclaimed stale processing videos", {
+          count,
+          olderThanSeconds: seconds,
+        });
+      }
+      return count;
+    });
   }
 
   /**
