@@ -19,6 +19,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import ffmpegPath from "ffmpeg-static";
+import ffprobeStatic from "ffprobe-static";
 import {
   createRepositories,
   streetSqlClient,
