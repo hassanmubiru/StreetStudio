@@ -10,11 +10,19 @@
  * this gate closes that hole.
  *
  * It counts the `apps/api` source files that import a raw infrastructure driver
- * (`pg`, `ws`, `ioredis`, `ffmpeg-static`, `@aws-sdk/*`) or host an HTTP server
- * (`createServer` from `node:http`/`http`), and fails the build if that count
- * EXCEEDS the recorded baseline in `scripts/infra-ratchet.json`. The number can
- * only be ratcheted DOWN: each strangler-fig slice that replaces a hand-rolled
- * adapter with a `@streetjs/*` package lowers the baseline until it reaches 0.
+ * (`pg`, `ws`, `ioredis`) or host an HTTP server (`createServer` from
+ * `node:http`/`http`), and fails the build if that count EXCEEDS the recorded
+ * baseline in `scripts/infra-ratchet.json`. The number can only be ratcheted
+ * DOWN: each strangler-fig slice that replaces a hand-rolled adapter with a
+ * `@streetjs/*` package lowers the baseline until it reaches 0.
+ *
+ * SANCTIONED BINARY PROVIDERS (NOT reimplementation): `ffmpeg-static` and
+ * `ffprobe-static` supply the ffmpeg/ffprobe *binaries* that the framework's
+ * injectable `MediaProcessor` runner executes (ADR-0022 slice 4), and
+ * `@aws-sdk/client-s3` is the optional peer the framework's published S3
+ * storage driver lazily loads (ADR-0023). These are extension-point inputs to
+ * framework-owned infrastructure — the same category as passing a driver to a
+ * framework factory — so they are deliberately NOT counted as raw infra.
  *
  * Zero dependencies; Node built-ins only.
  */
