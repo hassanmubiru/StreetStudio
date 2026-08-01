@@ -76,6 +76,16 @@ export interface BoundaryConfig {
    * vendor SDKs that must not appear in platform core code.
    */
   readonly vendorModules: readonly string[];
+  /**
+   * Published subpath exports per StreetJS package: `pkgName` → the set of
+   * subpaths declared in that package's `exports` map (e.g. `@streetjs/storage`
+   * → {`s3`, `minio`, …}). A `@streetjs/<pkg>/<sub>` import is a permitted
+   * public-API consumption when `<sub>` is a published export; a deep/internal
+   * path (not in `exports`) remains forbidden. Empty by default (strict); the
+   * CLI populates it from the installed packages so the guard tracks the real
+   * published surface rather than assuming a single entry point (ADR-0022).
+   */
+  readonly streetjsPublicSubpaths?: ReadonlyMap<string, ReadonlySet<string>>;
 }
 
 /** A detected boundary violation. */
