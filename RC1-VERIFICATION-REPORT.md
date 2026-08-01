@@ -582,6 +582,21 @@ The API serializes errors as `{ "error": ErrorDto }`, but the SDK's `errorFromRe
 
 ---
 
+## Update 25 — Distributed worker crash recovery (stale-claim reclaim), verified on real infra
+
+Closed the last deferred functional item — a distributed worker that crashes mid-transcode previously left its Video stuck `processing` forever. Implemented crash recovery **entirely in the composition layer** (a worker-owned `processing_claim` table created via runtime DDL) so the tested `@streetstudio/database` schema is untouched.
+
+**Design (`apps/api/src/runtime/media/media-worker.ts`):**
+- **Atomic claim.** `claimNext()` now runs inside `PgClient.transaction`: it flips the oldest `queued` Video to `processing` (`FOR UPDATE SKIP LOCKED`) **and** records a `processing_claim` row (`video_id` PK, `organization_id`, `worker_id`, `claimed_at`) in the same transaction — so a crash can never leave a `processing` Video without a claim row.
+- **Release on completion.** After a job reaches `ready`/`failed`, the claim row is deleted.
+- **Reclaim stale.** `reclaimStale()` (run at startup and roughly once per claim-timeout window) requeues Videos whose claim is older than `WORKER_CLAIM_TIMEOUT_MS` (default 5 min) — i.e. held by a dead worker — resetting only rows still `processing` and deleting the stale claims, atomically. Worker identity comes from `WORKER_ID`/`INSTANCE_ID`.
+
+**Verified end-to-end (real Postgres + MinIO + ffmpeg):** uploaded a real video in enqueue-only mode (left `queued`); simulated a crashed worker by setting it `processing` with a **10-minute-old** claim from `dead-worker`. Started a fresh worker (5-min timeout): its startup log shows `reclaimed stale processing videos {count:1, olderThanSeconds:300}`, then `claimed → processing → ready` with `renditions:3`. Final DB state: `video.status=ready`, **3 renditions**, and **0 remaining claim rows** (both the stale reclaim and the happy-path release confirmed). Gates: typecheck + `streetjs:check` + `boundary:check` (403 files) green; full suite **5315 passed / 0 failed**.
+
+**Remaining for full RC:** only the 2 moderate landing-page a11y items (global skip-link targets not mounted on the public page — touches tested accessibility code, scoped follow-up).
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
