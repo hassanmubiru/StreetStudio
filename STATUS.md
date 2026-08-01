@@ -17,10 +17,11 @@
   registry). The composition root therefore hand-rolled reusable infrastructure
   (`pg`/`ws`/`ioredis`/`ffmpeg`/S3/HTTP host) the framework already owns — a
   charter violation now being retired via a **strangler-fig migration**
-  (ADR-0022): slice 1 moved the DB pool onto `streetjs/pool` `PgPool`, and an
-  `infra:ratchet` gate holds the raw-driver file count monotonically toward 0
-  (currently 6).
-  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–27)
+  (ADR-0022): slice 1 moved the DB pool onto `streetjs/pool` `PgPool` and slice 2
+  moved the HTTP host onto `streetApp` (product keeps only the dispatch as a
+  catch-all middleware), and an `infra:ratchet` gate holds the raw-driver file
+  count monotonically toward 0 (currently 5).
+  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–28)
   for the full, evidence-backed verification.
   The web SPA now production-builds (Vite, es2022 target) and is served by a
   zero-dependency static host (`apps/web/server.mjs`, with the Docker `web`
