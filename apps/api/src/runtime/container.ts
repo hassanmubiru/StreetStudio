@@ -154,6 +154,7 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "uploads.complete",
   "uploads.abort",
   "playback.manifest",
+  "playback.recordView",
   "sharing.create",
   "sharing.get",
   "sharing.revoke",
