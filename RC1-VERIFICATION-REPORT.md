@@ -752,6 +752,18 @@ Moved the runtime's operational endpoints onto the framework's built-in observab
 
 ---
 
+## Update 34 — `search.videos` wired over the canonical schema (ADR-0021 gap closed) + ADR-0020 JWT adoption
+
+**ADR-0020 (JWT):** access-token issuance moved onto the published `streetjs` `JwtService` via a `StreetJwtAccessTokenIssuer` adapter behind the auth core's `AccessTokenIssuer` port (`apps/api/src/security/street-jwt-issuer.ts`, wired in `container.ts`; the hand-rolled `HmacAccessTokenIssuer` stays as the port's test reference). Verified live: valid→200, tampered signature→401, `alg:none` forgery→401, no token→401; plus a 6-case adapter unit test. The remaining ADR-0020 step-2 primitives (`auth/session-store`/`refresh-tokens`/`api-keys`) are blocked by a framework publishing gap — `streetjs@1.2.7` does not export those subpaths — recorded in the README StreetJS gap register (#6).
+
+**ADR-0021 (search):** `search.videos` was advertised in the catalog + SDK but **unserved**, and its only `SearchIndex` implementation (`postgresSearchIndex`) targeted the legacy *plural* `videos`/`transcripts` tables — never the singular `video`/`transcript` tables production populates. Added a canonical-schema `SearchIndex` (`apps/api/src/search/canonical-search-index.ts`) over `video.title` + `transcript.segments`, constructed a `SearchService` in `container.ts`, and registered the handler (added to `SLICE_OPERATION_IDS`, so the catalog is now **46** wired operations), returning `VideoDto[]` for SDK parity. **Verified end-to-end on real PostgreSQL:** a unique-title match returns the video (bare array), a no-match query → empty array, an empty query → 400 (R14.5 validation), and cross-tenant isolation holds — a second org's member does not see the first org's video (per-candidate RBAC filtering, R14.4).
+
+**Docs reconciled to ground truth:** corrected the inaccurate "production uses `assemblePostgres*`" claim (production wires `repository*Store` directly over the canonical `SqlClient`) across ADR-0021, `ADR-0021-COMPLETION.md`, and `CHANGELOG.md`. Remaining ADR-0021 convergence gap: `uploads`/`playback` still use a separate `UploadSessionRepository` rather than the canonical layer (scoped follow-up).
+
+Gates: typecheck + `streetjs:check` + `boundary:check` (401 files) + `infra:ratchet` (0) green; full suite **5302 passed / 0 failed**.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
