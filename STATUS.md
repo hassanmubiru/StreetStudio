@@ -26,10 +26,13 @@
   are injected as sanctioned binary providers), and slice 5 the media queue onto
   the published `@streetjs/queue` (Redis driver via `streetjs`'s `RedisClient`;
   Memory driver fallback), retiring the hand-rolled SKIP-LOCKED worker +
-  `processing_claim` table. An `infra:ratchet` gate holds the raw-driver file
-  count monotonically toward 0 (now **2** — only the `ioredis` bus and `ws` hub
-  remain, targeted by slice 6).
-  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–31)
+  `processing_claim` table, and slice 6 realtime onto the published
+  `@streetjs/realtime` (rooms + `RedisAdapter` over `streetjs/websocket`),
+  retiring the `ws` hub and `ioredis` bus. The `infra:ratchet` gate has reached
+  its target: **0** — `apps/api` hand-rolls no reusable infrastructure; HTTP
+  host, DB pool, storage, transcode, queue, and realtime are all consumed from
+  the published framework.
+  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–32)
   for the full, evidence-backed verification.
   The web SPA now production-builds (Vite, es2022 target) and is served by a
   zero-dependency static host (`apps/web/server.mjs`, with the Docker `web`
@@ -61,7 +64,7 @@ Runnable API server (composition)██████████ 100%  env→conf
 Operation catalog wired (REST+WS)██████████ 100%  45/45 ops with a backing method, verified end-to-end on real infra
 Media pipeline (real ffmpeg)     ██████████ 100%  upload→duration-probe→transcode(thumb/preview/ABR)→storage→stream renditions(Range); framework @streetjs/queue (Redis) drives inline + distributed workers with visibility-lease crash recovery
 Auth / RBAC / tenant isolation   ██████████ 100%  register/login/JWT, wildcard-admin RBAC, deny-by-default, cross-tenant 403s verified
-Realtime (WebSocket)             ██████████ 100%  authenticated /realtime channel + notification & processing-status fan-out; cross-process bus (Redis pub/sub) delivers worker events to clients; in-process fallback
+Realtime (WebSocket)             ██████████ 100%  published @streetjs/realtime (rooms + RedisAdapter over streetjs/websocket): authenticated /realtime channel + notification & processing-status fan-out; cross-process delivery via the framework cluster adapter; MemoryAdapter fallback
 SDK (typed client)               ██████████ 100%  exercised end-to-end against the live server (24/24 ops via the typed client); fixed 2 real parity defects (list-array shape, error-envelope unwrapping)
 Client models (editor/timeline)  ██████░░░░  60%   model + reducer/ops implemented & tested; no UI
 Dashboard client logic           ██████░░░░  65%   session/scope, workspace/video/search/notification flows, uploads, sharing, reactions, edit-session; no UI
@@ -146,6 +149,19 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 32):** **ADR-0022 slice 6** — realtime moved onto
+  the published **`@streetjs/realtime`**; the hand-rolled `ws` hub and `ioredis`
+  pub/sub bus were deleted (`realtime-bus.ts` removed; `ioredis`/`ws`/`@types/ws`
+  dropped from `apps/api`). Org/member scoping is now framework **rooms**;
+  cross-process fan-out is the framework `RedisAdapter` over `streetjs`'s
+  `RedisClient`. Realtime frames now use the framework envelope
+  `{type, payload, ts}` (agreed client-affecting change; SDK is
+  transport-agnostic). Verified end-to-end on real infra: **inline** (WS client
+  gets `connected` then `queued → processing → ready`) and **distributed** (a
+  separate worker process's events reach the API's WS client cross-process).
+  **`infra:ratchet` reached its target 0** — `apps/api` hand-rolls no reusable
+  infrastructure. (Slice 7, metrics/health → `@streetjs/metrics`/`@streetjs/health`,
+  is optional polish that does not move the ratchet.)
 - **Recently closed (Update 31):** **ADR-0022 slice 5** — the media queue moved
   onto the published **`@streetjs/queue`**; the hand-rolled `InProcessQueue` and
   the bespoke SKIP-LOCKED `MediaWorker` (+ `processing_claim` table) were
