@@ -1,5 +1,20 @@
 # ADR-0021 Repository Seams Retirement - Completion Report
 
+> **⚠️ ACCURACY CORRECTION (mechanism).** Sections below state that production
+> runs "through the `assemblePostgres*` functions." Verified against
+> `apps/api/src/runtime/container.ts` (the only wiring `main.ts` invokes), that
+> is **not** how production is wired: `container.ts` builds
+> `createRepositories(streetSqlClient(pg))` once and injects each domain's
+> `repository*Store(repositories)` **directly**. The `assemblePostgres*` helpers
+> (and the direct-`PgPool` `postgres<Domain>Store` adapters they compose) are
+> referenced **only** by `*.integration.test.ts` — they are integration-test
+> scaffolding, not the production path. The *convergence outcome* asserted here
+> (one canonical `SqlClient` store of record; in-memory client test-only) is
+> accurate; the *named mechanism* is not. Two genuine gaps also remain: `search`
+> is unwired in production, and `uploads`/`playback` use a separate
+> `UploadSessionRepository` rather than the canonical layer. See ADR-0021 in
+> `docs/DECISIONS.md` for the corrected status.
+
 ## Task: 43.14 Retire the in-memory `repository*Store` seams
 
 This document confirms the completion of ADR-0021's sequenced retirement plan for repository seams.
