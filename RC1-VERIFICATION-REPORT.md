@@ -650,6 +650,23 @@ A production-charter re-review established (verified against the npm registry, a
 
 ---
 
+## Update 28 — ADR-0022 slice 2: HTTP host adopted (`streetApp`); hand-rolled `node:http` server retired
+
+Replaced the hand-rolled `node:http` `createServer` transport with the published **`streetApp`** host, via a **bridge** (not a rewrite): the product keeps its dispatch — the operation catalog + request lifecycle (rate-limit → authenticate → validate → RBAC → service → audit) + the binary/byte routes — mounted as a **single catch-all `app.use` middleware**; the framework owns the socket, request parsing, per-request timeout, and body buffering. This is correct ownership: the catalog/lifecycle are product (they encode RBAC/audit/parity); only the transport is framework.
+
+**Design decisions (grounded in the real `streetjs` API, not assumed):**
+- `streetApp` exposes `use(mw)`, `listen()/close()`, and — critically — `readonly server` (the underlying `http.Server`), so the realtime hub still attaches its `/realtime` WebSocket upgrade to the same socket (`app.server.on("upgrade", …)`).
+- `StreetContext` gives the raw `req`/`res`, so the existing `handle(req,res,…)` (Range streaming via `res.writeHead(206,…)`, error mapping, `/health`, `/metrics`) is reused unchanged.
+- **Body consumption analysis** (the one real risk): the framework's `parseBody` buffers only `application/json`/`text/*`/`multipart` — **`application/octet-stream` is left unconsumed**, so the binary part-upload's `readRawBody(ctx.req)` still works. The JSON catalog path now reads the framework-parsed `ctx.body` instead of re-reading the (already-consumed) stream. The catch-all never calls `next()`, so the framework router (no controllers registered) never runs.
+- Set `requestTimeoutMs: 600_000` (the default is 30 s) so inline `uploads.complete` transcode and large Range streams aren't aborted.
+- Boundary-compliant: imports `streetApp` from the main `"streetjs"` entry (not the `streetjs/http` subpath the analyzer forbids).
+
+**Verified end-to-end on the framework host** (real Postgres/MinIO/ffmpeg): server logs `[street] Listening…`; 14/14 checks — health, `/metrics` (counts real traffic), JSON dispatch via `ctx.body` (auth/orgs/projects CRUD), **binary part upload** (octet-stream stream intact → 200), **inline transcode → `ready`/3 renditions** (within the raised timeout), **object streaming `Range` → 206 + `Content-Range`**, cross-tenant `403`, and the **`/realtime` WebSocket upgrade** on `app.server` (`connected` frame). Note: `auth.logout` returns `201` (the dispatch layer's pre-existing POST-success default — unchanged by this slice; a minor API-semantics follow-up). Ratchet: **6 → 5** (`http-server.ts` no longer calls `createServer`). Gates: typecheck + `streetjs:check` + `boundary:check` + `infra:ratchet` green; full suite **5315 passed / 0 failed**.
+
+**Remaining infra to retire (ratchet 5, target 0):** `realtime-bus.ts` (`ioredis`), `realtime-hub.ts` (`ws`), `media/s3-storage-driver.ts` (`@aws-sdk`), `main.ts` + `worker-main.ts` (`ffmpeg-static`) → slices (3) storage, (4) media, (5) queue, (6) realtime, (7) metrics/health.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
