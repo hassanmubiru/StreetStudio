@@ -26,7 +26,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 ## Tasks
 
-- [ ] 1. Write bug condition exploration test (BEFORE any fix)
+- [-] 1. Write bug condition exploration test (BEFORE any fix)
   - **Property 1: Bug Condition** - API/data calls cannot reach the live backend
   - **CRITICAL**: This test MUST FAIL on unfixed code — failure confirms the bug exists
   - **DO NOT attempt to fix the test or the code when it fails**
@@ -44,7 +44,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
   - Mark task complete when test is written, run, and failure is documented
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 2. Write preservation property tests (BEFORE any fix)
+- [~] 2. Write preservation property tests (BEFORE any fix)
   - **Property 2: Preservation** - non-`/api` behavior is unchanged
   - **IMPORTANT**: Follow observation-first methodology — observe behavior on the UNFIXED `server.mjs`/Vite host first, then encode it as properties
   - Observe and record on UNFIXED code, then assert as generated properties over the non-`/api` request domain:
@@ -61,7 +61,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 3. Slice 1 — Dev connectivity (Vite proxy)
 
-  - [ ] 3.1 Add `server.proxy` for `/api` in `apps/web/vite.config.ts`
+  - [~] 3.1 Add `server.proxy` for `/api` in `apps/web/vite.config.ts`
     - Add a `server.proxy['/api']` entry: `target` = `process.env.API_ORIGIN` with a sensible dev default (`http://localhost:8080`), `changeOrigin: true`, `rewrite: (path) => path.replace(/^\/api/, '')` so the backend receives ROOT paths, `ws` left unset/false (WebSocket upgrade scoped out)
     - Mirror the identical `proxy` block under `preview` so `vite preview` behaves like dev
     - Leave every other Vite config (build target, resolve alias, test block) untouched
@@ -70,7 +70,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: non-`/api` dev behavior unchanged (Preservation Requirements)_
     - _Requirements: 1.1, 2.1, 2.3_
 
-  - [ ] 3.2 Verify Slice 1 via the per-slice verification loop
+  - [~] 3.2 Verify Slice 1 via the per-slice verification loop
     - `get_diagnostics` on `vite.config.ts` (0 problems); web type-check + `npx tsc -b apps/api` clean
     - Gates: `infra:ratchet`, `streetjs:check`, `boundary:check`, `graph:check`, full `typecheck`
     - Start Vite dev host against real infra (Postgres :5435, MinIO :9000, Redis :6379; API on `HTTP_PORT`)
@@ -80,7 +80,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 4. Slice 2 — Prod connectivity (`server.mjs` reverse proxy)
 
-  - [ ] 4.1 Add an `/api` reverse-proxy branch to `apps/web/server.mjs` (Node built-ins only)
+  - [~] 4.1 Add an `/api` reverse-proxy branch to `apps/web/server.mjs` (Node built-ins only)
     - Import `node:http` / `node:https` / `node:url` only — no new runtime deps (must survive `npm prune --omit=dev`)
     - Read `API_ORIGIN` from env at startup; parse once into `{ protocol, hostname, port }`. If unset, log a clear warning and continue serving static content (connectivity disabled) so the host still boots
     - Insert the `/api` branch AFTER the `/healthz` check and BEFORE `resolveFile`, keyed strictly on `pathname === '/api' || pathname.startsWith('/api/')`
@@ -94,7 +94,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: static assets, SPA fallback, /healthz, missing-asset 404, method guard unchanged (Preservation Requirements)_
     - _Requirements: 1.2, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4_
 
-  - [ ] 4.2 Verify Slice 2 via the per-slice verification loop
+  - [~] 4.2 Verify Slice 2 via the per-slice verification loop
     - `get_diagnostics` on `server.mjs` (0 problems); web type-check + `npx tsc -b apps/api` clean
     - Gates: `infra:ratchet`, `streetjs:check`, `boundary:check`, `graph:check`, full `typecheck`
     - Start `server.mjs` serving `dist` with `API_ORIGIN` set, against real infra (Postgres :5435, MinIO :9000, Redis :6379; API on `HTTP_PORT`)
@@ -104,7 +104,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 5. Slice 3 — Root-path correctness
 
-  - [ ] 5.1 Assert stripped requests hit real backend ROOT paths
+  - [~] 5.1 Assert stripped requests hit real backend ROOT paths
     - No code changes beyond slices 1–2; add explicit assertions (unit + curl) that a stripped `/api`-prefixed request maps to a real backend ROOT route through EACH proxy (dev Vite and prod `server.mjs`)
     - Assert `/api/auth/login` → backend `POST /auth/login` returns 200/401 (not 404), confirming the backend — not the static host — answers
     - _Bug_Condition: isBugCondition(X) where NOT hitsBackendRootPath(X) (unstripped `/api` prefix)_
@@ -112,7 +112,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: prefix strip affects `/api` paths only; non-`/api` paths unchanged_
     - _Requirements: 1.3, 2.3_
 
-  - [ ] 5.2 Verify Slice 3 via the per-slice verification loop
+  - [~] 5.2 Verify Slice 3 via the per-slice verification loop
     - `get_diagnostics` (0 problems); web type-check + `npx tsc -b apps/api` clean
     - Gates: `infra:ratchet`, `streetjs:check`, `boundary:check`, `graph:check`, full `typecheck`
     - Start each host against real infra (Postgres :5435, MinIO :9000, Redis :6379; API on `HTTP_PORT`)
@@ -122,7 +122,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 6. Slice 4 — SDK adoption (login vertical first)
 
-  - [ ] 6.1 Reconcile the SDK base URL to same-origin `/api`
+  - [~] 6.1 Reconcile the SDK base URL to same-origin `/api`
     - In `apps/web/src/main.ts` / `apps/web/src/app/app.ts`, default `apiBaseUrl` to `/api` (relative), removing the cross-origin `http://localhost:8080` default from the browser bundle
     - `DashboardSession` → `StreetStudioClient.buildUrl` concatenates `/api` + `/auth/login` → `/api/auth/login`, which both proxies strip to `/auth/login`; the backend origin is configured once at the proxy via `API_ORIGIN`
     - _Bug_Condition: isBugCondition(X) where X.layer = DATA_ACCESS AND base URL is cross-origin/inconsistent_
@@ -130,7 +130,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: no change to non-`/api` behavior_
     - _Requirements: 1.4, 2.4_
 
-  - [ ] 6.2 Implement a composable `HttpTransport` and adapt error/degradation
+  - [~] 6.2 Implement a composable `HttpTransport` and adapt error/degradation
     - Implement a composable `HttpTransport` (timeout + retry/exponential-backoff + offline-awareness) injected via `SdkClientOptions.transport` / `DashboardSessionOptions.transport` — the SDK is transport-agnostic and has no built-in retry/backoff/timeout/`NetworkMonitor`
     - Adapt `AppError` (shared taxonomy) into the existing `handleError` / `getDegradationManager` calls at the call sites so error reporting and graceful degradation are retained without the bespoke client
     - Add unit tests for the transport: timeout, retry/backoff, offline-awareness, and `AppError` → `handleError`/degradation adaptation
@@ -139,7 +139,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: existing degradation/error-reporting behavior retained_
     - _Requirements: 1.4, 2.4_
 
-  - [ ] 6.3 Route the login vertical through the SDK; use `useBearerToken` for dynamic tokens
+  - [~] 6.3 Route the login vertical through the SDK; use `useBearerToken` for dynamic tokens
     - Replace raw `fetch('/api/auth/login')`, `/api/auth/register`, `/api/auth/logout`, and session-validation calls in `auth-controller.ts` with the `DashboardSession`/`StreetStudioClient` methods the SPA already holds (`register`, `auth.login`, `auth.logout`, `currentMember`)
     - Use `DashboardSession.useBearerToken` (which rebuilds the client) for dynamic token injection rather than mutating construction-time `auth`
     - Add unit tests: login/register/logout/validation routed through `DashboardSession`, with the token-gap path handled explicitly (see 6.5)
@@ -148,7 +148,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: login remains functional over the correctly-proxied endpoint_
     - _Requirements: 1.4, 2.4_
 
-  - [ ] 6.4 Migrate already-sufficient data verticals off `ApiClient` and retire `services/api.ts`
+  - [~] 6.4 Migrate already-sufficient data verticals off `ApiClient` and retire `services/api.ts`
     - Migrate verticals whose SDK contract is already sufficient (`videos`, `comments`, `uploads`, `projects`) off the hand-rolled `ApiClient` to `StreetStudioClient` via `DashboardSession`
     - Once every data-access vertical is on the SDK, delete `apps/web/src/services/api.ts` (and its `NetworkMonitor`), leaving the composable transport as the single home for retry/timeout/offline concerns
     - _Bug_Condition: isBugCondition(X) where X.layer = DATA_ACCESS AND usesHandRolledApiClient(X)_
@@ -156,7 +156,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: migrated verticals return real backend responses; degradation/error reporting preserved_
     - _Requirements: 1.4, 2.4_
 
-  - [ ] 6.5 Report the login-token framework gap (do NOT deep-import or force-fit)
+  - [~] 6.5 Report the login-token framework gap (do NOT deep-import or force-fit)
     - The SDK's `AuthResource.login` returns `SessionDto` = `{ id, memberId, issuedAt, expiresAt, revokedAt? }` with no bearer token / refresh token / `expiresIn` / user, while `AuthController.login` needs `{ token, refreshToken, expiresIn, user }`
     - REPORT the gap requesting the login contract surface a bearer token (and refresh/expiry) — do NOT deep-import (forbidden by ADR-0001/0011) or fabricate a bespoke token path
     - Until resolved, connectivity slices 1–3 keep login functional over the correctly-proxied endpoint; the SDK token exchange lands when the contract is extended (tracked by task 8)
@@ -165,7 +165,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: no bespoke workaround introduced_
     - _Requirements: 2.4_
 
-  - [ ] 6.6 Verify Slice 4 via the per-slice verification loop
+  - [~] 6.6 Verify Slice 4 via the per-slice verification loop
     - `get_diagnostics` on all touched files (0 problems); web type-check + `npx tsc -b apps/api` clean
     - Gates: `infra:ratchet`, `streetjs:check`, `boundary:check`, `graph:check`, full `typecheck`
     - Start a host against real infra (Postgres :5435, MinIO :9000, Redis :6379; API on `HTTP_PORT`)
@@ -175,34 +175,34 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 7. Verify correctness properties against the fixed code
 
-  - [ ] 7.1 Verify bug condition exploration test now passes
+  - [~] 7.1 Verify bug condition exploration test now passes
     - **Property 1: Expected Behavior** - API/data calls reach the live backend via the SDK
     - **IMPORTANT**: Re-run the SAME test from task 1 — do NOT write a new test
     - The test from task 1 encodes the expected behavior; passing confirms `/api/*` is forwarded to `API_ORIGIN` stripped to ROOT and data access uses the published SDK
     - **EXPECTED OUTCOME**: Test PASSES (confirms the bug is fixed)
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-  - [ ] 7.2 Verify preservation tests still pass
+  - [~] 7.2 Verify preservation tests still pass
     - **Property 2: Preservation** - non-`/api` behavior is unchanged
     - **IMPORTANT**: Re-run the SAME tests from task 2 — do NOT write new tests
     - Confirm static-asset serving, SPA fallback, `/healthz`/`/health`, missing-asset 404s, and the method guard are all unchanged (`F(X) == F'(X)`)
     - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 8. File the reported login-token framework gap
+- [~] 8. File the reported login-token framework gap
   - File a framework gap (issue/ticket + reference in `docs/DECISIONS.md`) requesting the SDK login contract surface a bearer token, refresh token, and expiry so the web login token exchange can adopt the SDK
   - Cross-reference the documented limitation in `apps/dashboard/src/session.ts` and the SDK `SessionDto` contract in `packages/shared/src/dto.ts`
   - Do NOT implement a deep-import or bespoke workaround (ADR-0001/0011)
   - _Requirements: 2.4_
 
-- [ ] 9. Update documentation and record an ADR (final step)
+- [~] 9. Update documentation and record an ADR (final step)
   - Update `STATUS.md` to reflect web SPA connectivity + SDK adoption status and the outstanding login-token gap
   - Update `RC1-VERIFICATION-REPORT.md` with the curl-through-proxy verification results per slice and the test-suite status (5308 passed / 0 failed)
   - Add a `CHANGELOG.md` entry for the dev proxy, prod reverse proxy, root-path correctness, and SDK adoption
   - Record an ADR (in `docs/DECISIONS.md` / new ADR file) capturing: `API_ORIGIN` single-origin proxy decision, Node-built-ins-only prod proxy, strangler-fig SDK adoption, and the reported login-token gap
   - _Requirements: 2.4, 3.5_
 
-- [ ] 10. Checkpoint - Ensure all tests pass
+- [~] 10. Checkpoint - Ensure all tests pass
   - Confirm every slice passed its per-slice verification loop and both correctness properties hold
   - Ensure the full suite passes at 5308 passed / 0 failed with no regressions; ask the user if questions arise
   - _Requirements: 3.5_
