@@ -766,3 +766,66 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   default change, not the domain logic. Tracked as spec task 43.14 and in
   [`PRODUCTIONIZATION.md`](PRODUCTIONIZATION.md); no code is deleted under this ADR
   until the steps above are executed and verified.
+
+
+---
+
+## ADR-0022: Adopt the published StreetJS runtime; retire the hand-rolled composition-root infrastructure
+
+- **Status:** Accepted
+- **Context:** The runnable API server under `apps/api/src/runtime/` was built on
+  the assumption — recorded in `RC1-VERIFICATION-REPORT.md` (Update 3) and in
+  `apps/api/src/runtime/main.ts` — that the granular `@streetjs/*` framework
+  packages were **not published**, so it "adapts standard drivers through the
+  existing structural seams" (`pg`, `ws`, `ioredis`, `ffmpeg-static`,
+  `@aws-sdk/client-s3`). That assumption was derived from what happened to be
+  installed in `node_modules` (only `@streetjs/storage`) and was **never
+  verified against the registry**. It is false. Verified against npm:
+  `streetjs@1.2.7` (exposing `./http`, `./router`, `./pool`, `./repository`,
+  `./migrations`, `./security`, `./session`, `./ratelimit`, `./websocket`,
+  `./telemetry`, …), `@streetjs/database@1.0.0`, `@streetjs/media@1.1.0`,
+  `@streetjs/realtime@1.0.1`, `@streetjs/metrics@1.0.0`, and
+  `@streetjs/storage@1.0.2` are all real published tarballs. `FRAMEWORK_CONTRACT.md`
+  was correct; the composition root diverged from it. As a result the product
+  repo now hand-rolls reusable infrastructure — an HTTP host + router + `/metrics`
+  (`http-server.ts`), a `pg.Pool` adapter (`pg-client.ts`), a WebSocket hub
+  (`realtime-hub.ts`), a Redis pub/sub bus (`realtime-bus.ts`), a
+  `FOR UPDATE SKIP LOCKED` job queue + stale-claim recovery (`media/media-worker.ts`),
+  an S3 driver (`media/s3-storage-driver.ts`), and an ffmpeg transcoder
+  (`media/ffmpeg-transcoder.ts`) — each of which is owned by a published StreetJS
+  package. This violates the Fundamental Rule of the production charter ("if it
+  is reusable infrastructure, it belongs in StreetJS; do not reimplement it in
+  the product") and doubles the long-term maintenance surface.
+- **Decision:** Consume the **published** StreetJS runtime and retire the
+  hand-rolled infrastructure via an incremental **strangler-fig** migration, one
+  production-ready vertical slice at a time, deleting each hand-rolled adapter
+  only when its `@streetjs/*` replacement is proven against real infrastructure
+  with all gates green. Ownership mapping (product ⇢ framework):
+  - `pg-client.ts` ⇢ `streetjs/pool` (`PgPool`)
+  - `http-server.ts` ⇢ `streetApp` + `streetjs/http` + `streetjs/router` + `streetjs/ratelimit`
+  - `media/s3-storage-driver.ts` ⇢ `@streetjs/storage`
+  - `media/ffmpeg-transcoder.ts` + `media/pipeline-runtime.ts` ⇢ `@streetjs/media`
+  - `media/media-worker.ts` (+ the `processing_claim` table) ⇢ `@streetjs/queue`
+  - `realtime-hub.ts` + `realtime-bus.ts` ⇢ `@streetjs/realtime` / `streetjs/websocket`
+  - `/metrics` + `/health` wiring ⇢ `@streetjs/metrics` + `@streetjs/health`
+  - `env-config-source.ts` ⇢ `@streetjs/config` (the product still owns *which* keys exist)
+
+  The composition root (`main.ts`, `worker-main.ts`) and the per-operation
+  handlers + RBAC policy in `container.ts` remain product-owned; they must wire
+  the framework rather than hand-rolled infra. New infrastructure in `apps/api`
+  is **frozen**: a ratchet gate (`scripts/check-infra-ratchet.mjs`) fails the
+  build if the number of `apps/api` source files importing raw infrastructure
+  drivers (`pg`, `ws`, `ioredis`, `node:http` `createServer`, `ffmpeg-static`,
+  `@aws-sdk/*`) exceeds the recorded baseline, so the count can only shrink as
+  slices complete.
+- **Consequences:** The product stops owning a framework. Migration is wide but
+  each slice is isolated behind an existing port (`SqlClient`, storage/queue/
+  realtime seams), so the domain logic and the 45-operation catalog are
+  untouched — only the injected adapter changes. No hand-rolled adapter is
+  deleted until its published replacement passes the full gate set (`build`,
+  `graph:check`, `boundary:check`, `streetjs:check`, `infra:ratchet`, `test`,
+  coverage) on real infrastructure. This extends ADR-0020/0021 (consume the
+  canonical persistence layer) to the entire runtime host. **Supersedes** the
+  informal "adapt standard drivers through the existing structural seams"
+  composition-root decision documented in `apps/api/src/runtime/main.ts` and
+  `RC1-VERIFICATION-REPORT.md` Update 3.
