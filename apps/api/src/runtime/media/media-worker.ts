@@ -65,8 +65,12 @@ export class MediaWorker {
   private readonly media: MediaRuntime;
   private readonly pollIntervalMs: number;
   private readonly log: (message: string, fields?: Record<string, unknown>) => void;
+  private readonly workerId: string;
+  private readonly claimTimeoutMs: number;
   private running = false;
   private stopped = false;
+  private claimTableReady = false;
+  private lastReclaimAt = 0;
   private idle: Promise<void> | null = null;
   private wakeUp: (() => void) | null = null;
 
@@ -74,11 +78,33 @@ export class MediaWorker {
     this.pg = pg;
     this.media = media;
     this.pollIntervalMs = options.pollIntervalMs ?? 1000;
+    this.workerId =
+      options.workerId ?? `worker-${Math.random().toString(36).slice(2, 10)}`;
+    this.claimTimeoutMs = options.claimTimeoutMs ?? 300_000;
     this.log =
       options.log ??
       ((message, fields) =>
         // eslint-disable-next-line no-console
         console.log(`[worker] ${message}`, fields ? JSON.stringify(fields) : ""));
+  }
+
+  /**
+   * Create the worker-owned claim-tracking table (idempotent). This lives in the
+   * composition layer — NOT in the canonical `@streetstudio/database` schema —
+   * so crash-recovery bookkeeping never touches the tested domain schema. One
+   * row per in-flight Video records when and by whom it was claimed.
+   */
+  async ensureClaimTable(): Promise<void> {
+    if (this.claimTableReady) return;
+    await this.pg.query(
+      `CREATE TABLE IF NOT EXISTS processing_claim (
+         video_id uuid PRIMARY KEY,
+         organization_id uuid NOT NULL,
+         worker_id text NOT NULL,
+         claimed_at timestamptz NOT NULL DEFAULT now()
+       )`,
+    );
+    this.claimTableReady = true;
   }
 
   /**
