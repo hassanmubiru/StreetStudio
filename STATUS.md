@@ -132,6 +132,12 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 23):** **Phase 7 (runtime a11y) + browser e2e**
+  executed with real headless Chrome against the production SPA — pages render &
+  route, **0 critical/serious** axe violations (fixed a serious `aria-prohibited-attr`),
+  and fixed 4 more real web defects (manifest 404, router-transition CSS blocked
+  by CSP, Google-Fonts CSP block, dev-only projects.css 404). 2 moderate a11y
+  items (landing-page skip-link targets) documented as a scoped follow-up.
 - **Recently closed (Update 22):** **Phase 5 (perf under load)** executed on real
   infra — `auth.currentMember` **3534 req/s** (p95 27.5 ms) and
   `organizations.list` JOIN **2993 req/s** (p95 23.3 ms), 1350 reqs each at 50
@@ -172,16 +178,18 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   guarding, immutable asset caching, `/healthz`). Verified locally against the
   real bundle; the full `docker build` itself is blocked here by a missing
   BuildKit/`buildx` (documented environment limitation).
-- **Remaining runtime gaps (all environment-blocked or a documented schema
-  follow-up):** the INFRA-blocked runtime Phases 5 (perf under load) and 7 (a11y
-  runtime), and browser/e2e verification of the web SPA — each needs a load or
-  headless-browser harness not provisioned in this environment. Worker
-  **stale-claim recovery** (reclaiming a Video left `processing` by a crashed
-  worker) needs a claim-timestamp column on the `video` table — a change to the
-  heavily-tested `@streetstudio/database` schema, deliberately deferred. The
-  unused in-memory fakes and the parallel plural-DDL `ensure*Schema` seams are
-  pending retirement now that the composition uses the canonical schema
-  (ADR-0020).
+- **Remaining gaps (documented follow-ups):** 2 **moderate** landing-page a11y
+  items (global skip-link targets absent on the public landing page — touches
+  tested accessibility code, scoped follow-up); and worker **stale-claim
+  recovery** (reclaiming a Video left `processing` by a crashed worker) which
+  needs a claim-timestamp column on the `video` table — a change to the
+  heavily-tested `@streetstudio/database` schema, deliberately deferred. Every
+  automated phase this environment can run — build, all Docker images, the full
+  operation catalog, media lifecycle, distributed processing, cross-process
+  realtime, performance under load, and runtime a11y + browser e2e — has been
+  executed on real infrastructure. The unused in-memory fakes and the parallel
+  plural-DDL `ensure*Schema` seams are pending retirement now that the
+  composition uses the canonical schema (ADR-0020).
 - **SDK** is a complete typed client mirroring the operation catalog, but has not
   been exercised end-to-end against a live deployed server.
 - **Dashboard** now has client-side application logic (session/credential/scope
