@@ -12,6 +12,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1099.0",
     "@streetjs/media": "^1.1.0",
+    "@streetjs/queue": "^1.0.1",
     "@streetjs/storage": "^1.0.2",
     "@streetstudio/analytics": "*",
     "@streetstudio/auth": "*",
