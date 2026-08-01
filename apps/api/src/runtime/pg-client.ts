@@ -28,7 +28,7 @@ import type {
   StreetPostgresClient,
   TransactionalSqlClient,
 } from "@streetstudio/database";
-import { PgPool } from "streetjs/pool";
+import { PgPool } from "streetjs";
 
 /**
  * Parse a `postgres://user:pass@host:port/database` URL into the discrete
