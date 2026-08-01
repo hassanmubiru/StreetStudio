@@ -85,7 +85,15 @@ await anon.auth.register({ email: emailB, password: "password12345" });
 const sessB = await anon.auth.login({ email: emailB, password: "password12345" });
 const cB = new StreetStudioClient({ baseUrl: BASE, auth: { kind: "bearer", token: sessB.accessToken }, organizationId: org.id });
 let denied = false;
-try { await cB.projects.list(); } catch (e) { denied = (e && (e.code === "AUTHORIZATION_DENIED" || e.status === 403)) || String(e).includes("403"); }
+let crossOutcome;
+try {
+  const r = await cB.projects.list();
+  crossOutcome = `RETURNED array len=${Array.isArray(r) ? r.length : "?"} value=${JSON.stringify(r).slice(0, 120)}`;
+} catch (e) {
+  denied = true;
+  crossOutcome = `THREW code=${e?.code} status=${e?.status} name=${e?.name} msg=${String(e?.message).slice(0, 80)}`;
+}
+console.log("  cross-tenant outcome:", crossOutcome);
 check("sdk cross-tenant projects.list → denied", denied);
 
 const passed = results.filter((r) => r.pass).length;
