@@ -108,9 +108,18 @@ async function main(): Promise<void> {
     },
   );
 
+  // Prove the queue backend is reachable before serving (connect + PING for the
+  // Redis driver; a no-op for the Memory driver).
+  await media.initQueue();
+
   // Processing placement: inline (single-node default) unless a distributed
   // worker is running (PROCESSING_INLINE=false → uploads.complete enqueues only).
   const inlineProcessing = process.env["PROCESSING_INLINE"] !== "false";
+  // In inline mode this API process also consumes the queue, so an in-process
+  // worker drives each enqueued video to completion for the synchronous response.
+  if (inlineProcessing) {
+    media.startWorker({ concurrency: 1 });
+  }
   const { service, operations, authenticate, uploadPart, resolveObject } =
     buildRuntime(config, pgClient, media, realtime, { inlineProcessing });
   realtime.setAuthenticator(authenticate);
