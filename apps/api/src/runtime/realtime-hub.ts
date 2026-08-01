@@ -117,6 +117,12 @@ export class RealtimeHub {
       // Late-bound authenticator: verifies the SAME bearer token the REST
       // surface uses. A null result rejects the upgrade with 401 (no socket).
       authenticate: async (req: IncomingMessage): Promise<Member | null> => {
+        // Gate the path ourselves (the framework's exact-match path option is
+        // incompatible with our query string): only `/realtime` may upgrade.
+        const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
+        if (pathname !== REALTIME_PATH) {
+          return null;
+        }
         const auth = this.authFn ? await this.authFn(extractToken(req)) : null;
         if (!auth) {
           return null;
