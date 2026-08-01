@@ -399,31 +399,31 @@ export function createHttpServer(deps: HttpServerDeps): ReturnType<typeof street
     }
   }
 
-  async function respondHealth(res: ServerResponse): Promise<void> {
-    let postgres = false;
-    try {
-      postgres = await deps.pg.ping();
-    } catch {
-      postgres = false;
-    }
-    const ok = postgres;
-    writeJson(res, ok ? 200 : 503, {
-      status: ok ? "ok" : "degraded",
-      checks: { postgres },
-    });
+  async function respondHealth(
+    res: ServerResponse,
+    kind: "liveness" | "readiness",
+  ): Promise<void> {
+    const report =
+      kind === "liveness"
+        ? await health.runLiveness()
+        : await health.runReadiness();
+    // 200 when every check is up; 503 when any check is down (Req 30.2).
+    writeJson(res, report.status === "ok" ? 200 : 503, report);
   }
 
   function respondMetrics(res: ServerResponse): void {
-    // Set point-in-time process gauges at scrape time.
-    metrics.setGauge("process_uptime_seconds", Math.floor((Date.now() - startedAt) / 1000));
+    // Set point-in-time process gauges at scrape time, then render the
+    // Prometheus text exposition owned by the framework registry.
+    uptimeGauge.set(Math.floor((Date.now() - startedAt) / 1000));
     const mem = process.memoryUsage();
-    metrics.setGauge("process_rss_bytes", mem.rss);
-    metrics.setGauge("process_heap_used_bytes", mem.heapUsed);
-    writeJson(res, 200, metrics.snapshot());
+    rssGauge.set(mem.rss);
+    heapGauge.set(mem.heapUsed);
+    res.writeHead(200, { "content-type": PROMETHEUS_CONTENT_TYPE });
+    res.end(metrics.collect());
   }
 
   function respondWithError(res: ServerResponse, error: unknown): void {
-    metrics.increment("http_errors_total");
+    errorsTotal.inc();
     if (error instanceof AppError) {
       // Surface the retry-after hint (e.g. RATE_LIMITED → 429) as the standard
       // HTTP `Retry-After` header so clients know when they may retry (R29.1).
