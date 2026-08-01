@@ -36,6 +36,32 @@ function walk(dir, filter, out = []) {
 
 const isStreetjsPkg = (name) => name === "streetjs" || name.startsWith("@streetjs/");
 
+/**
+ * The set of published subpath exports for an installed package (from its
+ * `package.json` `exports`), normalized without the leading "./". A
+ * `@streetjs/<pkg>/<sub>` import is a legitimate public-API consumption when
+ * `<sub>` is one of these; deep/internal paths are not (ADR-0022). Cached.
+ */
+const subpathCache = new Map();
+function publishedSubpaths(pkgName) {
+  if (subpathCache.has(pkgName)) return subpathCache.get(pkgName);
+  const set = new Set();
+  try {
+    const manifest = JSON.parse(
+      readFileSync(join(ROOT, "node_modules", pkgName, "package.json"), "utf8"),
+    );
+    for (const key of Object.keys(manifest.exports ?? {})) {
+      if (key === ".") continue;
+      const normalized = key.startsWith("./") ? key.slice(2) : key;
+      if (normalized) set.add(normalized);
+    }
+  } catch {
+    /* not installed / no exports */
+  }
+  subpathCache.set(pkgName, set);
+  return set;
+}
+
 // A specifier is a plain registry range unless it uses a local/vcs/url protocol.
 const BAD_SPECIFIER = /^(file:|link:|portal:|workspace:|git\+|git:|https?:|\.\.?\/|\/)/;
 
