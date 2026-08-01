@@ -18,7 +18,6 @@ import {
   streetApp,
   MetricsRegistry,
   HealthCheckRegistry,
-  createDbReadinessCheck,
   PROMETHEUS_CONTENT_TYPE,
 } from "streetjs";
 import { AppError } from "@streetstudio/shared";
