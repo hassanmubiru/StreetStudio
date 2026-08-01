@@ -44,7 +44,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
   - Mark task complete when test is written, run, and failure is documented
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [-] 2. Write preservation property tests (BEFORE any fix)
+- [x] 2. Write preservation property tests (BEFORE any fix)
   - **Property 2: Preservation** - non-`/api` behavior is unchanged
   - **IMPORTANT**: Follow observation-first methodology — observe behavior on the UNFIXED `server.mjs`/Vite host first, then encode it as properties
   - Observe and record on UNFIXED code, then assert as generated properties over the non-`/api` request domain:
