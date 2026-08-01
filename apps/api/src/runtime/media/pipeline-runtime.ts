@@ -168,7 +168,8 @@ export async function buildMediaRuntime(
     probeDurationSeconds: (objectKey) =>
       transcoder.probeDurationSeconds(objectKey),
     close(): void {
-      driver.destroy();
+      // The framework StorageDriver owns and manages its own client lifecycle;
+      // there is no explicit socket handle to release here.
     },
   };
 }
