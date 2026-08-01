@@ -875,7 +875,7 @@ each gain.
 | 4 | `media/ffmpeg-transcoder.ts` raw `spawn`/arg-building | `@streetjs/media` `MediaProcessor` | 4 → 2 | Update 30 |
 | 5 | `media/media-worker.ts` (SKIP-LOCKED) + `InProcessQueue` + `processing_claim` | `@streetjs/queue` (`RedisDriver`/`MemoryDriver`) | 2 → 2¹ | Update 31 |
 | 6 | `realtime-hub.ts` (`ws`) + `realtime-bus.ts` (`ioredis`) | `@streetjs/realtime` (+ `RedisAdapter`) over `streetjs/websocket` | 2 → **0** | Update 32 |
-| 7 (optional) | `/metrics` + `/health` in-house registries | `@streetjs/metrics` / `@streetjs/health` | 0 → 0² | — |
+| 7 | `/metrics` + `/health` in-house registries | `streetjs` `MetricsRegistry` + `HealthCheckRegistry` (bare exports) | 0 → 0² | Update 33 |
 
 **ADR-0022 ratchet target reached (slice 6).** As of slice 6 the `apps/api`
 raw-infrastructure file count is **0**: HTTP host (`streetApp`), DB pool
