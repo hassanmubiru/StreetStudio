@@ -1,5 +1,22 @@
 # StreetStudio — Release Candidate (RC1) Verification Report
 
+> **⚠️ CORRECTION (ADR-0022).** A central claim in this report — Update 3's
+> *"the granular `@streetjs/*` packages are not published yet… that is why no
+> composition root existed"* — is **FALSE**. It was inferred from what was
+> installed in `node_modules` (only `@streetjs/storage`), never checked against
+> the registry. Verified on npm: `streetjs@1.2.7`, `@streetjs/database@1.0.0`,
+> `@streetjs/media@1.1.0`, `@streetjs/realtime@1.0.1`, `@streetjs/metrics@1.0.0`,
+> and `@streetjs/storage@1.0.2` are all real published tarballs, and `streetjs`
+> exposes `./http`, `./router`, `./pool`, `./repository`, `./migrations`,
+> `./security`, `./ratelimit`, `./websocket`, `./telemetry`, … Consequently the
+> hand-rolled runtime infrastructure this report celebrates (Updates 3–26: HTTP
+> host, `pg` pool adapter, WebSocket hub, Redis bus, `SKIP LOCKED` job queue,
+> ffmpeg transcoder, S3 driver, `/metrics`) **reimplements published framework
+> capabilities inside the product repo**, violating the production charter. It is
+> being retired via the strangler-fig migration in **ADR-0022**. The end-to-end
+> verifications below remain factually accurate as *runtime proofs*; what changed
+> is the architectural verdict on *where that code belongs*.
+
 **Verdict: ❌ NOT a Release Candidate.** Build and the full test suite now PASS (all code-level criteria met), **but runtime validation is blocked by RUNTIME-01: the application has no runnable server process or concrete infrastructure integrations.** This is a deeper blocker than the previously-noted INFRA-01 — providing infrastructure cannot help because there is no server to connect it to. No results are fabricated; runtime phases are documented as not-executable with evidence.
 
 ---
