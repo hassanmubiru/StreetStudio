@@ -53,6 +53,9 @@ export function defaultBoundaryConfig(workspaceRoot: string): BoundaryConfig {
     streetjsPackages: DEFAULT_STREETJS_PACKAGES,
     streetjsRepoMarkers: DEFAULT_STREETJS_REPO_MARKERS,
     vendorModules: DEFAULT_VENDOR_MODULES,
+    // Strict by default: no subpath is pre-approved. The CLI populates this from
+    // the installed StreetJS packages' `exports` for real project analysis.
+    streetjsPublicSubpaths: new Map(),
   };
 }
 
