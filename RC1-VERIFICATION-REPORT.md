@@ -636,6 +636,20 @@ The runnable API server now exposes the full operational surface — env→confi
 
 ---
 
+## Update 27 — ADR-0022 remediation begins: record corrected + strangler-fig slice 1 (adopt `streetjs` `PgPool`)
+
+A production-charter re-review established (verified against the npm registry, and confirmed in `node_modules`) that the StreetJS framework is **published and installed** — `streetjs@1.2.7` with `./http`·`/pool`·`/repository`·`/migrations`·`/security`·`/ratelimit`·`/websocket`·`/telemetry`, plus `@streetjs/{database,media,realtime,metrics,storage}`. Updates 3–26 therefore **hand-rolled reusable infrastructure inside the product repo** (HTTP host, `pg` pool, WebSocket hub, Redis bus, `SKIP LOCKED` queue, ffmpeg transcoder, S3 driver, `/metrics`) under a false "not published" belief — a violation of the Fundamental Rule. Recorded as **ADR-0022** with a strangler-fig remediation.
+
+**Record corrected (zero code risk):** ADR-0022 added to `docs/DECISIONS.md`; correction banners added to this report's header and to Update 3; a new **anti-reimplementation ratchet gate** (`scripts/check-infra-ratchet.mjs`, wired into `package.json` + `scripts/check.sh`) fails the build if the count of `apps/api` files importing raw drivers (`pg`/`ws`/`ioredis`/`ffmpeg-static`/`@aws-sdk/*`/`createServer`) rises above a baseline that only ratchets toward 0.
+
+**Slice 1 — `PgPool` (done, verified):** `apps/api/src/runtime/pg-client.ts` now composes the published `streetjs/pool` `PgPool` instead of a hand-rolled `node-postgres` `Pool`; `pg` and `@types/pg` removed from `apps/api`. Because the StreetJS wire client returns columns as strings (not auto-parsed like `node-postgres`), this **aligns with the repository layer's `coerceValue`** — the root cause of the earlier "jsonb double-parse" defects was using raw `pg`, not the framework. Fixed the two string-sensitive raw reads (`ping()` `Number(ok)===1`; playback-manifest `bitrate` `Number(...)`), and `asPgPool()` now returns the real pool (removing the documented `as unknown as PgPool` cast). Ratchet: **7 → 6**.
+
+**Verified end-to-end on real Postgres (framework pool):** server boots (`runMigrations` + `ensureUploadsSchema` + `ping` all on `PgPool`); 11/11 API checks pass including the **RBAC jsonb round-trip** (org-admin `["*",…]` permissions written and read back to grant `projects.create`) — the exact path the raw-`pg` mismatch used to break — plus full projects CRUD, cross-tenant `403`, `analytics.metrics`, and `/metrics`; and 4/4 media checks (upload→transcode→`ready`/3 renditions→playback manifest with numeric bitrates) on the pool via `asPgPool()`. Gates: typecheck + `streetjs:check` + `boundary:check` + `infra:ratchet` green; full suite **5315 passed / 0 failed**.
+
+**Next slices (ADR-0022 order):** (2) HTTP host/router/ratelimit → `streetApp`/`streetjs/http`/`streetjs/router`/`streetjs/ratelimit`; (3) storage → `@streetjs/storage`; (4) media → `@streetjs/media`; (5) queue/worker → `@streetjs/queue`; (6) realtime → `@streetjs/realtime`; (7) metrics/health → `@streetjs/metrics`/`@streetjs/health`. Each lowers the ratchet toward 0.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
