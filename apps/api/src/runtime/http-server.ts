@@ -199,14 +199,20 @@ export function createHttpServer(deps: HttpServerDeps): ReturnType<typeof street
   const health = deps.health ?? new HealthCheckRegistry();
   health.addCheck(
     "postgres",
-    createDbReadinessCheck({
-      expected: true,
-      probe: async () => {
-        if (!(await deps.pg.ping())) {
-          throw new Error("PostgreSQL connectivity check (SELECT 1) failed");
-        }
-      },
-    }),
+    async () => {
+      try {
+        return (await deps.pg.ping())
+          ? { status: "up" }
+          : { status: "down", details: { reason: "SELECT 1 returned false" } };
+      } catch (error) {
+        return {
+          status: "down",
+          details: {
+            reason: error instanceof Error ? error.message : String(error),
+          },
+        };
+      }
+    },
     { type: "readiness" },
   );
   const startedAt = Date.now();
