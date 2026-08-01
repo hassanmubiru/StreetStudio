@@ -52,4 +52,4 @@ fi
 run npm run test:coverage
 
 echo ""
-echo "✅ All checks passed (build, graph:check, boundary:check, streetjs:check, coverage)."
+echo "✅ All checks passed (build, graph:check, boundary:check, streetjs:check, infra:ratchet, coverage)."
