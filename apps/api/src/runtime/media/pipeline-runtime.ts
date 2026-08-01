@@ -16,13 +16,14 @@
  */
 import { createRepositories, streetSqlClient } from "@streetstudio/database";
 import { createStorage, type Storage } from "@streetjs/storage";
+import type { Worker } from "@streetjs/queue";
 import {
   MediaPipeline,
   repositoryProcessingStore,
   type ProcessingJob,
-  type ProcessingQueue,
   type ProcessingResult,
   type ProcessingStatusEmitter,
+  type ProcessingStore,
 } from "@streetstudio/processing";
 import type { Uuid } from "@streetstudio/shared";
 import type { PgClient } from "../pg-client.js";
@@ -30,6 +31,11 @@ import {
   FfmpegTranscoder,
   type FfmpegInvocation,
 } from "./ffmpeg-transcoder.js";
+import {
+  createMediaQueue,
+  type MediaWorkOptions,
+  type StreetProcessingQueue,
+} from "./street-queue.js";
 // Object storage is owned by the published framework (ADR-0022 slice 3): the S3
 // driver comes from `@streetjs/storage/s3` (a published subpath export), not a
 // hand-rolled `@aws-sdk` adapter. The driver lazily loads `@aws-sdk/client-s3`
