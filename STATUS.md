@@ -132,6 +132,13 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 25):** **distributed worker crash recovery** — an
+  atomic claim (`FOR UPDATE SKIP LOCKED` + a composition-layer `processing_claim`
+  row in one transaction), claim release on completion, and a startup/periodic
+  **stale-claim reclaim** that requeues Videos abandoned by a dead worker
+  (`WORKER_CLAIM_TIMEOUT_MS`, default 5 min). Verified: a video stuck
+  `processing` with a 10-min-old claim was reclaimed → processed → `ready` (3
+  renditions, 0 residual claims). No change to the tested database schema.
 - **Recently closed (Update 24):** the **typed `@streetstudio/sdk` client** was
   exercised end-to-end against the **live server** (24/24 operations via resource
   methods — auth, orgs, projects/folders CRUD, lists, analytics, api-keys,
@@ -187,10 +194,7 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   BuildKit/`buildx` (documented environment limitation).
 - **Remaining gaps (documented follow-ups):** 2 **moderate** landing-page a11y
   items (global skip-link targets absent on the public landing page — touches
-  tested accessibility code, scoped follow-up); and worker **stale-claim
-  recovery** (reclaiming a Video left `processing` by a crashed worker) which
-  needs a claim-timestamp column on the `video` table — a change to the
-  heavily-tested `@streetstudio/database` schema, deliberately deferred. Every
+  tested accessibility code, scoped follow-up). Every
   automated phase this environment can run — build, all Docker images, the full
   operation catalog, media lifecycle, distributed processing, cross-process
   realtime, performance under load, and runtime a11y + browser e2e — has been
