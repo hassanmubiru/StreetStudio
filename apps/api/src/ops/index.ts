@@ -7,11 +7,6 @@
  *  - {@link startApiService}: validates required configuration and aborts with
  *    a named error on any missing/invalid value (R30.3), then activates
  *    dependencies within the 60-second startup budget (R30.2).
- *  - {@link HealthChecker} / {@link exposeHealthCheck}: aggregate dependency
- *    reachability into a passing/failing status and expose it through the
- *    StreetJS health check interface (R30.2, R30.4).
- *  - {@link MetricsRegistry} / {@link exposeMetrics}: record counters/gauges and
- *    publish them through the StreetJS metrics interface (R30.4).
  *  - {@link HaConnectionManager} / {@link createHaConnectionManager}: operate
  *    against PostgreSQL HA and Redis Cluster through the StreetJS HA interfaces
  *    (R30.5) and reconnect on primary/node loss, resuming without an operator
