@@ -197,8 +197,9 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   executed on real infrastructure. The unused in-memory fakes and the parallel
   plural-DDL `ensure*Schema` seams are pending retirement now that the
   composition uses the canonical schema (ADR-0020).
-- **SDK** is a complete typed client mirroring the operation catalog, but has not
-  been exercised end-to-end against a live deployed server.
+- **SDK** is a complete typed client mirroring the operation catalog, now
+  **exercised end-to-end against the live server** (24/24 operations via the
+  typed resource methods; two real parity defects fixed — see update 24).
 - **Dashboard** now has client-side application logic (session/credential/scope
   management + use-case flows over the SDK), verified with an in-memory transport;
   its UI rendering layer is still unbuilt. The other clients (`desktop`,
