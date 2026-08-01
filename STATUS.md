@@ -48,7 +48,7 @@ Operation catalog wired (REST+WS)██████████ 100%  45/45 ops 
 Media pipeline (real ffmpeg)     ██████████ 100%  upload→duration-probe→transcode(thumb/preview/ABR)→storage→stream renditions(Range); in-process + distributed worker (SKIP LOCKED)
 Auth / RBAC / tenant isolation   ██████████ 100%  register/login/JWT, wildcard-admin RBAC, deny-by-default, cross-tenant 403s verified
 Realtime (WebSocket)             ██████████ 100%  authenticated /realtime channel + notification & processing-status fan-out; cross-process bus (Redis pub/sub) delivers worker events to clients; in-process fallback
-SDK (typed client)               ████████░░  80%   not yet run against a live server
+SDK (typed client)               ██████████ 100%  exercised end-to-end against the live server (24/24 ops via the typed client); fixed 2 real parity defects (list-array shape, error-envelope unwrapping)
 Client models (editor/timeline)  ██████░░░░  60%   model + reducer/ops implemented & tested; no UI
 Dashboard client logic           ██████░░░░  65%   session/scope, workspace/video/search/notification flows, uploads, sharing, reactions, edit-session; no UI
 Dashboard (web UI runtime)       ████░░░░░░  40%   Vite SPA production-builds (es2022), served by a zero-dep static host, and browser-verified in real Chrome (renders/routes, 0 critical/serious axe a11y); Docker web image runs
