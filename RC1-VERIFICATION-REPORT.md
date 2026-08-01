@@ -716,6 +716,26 @@ Gates: typecheck + `streetjs:check` (recognizes the published `@streetjs/queue/r
 
 ---
 
+## Update 32 — ADR-0022 slice 6: realtime adopted (`@streetjs/realtime`); ratchet reaches 0
+
+Replaced the hand-rolled realtime infrastructure — the raw `ws` WebSocket hub (`realtime-hub.ts`) and the `ioredis` cross-process pub/sub bus (`realtime-bus.ts`) — with the **published** `@streetjs/realtime` over the framework's `StreetWebSocketServer`. Verified against the installed `.d.ts`: `createRealtime({ server, authenticate, adapter })` owns the authenticated upgrade handshake, per-connection identity binding, room membership, broadcast fan-out, and (via a `ClusterAdapter`) cross-instance delivery.
+
+**Consumption:** `realtime-hub.ts` was rewritten to compose the framework facade. Org/member scoping is modeled as **rooms**: a connection joins `member:{memberId}` and, when the client declares one via `?organizationId=`, `org:{organizationId}`; `broadcastToOrg`/`sendToMember` become room broadcasts. The `authenticate` hook verifies the SAME bearer token the REST surface uses (a `null` result rejects the upgrade with 401). Cross-process fan-out is the framework `RedisAdapter` over `streetjs`'s `RedisClient` (retiring the ioredis bus); with no `REDIS_URL` the framework `MemoryAdapter` runs single-node. The media worker — a producer with no sockets — gets a hub whose WebSocket server is never attached, so its `broadcastToOrg` publishes only through the RedisAdapter for API instances to re-inject. `realtime-bus.ts` was deleted; `main.ts`/`worker-main.ts` drop the bus; the hand-rolled `app.server.on("upgrade")` wiring is replaced by `StreetWebSocketServer.attach(app.server)`. The now-unused direct deps `ioredis`, `ws`, and `@types/ws` were removed from `apps/api`.
+
+**Wire format (client-affecting, agreed):** frames are now the framework envelope **`{ type, payload, ts }`** (the fields the former flat hub sent are nested under `payload`); the `connected` confirmation is sent on join. The SDK is transport-agnostic (`RealtimeEvent {type,data}`; the injected `RealtimeTransport` parses frames) and no test pinned the old flat shape, so the change is contained to the wire envelope.
+
+**Framework gotcha found & handled:** `StreetWebSocketServer`'s `attach` matches the upgrade with an EXACT `req.url === options.path` check, which a `?organizationId=` query string always fails (the socket is destroyed → "socket hang up"). Resolved by not setting the `path` option and gating the path in the `authenticate` hook (reject non-`/realtime` upgrades) — documented in the adapter.
+
+**Verified end-to-end on real infra (Postgres + MinIO + ffmpeg + Redis):**
+- **Inline:** an authenticated WS client received the `connected` frame, then `queued → processing → ready` for its uploaded video, each as `{type:"processing-status", payload:{videoId,status,...}, ts}`. 9/9.
+- **Distributed:** with the API enqueue-only, a **separate worker process** produced `processing`/`ready`; the API's WS client received them cross-process via the framework `RedisAdapter`. 9/9.
+
+Gates: typecheck + `streetjs:check` (recognizes `@streetjs/realtime/redis` + `streetjs/websocket` subpaths) + `boundary:check` (401 files) + **`infra:ratchet` at baseline 0**. Full suite **5315 passed / 0 failed**.
+
+**ADR-0022 migration COMPLETE for the ratchet target:** `apps/api` hand-rolls **zero** reusable infrastructure — HTTP host (`streetApp`), DB pool (`streetjs` `PgPool`), object storage (`@streetjs/storage/s3`), media transcode (`@streetjs/media`), queue (`@streetjs/queue`), and realtime (`@streetjs/realtime`) are all consumed from the published framework. Slice 7 (metrics/health → `@streetjs/metrics`/`@streetjs/health`) remains as optional polish (the current `/metrics` + `/health` use small in-house registries, not a flagged raw driver, so they do not affect the ratchet).
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
