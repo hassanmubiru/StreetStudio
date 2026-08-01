@@ -13,7 +13,8 @@
  * A `GET /health` endpoint short-circuits routing and reports dependency
  * reachability (a real `SELECT 1` against PostgreSQL).
  */
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
+import { streetApp } from "streetjs";
 import { AppError } from "@streetstudio/shared";
 import type { Uuid } from "@streetstudio/shared";
 import type { AuthContext } from "@streetstudio/auth";
