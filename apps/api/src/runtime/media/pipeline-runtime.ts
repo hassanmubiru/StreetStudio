@@ -255,5 +255,6 @@ export function mediaRuntimeConfigFromEnv(
     s3ForcePathStyle: true,
     ffmpegPath: env["FFMPEG_PATH"] ?? ffmpegPath,
     ffprobePath: env["FFPROBE_PATH"] ?? ffprobePath,
+    ...(env["REDIS_URL"] ? { redisUrl: env["REDIS_URL"] } : {}),
   };
 }
