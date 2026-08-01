@@ -18,11 +18,15 @@
   (`pg`/`ws`/`ioredis`/`ffmpeg`/S3/HTTP host) the framework already owns — a
   charter violation now being retired via a **strangler-fig migration**
   (ADR-0022): slice 1 moved the DB pool onto `streetjs/pool` `PgPool`, slice 2
-  the HTTP host onto `streetApp`, and slice 3 object storage onto the published
+  the HTTP host onto `streetApp`, slice 3 object storage onto the published
   `@streetjs/storage/s3` driver (the boundary guards were refined, ADR-0023, to
-  recognize published `exports` subpaths as public API). An `infra:ratchet` gate
-  holds the raw-driver file count monotonically toward 0 (currently 4).
-  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–29)
+  recognize published `exports` subpaths as public API), and slice 4 media
+  transcode onto the published `@streetjs/media` `MediaProcessor` (product no
+  longer spawns ffmpeg or builds ffmpeg args; `ffmpeg-static`/`ffprobe-static`
+  are injected as sanctioned binary providers). An `infra:ratchet` gate holds
+  the raw-driver file count monotonically toward 0 (now **2** — only the
+  `ioredis` bus and `ws` hub remain, targeted by slices 6/7).
+  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–30)
   for the full, evidence-backed verification.
   The web SPA now production-builds (Vite, es2022 target) and is served by a
   zero-dependency static host (`apps/web/server.mjs`, with the Docker `web`
