@@ -1,6 +1,20 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
+// Single configurable backend origin for the `/api` proxy, shared by both the
+// dev server and `vite preview`. The `/api` prefix is a same-origin routing
+// marker only; it is stripped before forwarding so the backend receives ROOT
+// paths (`/api/auth/login` -> `/auth/login`).
+const apiOrigin = process.env.API_ORIGIN || 'http://localhost:8080';
+
+const proxy = {
+  '/api': {
+    target: apiOrigin,
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/api/, ''),
+  },
+};
+
 export default defineConfig({
   build: {
     outDir: 'dist',
@@ -23,10 +37,12 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    proxy,
   },
   preview: {
     port: 3000,
     host: true,
+    proxy,
   },
   test: {
     environment: 'jsdom',
