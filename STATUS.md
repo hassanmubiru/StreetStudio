@@ -146,6 +146,17 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 31):** **ADR-0022 slice 5** — the media queue moved
+  onto the published **`@streetjs/queue`**; the hand-rolled `InProcessQueue` and
+  the bespoke SKIP-LOCKED `MediaWorker` (+ `processing_claim` table) were
+  deleted. A new `media/street-queue.ts` composes the framework `Queue` (durable
+  `RedisDriver` over `streetjs`'s `RedisClient` when `REDIS_URL` is set, else the
+  framework `MemoryDriver`). Postgres `video.status` stays authoritative for
+  domain status; an idempotent handler bridges the queue's at-least-once
+  delivery. Verified end-to-end on real Redis: **inline** (uploads.complete →
+  `ready` synchronously) and **distributed** (a separate worker process drains
+  the Redis queue → `ready`, cross-process). Ratchet unchanged at 2 (queue used
+  raw SQL, not a flagged driver).
 - **Recently closed (Update 30):** **ADR-0022 slice 4** — media transcode moved
   onto the published **`@streetjs/media`** `MediaProcessor`; the hand-rolled
   ffmpeg transcoder (raw `spawn` + product-built ffmpeg/ffprobe arg vectors) was
