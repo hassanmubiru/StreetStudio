@@ -1,0 +1,4 @@
+{
+  "$comment": "Anti-reimplementation ratchet baseline (ADR-0022). Count of apps/api source files importing raw infrastructure drivers (pg, ws, ioredis, ffmpeg-static, @aws-sdk/*) or hosting an HTTP server (createServer). The strangler-fig migration lowers this toward 0 as each hand-rolled adapter is replaced by a published StreetJS package. NEVER raise it.",
+  "maxRawInfraFiles": 7
+}
