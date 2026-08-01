@@ -623,6 +623,59 @@ export function buildRuntime(
     }));
   };
 
+  // organizations.update (RBAC org:update): rename and/or replace settings on
+  // the canonical `organization` record via the repository layer (store of
+  // record). Absent org → 404; an out-of-range name → VALIDATION_FAILED.
+  const updateOrganization: ServiceInvocation<OrganizationDto> = async (request, context) => {
+    requireAuth(context);
+    const orgId = requireUuidPathParam(request, "id");
+    const body =
+      typeof request.body === "object" && request.body !== null
+        ? (request.body as Record<string, unknown>)
+        : {};
+    const existing = await repositories.organizations.findById(orgId);
+    if (!existing) {
+      throw new AppError("NOT_FOUND");
+    }
+    let name = existing.name;
+    if (body["name"] !== undefined) {
+      if (typeof body["name"] !== "string" || body["name"].length < 1 || body["name"].length > 255) {
+        throw new AppError("VALIDATION_FAILED", {
+          details: { field: "name", reason: "must be a string of 1–255 characters" },
+        });
+      }
+      name = body["name"];
+    }
+    const settings =
+      body["settings"] !== undefined &&
+      typeof body["settings"] === "object" &&
+      body["settings"] !== null
+        ? (body["settings"] as Record<string, unknown>)
+        : existing.settings;
+    const updated = { ...existing, name, settings };
+    await repositories.organizations.update(updated);
+    return toOrganizationDto(updated);
+  };
+
+  // organizations.invite (RBAC org:invite): create a pending invitation to the
+  // org for an email, via the real OrgService (validates email + membership).
+  const inviteMember: ServiceInvocation<InvitationDto> = async (request, context) => {
+    const auth = requireAuth(context);
+    const orgId = requireUuidPathParam(request, "id");
+    const email = requireStringField(request.body, "email");
+    const inv = await orgService.invite(auth, orgId, email);
+    // The invite token is a shareable secret; the DTO surfaces only the
+    // non-secret invitation metadata (parity with the SDK's InvitationDto).
+    return {
+      id: inv.id,
+      organizationId: inv.organizationId,
+      email: inv.email,
+      status: inv.status,
+      createdAt: inv.createdAt,
+      expiresAt: inv.expiresAt,
+    };
+  };
+
   // projects.create (RBAC: project:create) — scoped to X-Organization-Id.
   const createProject: ServiceInvocation = async (request, context) => {
     const auth = requireAuth(context);
