@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ADR-0022 complete: adopt the published StreetJS runtime (strangler-fig).**
+  The runnable API/worker composition root (`apps/api/src/runtime/`) now consumes
+  every reusable infrastructure concern from the published framework instead of
+  hand-rolling it, retired one production-ready vertical slice at a time and
+  verified end-to-end on real infrastructure (PostgreSQL, MinIO, ffmpeg, Redis):
+  (1) DB pool → `streetjs` `PgPool`; (2) HTTP host → `streetApp`; (3) object
+  storage → `@streetjs/storage/s3`; (4) media transcode → `@streetjs/media`
+  `MediaProcessor` (`ffmpeg-static`/`ffprobe-static` injected as binary
+  providers); (5) durable queue/worker → `@streetjs/queue` (Redis driver over
+  `streetjs` `RedisClient`, Memory fallback), retiring the SKIP-LOCKED worker +
+  `processing_claim` table; (6) realtime → `@streetjs/realtime` (rooms +
+  `RedisAdapter` over `streetjs/websocket`), retiring the `ws` hub and `ioredis`
+  bus (realtime frames now use the framework `{type, payload, ts}` envelope);
+  (7) metrics/health → `streetjs` `MetricsRegistry` (Prometheus `GET /metrics`)
+  + `HealthCheckRegistry` (`/health`, `/health/live`, `/health/ready`). An
+  **anti-reimplementation ratchet** gate (`scripts/check-infra-ratchet.mjs`)
+  enforces the outcome: the count of `apps/api` files importing raw
+  infrastructure drivers is locked at **0**. The boundary/consumption guards were
+  refined (ADR-0023) to recognize published `exports` subpaths as public API.
+  Direct deps `pg`/`@types/pg`, `ioredis`, `ws`/`@types/ws`, and the hand-rolled
+  S3 driver / ffmpeg arg-builder / in-house `ops/{metrics,health}.ts` registries
+  were removed. See `RC1-VERIFICATION-REPORT.md` updates 27–33 and ADR-0022/0023.
+
 - **ADR-0021 completion: Repository seams retirement:** Completed store-of-record
   convergence by repointing the final organizations domain to the canonical
   repository layer (`assemblePostgresOrganizations`) and reclassifying 
