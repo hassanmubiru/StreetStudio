@@ -597,6 +597,21 @@ Closed the last deferred functional item — a distributed worker that crashes m
 
 ---
 
+## Update 26 — Operational metrics endpoint wired (R30.4)
+
+The composition shipped an operational `MetricsRegistry` (`apps/api/src/ops/metrics.ts`, tested) but the runnable server exposed only `GET /health` — there was **no `/metrics` endpoint**, leaving R30.4 (operator-visible metrics) unmet in the running system. Wired it in the transport (composition-only; no domain change):
+
+- `createHttpServer` now owns a `MetricsRegistry` (injectable via `HttpServerDeps.metrics`). It increments `http_requests_total` for every API request (catalog + byte routes) and `http_errors_total` in the error responder.
+- Added `GET /metrics` returning a JSON snapshot of counters plus live process gauges set at scrape time — `process_uptime_seconds`, `process_rss_bytes`, `process_heap_used_bytes`. The scrape itself short-circuits before the request counter, so it is not counted as API traffic.
+
+**Verified live:** after exactly 3 API requests (two `401`s + one `201`), `GET /metrics` reported `{"counters":{"http_requests_total":3,"http_errors_total":2},"gauges":{"process_uptime_seconds":…,"process_rss_bytes":…,"process_heap_used_bytes":…}}` — request/error counts exact, scrape uncounted, gauges live. Gates: typecheck + `streetjs:check` + `boundary:check` (403 files) green; full suite **5315 passed / 0 failed**.
+
+The runnable API server now exposes the full operational surface — env→config→migrations→listen, `GET /health` (dependency reachability), `GET /metrics` (R30.4), and graceful SIGTERM/SIGINT shutdown — over the real HTTP+WebSocket transport on real infrastructure.
+
+**Remaining for full RC:** only the 2 moderate landing-page a11y items (scoped follow-up in tested accessibility code).
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
