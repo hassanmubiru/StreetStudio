@@ -145,6 +145,7 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "notifications.list",
   "notifications.markRead",
   "notifications.listPreferences",
+  "notifications.updatePreference",
   "analytics.metrics",
   // Uploads (RBAC) + playback manifest (RBAC). The raw part-upload and
   // object-stream byte routes are served directly by the HTTP transport (the
