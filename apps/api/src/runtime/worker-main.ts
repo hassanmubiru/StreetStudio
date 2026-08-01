@@ -87,7 +87,17 @@ async function main(): Promise<void> {
     statusEmitter,
   );
 
-  const worker = new MediaWorker(pg, media, { pollIntervalMs });
+  const claimTimeoutMs = Number.parseInt(
+    process.env["WORKER_CLAIM_TIMEOUT_MS"] ?? "300000",
+    10,
+  );
+  const workerId =
+    process.env["WORKER_ID"] ?? process.env["INSTANCE_ID"] ?? undefined;
+  const worker = new MediaWorker(pg, media, {
+    pollIntervalMs,
+    claimTimeoutMs,
+    ...(workerId ? { workerId } : {}),
+  });
 
   let shuttingDown = false;
   const shutdown = (signal: string): void => {
