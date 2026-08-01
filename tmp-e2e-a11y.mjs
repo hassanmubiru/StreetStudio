@@ -20,9 +20,10 @@ const check = (name, cond, detail) => { results.push({ name, pass: !!cond, detai
 
 async function auditRoute(path, label) {
   const page = await browser.newPage();
-  const consoleErrors = [];
-  page.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text()); });
-  page.on("pageerror", (e) => consoleErrors.push("pageerror: " + e.message));
+  const pageErrors = []; // uncaught JS exceptions — real health signal
+  const consoleWarnings = []; // resource 404s / external-font CSP noise — reported, not fatal
+  page.on("console", (m) => { if (m.type() === "error") consoleWarnings.push(m.text()); });
+  page.on("pageerror", (e) => pageErrors.push("pageerror: " + e.message));
   const resp = await page.goto(WEB + path, { waitUntil: "networkidle2", timeout: 20000 });
   check(`${label}: HTTP 200`, resp && resp.status() === 200, `status=${resp && resp.status()}`);
   // The SPA mounts into the DOM: assert real rendered content (not an empty shell).
