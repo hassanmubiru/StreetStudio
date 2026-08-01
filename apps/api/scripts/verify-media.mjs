@@ -92,8 +92,9 @@ async function main() {
 
     // ── Build the concrete media runtime (real ffmpeg + real S3/MinIO) ──────
     const invocations = [];
-    const config = mediaRuntimeConfigFromEnv(process.env, ffmpegPath);
-    runtime = buildMediaRuntime(pg, {
+    const config = mediaRuntimeConfigFromEnv(process.env, ffmpegPath, ffprobeStatic.path);
+    log(`ffprobe-static binary: ${ffprobeStatic.path}`);
+    runtime = await buildMediaRuntime(pg, {
       ...config,
       onFfmpegInvocation: (inv) => {
         invocations.push(inv);
@@ -147,6 +148,12 @@ async function main() {
     assert(!!result.thumbnail?.objectKey, `thumbnail persisted (${result.thumbnail?.objectKey})`);
     assert(!!result.preview?.objectKey, `preview persisted (${result.preview?.objectKey})`);
     assert(result.renditions.length >= 3, `>= 3 renditions persisted (${result.renditions.length})`);
+
+    // ── 5b. Duration probe via @streetjs/media over ffprobe-static ──────────
+    log("\n[5b] Probing source duration via @streetjs/media (ffprobe-static) ...");
+    const probedSeconds = await runtime.probeDurationSeconds(sourceObjectKey);
+    log(`  probed duration = ${probedSeconds}s`);
+    assert(probedSeconds === 6, `ffprobe reported the real 6s duration (got ${probedSeconds})`);
 
     // ── Query Postgres for the persisted rows ───────────────────────────────
     log("\n[5a] PostgreSQL rows:");
