@@ -137,6 +137,15 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 27):** **architectural correction (ADR-0022)** — a
+  charter re-review found the composition root had hand-rolled infrastructure the
+  **published** StreetJS framework already owns (the "not published" premise was
+  false). Recorded ADR-0022, corrected the false record, added an
+  `infra:ratchet` gate (raw-driver count only shrinks), and completed
+  **strangler-fig slice 1**: the DB pool now runs on `streetjs/pool` `PgPool`
+  (raw `pg` removed; ratchet 7→6). Verified end-to-end on real Postgres — RBAC
+  jsonb round-trip, full CRUD, tenant isolation, and upload→transcode→playback
+  all green on the framework pool.
 - **Recently closed (Update 26):** the runnable server now exposes **`GET /metrics`**
   (R30.4) — `http_requests_total`/`http_errors_total` counters + live process
   gauges (uptime/RSS/heap), verified live; completing the operational surface
