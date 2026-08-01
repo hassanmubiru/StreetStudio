@@ -667,6 +667,23 @@ Replaced the hand-rolled `node:http` `createServer` transport with the published
 
 ---
 
+## Update 29 — ADR-0022 slice 3: object storage adopted (`@streetjs/storage/s3`); hand-rolled S3 driver retired; boundary gate refined
+
+Replaced the hand-rolled `media/s3-storage-driver.ts` (built on `@aws-sdk/client-s3`) with the **published** `@streetjs/storage/s3` driver. Verifying the framework surface (not the stale note that claimed it shipped "only memory/local") showed `@streetjs/storage@1.0.2` publishes first-class cloud drivers — `./s3`, `./minio`, `./r2`, `./gcs`, `./azure`, `./supabase`, `./backblaze`. So the product's S3 driver duplicated a framework capability.
+
+**Consumption:** `pipeline-runtime.ts` now builds the driver with `createS3StorageDriverFromConfig({ bucket, region, endpoint, credentials, forcePathStyle })` (works against MinIO). That factory **lazily `import()`s `@aws-sdk/client-s3`** — the optional peer this app still provides in its manifest — so no vendor SDK is imported in product source. `buildMediaRuntime` became `async` (driver construction is async); both call sites (`main.ts`, `worker-main.ts`) now `await` it. The hand-rolled driver file was deleted; ratchet **5 → 4**.
+
+**Gate refinement (necessary, and correct):** the framework publishes cloud drivers only as **subpath exports** (`@streetjs/storage/s3`), and the facade requires a pre-built `config.driver` for cloud providers — so consuming the framework driver *requires* a subpath import, which both guards previously rejected as "reaching into an internal module." That was a false positive: a subpath declared in a package's `exports` **is** its public API. Both guards now permit a `@streetjs/<pkg>/<sub>` import **iff `<sub>` is a declared export** of that installed package, while still rejecting genuine internal/deep paths:
+- `packages/config` boundary analyzer: added `BoundaryConfig.streetjsPublicSubpaths` (empty by default → strict; existing 24 boundary tests unchanged), consulted in rule 2a; the CLI populates it from the installed `@streetjs/*` packages' `exports` (`discoverStreetjsPublicSubpaths`).
+- `scripts/check-streetjs-consumption.mjs`: a deep-scoped `@streetjs/*` import is allowed when the subpath is a published export.
+This extends ADR-0001/ADR-0011's "consume only public entry points" to recognize multi-entry `exports` maps — the modern shape of the framework's public API.
+
+**Verified end-to-end on the framework driver (real MinIO):** upload (part `put` → MinIO), `complete` → assemble + transcode (`get` source, `put` thumbnail/preview/3 renditions), `playback.manifest` (3 renditions + 2 assets), and Range `get` streaming of every rendition + thumbnail (206, non-empty, sizes match) — **8/8**. Gates: typecheck + `streetjs:check` + `boundary:check` (402 files) + `infra:ratchet` green; `packages/config` boundary tests 24/24; full suite **5315 passed / 0 failed**.
+
+**Remaining infra to retire (ratchet 4, target 0):** `realtime-bus.ts` (`ioredis`), `realtime-hub.ts` (`ws`), `main.ts` + `worker-main.ts` (`ffmpeg-static`) → slices (4) media transcode → `@streetjs/media`, (5) queue/worker → `@streetjs/queue`, (6) realtime → `@streetjs/realtime`, (7) metrics/health → `@streetjs/metrics`/`@streetjs/health`.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
