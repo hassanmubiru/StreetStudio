@@ -234,13 +234,9 @@ export function createHttpServer(deps: HttpServerDeps): ReturnType<typeof street
       return;
     }
 
-    let body: unknown;
-    try {
-      body = await readJsonBody(req);
-    } catch (error) {
-      respondWithError(res, error);
-      return;
-    }
+    // Body was parsed by the framework (`ctx.body`); a malformed JSON body
+    // arrives as null, which the operation's field validation rejects.
+    const body: unknown = preParsedBody;
 
     const credential = bearerToken(req);
     const remoteAddress = req.socket.remoteAddress ?? "unknown";
