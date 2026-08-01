@@ -23,6 +23,7 @@ import type { ApiRequest } from "../http/lifecycle.js";
 import type { RestRouter } from "../http/controllers.js";
 import type { PgClient } from "./pg-client.js";
 import type { Runtime } from "./container.js";
+import { MetricsRegistry } from "../ops/metrics.js";
 
 /** A compiled route: its operation plus the template split into segments. */
 interface CompiledRoute {
