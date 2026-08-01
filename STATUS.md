@@ -106,18 +106,17 @@ Published repo + npm releases    ░░░░░░░░░░   0%   not relea
 
 Static counts from `npm run status`; gate results from `scripts/check.sh`.
 
-| Metric              | Value  |
-| ------------------- | ------ |
-| Apps                | 5      |
-| Packages            | 44     |
-| Source files        | 174    |
-| Source LOC          | 26,692 |
-| Test files          | 189    |
-| Property-test files | 89     |
-| Test LOC            | 36,180 |
-| Tests               | 892 passing with a DB (integration tests skip without one) |
-| Line coverage       | 85.92% (DB-backed, as CI runs); ~82% no-DB local |
-| build / graph / boundary / streetjs gates | passing |
+| Metric              | Value   |
+| ------------------- | ------- |
+| Apps                | 6       |
+| Packages            | 44      |
+| Source files        | 396     |
+| Source LOC          | 120,002 |
+| Test files          | 319     |
+| Property-test files | 103     |
+| Test LOC            | 103,933 |
+| Tests               | 5,296 passing / 0 failing (71 skipped) — `npx vitest run` |
+| build / typecheck / graph / boundary / streetjs / infra:ratchet gates | passing |
 
 *Regenerate the counts with `npm run status`; regenerate pass/coverage with
 `npm test` and `npm run test:coverage`. Do not hand-edit measured values.*
