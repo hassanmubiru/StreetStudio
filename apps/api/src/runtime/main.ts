@@ -64,20 +64,16 @@ async function main(): Promise<void> {
   // `activate` ran to completion, so the client is initialized.
   const pgClient = pg as PgClient;
 
-  // WebSocket realtime transport. Built first so it can serve as both the
-  // NotificationService delivery emitter and the processing-status fan-out
-  // target; its bearer authenticator is wired from the runtime immediately
-  // after buildRuntime.
-  const realtime = new RealtimeHub();
-
-  // Cross-process realtime bus (Redis pub/sub) when REDIS_URL is set; otherwise
-  // a no-op bus and we broadcast in-process (single-node). This is how
-  // processing-status events produced by a SEPARATE media worker (or another
-  // API instance) reach the WebSocket clients connected to THIS process.
-  const realtimeBus = createRealtimeBus(process.env["REDIS_URL"]);
-  realtimeBus.onMessage((organizationId, event) =>
-    realtime.broadcastToOrg(organizationId, event),
-  );
+  // WebSocket realtime transport (published `@streetjs/realtime`, ADR-0022
+  // slice 6). Built first so it can serve as both the NotificationService
+  // delivery emitter and the processing-status fan-out target; its bearer
+  // authenticator is wired from the runtime immediately after buildRuntime.
+  // Cross-instance fan-out (a SEPARATE media worker or a second API instance)
+  // is handled by the framework's RedisAdapter when REDIS_URL is set; otherwise
+  // the framework MemoryAdapter delivers in-process (single-node).
+  const realtime = await RealtimeHub.create({
+    redisUrl: process.env["REDIS_URL"],
+  });
 
   // Concrete media pipeline (real ffmpeg via ffmpeg-static + S3/MinIO storage),
   // shared by uploads/playback and the processing pipeline. Processing-status
@@ -89,20 +85,16 @@ async function main(): Promise<void> {
     mediaRuntimeConfigFromEnv(process.env, ffmpegPath, ffprobePath),
     {
       emit(event) {
-        const payload = {
+        // Fan out over the owning org's room. The framework facade delivers to
+        // this instance's connected clients and (via the RedisAdapter) to peer
+        // instances, so a single call reaches every client exactly once.
+        realtime.broadcastToOrg(event.organizationId, {
           type: "processing-status",
           videoId: event.videoId,
           status: event.status,
           at: event.at,
           ...(event.failed ? { failed: true } : {}),
-        };
-        if (realtimeBus.distributed) {
-          // Publish to Redis; every subscribed API instance (including this
-          // one) broadcasts to its local sockets — exactly-once per client.
-          realtimeBus.publish(event.organizationId, payload);
-        } else {
-          realtime.broadcastToOrg(event.organizationId, payload);
-        }
+        });
       },
     },
   );
@@ -135,12 +127,10 @@ async function main(): Promise<void> {
     resolveObject,
   });
 
-  // Route HTTP upgrades on /realtime to the WebSocket hub; reject others.
-  app.server.on("upgrade", (req, socket, head) => {
-    if (!realtime.handleUpgrade(req, socket, head)) {
-      socket.destroy();
-    }
-  });
+  // Attach the framework WebSocket server to the shared HTTP socket. The
+  // framework owns the `/realtime` upgrade, the authenticated handshake, and
+  // identity binding; the hub joins each connection to its member/org rooms.
+  realtime.attach(app.server);
 
   await app.listen(config.httpPort, "0.0.0.0");
   // eslint-disable-next-line no-console
@@ -160,12 +150,7 @@ async function main(): Promise<void> {
     shuttingDown = true;
     // eslint-disable-next-line no-console
     console.log(`[api] received ${signal}, shutting down`);
-    try {
-      realtime.close();
-    } catch {
-      /* best-effort */
-    }
-    void realtimeBus.close().catch(() => undefined);
+    void realtime.close().catch(() => undefined);
     void app
       .close()
       .catch(() => undefined)

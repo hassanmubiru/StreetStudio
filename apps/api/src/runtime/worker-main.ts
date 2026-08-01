@@ -25,7 +25,7 @@ import {
   buildMediaRuntime,
   mediaRuntimeConfigFromEnv,
 } from "./media/pipeline-runtime.js";
-import { createRealtimeBus } from "./realtime-bus.js";
+import { RealtimeHub } from "./realtime-hub.js";
 import type { ProcessingStatusEmitter } from "@streetstudio/processing";
 
 function requireEnv(name: string): string {
