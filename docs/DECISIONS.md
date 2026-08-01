@@ -877,6 +877,26 @@ each gain.
 | 6 (pending) | `realtime-bus.ts` (`ioredis`) + `realtime-hub.ts` (`ws`) | `@streetjs/realtime` / `streetjs/websocket` | — | — |
 | 7 (pending) | `/metrics` + `/health` wiring | `@streetjs/metrics` / `@streetjs/health` | — | — |
 
+¹ **Slice 5 leaves the ratchet at 2 by design.** The retired `MediaWorker`
+reached the durable backlog with raw SQL through the framework pool (not a
+flagged driver import: `pg`/`ws`/`ioredis`/`createServer`), so replacing it with
+`@streetjs/queue` retires hand-rolled queue *infrastructure* without moving the
+ratchet count. The remaining 2 (`realtime-bus.ts`/`ioredis`,
+`realtime-hub.ts`/`ws`) are addressed by slice 6.
+
+**Slice 5 dual-source-of-truth handling.** The framework `@streetjs/queue`
+Redis driver holds the *job*; the canonical Postgres `video.status` remains
+authoritative for *domain status*. `enqueue` marks the video `queued` and
+dispatches a job; the registered handler is idempotent (an at-least-once
+redelivery of an already-`ready` video is acked without reprocessing, preventing
+duplicate rendition/asset rows). Inline single-node mode runs an in-process
+worker plus a per-video completion promise so `uploads.complete` returns the
+terminal result synchronously; distributed mode (`PROCESSING_INLINE=false`)
+enqueues only and separate workers drain the Redis queue with the driver's
+visibility-lease crash recovery (no `processing_claim` table). When `REDIS_URL`
+is unset the framework `MemoryDriver` is used, so no hand-rolled queue remains on
+either path.
+
 **Slice 4 ratchet clarification — sanctioned binary providers.** The
 `infra:ratchet` driver set was tightened to `{ pg, ws, ioredis }` plus
 `node:http createServer`; `ffmpeg-static` and `ffprobe-static` were **removed**
