@@ -132,6 +132,10 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 26):** the runnable server now exposes **`GET /metrics`**
+  (R30.4) — `http_requests_total`/`http_errors_total` counters + live process
+  gauges (uptime/RSS/heap), verified live; completing the operational surface
+  (`/health` + `/metrics` + graceful shutdown) alongside the composition root.
 - **Recently closed (Update 25):** **distributed worker crash recovery** — an
   atomic claim (`FOR UPDATE SKIP LOCKED` + a composition-layer `processing_claim`
   row in one transaction), claim release on completion, and a startup/periodic
