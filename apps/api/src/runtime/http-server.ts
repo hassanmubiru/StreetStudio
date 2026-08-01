@@ -152,6 +152,8 @@ export interface HttpServerDeps {
   readonly uploadPart: Runtime["uploadPart"];
   /** Backs `GET /objects/*` (authorized byte streaming with Range). */
   readonly resolveObject: Runtime["resolveObject"];
+  /** Operational metrics registry (R30.4). Created if not supplied. */
+  readonly metrics?: MetricsRegistry;
 }
 
 /** Read the entire request body as raw bytes. */
@@ -181,6 +183,10 @@ function requireOrgHeader(req: IncomingMessage): Uuid {
  */
 export function createHttpServer(deps: HttpServerDeps): Server {
   const routes = compileRoutes(deps.operations);
+  // Operational metrics (R30.4): request/error counters + live process gauges,
+  // exposed at GET /metrics. Shared for the lifetime of the server.
+  const metrics = deps.metrics ?? new MetricsRegistry();
+  const startedAt = Date.now();
 
   return createServer((req, res) => {
     void handle(req, res).catch((error: unknown) => {
@@ -196,11 +202,21 @@ export function createHttpServer(deps: HttpServerDeps): Server {
     const url = new URL(req.url ?? "/", "http://localhost");
     const pathname = url.pathname;
 
+    // Operational metrics (R30.4). The scrape itself is not counted as API
+    // traffic, so this short-circuits before the request counter below.
+    if (method === "GET" && pathname === "/metrics") {
+      respondMetrics(res);
+      return;
+    }
+
     // Health check: report dependency reachability (R30.2/R30.4).
     if (method === "GET" && pathname === "/health") {
       await respondHealth(res);
       return;
     }
+
+    // Count every API request (catalog + byte routes) once past health/metrics.
+    metrics.increment("http_requests_total");
 
     // --- Raw byte routes (not in the JSON catalog; documented gaps) --------
     // Chunked part upload: PUT /uploads/:id/parts/:partNumber  (binary body).
@@ -354,7 +370,17 @@ export function createHttpServer(deps: HttpServerDeps): Server {
     });
   }
 
+  function respondMetrics(res: ServerResponse): void {
+    // Set point-in-time process gauges at scrape time.
+    metrics.setGauge("process_uptime_seconds", Math.floor((Date.now() - startedAt) / 1000));
+    const mem = process.memoryUsage();
+    metrics.setGauge("process_rss_bytes", mem.rss);
+    metrics.setGauge("process_heap_used_bytes", mem.heapUsed);
+    writeJson(res, 200, metrics.snapshot());
+  }
+
   function respondWithError(res: ServerResponse, error: unknown): void {
+    metrics.increment("http_errors_total");
     if (error instanceof AppError) {
       // Surface the retry-after hint (e.g. RATE_LIMITED → 429) as the standard
       // HTTP `Retry-After` header so clients know when they may retry (R29.1).
