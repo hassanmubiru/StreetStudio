@@ -845,7 +845,7 @@ export function buildRuntime(
     requireAuth(context);
     const orgId = requireOrganizationId(context);
     const apiKeys = await apiKeyService.list(orgId);
-    return { apiKeys, total: apiKeys.length };
+    return apiKeys;
   };
 
   // apiKeys.revoke (RBAC: apikey:revoke)
@@ -862,7 +862,7 @@ export function buildRuntime(
     const auth = requireAuth(context);
     const orgId = requireOrganizationId(context);
     const videos = await contentService.listVideos(auth, orgId);
-    return { videos, total: videos.length };
+    return videos;
   };
 
   // videos.get (RBAC: video:read)
