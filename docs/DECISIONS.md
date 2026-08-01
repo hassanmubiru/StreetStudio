@@ -859,3 +859,35 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   informal "adapt standard drivers through the existing structural seams"
   composition-root decision documented in `apps/api/src/runtime/main.ts` and
   `RC1-VERIFICATION-REPORT.md` Update 3.
+
+### ADR-0022 slice progress log
+
+The strangler-fig migration proceeds one production-ready slice at a time; each
+row is proven on real infra with every gate green before the hand-rolled adapter
+is deleted. Ratchet baseline (`scripts/infra-ratchet.json`) is lowered to hold
+each gain.
+
+| Slice | Hand-rolled adapter retired | Adopted framework surface | Ratchet | RC update |
+|---|---|---|---|---|
+| 1 | `pg-client.ts` raw `node-postgres` pool | `streetjs` `PgPool` (bare entry) | 7 → 6 | Update 27 |
+| 2 | `http-server.ts` `node:http` `createServer` | `streetApp` (framework HTTP host) | 6 → 5 | Update 28 |
+| 3 | `media/s3-storage-driver.ts` (`@aws-sdk`) | `@streetjs/storage/s3` published driver | 5 → 4 | Update 29 |
+| 4 | `media/ffmpeg-transcoder.ts` raw `spawn`/arg-building | `@streetjs/media` `MediaProcessor` | 4 → 2 | Update 30 |
+| 5 (pending) | `media/media-worker.ts` + `processing_claim` | `@streetjs/queue` | — | — |
+| 6 (pending) | `realtime-bus.ts` (`ioredis`) + `realtime-hub.ts` (`ws`) | `@streetjs/realtime` / `streetjs/websocket` | — | — |
+| 7 (pending) | `/metrics` + `/health` wiring | `@streetjs/metrics` / `@streetjs/health` | — | — |
+
+**Slice 4 ratchet clarification — sanctioned binary providers.** The
+`infra:ratchet` driver set was tightened to `{ pg, ws, ioredis }` plus
+`node:http createServer`; `ffmpeg-static` and `ffprobe-static` were **removed**
+from it. Rationale: those packages supply the ffmpeg/ffprobe *binary paths* that
+the framework's injectable `MediaProcessor` runner (`NodeCommandRunner`)
+executes. A composition root importing a static binary path to hand to a
+framework runner is an **extension-point input** — the same category as passing
+a `config.driver` to a framework storage factory — not a hand-rolled
+infrastructure driver. `@aws-sdk/*` deliberately **stays flagged**: the
+framework's published S3 driver `import()`s it lazily itself (ADR-0023), so any
+direct `@aws-sdk` import in product source would be a reimplementation and must
+fail the gate. This distinction (product may inject a binary/peer *into* a
+framework component, but may not re-drive the vendor SDK itself) is the operative
+line between "consuming the framework" and "reimplementing infrastructure."
