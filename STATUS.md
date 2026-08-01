@@ -160,12 +160,12 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   gets `connected` then `queued → processing → ready`) and **distributed** (a
   separate worker process's events reach the API's WS client cross-process).
   **`infra:ratchet` reached its target 0** — `apps/api` hand-rolls no reusable
-  infrastructure; the ADR-0022 strangler migration is complete for its mandate.
-  (Slice 7, metrics/health → `streetjs` `MetricsRegistry`/`HealthCheckRegistry`,
-  is **deferred by decision**: the in-house `ops/` registries are tested
-  structural seams the ratchet does not flag, and swapping them is a breaking
-  change to `/metrics` (JSON→Prometheus), `/health`, and the Docker healthcheck
-  for zero ratchet benefit — see ADR-0022 footnote ².)
+  infrastructure; the ADR-0022 strangler migration is **complete**. Slice 7
+  moved observability onto `streetjs`'s built-in `MetricsRegistry`
+  (Prometheus `/metrics`) and `HealthCheckRegistry` (`/health` + `/health/live`
+  + `/health/ready`), non-breakingly (the Docker healthcheck path is preserved).
+  Every runtime concern — HTTP host, DB pool, storage, transcode, queue,
+  realtime, and metrics/health — is now consumed from the published framework.
 - **Recently closed (Update 31):** **ADR-0022 slice 5** — the media queue moved
   onto the published **`@streetjs/queue`**; the hand-rolled `InProcessQueue` and
   the bespoke SKIP-LOCKED `MediaWorker` (+ `processing_claim` table) were
