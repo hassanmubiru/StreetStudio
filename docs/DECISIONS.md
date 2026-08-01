@@ -651,11 +651,44 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
 
 ## ADR-0020: De-seam the legacy `packages/auth` onto real StreetJS auth (incremental)
 
-- **Status:** Accepted — step 1 executed (real Postgres member/session stores),
-  and the real `AuthService` core is verified end-to-end on them (register →
-  login → verify → logout against real Postgres). Steps 2–5 as numbered below
-  (swap session/token/API-key seams to `streetjs` `auth/*`, RBAC, migrate
-  consumers, remove seams) are in progress.
+- **Status:** Accepted — production auth runs entirely on **real PostgreSQL via
+  the canonical repository layer** and hand-rolls no in-memory seam. `apps/api`'s
+  composition root (`runtime/container.ts`) wires `AuthService` with
+  `repositoryAuthStores`/`repositoryRbacStore`/`repositoryApiKeyStore` over
+  `createRepositories(streetSqlClient(pg))`; the in-memory member/session/RBAC/
+  api-key stores exist only as unit-test classes (step 5 satisfied by
+  construction). Token issuance was moved onto the framework's JWT primitive
+  (step 2, JWT part — see below). The remaining step-2 primitives are **blocked
+  by a framework publishing gap** (see below). Ground-truth note: earlier text
+  crediting `assemblePostgresAuth` as the production path was inaccurate —
+  `assemblePostgresAuth` (which composes the direct-`PgPool` `postgresAuthStores`)
+  is integration-test scaffolding; the real production wiring is container's
+  `repository*Store` path.
+  - **[done] Step 2 (JWT):** access-token issuance/verification now consumes the
+    published `streetjs` `JwtService` (strict HS256: header-`alg` confinement so
+    `alg:none`/confusion is rejected, constant-time signature comparison,
+    `exp`/`nbf`/`iat` enforcement, ≥32-char secret) via a
+    `StreetJwtAccessTokenIssuer` adapter behind the auth core's
+    `AccessTokenIssuer` port (`apps/api/src/security/street-jwt-issuer.ts`,
+    wired in `container.ts`). The port's reference HS256 impl
+    (`HmacAccessTokenIssuer`) stays in `@streetstudio/auth` for unit/property
+    tests. Verified live (valid→200, tampered→401, `alg:none` forgery→401,
+    no-token→401) and by a focused adapter unit test.
+  - **[BLOCKED — framework gap] Step 2 (session-store / refresh-tokens /
+    api-keys):** `streetjs@1.2.7` does **not** expose `auth/session-store`,
+    `auth/refresh-tokens`, or `auth/api-keys` as public subpath exports (its
+    `exports` map publishes only `./security` JwtService, `./session` (AES-GCM),
+    `./vault`, `./ratelimit`); deep imports are forbidden by the boundary gate
+    (ADR-0001/0011). The product's own Postgres-backed `SessionStore` /
+    `ApiKeyService` (no refresh-token flow) therefore remain until StreetJS
+    publishes these primitives — tracked as a framework gap in the README
+    StreetJS gap register. This is a genuine missing capability, not a
+    reimplementation to force-fit.
+  - **[done] Step 3 (RBAC store):** `RbacAccessControl` runs on real Postgres via
+    `repositoryRbacStore`. Adopting a framework `requireRoles` primitive remains
+    optional.
+  - **[done] Steps 1, 4, 5:** real Postgres member/session stores; `apps/api`
+    migrated; in-memory seams are test-only by construction.
 - **Context:** The reference-build `packages/auth` implements authentication,
   sessions, RBAC, and API keys behind **in-memory adapter seams**, and is
   consumed (directly or transitively) across much of the reference build
