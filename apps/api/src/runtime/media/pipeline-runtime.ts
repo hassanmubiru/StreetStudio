@@ -78,22 +78,34 @@ const noopEmitter: ProcessingStatusEmitter = {
 export interface MediaRuntime {
   /** The composed pipeline. */
   readonly pipeline: MediaPipeline;
-  /** The in-process queue backing {@link MediaPipeline.enqueue}. */
-  readonly queue: InProcessQueue;
+  /** The framework-backed media queue ({@link MediaPipeline} enqueues onto it). */
+  readonly queue: StreetProcessingQueue;
   /** The storage facade over the S3 driver (for direct object access). */
   readonly storage: Storage;
   /** The underlying framework {@link StorageDriver} (for direct object access). */
   readonly driver: StorageDriver;
-  /** Enqueue a video for processing (marks it `queued`). */
+  /** Enqueue a video for processing (marks it `queued` + dispatches a job). */
   enqueue(videoId: Uuid): Promise<void>;
-  /** Process a job synchronously, returning its terminal result. */
+  /**
+   * Process a job synchronously through the pipeline, bypassing the queue.
+   * Used by the verification harness / tests; the runtime worker uses the
+   * registered handler instead.
+   */
   process(job: ProcessingJob): Promise<ProcessingResult>;
-  /** Drain the queue, processing every job in FIFO order. */
-  drain(): Promise<ProcessingResult[]>;
+  /**
+   * Enqueue a video and await its terminal result (inline single-node path).
+   * Requires a running worker ({@link startWorker}); the worker's handler
+   * resolves the awaited completion when the video reaches `ready`/`failed`.
+   */
+  enqueueAndAwait(videoId: Uuid, organizationId: Uuid): Promise<ProcessingResult>;
+  /** Start the consuming worker (reservation loop). Idempotent per call. */
+  startWorker(options?: MediaWorkOptions): Worker;
+  /** Prove the queue backend is reachable (connect + PING for Redis). */
+  initQueue(): Promise<void>;
   /** Probe the integer-second duration of a stored media object (0 if unknown). */
   probeDurationSeconds(objectKey: string): Promise<number>;
-  /** Release the S3 client sockets. */
-  close(): void;
+  /** Stop workers, close the queue driver/client, and release resources. */
+  close(): Promise<void>;
 }
 
 /**
