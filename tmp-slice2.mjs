@@ -71,7 +71,8 @@ ws.close();
 
 // Empty-body authed POST (logout) — no content-type; ctx.body undefined. Done
 // last so it doesn't invalidate the token the upload steps above rely on.
-ck("auth.logout 200 (empty body)", (await j("POST", "/auth/logout", { token })).status === 200);
+const lo = await j("POST", "/auth/logout", { token });
+ck("auth.logout 200 (empty body)", lo.status === 200, `status=${lo.status} data=${JSON.stringify(lo.data)}`);
 
 // /metrics after real API traffic — counters now present.
 const m1 = await j("GET", "/metrics");
