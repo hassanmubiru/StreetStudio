@@ -142,6 +142,7 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   // Notifications (personal/authenticated scope) + analytics (RBAC read).
   "notifications.list",
   "notifications.markRead",
+  "notifications.listPreferences",
   "analytics.metrics",
   // Uploads (RBAC) + playback manifest (RBAC). The raw part-upload and
   // object-stream byte routes are served directly by the HTTP transport (the
@@ -339,9 +340,11 @@ export function buildRuntime(
   // WebSocket realtime transport is not wired in this composition, so
   // deliverPending is unused; list/markRead do not touch it.
   const notificationStore = repositoryNotificationStore(repositories);
+  const notificationPreferenceStore =
+    repositoryNotificationPreferenceStore(repositories);
   const notificationService = new NotificationService({
     notifications: notificationStore,
-    preferences: repositoryNotificationPreferenceStore(repositories),
+    preferences: notificationPreferenceStore,
     // Realtime delivery over the WebSocket hub (falls back to a no-op emitter
     // if the transport is not wired).
     emitter: notificationEmitter,
@@ -532,6 +535,91 @@ export function buildRuntime(
     return organizations;
   };
 
+  // organizations.get (RBAC org:read): the org identified by :id, resolved from
+  // the canonical `organization` table. RBAC (org:read in that org) gates entry,
+  // so a non-member is denied before this runs; a missing org is 404.
+  const getOrganization: ServiceInvocation<OrganizationDto> = async (request, context) => {
+    requireAuth(context);
+    const orgId = requireUuidPathParam(request, "id");
+    const result = await pg.query<{
+      id: string;
+      name: string;
+      settings: string | Record<string, unknown> | null;
+      created_at: string;
+    }>(
+      `SELECT id, name, settings, created_at FROM organization WHERE id = $1`,
+      [orgId],
+    );
+    const row = result.rows[0];
+    if (!row) {
+      throw new AppError("NOT_FOUND");
+    }
+    return {
+      id: row.id as Uuid,
+      name: row.name,
+      settings:
+        typeof row.settings === "string"
+          ? (JSON.parse(row.settings) as Record<string, unknown>)
+          : row.settings ?? {},
+      createdAt: new Date(row.created_at).toISOString(),
+    };
+  };
+
+  // organizations.listMembers (RBAC org:read_members): the org's memberships,
+  // read from the canonical `membership` table (org-scoped).
+  const listOrgMembers: ServiceInvocation = async (request, context) => {
+    requireAuth(context);
+    const orgId = requireUuidPathParam(request, "id");
+    const result = await pg.query<{
+      organization_id: string;
+      member_id: string;
+      role_id: string;
+      created_at: string;
+    }>(
+      `SELECT organization_id, member_id, role_id, created_at
+         FROM membership
+        WHERE organization_id = $1
+        ORDER BY created_at ASC`,
+      [orgId],
+    );
+    return result.rows.map((r) => ({
+      organizationId: r.organization_id as Uuid,
+      memberId: r.member_id as Uuid,
+      roleId: r.role_id as Uuid,
+      createdAt: new Date(r.created_at).toISOString(),
+    }));
+  };
+
+  // organizations.listRoles (RBAC org:read_roles): the org's roles + granted
+  // permissions, read from the canonical `role` table (org-scoped). `permissions`
+  // is a jsonb array (the framework wire client returns it as a string).
+  const listOrgRoles: ServiceInvocation = async (request, context) => {
+    requireAuth(context);
+    const orgId = requireUuidPathParam(request, "id");
+    const result = await pg.query<{
+      id: string;
+      organization_id: string;
+      name: string;
+      permissions: string | string[] | null;
+    }>(
+      `SELECT id, organization_id, name, permissions
+         FROM role
+        WHERE organization_id = $1
+        ORDER BY name ASC`,
+      [orgId],
+    );
+    return result.rows.map((r) => ({
+      id: r.id as Uuid,
+      organizationId: r.organization_id as Uuid,
+      name: r.name,
+      permissions: Array.isArray(r.permissions)
+        ? r.permissions
+        : typeof r.permissions === "string"
+          ? (JSON.parse(r.permissions) as string[])
+          : [],
+    }));
+  };
+
   // projects.create (RBAC: project:create) — scoped to X-Organization-Id.
   const createProject: ServiceInvocation = async (request, context) => {
     const auth = requireAuth(context);
@@ -617,6 +705,19 @@ export function buildRuntime(
     }
     await notificationService.markRead(auth.memberId, id as Uuid);
     return { success: true };
+  };
+
+  // notifications.listPreferences (personal scope): the caller's own
+  // notification preferences, read from the preference store (a member with no
+  // configured preferences gets an empty list — event types default to enabled).
+  const listNotificationPreferences: ServiceInvocation = async (_request, context) => {
+    const auth = requireAuth(context);
+    const records = await notificationPreferenceStore.listByMember(auth.memberId);
+    return records.map((r) => ({
+      memberId: r.memberId,
+      eventType: r.eventType,
+      enabled: r.enabled,
+    }));
   };
 
   // analytics.metrics (RBAC: analytics:read, Administrator-only): aggregate
@@ -1193,6 +1294,9 @@ export function buildRuntime(
     .register<ServiceInvocation>("auth.currentMember", currentMember)
     .register<ServiceInvocation>("organizations.create", createOrganization)
     .register<ServiceInvocation>("organizations.list", listOrganizations)
+    .register<ServiceInvocation>("organizations.get", getOrganization)
+    .register<ServiceInvocation>("organizations.listMembers", listOrgMembers)
+    .register<ServiceInvocation>("organizations.listRoles", listOrgRoles)
     .register<ServiceInvocation>("projects.create", createProject)
     .register<ServiceInvocation>("projects.list", listProjects)
     .register<ServiceInvocation>("projects.get", getProject)
@@ -1235,6 +1339,7 @@ export function buildRuntime(
     })
     .register<ServiceInvocation>("notifications.list", listNotifications)
     .register<ServiceInvocation>("notifications.markRead", markNotificationRead)
+    .register<ServiceInvocation>("notifications.listPreferences", listNotificationPreferences)
     .register<ServiceInvocation>("analytics.metrics", analyticsMetrics)
     .register<ServiceInvocation>("uploads.create", createUpload)
     .register<ServiceInvocation>("uploads.get", getUpload)
