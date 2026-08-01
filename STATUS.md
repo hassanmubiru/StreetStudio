@@ -138,6 +138,13 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 28):** **ADR-0022 slice 2** — the hand-rolled
+  `node:http` server was replaced by the published **`streetApp`** host via a
+  bridge (product keeps only the operation-catalog dispatch + lifecycle as one
+  catch-all middleware; framework owns the socket). WS `/realtime` still attaches
+  to `app.server`; binary upload works because the host leaves `octet-stream`
+  unconsumed; timeout raised for inline transcode. Verified 14/14 on real infra;
+  ratchet 6→5.
 - **Recently closed (Update 27):** **architectural correction (ADR-0022)** — a
   charter re-review found the composition root had hand-rolled infrastructure the
   **published** StreetJS framework already owns (the "not published" premise was
