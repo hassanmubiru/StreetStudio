@@ -20,13 +20,16 @@
   (ADR-0022): slice 1 moved the DB pool onto `streetjs/pool` `PgPool`, slice 2
   the HTTP host onto `streetApp`, slice 3 object storage onto the published
   `@streetjs/storage/s3` driver (the boundary guards were refined, ADR-0023, to
-  recognize published `exports` subpaths as public API), and slice 4 media
+  recognize published `exports` subpaths as public API), slice 4 media
   transcode onto the published `@streetjs/media` `MediaProcessor` (product no
   longer spawns ffmpeg or builds ffmpeg args; `ffmpeg-static`/`ffprobe-static`
-  are injected as sanctioned binary providers). An `infra:ratchet` gate holds
-  the raw-driver file count monotonically toward 0 (now **2** — only the
-  `ioredis` bus and `ws` hub remain, targeted by slices 6/7).
-  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–30)
+  are injected as sanctioned binary providers), and slice 5 the media queue onto
+  the published `@streetjs/queue` (Redis driver via `streetjs`'s `RedisClient`;
+  Memory driver fallback), retiring the hand-rolled SKIP-LOCKED worker +
+  `processing_claim` table. An `infra:ratchet` gate holds the raw-driver file
+  count monotonically toward 0 (now **2** — only the `ioredis` bus and `ws` hub
+  remain, targeted by slice 6).
+  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–31)
   for the full, evidence-backed verification.
   The web SPA now production-builds (Vite, es2022 target) and is served by a
   zero-dependency static host (`apps/web/server.mjs`, with the Docker `web`
