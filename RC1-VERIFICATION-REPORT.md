@@ -684,6 +684,22 @@ This extends ADR-0001/ADR-0011's "consume only public entry points" to recognize
 
 ---
 
+## Update 30 — ADR-0022 slice 4: media transcode adopted (`@streetjs/media`); hand-rolled ffmpeg arg-building retired
+
+Replaced the hand-rolled ffmpeg transcoder (raw `child_process.spawn` + product-built ffmpeg/ffprobe argument vectors) with the **published** `@streetjs/media` processor. Verifying the framework surface (not the stale note that assumed the product must own transcoding) showed `@streetjs/media@1.1.0` is a provider-agnostic ffmpeg/ffprobe wrapper — `MediaProcessor.probe/transcode/thumbnail/hls` over an injectable `CommandRunner` (`NodeCommandRunner`), with injectable `ffmpegPath`/`ffprobePath`. That covers the entire pipeline contract, so the product's transcoder duplicated framework capability.
+
+**Consumption:** `media/ffmpeg-transcoder.ts` now drives `new MediaProcessor({ ffmpegPath, ffprobePath, runner: new NodeCommandRunner() })`. Product code no longer builds a single ffmpeg argument or spawns a process — the framework owns argument construction (evidence: the recorded invocations now carry the framework's `-hide_banner -v error` prefix and `scale=-2:H` filters). The product retains only its genuine concerns: the ABR/preview/thumbnail **recipe** (3 renditions 1080p/720p/480p, 3–10s preview, ~1s thumbnail), the deterministic storage **key layout**, and the storage get/put glue over the framework `StorageDriver`. Duration probing routes through `MediaProcessor.probe` (`MediaInfo.duration`).
+
+**Binary providers (sanctioned, not reimplementation):** the composition roots (`main.ts`, `worker-main.ts`) resolve `ffmpeg-static` (path string) and `ffprobe-static` (`{ path }`) and inject both into the framework processor via `mediaRuntimeConfigFromEnv(env, ffmpegPath, ffprobePath)` → `FfmpegTranscoder`. Installed `@streetjs/media@^1.1.0` + `ffprobe-static@^3.1.0` into `apps/api`; added an ambient `ffprobe-static.d.ts` (the package ships no types). This is the framework's injectable-runner extension point — exactly analogous to the AWS SDK peer the framework S3 driver loads (slice 3).
+
+**Ratchet reclassification (documented in the gate + baseline):** `ffmpeg-static`/`ffprobe-static` are **removed** from the `infra:ratchet` driver set. A composition root importing a static binary *path* to hand to the framework's injectable runner is an extension-point input, not a hand-rolled infrastructure driver — the same category as passing a driver to a framework factory. `@aws-sdk/*` **stays flagged** (the framework S3 driver loads it lazily itself, so any direct product import would be a reimplementation). With the transcoder swapped, `apps/api` raw-infra files dropped **4 → 2** (only `realtime-bus.ts`/`ioredis` and `realtime-hub.ts`/`ws` remain); `scripts/infra-ratchet.json` baseline lowered to **2**.
+
+**Verified end-to-end (real ffmpeg + real MinIO + real Postgres):** generated a real 6s A/V source, uploaded to MinIO via the framework S3 driver, ran `MediaPipeline.process` → status `ready`, thumbnail + preview + **3** renditions produced and streamed, every framework ffmpeg invocation exited 0, `probeDurationSeconds` returned the true **6s** via `@streetjs/media`+`ffprobe-static`, and Postgres holds the `ready` video + 2 assets + 3 rendition rows. The runnable API server (`main.js`) starts clean against real infra with the new processor. Gates: typecheck + `streetjs:check` + `boundary:check` (402 files) + `infra:ratchet` (baseline 2) green; full suite **5315 passed / 0 failed** (the lone unhandled error is the known benign `apps/web` async-timer artifact; exit 0).
+
+**Remaining infra to retire (ratchet 2, target 0):** `realtime-bus.ts` (`ioredis`) + `realtime-hub.ts` (`ws`) → slices (5) queue/worker → `@streetjs/queue`, (6) realtime → `@streetjs/realtime`, (7) metrics/health → `@streetjs/metrics`/`@streetjs/health`.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
