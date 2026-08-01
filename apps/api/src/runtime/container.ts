@@ -20,7 +20,7 @@ import {
   createRepositories,
   streetSqlClient,
 } from "@streetstudio/database";
-import type { MemberDto } from "@streetstudio/shared";
+import type { InvitationDto, MemberDto } from "@streetstudio/shared";
 import {
   Argon2idPasswordHasher,
   AuthService,
