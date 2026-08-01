@@ -149,6 +149,15 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 33):** **ADR-0022 slice 7 (final)** — operational
+  observability moved onto `streetjs`'s built-in `MetricsRegistry` (Prometheus
+  `GET /metrics`) and `HealthCheckRegistry` (`GET /health` retained at its path,
+  plus `/health/live` + `/health/ready`) — both bare `streetjs` exports, no new
+  package. Non-breaking (nothing consumed the old `/metrics` JSON; the Docker
+  healthcheck path is preserved); the in-house `ops/{metrics,health}.ts` are now
+  unused (retired alongside other seams, ADR-0020). Verified live on real
+  Postgres; ratchet stays 0. **The ADR-0022 migration is complete** — the
+  product repo hand-rolls no reusable infrastructure.
 - **Recently closed (Update 32):** **ADR-0022 slice 6** — realtime moved onto
   the published **`@streetjs/realtime`**; the hand-rolled `ws` hub and `ioredis`
   pub/sub bus were deleted (`realtime-bus.ts` removed; `ioredis`/`ws`/`@types/ws`
