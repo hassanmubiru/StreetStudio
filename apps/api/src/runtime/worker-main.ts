@@ -26,7 +26,6 @@ import {
   buildMediaRuntime,
   mediaRuntimeConfigFromEnv,
 } from "./media/pipeline-runtime.js";
-import { MediaWorker } from "./media/media-worker.js";
 import { createRealtimeBus } from "./realtime-bus.js";
 import type { ProcessingStatusEmitter } from "@streetstudio/processing";
 
@@ -89,16 +88,21 @@ async function main(): Promise<void> {
     statusEmitter,
   );
 
-  const claimTimeoutMs = Number.parseInt(
-    process.env["WORKER_CLAIM_TIMEOUT_MS"] ?? "300000",
+  const concurrency = Number.parseInt(
+    process.env["WORKER_CONCURRENCY"] ?? "1",
     10,
   );
-  const workerId =
-    process.env["WORKER_ID"] ?? process.env["INSTANCE_ID"] ?? undefined;
-  const worker = new MediaWorker(pg, media, {
+
+  // Prove the queue backend is reachable before consuming.
+  await media.initQueue();
+
+  // The framework queue owns reservation-with-visibility-lease, at-least-once
+  // delivery, bounded retry, dead-lettering, and multi-worker crash recovery
+  // (ADR-0022 slice 5) — superseding the former SKIP-LOCKED `processing_claim`
+  // bookkeeping. N of these workers are safe competing consumers.
+  const worker = media.startWorker({
+    concurrency: Number.isFinite(concurrency) && concurrency > 0 ? concurrency : 1,
     pollIntervalMs,
-    claimTimeoutMs,
-    ...(workerId ? { workerId } : {}),
   });
 
   let shuttingDown = false;
@@ -109,15 +113,11 @@ async function main(): Promise<void> {
     shuttingDown = true;
     // eslint-disable-next-line no-console
     console.log(`[worker] received ${signal}, stopping`);
-    worker.stop();
+    void worker.stop().catch(() => undefined);
     void realtimeBus.close().catch(() => undefined);
     // Give the in-flight job a moment, then release resources and exit.
     setTimeout(() => {
-      try {
-        media.close();
-      } catch {
-        /* best-effort */
-      }
+      void media.close().catch(() => undefined);
       void pg
         .close()
         .catch(() => undefined)
@@ -131,9 +131,10 @@ async function main(): Promise<void> {
 
   // eslint-disable-next-line no-console
   console.log(
-    `[worker] StreetStudio media worker online (poll ${pollIntervalMs}ms); draining 'queued' videos`,
+    `[worker] StreetStudio media worker online (concurrency ${concurrency}, poll ${pollIntervalMs}ms); consuming the media queue`,
   );
-  await worker.start();
+  // Keep the process alive; the worker runs its own reservation loop.
+  await new Promise<never>(() => undefined);
 }
 
 main().catch((error: unknown) => {
