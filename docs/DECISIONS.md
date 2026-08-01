@@ -767,6 +767,36 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
   [`PRODUCTIONIZATION.md`](PRODUCTIONIZATION.md); no code is deleted under this ADR
   until the steps above are executed and verified.
 
+---
+
+## ADR-0023: Boundary guards recognize published `exports` subpaths as public API
+
+- **Status:** Accepted
+- **Context:** ADR-0001/ADR-0011 enforce "consume StreetJS only through its
+  public package entry point," implemented as guards that rejected **any**
+  `@streetjs/<pkg>/<subpath>` import as reaching into an internal module. But the
+  framework publishes much of its API through **multiple entry points declared
+  in a package's `exports` map** — e.g. `@streetjs/storage` exposes its cloud
+  drivers only at `@streetjs/storage/s3`, `/minio`, `/r2`, …, and the storage
+  facade *requires* a pre-built `config.driver` for cloud providers. Consuming
+  the framework's published S3 driver (ADR-0022 slice 3) therefore *requires* a
+  subpath import, which the guards wrongly flagged. Treating every subpath as
+  "internal" is a false positive against a legitimate, versioned public surface.
+- **Decision:** A `@streetjs/<pkg>/<subpath>` import is permitted **iff
+  `<subpath>` is a key in that installed package's `exports` map** (its declared
+  public API); deep/internal paths not present in `exports` (e.g. `.../dist/...`,
+  `.../src/...`) remain rejected. Both guards implement this: the
+  `packages/config` boundary analyzer gains an (empty-by-default, strict)
+  `BoundaryConfig.streetjsPublicSubpaths` allowlist that the CLI populates from
+  the installed `@streetjs/*` packages' `exports`; `scripts/check-streetjs-consumption.mjs`
+  reads the same `exports`. Bare-entry and path/vcs/url rules are unchanged.
+- **Consequences:** The product can consume the framework's published subpath
+  APIs (storage drivers, and future media/realtime/queue entry points) without a
+  boundary violation, while internal-module imports stay forbidden — the guard
+  now tracks the framework's real public surface. The default config stays
+  strict, so unit tests and any non-CLI caller see no behavior change. Refines
+  (does not supersede) ADR-0001/ADR-0011.
+
 
 ---
 
