@@ -703,7 +703,7 @@ export function buildRuntime(
     const auth = requireAuth(context);
     const videoId = requireUuidPathParam(request, "videoId");
     const comments = await commentService.listComments(auth, videoId);
-    return { comments, total: comments.length };
+    return comments;
   };
 
   // comments.create (RBAC: comment:create) — POST /videos/:videoId/comments
@@ -814,7 +814,7 @@ export function buildRuntime(
   const listWebhooks: ServiceInvocation = async (_request, context) => {
     const ctx = orgScopedAuth(context);
     const webhooks = await webhookService.list(ctx);
-    return { webhooks, total: webhooks.length };
+    return webhooks;
   };
 
   // webhooks.delete (RBAC: webhook:delete)
