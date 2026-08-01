@@ -216,16 +216,19 @@ export class MediaWorker {
         attempts: result.attempts,
         renditions: result.renditions.length,
       });
+      // Terminal (ready/failed) — the claim is done; release it.
+      await this.releaseClaim(job.videoId);
       return result;
     } catch (error) {
       // process() already records `failed` after exhausting attempts for
       // transcode errors; reaching here means an unexpected error (e.g. the
-      // Video vanished). Leave the row in `processing` for stale-recovery /
-      // operator inspection rather than silently dropping it.
+      // Video vanished). Release the claim so a stuck row does not linger — the
+      // Video keeps its DB status for operator inspection.
       this.log("processing error", {
         videoId: job.videoId,
         error: error instanceof Error ? error.message : String(error),
       });
+      await this.releaseClaim(job.videoId);
       return null;
     }
   }
