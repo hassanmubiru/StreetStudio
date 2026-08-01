@@ -1124,7 +1124,8 @@ export function buildRuntime(
       renditions: rends.rows.map((r) => ({
         quality: r.quality,
         objectKey: r.object_key,
-        bitrate: r.bitrate,
+        // The StreetJS wire client returns numeric columns as strings; coerce.
+        bitrate: Number(r.bitrate),
       })),
       assets: assets.rows.map((a) => ({
         type: a.type,
