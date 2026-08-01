@@ -3,8 +3,8 @@
 - **Repository state:** **Active — runnable API server; full operation catalog
   served on real infrastructure.** A composition root + HTTP/WebSocket transport
   now exist in `apps/api/src/runtime/`: the API server boots (env → config →
-  PostgreSQL migrations → dependency activation → listen), and **all 45 catalog
-  operations (44 REST + 1 WebSocket) that have a backing domain method are wired
+  PostgreSQL migrations → dependency activation → listen), and **all 46 catalog
+  operations (45 REST + 1 WebSocket) that have a backing domain method are wired
   and verified end-to-end** against **real PostgreSQL, real MinIO object storage,
   and real ffmpeg**, through the full request lifecycle (rate-limit →
   authenticate → validate → RBAC → service → audit) with deny-by-default RBAC and
