@@ -70,7 +70,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: non-`/api` dev behavior unchanged (Preservation Requirements)_
     - _Requirements: 1.1, 2.1, 2.3_
 
-  - [-] 3.2 Verify Slice 1 via the per-slice verification loop
+  - [ ] 3.2 Verify Slice 1 via the per-slice verification loop
     - `get_diagnostics` on `vite.config.ts` (0 problems); web type-check + `npx tsc -b apps/api` clean
     - Gates: `infra:ratchet`, `streetjs:check`, `boundary:check`, `graph:check`, full `typecheck`
     - Start Vite dev host against real infra (Postgres :5435, MinIO :9000, Redis :6379; API on `HTTP_PORT`)
