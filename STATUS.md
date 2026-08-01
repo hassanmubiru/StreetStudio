@@ -132,6 +132,13 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 24):** the **typed `@streetstudio/sdk` client** was
+  exercised end-to-end against the **live server** (24/24 operations via resource
+  methods — auth, orgs, projects/folders CRUD, lists, analytics, api-keys,
+  webhooks, cross-tenant denial). Fixed 2 real API/SDK parity defects: list
+  endpoints now return bare arrays (SDK contract), and the SDK now unwraps the
+  server's `{error}` envelope so error codes/statuses (e.g. 403
+  `AUTHORIZATION_DENIED`) round-trip instead of collapsing to `VALIDATION_FAILED`.
 - **Recently closed (Update 23):** **Phase 7 (runtime a11y) + browser e2e**
   executed with real headless Chrome against the production SPA — pages render &
   route, **0 critical/serious** axe violations (fixed a serious `aria-prohibited-attr`),
