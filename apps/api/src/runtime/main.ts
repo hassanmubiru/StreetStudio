@@ -27,6 +27,7 @@
 import { runMigrations, streetSqlClient } from "@streetstudio/database";
 import { ensureUploadsSchema } from "@streetstudio/uploads";
 import ffmpegStatic from "ffmpeg-static";
+import ffprobeStatic from "ffprobe-static";
 import { startApiService } from "../ops/startup.js";
 import { buildRuntime } from "./container.js";
 import { envConfigSource } from "./env-config-source.js";
