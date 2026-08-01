@@ -66,6 +66,8 @@ import {
   repositoryCommentStore,
   type ReactionTarget,
 } from "@streetstudio/comments";
+import { SearchService } from "@streetstudio/search";
+import { canonicalSearchIndex } from "../search/canonical-search-index.js";
 import type { ReactionTargetType } from "@streetstudio/shared";
 import { WebhookService, repositoryWebhookStore } from "../webhooks/index.js";
 import {
