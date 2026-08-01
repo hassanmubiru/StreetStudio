@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Full public operation catalog wired (API-CATALOG-COVERAGE-01 closed).** The
+  last 8 unwired catalog operations are now served, so `SLICE_OPERATION_IDS ==
+  PUBLIC_OPERATIONS` (55/55): `organizations.get`/`update`/`listMembers`/
+  `listRoles`/`invite`, `notifications.listPreferences`/`updatePreference`, and
+  `playback.recordView`. Reads use direct canonical-schema queries (consistent
+  with the existing `organizations.list` handler); writes reuse existing backing
+  — `OrgService.invite`, `AnalyticsService.recordView`, the canonical
+  `organizations` repository (`update`), and the tested
+  `NotificationPreferenceRepository.upsert` (`updatePreference`) — so **no
+  domain-package changes were required**. Verified end-to-end on real Postgres:
+  `organizations.get`/`update` (persisted; empty name → 400; cross-org → 403),
+  `listMembers`/`listRoles` (wildcard-admin role present), `invite` (201, no
+  secret token leaked in the DTO; invalid email → 400), `recordView` (reflected
+  in `analytics.metrics` totalViews; unknown video → 404), and
+  `listPreferences`/`updatePreference` (idempotent upsert on the
+  `(member_id, event_type)` PK; invalid `enabled` → 400).
+
 - **`search.videos` wired over the canonical schema (ADR-0021 gap closed).** The
   operation was advertised in the catalog + SDK but unserved, and the only
   `SearchIndex` implementation (`postgresSearchIndex`) targeted the legacy
