@@ -787,6 +787,33 @@ export function buildRuntime(
     }));
   };
 
+  // notifications.updatePreference (personal scope): set the caller's enabled
+  // flag for an event type, via the canonical NotificationPreference repository's
+  // idempotent upsert on the (member_id, event_type) primary key.
+  const updateNotificationPreference: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const eventType = requireStringField(request.body, "eventType");
+    const enabled =
+      typeof request.body === "object" && request.body !== null
+        ? (request.body as Record<string, unknown>)["enabled"]
+        : undefined;
+    if (typeof enabled !== "boolean") {
+      throw new AppError("VALIDATION_FAILED", {
+        details: { field: "enabled", reason: "must be a boolean" },
+      });
+    }
+    const record = await repositories.notificationPreferences.upsert({
+      memberId: auth.memberId,
+      eventType,
+      enabled,
+    });
+    return {
+      memberId: record.memberId,
+      eventType: record.eventType,
+      enabled: record.enabled,
+    };
+  };
+
   // analytics.metrics (RBAC: analytics:read, Administrator-only): aggregate
   // playback metrics for the owning org over an optional [start,end] window
   // (defaults to all-time). Deny-by-default and org-scoped — other tenants'
