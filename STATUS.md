@@ -45,7 +45,7 @@ Documentation                    ████████░░  80%
 Backend domain + API (ref build) ██████████ 100%  domain logic implemented & tested (5315 tests passing)
 Runnable API server (composition)█████████░  90%  env→config→migrations→listen; HTTP+WS transport; real pg/MinIO/ffmpeg
 Operation catalog wired (REST+WS)██████████ 100%  45/45 ops with a backing method, verified end-to-end on real infra
-Media pipeline (real ffmpeg)     ██████████ 100%  upload→duration-probe→transcode(thumb/preview/ABR)→storage→stream renditions(Range); in-process + distributed worker (SKIP LOCKED)
+Media pipeline (real ffmpeg)     ██████████ 100%  upload→duration-probe→transcode(thumb/preview/ABR)→storage→stream renditions(Range); in-process + distributed worker (SKIP LOCKED + crash-recovery reclaim)
 Auth / RBAC / tenant isolation   ██████████ 100%  register/login/JWT, wildcard-admin RBAC, deny-by-default, cross-tenant 403s verified
 Realtime (WebSocket)             ██████████ 100%  authenticated /realtime channel + notification & processing-status fan-out; cross-process bus (Redis pub/sub) delivers worker events to clients; in-process fallback
 SDK (typed client)               ██████████ 100%  exercised end-to-end against the live server (24/24 ops via the typed client); fixed 2 real parity defects (list-array shape, error-envelope unwrapping)
