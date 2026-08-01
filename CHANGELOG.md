@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`search.videos` wired over the canonical schema (ADR-0021 gap closed).** The
+  operation was advertised in the catalog + SDK but unserved, and the only
+  `SearchIndex` implementation (`postgresSearchIndex`) targeted the legacy
+  *plural* `videos`/`transcripts` tables — not the singular `video`/`transcript`
+  tables production actually populates. Added a canonical-schema
+  `SearchIndex` (`apps/api/src/search/canonical-search-index.ts`) querying
+  `video.title` + `transcript.segments`, wired a `SearchService` in
+  `container.ts` (handler added to `SLICE_OPERATION_IDS`), returning `VideoDto[]`
+  to match the SDK's `search.videos` contract. Verified end-to-end on real
+  Postgres: title match returns the video, no-match → empty array, empty query →
+  400, and cross-tenant isolation holds (RBAC filters every candidate).
+
 - **ADR-0020 step 2 (JWT): access tokens now use the published `streetjs`
   `JwtService`.** A `StreetJwtAccessTokenIssuer` adapter
   (`apps/api/src/security/street-jwt-issuer.ts`) composes the framework's strict
