@@ -30,7 +30,12 @@ import {
   FfmpegTranscoder,
   type FfmpegInvocation,
 } from "./ffmpeg-transcoder.js";
-import { S3StorageDriver } from "./s3-storage-driver.js";
+// Object storage is owned by the published framework (ADR-0022 slice 3): the S3
+// driver comes from `@streetjs/storage/s3` (a published subpath export), not a
+// hand-rolled `@aws-sdk` adapter. The driver lazily loads `@aws-sdk/client-s3`
+// (the optional peer this app provides), so no vendor SDK is imported here.
+import { createS3StorageDriverFromConfig } from "@streetjs/storage/s3";
+import type { StorageDriver } from "@streetjs/storage";
 
 /** S3/MinIO + ffmpeg configuration for the media pipeline. */
 export interface MediaRuntimeConfig {
