@@ -61,7 +61,7 @@ Spec (requirements/design/tasks) ██████████ 100%
 Documentation                    ████████░░  80%
 Backend domain + API (ref build) ██████████ 100%  domain logic implemented & tested (5315 tests passing)
 Runnable API server (composition)██████████ 100%  env→config→migrations→listen; HTTP+WS; real pg/MinIO/ffmpeg; /health + /metrics (R30.4) + graceful shutdown
-Operation catalog wired (REST+WS)██████████ 100%  46/46 ops with a backing method (incl. search.videos over the canonical schema), verified end-to-end on real infra
+Operation catalog wired (REST+WS)██████████ 100%  55/55 — the FULL public catalog is wired (SLICE_OPERATION_IDS == PUBLIC_OPERATIONS; API-CATALOG-COVERAGE-01 closed), verified end-to-end on real infra
 Media pipeline (real ffmpeg)     ██████████ 100%  upload→duration-probe→transcode(thumb/preview/ABR)→storage→stream renditions(Range); framework @streetjs/queue (Redis) drives inline + distributed workers with visibility-lease crash recovery
 Auth / RBAC / tenant isolation   ██████████ 100%  register/login/JWT, wildcard-admin RBAC, deny-by-default, cross-tenant 403s verified
 Realtime (WebSocket)             ██████████ 100%  published @streetjs/realtime (rooms + RedisAdapter over streetjs/websocket): authenticated /realtime channel + notification & processing-status fan-out; cross-process delivery via the framework cluster adapter; MemoryAdapter fallback
