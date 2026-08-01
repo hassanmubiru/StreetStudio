@@ -1002,6 +1002,40 @@ export function buildRuntime(
     };
   };
 
+  // search.videos (RBAC video:read): full-text/transcript search over the
+  // canonical schema. The RBAC guard gates entry in the caller's org scope; the
+  // SearchService additionally filters every candidate to the requester's
+  // authorized scope (R14.4). Matching video ids are hydrated into VideoDtos via
+  // the ContentService (org-scoped, access-checked) and returned as a bare array
+  // to match the SDK's `search.videos(): VideoDto[]` contract.
+  const searchVideos: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    // Entry is RBAC-gated (video:read) in the header org; ensure it is present.
+    requireOrganizationId(context);
+    const q =
+      typeof request.query?.["q"] === "string" ? (request.query["q"] as string) : "";
+    const cursor =
+      typeof request.query?.["cursor"] === "string"
+        ? (request.query["cursor"] as string)
+        : undefined;
+    const page = await searchService.search(auth, q, cursor);
+    const videos: unknown[] = [];
+    for (const hit of page.results) {
+      if (hit.resource.type !== "video") {
+        continue;
+      }
+      try {
+        videos.push(
+          await contentService.getVideo(auth, hit.resource.organizationId, hit.resource.id),
+        );
+      } catch {
+        // A video that vanished or is not viewable is simply omitted; no
+        // cross-scope disclosure and no failure of the whole search.
+      }
+    }
+    return videos;
+  };
+
   // uploads.create (RBAC upload:create): begin a chunked session. The final
   // assembled object key is derived server-side under the org's source prefix.
   const createUpload: ServiceInvocation = async (request, context) => {
@@ -1172,6 +1206,7 @@ export function buildRuntime(
     .register<ServiceInvocation>("videos.delete", deleteVideo)
     .register<ServiceInvocation>("videos.transcript", getVideoTranscript)
     .register<ServiceInvocation>("videos.summary", getVideoSummary)
+    .register<ServiceInvocation>("search.videos", searchVideos)
     .register<ServiceInvocation>("comments.list", listComments)
     .register<ServiceInvocation>("comments.create", createComment)
     .register<ServiceInvocation>("comments.delete", deleteComment)
