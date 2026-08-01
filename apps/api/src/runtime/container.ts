@@ -1022,13 +1022,12 @@ export function buildRuntime(
     const videos: unknown[] = [];
     for (const hit of page.results) {
       const hitOrgId = hit.resource.organizationId;
-      if (hit.resource.type !== "video" || !hitOrgId) {
+      const hitVideoId = hit.resource.id;
+      if (hit.resource.type !== "video" || !hitOrgId || !hitVideoId) {
         continue;
       }
       try {
-        videos.push(
-          await contentService.getVideo(auth, hitOrgId, hit.resource.id),
-        );
+        videos.push(await contentService.getVideo(auth, hitOrgId, hitVideoId));
       } catch {
         // A video that vanished or is not viewable is simply omitted; no
         // cross-scope disclosure and no failure of the whole search.
