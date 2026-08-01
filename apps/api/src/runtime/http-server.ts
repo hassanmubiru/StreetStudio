@@ -169,9 +169,47 @@ function requireOrgHeader(req: IncomingMessage): Uuid {
  */
 export function createHttpServer(deps: HttpServerDeps): ReturnType<typeof streetApp> {
   const routes = compileRoutes(deps.operations);
-  // Operational metrics (R30.4): request/error counters + live process gauges,
-  // exposed at GET /metrics. Shared for the lifetime of the server.
+  // Operational observability is owned by the published framework (ADR-0022
+  // slice 7): the `streetjs` Prometheus `MetricsRegistry` backs `GET /metrics`
+  // (text exposition), and the `streetjs` `HealthCheckRegistry` backs the
+  // `/health` probes. No hand-rolled registry is used here.
   const metrics = deps.metrics ?? new MetricsRegistry();
+  const requestsTotal = metrics.counter(
+    "http_requests_total",
+    "Total API requests handled (excludes /health and /metrics scrapes).",
+  );
+  const errorsTotal = metrics.counter(
+    "http_errors_total",
+    "Total API error responses returned.",
+  );
+  const uptimeGauge = metrics.gauge(
+    "process_uptime_seconds",
+    "Process uptime in seconds.",
+  );
+  const rssGauge = metrics.gauge(
+    "process_rss_bytes",
+    "Resident set size in bytes.",
+  );
+  const heapGauge = metrics.gauge(
+    "process_heap_used_bytes",
+    "Heap used in bytes.",
+  );
+
+  // Readiness gates on real PostgreSQL reachability (a `SELECT 1` round-trip);
+  // liveness has no dependency checks so it answers as soon as the process is up.
+  const health = deps.health ?? new HealthCheckRegistry();
+  health.addCheck(
+    "postgres",
+    createDbReadinessCheck({
+      expected: true,
+      probe: async () => {
+        if (!(await deps.pg.ping())) {
+          throw new Error("PostgreSQL connectivity check (SELECT 1) failed");
+        }
+      },
+    }),
+    { type: "readiness" },
+  );
   const startedAt = Date.now();
 
   // The HTTP host is the published StreetJS framework (`streetApp`); the product
