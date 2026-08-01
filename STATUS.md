@@ -17,11 +17,12 @@
   registry). The composition root therefore hand-rolled reusable infrastructure
   (`pg`/`ws`/`ioredis`/`ffmpeg`/S3/HTTP host) the framework already owns — a
   charter violation now being retired via a **strangler-fig migration**
-  (ADR-0022): slice 1 moved the DB pool onto `streetjs/pool` `PgPool` and slice 2
-  moved the HTTP host onto `streetApp` (product keeps only the dispatch as a
-  catch-all middleware), and an `infra:ratchet` gate holds the raw-driver file
-  count monotonically toward 0 (currently 5).
-  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–28)
+  (ADR-0022): slice 1 moved the DB pool onto `streetjs/pool` `PgPool`, slice 2
+  the HTTP host onto `streetApp`, and slice 3 object storage onto the published
+  `@streetjs/storage/s3` driver (the boundary guards were refined, ADR-0023, to
+  recognize published `exports` subpaths as public API). An `infra:ratchet` gate
+  holds the raw-driver file count monotonically toward 0 (currently 4).
+  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–29)
   for the full, evidence-backed verification.
   The web SPA now production-builds (Vite, es2022 target) and is served by a
   zero-dependency static host (`apps/web/server.mjs`, with the Docker `web`
@@ -138,6 +139,13 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 29):** **ADR-0022 slice 3** — object storage moved
+  onto the published `@streetjs/storage/s3` driver; the hand-rolled `@aws-sdk`
+  driver was deleted (the framework driver lazily loads the SDK the app provides
+  as an optional peer). Refined the boundary guards (**ADR-0023**) to permit
+  published `@streetjs/*` `exports` subpaths (still rejecting internal deep
+  paths). Verified 8/8 on real MinIO (upload/transcode `put` + Range `get`);
+  ratchet 5→4.
 - **Recently closed (Update 28):** **ADR-0022 slice 2** — the hand-rolled
   `node:http` server was replaced by the published **`streetApp`** host via a
   bridge (product keeps only the operation-catalog dispatch + lifecycle as one
