@@ -512,7 +512,7 @@ export function buildRuntime(
           : row.settings ?? {},
       createdAt: new Date(row.created_at).toISOString(),
     }));
-    return { organizations, total: organizations.length };
+    return organizations;
   };
 
   // projects.create (RBAC: project:create) — scoped to X-Organization-Id.
@@ -528,7 +528,7 @@ export function buildRuntime(
     const auth = requireAuth(context);
     const orgId = requireOrganizationId(context);
     const projects = await contentService.listProjects(auth, orgId);
-    return { projects, total: projects.length };
+    return projects;
   };
 
   // projects.get (RBAC: project:read)
