@@ -171,11 +171,7 @@ async function main(): Promise<void> {
       .close()
       .catch(() => undefined)
       .finally(() => {
-        try {
-          media.close();
-        } catch {
-          /* best-effort */
-        }
+        void media.close().catch(() => undefined);
         void pgClient
           .close()
           .catch(() => undefined)
