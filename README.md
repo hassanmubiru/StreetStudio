@@ -121,6 +121,7 @@ and records the gap here with a reference to an external StreetJS issue
 | 3 | Media processing pipeline (transcode, thumbnail, preview, ABR renditions) with bounded retries is domain-specific and absent from the framework. | `packages/processing` workers. | https://github.com/streetjs/streetjs/issues/103 (placeholder) |
 | 4 | Vendor-neutral AI capability routing with graceful `AI_UNAVAILABLE` fallback is not a framework primitive. | `packages/plugins` AI capability router. | https://github.com/streetjs/streetjs/issues/104 (placeholder) |
 | 5 | Signed webhook delivery with bounded exponential-backoff retries beyond the base queue/resilience primitives. | `apps/api` webhooks + worker delivery. | https://github.com/streetjs/streetjs/issues/105 (placeholder) |
+| 6 | Server-side auth primitives beyond `JwtService` — a Postgres-backed session store, refresh-token rotation, and API-key issuance/verification — are **not published as importable subpaths** by `streetjs@1.2.7` (its `exports` map exposes only `./security` (JwtService), `./session` (stateless AES-GCM), `./vault`, `./ratelimit`). JWT signing itself **is** consumed (ADR-0020 step 2). | `packages/auth` (`SessionStore`, `ApiKeyService`) over the canonical Postgres repository layer; JWT via `streetjs` `JwtService` (`apps/api/src/security/street-jwt-issuer.ts`). | https://github.com/streetjs/streetjs/issues/106 (placeholder) |
 
 When you discover a new StreetJS weakness, add a row here (with an external issue
 reference) rather than patching StreetJS.
