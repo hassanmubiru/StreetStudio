@@ -10,12 +10,17 @@
   authenticate → validate → RBAC → service → audit) with deny-by-default RBAC and
   cross-tenant isolation. The media pipeline (chunked upload → assemble → ffmpeg
   transcode: thumbnail + preview + ABR renditions → object storage → playback
-  with HTTP Range) runs on real infrastructure. Because the granular
-  `@streetjs/*` framework packages (postgres/redis/websocket/media) are not
-  published yet (only `@streetjs/storage`), the composition root adapts standard
-  drivers (`pg`, `ws`, `ffmpeg-static`) through the existing structural seams —
-  a deliberate, reversible decision documented in `apps/api/src/runtime/main.ts`.
-  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–21)
+  with HTTP Range) runs on real infrastructure. **Correction (ADR-0022):** the
+  StreetJS framework **is** published and installed (`streetjs@1.2.7` +
+  `@streetjs/{database,media,realtime,metrics,storage}`); the earlier claim that
+  only `@streetjs/storage` existed was false (never verified against the
+  registry). The composition root therefore hand-rolled reusable infrastructure
+  (`pg`/`ws`/`ioredis`/`ffmpeg`/S3/HTTP host) the framework already owns — a
+  charter violation now being retired via a **strangler-fig migration**
+  (ADR-0022): slice 1 moved the DB pool onto `streetjs/pool` `PgPool`, and an
+  `infra:ratchet` gate holds the raw-driver file count monotonically toward 0
+  (currently 6).
+  See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–27)
   for the full, evidence-backed verification.
   The web SPA now production-builds (Vite, es2022 target) and is served by a
   zero-dependency static host (`apps/web/server.mjs`, with the Docker `web`
