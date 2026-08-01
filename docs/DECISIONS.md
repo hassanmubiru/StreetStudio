@@ -916,6 +916,23 @@ Verified live: `/metrics` renders the exact counters (`http_requests_total`,
 `http_errors_total` — scrapes uncounted) + process gauges in Prometheus format;
 `/health`, `/health/live`, `/health/ready` all return `200` on real PostgreSQL.
 
+**HA (`ops/ha.ts` / R30.5–R30.6) — reality-verified deferral.** The published
+`streetjs/pg-ha` `PgHaClient` provides real primary/replica failover with
+topology re-discovery, but it is **not** wired, for two concrete reasons found
+by reading its `.d.ts`: (a) it takes a **multi-host** candidate set
+(`hosts: PgHaHost[]`) — the current deployment has a single `DATABASE_URL`, so
+there is no standby to fail over to and no HA benefit; and (b) it exposes only
+`query(sql, params, { target })` with **no `transaction()`**, so it is not a
+drop-in for the `PgPool` that `runtime/pg-client.ts` composes (the
+`TransactionalSqlClient` seam the repository layer depends on requires
+`transaction`). Wiring it now would break transactions for zero benefit, so it
+is deferred until a genuinely multi-node PostgreSQL topology exists. When
+undertaken, the composition root should consume `streetjs/pg-ha` (and/or
+`streetjs/resilience`) and the hand-rolled `ops/ha.ts` `HaConnectionManager` —
+itself a framework-replaceable stand-in — should be retired at that point. It is
+kept for now as the documented R30.5/R30.6 seam and its reconnection contract
+tests, not deleted.
+
 ¹ **Slice 5 leaves the ratchet at 2 by design.** The retired `MediaWorker`
 reached the durable backlog with raw SQL through the framework pool (not a
 flagged driver import: `pg`/`ws`/`ioredis`/`createServer`), so replacing it with
