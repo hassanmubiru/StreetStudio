@@ -244,8 +244,24 @@ export class MediaWorker {
     }
     this.running = true;
     this.stopped = false;
-    this.log("started", { pollIntervalMs: this.pollIntervalMs });
+    await this.ensureClaimTable();
+    this.log("started", {
+      pollIntervalMs: this.pollIntervalMs,
+      workerId: this.workerId,
+      claimTimeoutMs: this.claimTimeoutMs,
+    });
     while (!this.stopped) {
+      // Crash recovery: periodically requeue Videos abandoned by a dead worker
+      // (throttled to roughly once per claim-timeout window).
+      if (Date.now() - this.lastReclaimAt >= Math.min(this.claimTimeoutMs, 60_000)) {
+        this.lastReclaimAt = Date.now();
+        // eslint-disable-next-line no-await-in-loop
+        await this.reclaimStale().catch((error) =>
+          this.log("reclaim failed", {
+            error: error instanceof Error ? error.message : String(error),
+          }),
+        );
+      }
       let processedAny = false;
       // Greedily drain the backlog before sleeping.
       // eslint-disable-next-line no-await-in-loop
