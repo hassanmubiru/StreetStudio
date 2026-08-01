@@ -584,7 +584,7 @@ export function buildRuntime(
     const auth = requireAuth(context);
     const records = await notificationStore.listByMember(auth.memberId);
     const notifications = records.map(toNotificationDto);
-    return { notifications, total: notifications.length };
+    return notifications;
   };
 
   // notifications.markRead (personal scope): ownership-checked by the service —
@@ -651,7 +651,7 @@ export function buildRuntime(
       });
     }
     const folders = await contentService.listFolders(auth, orgId, projectIdRaw as Uuid);
-    return { folders, total: folders.length };
+    return folders;
   };
 
   // folders.move (RBAC: folder:update) — PATCH /folders/:id, body {parentFolderId: uuid|null}.
