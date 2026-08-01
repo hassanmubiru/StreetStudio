@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ADR-0020 step 2 (JWT): access tokens now use the published `streetjs`
+  `JwtService`.** A `StreetJwtAccessTokenIssuer` adapter
+  (`apps/api/src/security/street-jwt-issuer.ts`) composes the framework's strict
+  HS256 JWT service behind the auth core's `AccessTokenIssuer` port and is wired
+  in `container.ts`, replacing the hand-rolled `HmacAccessTokenIssuer` in
+  production (the latter is retained in `@streetstudio/auth` as the port's
+  reference impl for unit/property tests). `JwtService` confines the header
+  algorithm (rejecting `alg:none`/confusion), compares signatures in constant
+  time, and enforces `exp`/`nbf`/`iat`. Verified live (valid→200, tampered→401,
+  `alg:none` forgery→401, no-token→401) and by a focused adapter unit test.
+  Remaining ADR-0020 step-2 primitives (`auth/session-store`,
+  `auth/refresh-tokens`, `auth/api-keys`) are **blocked by a framework publishing
+  gap** — `streetjs@1.2.7` does not export those subpaths — tracked in the README
+  StreetJS gap register.
+
 - **ADR-0022 complete: adopt the published StreetJS runtime (strangler-fig).**
   The runnable API/worker composition root (`apps/api/src/runtime/`) now consumes
   every reusable infrastructure concern from the published framework instead of
