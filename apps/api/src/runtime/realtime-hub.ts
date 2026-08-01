@@ -103,7 +103,12 @@ export class RealtimeHub {
 
   private constructor(deps: RealtimeHubDeps, redisClient: RedisClient | undefined) {
     this.redisClient = redisClient;
-    this.wss = new StreetWebSocketServer({ path: REALTIME_PATH });
+    // NB: the framework's `attach` matches the upgrade with an EXACT
+    // `req.url === options.path` check, which a `?organizationId=` query string
+    // would always fail. So we do not set `path` here and instead gate the path
+    // ourselves in `authenticate` (reject non-`/realtime` upgrades) and skip
+    // non-realtime sockets in the connection handler.
+    this.wss = new StreetWebSocketServer({});
     const adapter =
       redisClient !== undefined ? new RedisAdapter({ client: redisClient }) : undefined;
     this.realtime = createRealtime({
