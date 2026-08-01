@@ -1,4 +1,4 @@
 {
-  "$comment": "Anti-reimplementation ratchet baseline (ADR-0022). Count of apps/api source files importing raw infrastructure drivers (pg, ws, ioredis) or hosting an HTTP server (createServer). ffmpeg-static/ffprobe-static are sanctioned binary-path providers injected into the framework MediaProcessor (slice 4) and @aws-sdk is loaded lazily by the framework S3 driver (ADR-0023), so neither is counted. The strangler-fig migration lowers this toward 0 as each hand-rolled adapter is replaced by a published StreetJS package. NEVER raise it. Remaining: realtime-bus.ts (ioredis) + realtime-hub.ts (ws), targeted by slice 6 (@streetjs/realtime).",
-  "maxRawInfraFiles": 2
+  "$comment": "Anti-reimplementation ratchet baseline (ADR-0022). Count of apps/api source files importing raw infrastructure drivers (pg, ws, ioredis) or hosting an HTTP server (createServer). ffmpeg-static/ffprobe-static are sanctioned binary-path providers injected into the framework MediaProcessor (slice 4) and @aws-sdk is loaded lazily by the framework S3 driver (ADR-0023), so neither is counted. TARGET REACHED: 0 as of slice 6 (realtime → @streetjs/realtime; the ws hub + ioredis bus were retired). The product hand-rolls no reusable infrastructure; every runtime concern is consumed from the published StreetJS framework (streetjs, @streetjs/*). NEVER raise it.",
+  "maxRawInfraFiles": 0
 }
