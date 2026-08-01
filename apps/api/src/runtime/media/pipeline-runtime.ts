@@ -92,8 +92,8 @@ export interface MediaRuntime {
   readonly queue: InProcessQueue;
   /** The storage facade over the S3 driver (for direct object access). */
   readonly storage: Storage;
-  /** The underlying S3 driver (exposed for source uploads / cleanup). */
-  readonly driver: S3StorageDriver;
+  /** The underlying framework {@link StorageDriver} (for direct object access). */
+  readonly driver: StorageDriver;
   /** Enqueue a video for processing (marks it `queued`). */
   enqueue(videoId: Uuid): Promise<void>;
   /** Process a job synchronously, returning its terminal result. */
