@@ -676,6 +676,16 @@ export function buildRuntime(
     };
   };
 
+  // playback.recordView (RBAC video:view): record a playback view for the video
+  // via the real AnalyticsService (which resolves the video's owning org and
+  // rejects an unknown video with NOT_FOUND). The same view feed analytics reads.
+  const recordVideoView: ServiceInvocation = async (request, context) => {
+    const auth = requireAuth(context);
+    const videoId = requireUuidPathParam(request, "videoId");
+    await analyticsService.recordView(auth.memberId, videoId, new Date());
+    return { success: true };
+  };
+
   // projects.create (RBAC: project:create) — scoped to X-Organization-Id.
   const createProject: ServiceInvocation = async (request, context) => {
     const auth = requireAuth(context);
