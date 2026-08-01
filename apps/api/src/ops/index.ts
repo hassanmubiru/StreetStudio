@@ -12,8 +12,13 @@
  *    (R30.5) and reconnect on primary/node loss, resuming without an operator
  *    restart (R30.6).
  *
- * Every StreetJS touchpoint is a structural adapter seam, so the host never
- * imports framework internals.
+ * Operational observability (metrics + health) is served directly at the
+ * composition root (`runtime/http-server.ts`) from the published framework's
+ * `MetricsRegistry` + `HealthCheckRegistry` (ADR-0022 slice 7); the former
+ * in-house `ops/{metrics,health}.ts` stand-ins were retired.
+ *
+ * Every remaining StreetJS touchpoint is a structural adapter seam, so the host
+ * never imports framework internals.
  */
 export {
   DEFAULT_STARTUP_DEADLINE_MS,
