@@ -877,6 +877,24 @@ each gain.
 | 6 | `realtime-hub.ts` (`ws`) + `realtime-bus.ts` (`ioredis`) | `@streetjs/realtime` (+ `RedisAdapter`) over `streetjs/websocket` | 2 → **0** | Update 32 |
 | 7 (optional) | `/metrics` + `/health` in-house registries | `@streetjs/metrics` / `@streetjs/health` | 0 → 0² | — |
 
+**ADR-0022 ratchet target reached (slice 6).** As of slice 6 the `apps/api`
+raw-infrastructure file count is **0**: HTTP host (`streetApp`), DB pool
+(`streetjs` `PgPool`), object storage (`@streetjs/storage/s3`), media transcode
+(`@streetjs/media`), durable queue (`@streetjs/queue`), and realtime
+(`@streetjs/realtime` + `RedisAdapter`) are all consumed from the published
+framework. Slice 6 also changed the realtime **wire format** to the framework
+envelope `{ type, payload, ts }` (agreed client-affecting change; the SDK is
+transport-agnostic and no test pinned the prior flat shape) and worked around a
+framework gotcha — `StreetWebSocketServer.attach` matches the upgrade with an
+exact `req.url === options.path` check that a `?organizationId=` query string
+fails, so the adapter omits `path` and gates `/realtime` in its `authenticate`
+hook.
+
+² **Slice 7 does not move the ratchet.** `/metrics` and `/health` use small
+in-house registries, not a flagged raw infrastructure driver (`pg`/`ws`/`ioredis`/
+`createServer`), so adopting `@streetjs/metrics`/`@streetjs/health` is optional
+polish that leaves the count at 0.
+
 ¹ **Slice 5 leaves the ratchet at 2 by design.** The retired `MediaWorker`
 reached the durable backlog with raw SQL through the framework pool (not a
 flagged driver import: `pg`/`ws`/`ioredis`/`createServer`), so replacing it with
