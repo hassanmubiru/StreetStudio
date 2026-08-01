@@ -1361,8 +1361,10 @@ export function buildRuntime(
     .register<ServiceInvocation>("organizations.create", createOrganization)
     .register<ServiceInvocation>("organizations.list", listOrganizations)
     .register<ServiceInvocation>("organizations.get", getOrganization)
+    .register<ServiceInvocation>("organizations.update", updateOrganization)
     .register<ServiceInvocation>("organizations.listMembers", listOrgMembers)
     .register<ServiceInvocation>("organizations.listRoles", listOrgRoles)
+    .register<ServiceInvocation>("organizations.invite", inviteMember)
     .register<ServiceInvocation>("projects.create", createProject)
     .register<ServiceInvocation>("projects.list", listProjects)
     .register<ServiceInvocation>("projects.get", getProject)
@@ -1411,7 +1413,8 @@ export function buildRuntime(
     .register<ServiceInvocation>("uploads.get", getUpload)
     .register<ServiceInvocation>("uploads.complete", completeUpload)
     .register<ServiceInvocation>("uploads.abort", abortUpload)
-    .register<ServiceInvocation>("playback.manifest", playbackManifest);
+    .register<ServiceInvocation>("playback.manifest", playbackManifest)
+    .register<ServiceInvocation>("playback.recordView", recordVideoView);
 
   const operations = sliceOperations();
   const service = createApiService({
