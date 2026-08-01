@@ -53,6 +53,8 @@ export interface MediaRuntimeConfig {
   readonly s3ForcePathStyle?: boolean;
   /** Absolute path to the ffmpeg binary. */
   readonly ffmpegPath: string;
+  /** Absolute path to the ffprobe binary. */
+  readonly ffprobePath: string;
   /** Optional evidence hook forwarded to the transcoder. */
   readonly onFfmpegInvocation?: (invocation: FfmpegInvocation) => void;
 }
