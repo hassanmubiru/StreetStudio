@@ -752,14 +752,21 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
     `ensure<Domain>Schema` adapters are test-only and doc-tagged as integration
     fixtures / reference DDL; they are retained (not deleted) as fast DB-gated
     integration proofs.
-  - **Genuine remaining convergence gaps (not blockers):** (a) `search.videos`
-    is not wired in production (absent from `SLICE_OPERATION_IDS`) and its only
-    `SearchIndex` impl is the direct-`PgPool` `postgresSearchIndex` (no
-    repository-backed index yet); (b) `uploads`/`playback` persist via
-    `UploadSessionRepository` (a direct-`PgPool` repo on `upload_sessions`,
-    provisioned by `ensureUploadsSchema` in `main.ts`) rather than the canonical
-    repository layer — a `repositoryUploadStore` exists in `@streetstudio/media`
-    but is unused. Both are scoped follow-ups.
+  - **[done] Search wired over the canonical schema.** `search.videos` is now
+    served: a new canonical-schema `SearchIndex`
+    (`apps/api/src/search/canonical-search-index.ts`) queries the singular
+    `video`/`transcript` tables the app actually populates (the published
+    `postgresSearchIndex` targets the legacy *plural* `videos`/`transcripts`
+    schema, so it could never have worked in production). `container.ts`
+    constructs `SearchService` over it and registers the handler (added to
+    `SLICE_OPERATION_IDS`), hydrating matched ids into `VideoDto[]` (SDK parity).
+    Verified end-to-end: title match returns the video, no-match → empty array,
+    empty query → 400, and cross-tenant isolation holds (RBAC filtering).
+  - **Genuine remaining convergence gap (not a blocker):** `uploads`/`playback`
+    persist via `UploadSessionRepository` (a direct-`PgPool` repo on
+    `upload_sessions`, provisioned by `ensureUploadsSchema` in `main.ts`) rather
+    than the canonical repository layer — a `repositoryUploadStore` exists in
+    `@streetstudio/media` but is unused. Scoped follow-up.
 - **Context:** The domain-by-domain de-seam (ADR-0020, tracked as spec task 43)
   added a real `postgres<Domain>Store` adapter beside each domain's in-memory
   default, each composing the published `streetjs` `PgPool` directly with its own
