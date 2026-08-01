@@ -20,7 +20,7 @@ const rand = () => Math.random().toString(36).slice(2, 10);
 const R = []; const ck = (n, c, d) => { R.push(!!c); console.log(`${c ? "PASS" : "FAIL"}  ${n}${d !== undefined ? "  (" + d + ")" : ""}`); };
 
 ck("GET /health (framework host)", (await j("GET", "/health")).status === 200);
-const m0 = await j("GET", "/metrics"); ck("GET /metrics counters", typeof m0.data?.counters?.http_requests_total === "number");
+const m0 = await j("GET", "/metrics"); ck("GET /metrics 200 + snapshot shape", m0.status === 200 && typeof m0.data?.counters === "object" && typeof m0.data?.gauges === "object");
 
 // JSON dispatch via ctx.body (the path that changed: framework pre-parses body).
 const email = `s2_${rand()}@e.com`;
@@ -33,9 +33,6 @@ const proj = await j("POST", "/projects", { token, org: orgId, body: { name: "Al
 ck("projects.create 201 (RBAC)", proj.status === 201);
 const list = await j("GET", "/projects", { token, org: orgId });
 ck("projects.list array", Array.isArray(list.data) && list.data.length === 1);
-
-// Empty-body POST (logout) — no content-type; ctx.body undefined; must still work.
-ck("auth.logout 200 (empty body)", (await j("POST", "/auth/logout", { token })).status === 200);
 
 // Binary part upload (application/octet-stream → stream left unconsumed by host).
 const bytes = readFileSync("/tmp/s2-sample.mp4");
@@ -71,6 +68,14 @@ const wsOk = await new Promise((resolve) => {
 });
 ck("WebSocket /realtime upgrade + connected frame", wsOk);
 ws.close();
+
+// Empty-body authed POST (logout) — no content-type; ctx.body undefined. Done
+// last so it doesn't invalidate the token the upload steps above rely on.
+ck("auth.logout 200 (empty body)", (await j("POST", "/auth/logout", { token })).status === 200);
+
+// /metrics after real API traffic — counters now present.
+const m1 = await j("GET", "/metrics");
+ck("/metrics counts requests+errors", typeof m1.data?.counters?.http_requests_total === "number" && m1.data.counters.http_requests_total > 0, `reqs=${m1.data?.counters?.http_requests_total}`);
 
 const passed = R.filter(Boolean).length;
 console.log(`\n${passed}/${R.length} passed`);
