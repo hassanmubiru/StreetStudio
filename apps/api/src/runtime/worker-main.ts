@@ -3,20 +3,19 @@
  *
  * The previous `worker` image CMD (`node apps/api/dist/index.js`) ran only the
  * scaffold that re-exports domain constants — it never drained the processing
- * backlog. This entrypoint runs the real {@link MediaWorker}: it connects
- * PostgreSQL, ensures the canonical schema is present, builds the concrete media
- * pipeline (real ffmpeg via `ffmpeg-static` + S3/MinIO storage), and loops,
- * claiming `queued` Videos from the canonical `video` table and transcoding them
- * to `ready`/`failed`.
+ * backlog. This entrypoint consumes the **published `@streetjs/queue`** media
+ * queue (ADR-0022 slice 5): it connects PostgreSQL, ensures the canonical schema
+ * is present, builds the concrete media pipeline (framework `@streetjs/media`
+ * transcode + S3/MinIO storage), and runs the framework worker's reservation
+ * loop, reserving enqueued transcode jobs and driving each Video to
+ * `ready`/`failed`.
  *
  * It shares the API's composition seams (`pg-client`, `pipeline-runtime`) so the
- * worker and the API run the exact same adapters against the exact same schema
- * and object store. A distributed deployment runs the API with
- * `PROCESSING_INLINE=false` (enqueue-only) plus one or more of these workers.
- *
- * Driver decision is identical to `main.ts`: standard `pg`/`ffmpeg-static`
- * adapted through the existing structural seams until the `@streetjs/*`
- * framework packages ship.
+ * worker and the API run the exact same adapters against the exact same schema,
+ * object store, and queue. A distributed deployment runs the API with
+ * `PROCESSING_INLINE=false` (enqueue-only) plus one or more of these workers;
+ * the framework `RedisDriver`'s visibility-lease reclaim makes N workers safe
+ * competing consumers with built-in crash recovery (no `processing_claim` table).
  */
 import { runMigrations, streetSqlClient } from "@streetstudio/database";
 import ffmpegStatic from "ffmpeg-static";
