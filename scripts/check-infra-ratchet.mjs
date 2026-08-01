@@ -18,11 +18,13 @@
  *
  * SANCTIONED BINARY PROVIDERS (NOT reimplementation): `ffmpeg-static` and
  * `ffprobe-static` supply the ffmpeg/ffprobe *binaries* that the framework's
- * injectable `MediaProcessor` runner executes (ADR-0022 slice 4), and
- * `@aws-sdk/client-s3` is the optional peer the framework's published S3
- * storage driver lazily loads (ADR-0023). These are extension-point inputs to
- * framework-owned infrastructure — the same category as passing a driver to a
- * framework factory — so they are deliberately NOT counted as raw infra.
+ * injectable `MediaProcessor` runner executes (ADR-0022 slice 4). The
+ * composition root imports them solely to hand the binary paths to the
+ * framework processor — an extension-point input, the same category as passing
+ * a driver to a framework factory — so they are deliberately NOT counted as raw
+ * infra. `@aws-sdk/*` STAYS flagged: the framework's published S3 driver loads
+ * it lazily itself (ADR-0023), so any direct `@aws-sdk` import in product code
+ * is a hand-rolled reimplementation and must fail the gate.
  *
  * Zero dependencies; Node built-ins only.
  */
@@ -34,8 +36,13 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SCAN_ROOT = join(ROOT, "apps", "api", "src");
 const BASELINE_PATH = join(ROOT, "scripts", "infra-ratchet.json");
 
-/** Raw infrastructure driver packages the product must NOT depend on directly. */
-const DRIVER_SPECIFIERS = new Set(["pg", "ws", "ioredis", "ffmpeg-static"]);
+/**
+ * Raw infrastructure driver packages the product must NOT depend on directly.
+ * `ffmpeg-static`/`ffprobe-static` are intentionally absent — see the header:
+ * they are sanctioned binary-path providers injected into the framework's
+ * media processor, not reimplementations.
+ */
+const DRIVER_SPECIFIERS = new Set(["pg", "ws", "ioredis"]);
 const DRIVER_PREFIXES = ["@aws-sdk/"];
 
 const IMPORT_RE =
