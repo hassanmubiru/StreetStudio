@@ -762,11 +762,28 @@ Status values: `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
     `SLICE_OPERATION_IDS`), hydrating matched ids into `VideoDto[]` (SDK parity).
     Verified end-to-end: title match returns the video, no-match → empty array,
     empty query → 400, and cross-tenant isolation holds (RBAC filtering).
-  - **Genuine remaining convergence gap (not a blocker):** `uploads`/`playback`
-    persist via `UploadSessionRepository` (a direct-`PgPool` repo on
-    `upload_sessions`, provisioned by `ensureUploadsSchema` in `main.ts`) rather
-    than the canonical repository layer — a `repositoryUploadStore` exists in
-    `@streetstudio/media` but is unused. Scoped follow-up.
+  - **Uploads/playback is NOT a dual-path convergence target (reality-verified).**
+    Earlier notes listed `uploads`/`playback` as a remaining convergence gap; a
+    closer read shows that framing is imprecise. `UploadService` (`@streetstudio/uploads`)
+    and `PlaybackService` (`@streetstudio/player`) take a **concrete
+    `UploadSessionRepository`** (not a port) that owns its own real-Postgres
+    `upload_sessions` table (plural; `object_key`/`total_parts`/`received_parts`
+    — a resumable chunk session), provisioned by `ensureUploadsSchema`. This is
+    the uploads slice's first-class real persistence — architecturally parallel
+    to the identity/recordings slices (`ensureIdentitySchema`/`ensureRecordingsSchema`)
+    — **not** a dual-path adapter duplicating a canonical table. It is real
+    Postgres with no fakes and no duplicate path, so it is already
+    charter-compliant. There is no drop-in convergence: the canonical
+    `upload_session` table (singular, `video_id`-centric, in `packages/database`)
+    and `@streetstudio/media`'s unused `repositoryUploadStore` (a different
+    `UploadStore` port with chunk/meta/progress semantics) model **different
+    things**. Making uploads go through the canonical repository layer would be a
+    data-model reconciliation across two schemas plus a port refactor of three
+    tested packages — churn without correctness or charter benefit, and risk to
+    the verified upload→transcode→playback path — so it is **deliberately not
+    undertaken**. ADR-0021 convergence (retire the *dual-path* `postgres<Domain>Store`
+    adapters in favor of the canonical `SqlClient` layer) is therefore complete;
+    the uploads slice's independent real-Postgres persistence is by design.
 - **Context:** The domain-by-domain de-seam (ADR-0020, tracked as spec task 43)
   added a real `postgres<Domain>Store` adapter beside each domain's in-memory
   default, each composing the published `streetjs` `PgPool` directly with its own
