@@ -110,19 +110,23 @@ export interface MediaRuntime {
  * Build the concrete media pipeline runtime from a live {@link PgClient} and
  * the S3/ffmpeg configuration.
  */
-export function buildMediaRuntime(
+export async function buildMediaRuntime(
   pg: PgClient,
   config: MediaRuntimeConfig,
   statusEmitter: ProcessingStatusEmitter = noopEmitter,
-): MediaRuntime {
+): Promise<MediaRuntime> {
   const repositories = createRepositories(streetSqlClient(pg));
 
-  const driver = new S3StorageDriver({
-    endpoint: config.s3Endpoint,
-    region: config.s3Region,
-    accessKeyId: config.s3AccessKeyId,
-    secretAccessKey: config.s3SecretAccessKey,
+  // Framework-owned S3 driver (works against MinIO via endpoint + path-style).
+  // Async because it lazily constructs the AWS client the first time.
+  const driver = await createS3StorageDriverFromConfig({
     bucket: config.s3Bucket,
+    region: config.s3Region,
+    endpoint: config.s3Endpoint,
+    credentials: {
+      accessKeyId: config.s3AccessKeyId,
+      secretAccessKey: config.s3SecretAccessKey,
+    },
     forcePathStyle: config.s3ForcePathStyle ?? true,
   });
   // The facade over the same driver — provided for callers that prefer the
