@@ -1,46 +1,38 @@
 /**
  * Integration tests for the API_Service operational surface
- * (Requirements 30.2, 30.4, 30.5, 30.6).
+ * (Requirements 30.2, 30.3, 30.5, 30.6).
  *
- * Where the pure-unit tests (startup.test.ts, health.test.ts, metrics.test.ts,
- * ha.test.ts) exercise each collaborator in isolation, these tests wire the
- * whole operational surface together end-to-end through its structural StreetJS
- * seams — configuration source, dependency activation, the health-check and
- * metrics interfaces, and the HA connection manager — and assert the composed
- * behaviour an operator actually observes:
+ * Where the pure-unit tests (startup.test.ts, ha.test.ts) exercise each
+ * collaborator in isolation, these tests wire the operational surface together
+ * end-to-end — configuration source, dependency activation, the framework
+ * health-check registry, and the HA connection manager — and assert the
+ * composed behaviour an operator actually observes:
  *
  *  (a) startup completes within the 60s budget on valid configuration and
  *      aborts naming every offending value on invalid configuration (R30.2/30.3);
- *  (b) the health endpoint reports passing only when every dependency probe is
- *      reachable, and failing as soon as one is not (R30.4);
- *  (c) metrics recorded while serving are published through the StreetJS metrics
- *      interface (R30.4);
- *  (d) the HA connection manager reconnects on PostgreSQL-primary / Redis-node
+ *  (b) the readiness endpoint reports `ok` only when every dependency probe is
+ *      reachable, and `degraded` as soon as one is not (R30.4), using the
+ *      published `streetjs` `HealthCheckRegistry` the runtime now serves;
+ *  (c) the HA connection manager reconnects on PostgreSQL-primary / Redis-node
  *      loss and resumes serving without an operator restart (R30.5/30.6).
+ *
+ * Operational observability was migrated onto the framework's `MetricsRegistry`
+ * + `HealthCheckRegistry` at the composition root (ADR-0022 slice 7), so the
+ * former in-house `ops/{metrics,health}.ts` stand-ins (and their seam tests) are
+ * retired; health here is exercised through the framework registry directly.
  *
  * Real PostgreSQL/Redis are not reachable in CI, so the wiring is exercised with
  * in-memory fakes behind the same seams the composition root adapts. A final
- * block opportunistically runs the health probe against real dependencies when
- * `STREETSTUDIO_IT_DATABASE_URL` / `STREETSTUDIO_IT_REDIS_URL` are supplied and
- * the endpoint is reachable, and skips gracefully otherwise.
+ * block opportunistically runs the readiness probe against real dependencies
+ * when `STREETSTUDIO_IT_DATABASE_URL` / `STREETSTUDIO_IT_REDIS_URL` are supplied
+ * and the endpoint is reachable, and skips gracefully otherwise.
  */
 import { connect } from "node:net";
 import { describe, expect, it, vi } from "vitest";
+import { HealthCheckRegistry } from "streetjs";
 import { objectConfigSource, StartupConfigError } from "@streetstudio/config";
 import { AppError } from "@streetstudio/shared";
 import { startApiService, type ActivateDependencies } from "./startup.js";
-import {
-  HealthChecker,
-  exposeHealthCheck,
-  probeFromHealthCheck,
-  type DependencyProbe,
-  type StreetHealthInterface,
-} from "./health.js";
-import {
-  MetricsRegistry,
-  exposeMetrics,
-  type StreetMetricsInterface,
-} from "./metrics.js";
 import {
   ConnectionLostError,
   createHaConnectionManager,
@@ -126,46 +118,40 @@ function flakyClient(failures: number, result = "ok"): FakeClient {
   };
 }
 
-/**
- * A composite in-memory StreetJS platform double implementing exactly the
- * health-check and metrics seams the ops surface depends on. Registered health
- * checks and reported metrics are captured for assertions, standing in for the
- * real StreetJS health/metrics endpoints.
- */
-class FakeStreetPlatform implements StreetHealthInterface, StreetMetricsInterface {
-  readonly healthChecks = new Map<string, () => Promise<boolean>>();
-  readonly reportedCounters: Record<string, number> = {};
-  readonly reportedGauges: Record<string, number> = {};
-
-  registerHealthCheck(name: string, check: () => Promise<boolean>): void {
-    this.healthChecks.set(name, check);
-  }
-
-  counter(name: string, value: number): void {
-    this.reportedCounters[name] = value;
-  }
-
-  gauge(name: string, value: number): void {
-    this.reportedGauges[name] = value;
-  }
-
-  /** Invoke a registered health check the way the platform endpoint would. */
-  runHealthCheck(name: string): Promise<boolean> {
-    const check = this.healthChecks.get(name);
-    if (!check) {
-      throw new Error(`no health check registered under "${name}"`);
-    }
-    return check();
-  }
-}
-
-const fixedClock = { now: () => 1_000 };
 const noSleep = () => Promise.resolve();
 
-describe("ops integration — startup → health → metrics wiring (R30.2, R30.4)", () => {
-  it("starts within the budget on valid config, then serves a passing health endpoint", async () => {
-    const street = new FakeStreetPlatform();
+/**
+ * Register a readiness check on the framework {@link HealthCheckRegistry} backed
+ * by an HA manager's `healthCheck()` — `up` when the dependency is reachable,
+ * `down` (with the failure reason) otherwise. This mirrors exactly what the
+ * runtime composition root does for its `/health/ready` probe.
+ */
+function registerReadiness(
+  registry: HealthCheckRegistry,
+  name: string,
+  manager: { healthCheck(): Promise<void> },
+): void {
+  registry.addCheck(
+    name,
+    async () => {
+      try {
+        await manager.healthCheck();
+        return { status: "up" as const };
+      } catch (error) {
+        return {
+          status: "down" as const,
+          details: {
+            reason: error instanceof Error ? error.message : String(error),
+          },
+        };
+      }
+    },
+    { type: "readiness" },
+  );
+}
 
+describe("ops integration — startup → readiness wiring (R30.2, R30.4)", () => {
+  it("starts within the budget on valid config, then serves a passing readiness endpoint", async () => {
     // Dependencies the composition root would connect during activation, each
     // reachable through its HA-managed connection.
     const postgres = new FakeHaConnection({
@@ -203,21 +189,17 @@ describe("ops integration — startup → health → metrics wiring (R30.2, R30.
     expect(result.durationMs).toBe(500);
     expect(result.durationMs).toBeLessThanOrEqual(60_000);
 
-    // With startup complete, wire the live probes into the StreetJS health seam.
-    const checker = new HealthChecker(
-      [
-        probeFromHealthCheck("postgres", pgManager),
-        probeFromHealthCheck("redis", redisManager),
-      ],
-      fixedClock,
-    );
-    exposeHealthCheck(street, checker, "api");
+    // With startup complete, wire the live probes into the framework registry.
+    const registry = new HealthCheckRegistry();
+    registerReadiness(registry, "postgres", pgManager);
+    registerReadiness(registry, "redis", redisManager);
 
-    // The registered endpoint reports healthy because every dependency is up.
-    await expect(street.runHealthCheck("api")).resolves.toBe(true);
-    const report = await checker.check();
-    expect(report.status).toBe("passing");
-    expect(report.dependencies.map((d) => d.name)).toEqual(["postgres", "redis"]);
+    // The readiness endpoint reports ok because every dependency is up.
+    const report = await registry.runReadiness();
+    expect(report.status).toBe("ok");
+    expect(Object.keys(report.checks).sort()).toEqual(["postgres", "redis"]);
+    expect(report.checks["postgres"]?.status).toBe("up");
+    expect(report.checks["redis"]?.status).toBe("up");
   });
 
   it("aborts startup naming every offending value and never activates dependencies (R30.3)", async () => {
@@ -241,8 +223,7 @@ describe("ops integration — startup → health → metrics wiring (R30.2, R30.
     expect(activate).not.toHaveBeenCalled();
   });
 
-  it("reports a failing health endpoint as soon as one dependency goes unreachable (R30.4)", async () => {
-    const street = new FakeStreetPlatform();
+  it("reports a degraded readiness endpoint as soon as one dependency goes unreachable (R30.4)", async () => {
     const postgres = new FakeHaConnection({
       name: "postgres",
       initial: { ping: () => "rows" },
@@ -251,41 +232,18 @@ describe("ops integration — startup → health → metrics wiring (R30.2, R30.
       name: "redis",
       initial: { ping: () => "PONG" },
     });
-    const checker = new HealthChecker([
-      probeFromHealthCheck("postgres", new HaConnectionManager(postgres, { sleep: noSleep })),
-      probeFromHealthCheck("redis", new HaConnectionManager(redis, { sleep: noSleep })),
-    ]);
-    exposeHealthCheck(street, checker, "api");
+    const registry = new HealthCheckRegistry();
+    registerReadiness(registry, "postgres", new HaConnectionManager(postgres, { sleep: noSleep }));
+    registerReadiness(registry, "redis", new HaConnectionManager(redis, { sleep: noSleep }));
 
-    await expect(street.runHealthCheck("api")).resolves.toBe(true);
+    expect((await registry.runReadiness()).status).toBe("ok");
 
-    // Redis drops out — the aggregate endpoint immediately flips to failing.
+    // Redis drops out — the aggregate endpoint immediately flips to degraded.
     redis.setReachable(false);
-    await expect(street.runHealthCheck("api")).resolves.toBe(false);
-
-    const report = await checker.check();
-    expect(report.status).toBe("failing");
-    expect(report.dependencies.find((d) => d.name === "redis")?.reachable).toBe(false);
-    expect(report.dependencies.find((d) => d.name === "postgres")?.reachable).toBe(true);
-  });
-
-  it("publishes request/error/resource metrics through the StreetJS metrics seam (R30.4)", async () => {
-    const street = new FakeStreetPlatform();
-    const registry = new MetricsRegistry();
-
-    // Simulate the host recording operational metrics while serving requests.
-    registry.increment("http.requests", 42);
-    registry.increment("http.errors", 3);
-    registry.setGauge("db.connections", 7);
-
-    const published = exposeMetrics(street, registry);
-
-    expect(street.reportedCounters).toEqual({
-      "http.requests": 42,
-      "http.errors": 3,
-    });
-    expect(street.reportedGauges).toEqual({ "db.connections": 7 });
-    expect(published).toEqual(registry.snapshot());
+    const report = await registry.runReadiness();
+    expect(report.status).toBe("degraded");
+    expect(report.checks["redis"]?.status).toBe("down");
+    expect(report.checks["postgres"]?.status).toBe("up");
   });
 });
 
@@ -307,8 +265,7 @@ describe("ops integration — HA reconnection resumes without restart (R30.5, R3
     expect(manager.currentState()).toBe("connected");
   });
 
-  it("reconnects a Redis Cluster node on loss and keeps the health probe healthy afterwards", async () => {
-    const street = new FakeStreetPlatform();
+  it("reconnects a Redis Cluster node on loss and keeps the readiness probe healthy afterwards", async () => {
     const redis = new FakeHaConnection({
       name: "redis",
       initial: flakyClient(1),
@@ -317,17 +274,17 @@ describe("ops integration — HA reconnection resumes without restart (R30.5, R3
     });
     const manager = createHaConnectionManager(redis, { sleep: noSleep });
 
-    // Health is failing while the node is unreachable.
-    const checker = new HealthChecker([probeFromHealthCheck("redis", manager)]);
-    exposeHealthCheck(street, checker, "api");
-    await expect(street.runHealthCheck("api")).resolves.toBe(false);
+    // Readiness is degraded while the node is unreachable.
+    const registry = new HealthCheckRegistry();
+    registerReadiness(registry, "redis", manager);
+    expect((await registry.runReadiness()).status).toBe("degraded");
 
     // A served operation drives the reconnect, which heals the topology.
     await expect(manager.run((c) => c.ping())).resolves.toBe("PONG");
     expect(manager.reconnectionCount()).toBe(1);
 
-    // Now the same probe reports healthy — the service resumed without restart.
-    await expect(street.runHealthCheck("api")).resolves.toBe(true);
+    // Now the same probe reports ok — the service resumed without restart.
+    expect((await registry.runReadiness()).status).toBe("ok");
   });
 
   it("surfaces CAPABILITY_UNAVAILABLE when reconnection cannot restore the connection", async () => {
@@ -395,20 +352,27 @@ describe("ops integration — real dependencies (reachability-gated) (R30.4, R30
   const dbUrl = process.env["STREETSTUDIO_IT_DATABASE_URL"];
   const redisUrl = process.env["STREETSTUDIO_IT_REDIS_URL"];
 
-  it("reports the real dependency health through the StreetJS health seam when reachable", async (ctx) => {
+  it("reports the real dependency readiness through the framework registry when reachable", async (ctx) => {
     if (!dbUrl && !redisUrl) {
       ctx.skip();
       return;
     }
 
-    const probes: DependencyProbe[] = [];
+    const registry = new HealthCheckRegistry();
     if (dbUrl) {
       const { host, port } = hostPort(dbUrl, 5432);
       if (!(await tcpReachable(host, port))) {
         ctx.skip();
         return;
       }
-      probes.push({ name: "postgres", check: async () => void (await tcpReachable(host, port)) });
+      registry.addCheck(
+        "postgres",
+        async () =>
+          (await tcpReachable(host, port))
+            ? { status: "up" as const }
+            : { status: "down" as const },
+        { type: "readiness" },
+      );
     }
     if (redisUrl) {
       const { host, port } = hostPort(redisUrl, 6379);
@@ -416,13 +380,16 @@ describe("ops integration — real dependencies (reachability-gated) (R30.4, R30
         ctx.skip();
         return;
       }
-      probes.push({ name: "redis", check: async () => void (await tcpReachable(host, port)) });
+      registry.addCheck(
+        "redis",
+        async () =>
+          (await tcpReachable(host, port))
+            ? { status: "up" as const }
+            : { status: "down" as const },
+        { type: "readiness" },
+      );
     }
 
-    const street = new FakeStreetPlatform();
-    const checker = new HealthChecker(probes);
-    exposeHealthCheck(street, checker, "api");
-
-    await expect(street.runHealthCheck("api")).resolves.toBe(true);
+    expect((await registry.runReadiness()).status).toBe("ok");
   });
 });
