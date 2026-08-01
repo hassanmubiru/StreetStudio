@@ -81,7 +81,7 @@ async function main(): Promise<void> {
   };
 
   const ffmpegPath = ffmpegStatic as unknown as string;
-  const media = buildMediaRuntime(
+  const media = await buildMediaRuntime(
     pg,
     mediaRuntimeConfigFromEnv(process.env, ffmpegPath),
     statusEmitter,
