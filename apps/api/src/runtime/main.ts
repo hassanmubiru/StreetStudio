@@ -38,7 +38,6 @@ import {
   mediaRuntimeConfigFromEnv,
 } from "./media/pipeline-runtime.js";
 import { RealtimeHub } from "./realtime-hub.js";
-import { createRealtimeBus } from "./realtime-bus.js";
 
 async function main(): Promise<void> {
   const configSource = envConfigSource();
