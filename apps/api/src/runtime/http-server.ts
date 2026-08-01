@@ -250,14 +250,20 @@ export function createHttpServer(deps: HttpServerDeps): ReturnType<typeof street
       return;
     }
 
-    // Health check: report dependency reachability (R30.2/R30.4).
-    if (method === "GET" && pathname === "/health") {
-      await respondHealth(res);
+    // Health probes (R30.2/R30.4), backed by the framework HealthCheckRegistry.
+    // `/health` keeps the legacy readiness summary; `/health/live` and
+    // `/health/ready` are the framework-native liveness/readiness probes.
+    if (method === "GET" && pathname === "/health/live") {
+      await respondHealth(res, "liveness");
+      return;
+    }
+    if (method === "GET" && (pathname === "/health" || pathname === "/health/ready")) {
+      await respondHealth(res, "readiness");
       return;
     }
 
     // Count every API request (catalog + byte routes) once past health/metrics.
-    metrics.increment("http_requests_total");
+    requestsTotal.inc();
 
     // --- Raw byte routes (not in the JSON catalog; documented gaps) --------
     // Chunked part upload: PUT /uploads/:id/parts/:partNumber  (binary body).
