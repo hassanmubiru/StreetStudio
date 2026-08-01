@@ -144,13 +144,62 @@ export async function buildMediaRuntime(
       : {}),
   });
 
-  const queue = new InProcessQueue();
+  // The durable job queue is framework-owned (ADR-0022 slice 5): Redis-backed
+  // when REDIS_URL is set, else the framework Memory driver.
+  const queue = createMediaQueue({
+    ...(config.redisUrl !== undefined ? { redisUrl: config.redisUrl } : {}),
+  });
+
+  const store: ProcessingStore = repositoryProcessingStore(repositories);
   const pipeline = new MediaPipeline({
-    store: repositoryProcessingStore(repositories),
+    store,
     queue,
     transcoder,
     emitter: statusEmitter,
   });
+
+  // Inline synchronous completions: a per-video promise registered by
+  // enqueueAndAwait and resolved by the worker handler when the video reaches a
+  // terminal state. This is how the single-node inline path returns the
+  // ProcessingResult in the HTTP response without a bespoke in-memory queue.
+  const completions = new Map<
+    string,
+    {
+      resolve: (result: ProcessingResult) => void;
+      reject: (error: unknown) => void;
+    }
+  >();
+
+  // The worker handler: idempotent (an at-least-once redelivery of an
+  // already-`ready` video is acked without reprocessing), and it resolves any
+  // pending inline waiter with the terminal result.
+  queue.registerHandler(async (job) => {
+    const existing = await store.findVideo(job.organizationId, job.videoId);
+    if (existing && existing.status === "ready") {
+      // Already processed (redelivery). Ack without reprocessing; no inline
+      // waiter exists for a redelivery in the single-dispatch inline flow.
+      return;
+    }
+    const waiter = completions.get(job.videoId);
+    try {
+      const result = await pipeline.process(job);
+      if (waiter) {
+        completions.delete(job.videoId);
+        waiter.resolve(result);
+      }
+    } catch (error) {
+      // Unexpected failure (transcode errors are handled inside process() and
+      // returned as `failed`). Resolve the inline waiter as failed so the HTTP
+      // request does not hang, then rethrow so the queue can retry / dead-letter.
+      if (waiter) {
+        completions.delete(job.videoId);
+        waiter.resolve({ status: "failed", attempts: 0, renditions: [] });
+      }
+      throw error;
+    }
+  });
+
+  const workers: Worker[] = [];
 
   return {
     pipeline,
@@ -159,18 +208,27 @@ export async function buildMediaRuntime(
     driver,
     enqueue: (videoId) => pipeline.enqueue(videoId),
     process: (job) => pipeline.process(job),
-    async drain(): Promise<ProcessingResult[]> {
-      const results: ProcessingResult[] = [];
-      let job = queue.dequeue();
-      while (job) {
-        results.push(await pipeline.process(job));
-        job = queue.dequeue();
-      }
-      return results;
+    enqueueAndAwait(videoId, organizationId): Promise<ProcessingResult> {
+      void organizationId; // organization is re-resolved by the pipeline
+      const result = new Promise<ProcessingResult>((resolve, reject) => {
+        completions.set(videoId, { resolve, reject });
+      });
+      // Register the waiter before enqueue so the worker cannot complete the
+      // job before we are listening.
+      return pipeline.enqueue(videoId).then(() => result);
     },
+    startWorker(options: MediaWorkOptions = {}): Worker {
+      const worker = queue.work(options);
+      worker.start();
+      workers.push(worker);
+      return worker;
+    },
+    initQueue: () => queue.init(),
     probeDurationSeconds: (objectKey) =>
       transcoder.probeDurationSeconds(objectKey),
-    close(): void {
+    async close(): Promise<void> {
+      await Promise.all(workers.map((w) => w.stop().catch(() => undefined)));
+      await queue.close().catch(() => undefined);
       // The framework StorageDriver owns and manages its own client lifecycle;
       // there is no explicit socket handle to release here.
     },
