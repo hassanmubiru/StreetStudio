@@ -196,7 +196,7 @@ async function main() {
 
     log("\n=== VERIFICATION PASSED ===");
   } finally {
-    if (runtime) runtime.close();
+    if (runtime) await runtime.close().catch(() => {});
     await pg.close().catch(() => {});
     await rm(workDir, { recursive: true, force: true });
   }
