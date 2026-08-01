@@ -56,6 +56,13 @@ Per the project rules, this server-build effort was surfaced for a scope decisio
 
 **Decision (authorized):** build a real composition root that adapts **standard drivers through the existing structural seams** (e.g. the `node-postgres` `pg` driver behind `StreetPostgresClient`), swappable for `@streetjs/*` once published. This does not violate `streetjs:check`/`boundary:check`.
 
+> **⚠️ CORRECTION (ADR-0022):** the premise of this Update — that the `@streetjs/*`
+> packages "are **not published yet**" — is **false** (they are published; see the
+> correction banner at the top of this report). The correct action per the charter
+> was to *consume* the published framework, not to hand-roll a composition root
+> over raw drivers. That infrastructure is now being retired via ADR-0022's
+> strangler-fig migration.
+
 **Phase A delivered — a runnable API server + a proven vertical slice** (`apps/api/src/runtime/`): `pg`-backed client, env→`ConfigSource`, DI container with real `AuthService`/`OrgService`/`RbacAccessControl` on pg-backed stores, bearer-token `Authenticator`, DB `AuditSink`, a Node `http` transport (template routing → `RestRouter` → full lifecycle), and a `main.ts` entrypoint calling `startApiService`. Docker `api` CMD fixed to run it.
 
 **Verified against live PostgreSQL** (`localhost:5435`), reproduced independently:
