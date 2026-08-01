@@ -93,6 +93,7 @@ import type {
 } from "../http/lifecycle.js";
 import { PUBLIC_OPERATIONS, type PublicOperation } from "../http/operations.js";
 import type { AuthStatus } from "../security/auth-required.js";
+import { StreetJwtAccessTokenIssuer } from "../security/street-jwt-issuer.js";
 import type { PgClient } from "./pg-client.js";
 
 /** The operations wired by this slice (filtered catalog for createApiService). */
@@ -311,7 +312,10 @@ export function buildRuntime(
   const authService = new AuthService({
     stores: repositoryAuthStores(repositories),
     passwordHasher: new Argon2idPasswordHasher(),
-    tokenIssuer: new HmacAccessTokenIssuer(config.jwtSecret),
+    // JWT signing is framework-owned security infrastructure (ADR-0020 step 2):
+    // consume `streetjs`'s strict HS256 `JwtService` via the auth core's
+    // AccessTokenIssuer port rather than hand-rolling the signer.
+    tokenIssuer: new StreetJwtAccessTokenIssuer(config.jwtSecret),
   });
   const memberStore = repositoryMemberStore(repositories);
   const accessControl = new RbacAccessControl({
