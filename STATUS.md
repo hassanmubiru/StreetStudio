@@ -43,7 +43,7 @@ Product design                   ██████████ 100%
 Spec (requirements/design/tasks) ██████████ 100%
 Documentation                    ████████░░  80%
 Backend domain + API (ref build) ██████████ 100%  domain logic implemented & tested (5315 tests passing)
-Runnable API server (composition)█████████░  90%  env→config→migrations→listen; HTTP+WS transport; real pg/MinIO/ffmpeg
+Runnable API server (composition)██████████ 100%  env→config→migrations→listen; HTTP+WS; real pg/MinIO/ffmpeg; /health + /metrics (R30.4) + graceful shutdown
 Operation catalog wired (REST+WS)██████████ 100%  45/45 ops with a backing method, verified end-to-end on real infra
 Media pipeline (real ffmpeg)     ██████████ 100%  upload→duration-probe→transcode(thumb/preview/ABR)→storage→stream renditions(Range); in-process + distributed worker (SKIP LOCKED + crash-recovery reclaim)
 Auth / RBAC / tenant isolation   ██████████ 100%  register/login/JWT, wildcard-admin RBAC, deny-by-default, cross-tenant 403s verified
