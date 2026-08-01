@@ -154,10 +154,13 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   `GET /metrics`) and `HealthCheckRegistry` (`GET /health` retained at its path,
   plus `/health/live` + `/health/ready`) — both bare `streetjs` exports, no new
   package. Non-breaking (nothing consumed the old `/metrics` JSON; the Docker
-  healthcheck path is preserved); the in-house `ops/{metrics,health}.ts` are now
-  unused (retired alongside other seams, ADR-0020). Verified live on real
-  Postgres; ratchet stays 0. **The ADR-0022 migration is complete** — the
-  product repo hand-rolls no reusable infrastructure.
+  healthcheck path is preserved). Verified live on real Postgres; ratchet stays
+  0. **The ADR-0022 migration is complete** — the product repo hand-rolls no
+  reusable infrastructure. **Follow-up done:** the orphaned in-house
+  `ops/{metrics,health}.ts` stand-ins + their unit tests were deleted and the
+  `ops/index.ts` barrel trimmed (`ops.integration.test.ts` rewritten to use the
+  framework `HealthCheckRegistry`; `ops/ha.ts` kept as an unwired R30.5/R30.6
+  capability). Suite 5315 → **5296 passed / 0 failed**.
 - **Recently closed (Update 32):** **ADR-0022 slice 6** — realtime moved onto
   the published **`@streetjs/realtime`**; the hand-rolled `ws` hub and `ioredis`
   pub/sub bus were deleted (`realtime-bus.ts` removed; `ioredis`/`ws`/`@types/ws`
