@@ -71,7 +71,7 @@ Dashboard client logic           ██████░░░░  65%   session/s
 Dashboard (web UI runtime)       ████░░░░░░  40%   Vite SPA production-builds (es2022), served by a zero-dep static host, and browser-verified in real Chrome (renders/routes, 0 critical/serious axe a11y); Docker web image runs
 Desktop client                   ░░░░░░░░░░   0%   scaffold entry only
 Recorder extension               ░░░░░░░░░░   0%   scaffold entry only
-De-seam remaining pkgs → StreetJS █████████░  90%   prod wires all domains to canonical Postgres repositories on ONE schema (ADR-0021 converged); auth on real Postgres + JWT via streetjs JwtService (ADR-0020 step 2); gaps: streetjs auth session/refresh/api-key subpaths unpublished (README gap #6), uploads/playback on separate repo
+De-seam remaining pkgs → StreetJS █████████░  95%   ADR-0021 convergence complete (prod wires all domains to canonical Postgres repositories on ONE schema; dual-path adapters retired to test fixtures); auth on real Postgres + JWT via streetjs JwtService (ADR-0020 step 2); uploads/playback keep their own first-class real-Postgres `upload_sessions` (by design, like identity/recordings — not a dual path); only genuine remainder is blocked upstream: streetjs auth session/refresh/api-key subpaths unpublished (README gap #6)
 Published repo + npm releases    ░░░░░░░░░░   0%   not released
 ```
 
