@@ -124,6 +124,7 @@ export const SLICE_OPERATION_IDS: readonly string[] = [
   "videos.delete",
   "videos.transcript",
   "videos.summary",
+  "search.videos",
   "comments.list",
   "comments.create",
   "comments.delete",
@@ -361,6 +362,14 @@ export function buildRuntime(
     store: repositoryCommentStore(repositories),
     access: accessControl,
     notifier: { async notifyMention(): Promise<void> {} },
+  });
+  // Search over the CANONICAL schema (ADR-0021): the search index queries the
+  // singular `video`/`transcript` tables the app actually populates (the
+  // published `postgresSearchIndex` targets the legacy plural schema). RBAC
+  // filtering to the requester's authorized scope stays in the service (R14.4).
+  const searchService = new SearchService({
+    index: canonicalSearchIndex(pg),
+    access: accessControl,
   });
   // API keys. Management authorization is enforced by the HTTP request
   // lifecycle's RBAC (apikey:create/revoke) before the handler runs, so the
