@@ -156,17 +156,20 @@ async function main(): Promise<void> {
       /* best-effort */
     }
     void realtimeBus.close().catch(() => undefined);
-    server.close(() => {
-      try {
-        media.close();
-      } catch {
-        /* best-effort */
-      }
-      void pgClient
-        .close()
-        .catch(() => undefined)
-        .finally(() => process.exit(0));
-    });
+    void app
+      .close()
+      .catch(() => undefined)
+      .finally(() => {
+        try {
+          media.close();
+        } catch {
+          /* best-effort */
+        }
+        void pgClient
+          .close()
+          .catch(() => undefined)
+          .finally(() => process.exit(0));
+      });
     // Safety net if connections linger.
     setTimeout(() => process.exit(0), 10_000).unref();
   };
