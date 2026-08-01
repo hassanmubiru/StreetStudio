@@ -160,23 +160,40 @@ function requireOrgHeader(req: IncomingMessage): Uuid {
  * templates, builds an {@link ApiRequest}, and dispatches through the router's
  * lifecycle. Errors are mapped to HTTP status via the shared error taxonomy.
  */
-export function createHttpServer(deps: HttpServerDeps): Server {
+export function createHttpServer(deps: HttpServerDeps): ReturnType<typeof streetApp> {
   const routes = compileRoutes(deps.operations);
   // Operational metrics (R30.4): request/error counters + live process gauges,
   // exposed at GET /metrics. Shared for the lifetime of the server.
   const metrics = deps.metrics ?? new MetricsRegistry();
   const startedAt = Date.now();
 
-  return createServer((req, res) => {
-    void handle(req, res).catch((error: unknown) => {
-      // Last-resort guard: never leave a socket hanging.
-      if (!res.headersSent) {
-        respondWithError(res, error);
+  // The HTTP host is the published StreetJS framework (`streetApp`); the product
+  // owns only the dispatch (operation catalog + request lifecycle) mounted as a
+  // single catch-all middleware (ADR-0022 slice 2). A generous per-request
+  // timeout accommodates legitimately long operations — inline transcode on
+  // `uploads.complete` and large Range streaming from `GET /objects/*`.
+  const app = streetApp({ requestTimeoutMs: 600_000 });
+  app.use(async (ctx) => {
+    // We fully own the response and never call `next()`, so the framework's
+    // router (no controllers are registered) never runs. `streetApp` has already
+    // buffered/parsed a JSON body into `ctx.body`; `application/octet-stream`
+    // (the binary part upload) is left unconsumed, so `ctx.req` is still a
+    // readable stream for that route.
+    try {
+      await handle(ctx.req, ctx.res, ctx.body);
+    } catch (error) {
+      if (!ctx.res.headersSent) {
+        respondWithError(ctx.res, error);
       }
-    });
+    }
   });
+  return app;
 
-  async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  async function handle(
+    req: IncomingMessage,
+    res: ServerResponse,
+    preParsedBody: unknown,
+  ): Promise<void> {
     const method = (req.method ?? "GET").toUpperCase();
     const url = new URL(req.url ?? "/", "http://localhost");
     const pathname = url.pathname;
