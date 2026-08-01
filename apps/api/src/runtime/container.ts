@@ -1021,12 +1021,13 @@ export function buildRuntime(
     const page = await searchService.search(auth, q, cursor);
     const videos: unknown[] = [];
     for (const hit of page.results) {
-      if (hit.resource.type !== "video") {
+      const hitOrgId = hit.resource.organizationId;
+      if (hit.resource.type !== "video" || !hitOrgId) {
         continue;
       }
       try {
         videos.push(
-          await contentService.getVideo(auth, hit.resource.organizationId, hit.resource.id),
+          await contentService.getVideo(auth, hitOrgId, hit.resource.id),
         );
       } catch {
         // A video that vanished or is not viewable is simply omitted; no
