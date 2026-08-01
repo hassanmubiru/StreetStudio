@@ -84,6 +84,7 @@ const emailB = `sdk_${rand()}@example.com`;
 await anon.auth.register({ email: emailB, password: "password12345" });
 const sessB = await anon.auth.login({ email: emailB, password: "password12345" });
 const cB = new StreetStudioClient({ baseUrl: BASE, auth: { kind: "bearer", token: sessB.accessToken }, organizationId: org.id });
+console.log("  cross-tenant inputs:", JSON.stringify({ orgId: org.id, tokenLen: sessB?.accessToken?.length ?? null }));
 let denied = false;
 let crossOutcome;
 try {
