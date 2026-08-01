@@ -24,7 +24,6 @@ import type { MemberDto } from "@streetstudio/shared";
 import {
   Argon2idPasswordHasher,
   AuthService,
-  HmacAccessTokenIssuer,
   RbacAccessControl,
   ApiKeyService,
   repositoryAuthStores,
