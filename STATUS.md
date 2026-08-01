@@ -143,6 +143,18 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
+- **Recently closed (Update 30):** **ADR-0022 slice 4** — media transcode moved
+  onto the published **`@streetjs/media`** `MediaProcessor`; the hand-rolled
+  ffmpeg transcoder (raw `spawn` + product-built ffmpeg/ffprobe arg vectors) was
+  rewritten to drive the framework processor over an injectable
+  `NodeCommandRunner`. Product code no longer builds a single ffmpeg argument
+  (evidence: recorded invocations carry the framework's `-hide_banner -v error`
+  prefix); it retains only the ABR/preview/thumbnail recipe, the storage key
+  layout, and get/put glue. `ffmpeg-static`/`ffprobe-static` are injected as
+  sanctioned binary providers (removed from the ratchet driver set; `@aws-sdk`
+  stays flagged). Verified end-to-end on real ffmpeg + MinIO + Postgres
+  (upload→probe(6s)→transcode(thumb/preview/3 renditions)→ready, all ffmpeg exit
+  0); ratchet 4→2.
 - **Recently closed (Update 29):** **ADR-0022 slice 3** — object storage moved
   onto the published `@streetjs/storage/s3` driver; the hand-rolled `@aws-sdk`
   driver was deleted (the framework driver lazily loads the SDK the app provides
