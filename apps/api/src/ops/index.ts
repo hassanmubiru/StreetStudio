@@ -32,29 +32,6 @@ export type {
 } from "./startup.js";
 
 export {
-  HealthChecker,
-  exposeHealthCheck,
-  probeFromHealthCheck,
-} from "./health.js";
-export type {
-  DependencyHealth,
-  DependencyProbe,
-  HealthClock,
-  HealthReport,
-  HealthState,
-  StreetHealthInterface,
-} from "./health.js";
-
-export {
-  MetricsRegistry,
-  exposeMetrics,
-} from "./metrics.js";
-export type {
-  MetricSnapshot,
-  StreetMetricsInterface,
-} from "./metrics.js";
-
-export {
   ConnectionLostError,
   DEFAULT_HA_RECONNECT_POLICY,
   HaConnectionManager,
