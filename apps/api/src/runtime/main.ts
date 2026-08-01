@@ -113,7 +113,10 @@ async function main(): Promise<void> {
     buildRuntime(config, pgClient, media, realtime, { inlineProcessing });
   realtime.setAuthenticator(authenticate);
 
-  const server = createHttpServer({
+  // The HTTP host is the published StreetJS app (ADR-0022 slice 2). It exposes
+  // its underlying Node `http.Server` as `app.server`, so the realtime hub can
+  // attach to the same socket for the `/realtime` WebSocket upgrade.
+  const app = createHttpServer({
     router: service.router,
     operations,
     pg: pgClient,
@@ -123,15 +126,13 @@ async function main(): Promise<void> {
   });
 
   // Route HTTP upgrades on /realtime to the WebSocket hub; reject others.
-  server.on("upgrade", (req, socket, head) => {
+  app.server.on("upgrade", (req, socket, head) => {
     if (!realtime.handleUpgrade(req, socket, head)) {
       socket.destroy();
     }
   });
 
-  await new Promise<void>((resolve) => {
-    server.listen(config.httpPort, () => resolve());
-  });
+  await app.listen(config.httpPort, "0.0.0.0");
   // eslint-disable-next-line no-console
   console.log(
     `[api] StreetStudio API listening on http://0.0.0.0:${config.httpPort} ` +
