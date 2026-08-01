@@ -30,7 +30,6 @@ import type { ApiRequest } from "../http/lifecycle.js";
 import type { RestRouter } from "../http/controllers.js";
 import type { PgClient } from "./pg-client.js";
 import type { Runtime } from "./container.js";
-import { MetricsRegistry } from "../ops/metrics.js";
 
 /** A compiled route: its operation plus the template split into segments. */
 interface CompiledRoute {
@@ -139,6 +138,8 @@ export interface HttpServerDeps {
   readonly resolveObject: Runtime["resolveObject"];
   /** Operational metrics registry (R30.4). Created if not supplied. */
   readonly metrics?: MetricsRegistry;
+  /** Health-check registry (R30.2/R30.4). Created if not supplied. */
+  readonly health?: HealthCheckRegistry;
 }
 
 /** Read the entire request body as raw bytes. */
