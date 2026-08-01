@@ -544,6 +544,30 @@ Gates: typecheck + `streetjs:check` + `boundary:check` (402 files) green; full s
 
 ---
 
+## Update 23 — Phase 7 (runtime accessibility) + browser e2e executed with real Chrome; five web defects fixed
+
+Ran a real headless-**Chrome 151** audit (via `puppeteer-core` + `axe-core`, an unsaved verification harness) against the **production Vite SPA** served by `apps/web/server.mjs`. This executes the previously-blocked Phase 7 (runtime accessibility) and a browser e2e smoke on real rendered pages.
+
+**Browser e2e (PASS):** the landing page and the `/login` client route (served via the SPA history fallback) both return **200**, render real DOM content, carry a document `<title>`, and produce **no uncaught JS/page errors** in Chrome. SPA routing works in a real browser.
+
+**Runtime a11y (axe-core):** the audit initially reported 3 violation rules (1 **serious**, 2 moderate). After fixes: **0 critical/serious**, 2 **moderate** remaining.
+
+### Real defects found and fixed (verified by re-audit)
+- **A11Y-TOAST-01 (serious → fixed):** the notifications toast container was a bare `<div>` with `aria-label` — prohibited on an element with the implicit generic role (`aria-prohibited-attr`). Added `role="region"` (a labelled landmark that permits the name). `apps/web/src/app/notifications/notification-controller.ts`.
+- **WEB-MANIFEST-01 (fixed):** `/manifest.json` didn't exist, so the static host served `index.html` for it and the browser parsed HTML as a manifest ("Manifest: Syntax error"). Fixed the host (`apps/web/server.mjs`) so the SPA history fallback applies only to **navigation** requests — a missing path that looks like a file (has an extension) now returns **404** — and added a real `apps/web/public/manifest.json` + `favicon.svg`.
+- **CSP-ROUTER-CSS-01 (functional, fixed):** the router transition CSS was loaded by `fetch()`-ing a stylesheet URL that Vite inlines as a `data:text/css` URL — **blocked by CSP `connect-src`**, so route-transition animations silently never loaded in production. Replaced with inline `<style>` injection from a shared `apps/web/src/styles/router-transitions.ts` (permitted by `style-src 'unsafe-inline'`); also removed the dev-only `/src/styles/...` fetch in `router-styles.js`.
+- **CSP-FONTS-01 (fixed):** Google Fonts were fetched against `connect-src` (they were trusted only in `style-src`/`font-src`), so the font CSS was CSP-blocked. Added `https://fonts.googleapis.com`/`https://fonts.gstatic.com` to `connect-src` (matching the existing font trust). `apps/web/index.html`.
+- **WEB-DEVCSS-01 (fixed):** `setupGlobalCSS` always `fetch`ed `/src/styles/projects.css` (a dev-server-only path) → a 404 in production. Guarded behind `import.meta.env.DEV`. `apps/web/src/styles/global.ts`.
+
+### Remaining a11y (2 moderate, documented — not fixed)
+`region` and `skip-link`: the app injects **global** skip links (`.skip-links`, keyboard-shortcut skip link) whose targets (`#main-content`, `#navigation`, `#search`) are created by the authenticated app shell (responsive layout / nav) and are **absent on the public landing page**, so axe flags the links' targets as missing and some top-level content as outside a landmark. Making the skip-link injection context-aware touches tested accessibility code (`accessibility.ts`, `keyboard-shortcuts.ts`, `skip-links.ts`, with tests asserting the `#main-content` hrefs), so it is left as a scoped follow-up rather than risk those suites. One benign resource 404 (a browser auto-request) also remains as a non-fatal console warning.
+
+Gates: typecheck + `streetjs:check` + `boundary:check` (403 files) green; full suite **5315 passed / 0 failed** (the web-source changes above caused no regression).
+
+**Remaining for full RC:** only the 2 moderate landing-page a11y items above and the deliberately-deferred worker stale-claim schema follow-up. Every automated phase that this environment can run — build, all Docker images, the full operation catalog, media lifecycle (upload → transcode → stream), distributed processing, cross-process realtime, **performance under load**, and now **runtime accessibility + browser e2e** — has been executed on real infrastructure with evidence.
+
+---
+
 ## (historical) The server-build effort was originally deferred for authorization:
 Per the project rules ("do not add features unless a verified defect requires it; do not auto-refactor; stop and document; fix only when authorized"), this server-build effort was **not** undertaken until the maintainer authorized it (now done — see update 3).
 
