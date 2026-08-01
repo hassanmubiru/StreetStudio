@@ -106,11 +106,16 @@ for (const file of codeFiles) {
     if (!mentionsStreetjs) continue;
     const isRelativeOrUrl = /^(\.\.?\/|\/)/.test(spec) || /^https?:/.test(spec);
     // Deep import into a @streetjs/* package (past the entry point), e.g.
-    // "@streetjs/core/src/internal" or "@streetjs/core/dist/...".
-    const deepScoped = /^@streetjs\/[^/]+\/.+/.test(spec);
+    // "@streetjs/core/src/internal" or "@streetjs/core/dist/...". A subpath that
+    // is a PUBLISHED export (declared in the package's `exports`, e.g.
+    // "@streetjs/storage/s3") is a legitimate public-API consumption and allowed.
+    const scoped = /^@streetjs\/([^/]+)\/(.+)$/.exec(spec);
+    const deepScoped =
+      scoped !== null &&
+      !publishedSubpaths(`@streetjs/${scoped[1]}`).has(scoped[2]);
     if (isRelativeOrUrl || deepScoped) {
       violations.push(
-        `${relative(ROOT, file)}: import "${spec}" — import StreetJS only via its public package entry point (e.g. "@streetjs/core").`,
+        `${relative(ROOT, file)}: import "${spec}" — import StreetJS only via its public package entry point or a published subpath export.`,
       );
     }
   }
