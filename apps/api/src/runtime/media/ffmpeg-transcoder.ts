@@ -229,7 +229,7 @@ export class FfmpegTranscoder implements Transcoder {
       const path = join(workDir, "probe.bin");
       await writeFile(path, fetched.bytes);
       const info = await this.processor.probe(path);
-      const duration = info.durationSeconds;
+      const duration = info.duration;
       return Number.isFinite(duration) ? Math.floor(duration) : 0;
     } catch {
       return 0;
