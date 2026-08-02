@@ -19,6 +19,9 @@ const mockDashboardSession = {
   useBearerToken: vi.fn(),
   clearAuthentication: vi.fn(),
   currentMember: vi.fn(),
+  // register and signOut are consumed by the migrated auth-controller paths.
+  register: vi.fn(),
+  signOut: vi.fn(),
 } as any;
 
 // Mock API responses
