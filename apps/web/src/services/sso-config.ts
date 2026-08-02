@@ -85,7 +85,7 @@ export class SSOConfigService {
    */
   private async loadConfig(): Promise<SSOConfig> {
     try {
-      const response = await apiClient.get<SSOConfig>('/auth/sso/config');
+      const response = await ssofetch<SSOConfig>('GET', '/auth/sso/config');
       
       logger.info('SSO configuration loaded successfully', {
         providersCount: response.data.providers.length,
@@ -290,14 +290,14 @@ export class SSOConfigService {
       }
 
       // Exchange code for authentication
-      const response = await apiClient.post('/auth/sso/callback', {
+      const response = await ssofetch<{ token?: string; returnUrl?: string }>('POST', '/auth/sso/callback', {
         provider: providerId,
         code,
         state,
         nonce: flowState.nonce,
       });
 
-      if (response.success) {
+      if (response.data) {
         logger.info('SSO authentication successful', { 
           provider: providerId,
           userId: response.data?.user?.id,

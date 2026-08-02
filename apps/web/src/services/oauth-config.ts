@@ -5,8 +5,19 @@
  * Requirement 1.6: OAuth provider buttons with dynamic configuration
  */
 
-import { apiClient } from './api.js';
 import { logger } from '../app/client-logger.js';
+
+// Lightweight JSON fetch for bespoke OAuth endpoints not in @streetstudio/sdk.
+async function oauthfetch<T>(method: string, path: string, body?: unknown): Promise<{ data: T; success: boolean }> {
+  const init: RequestInit = {
+    method,
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+  };
+  if (body !== undefined) init.body = JSON.stringify(body);
+  const res = await fetch(path, init);
+  const data: T = await res.json();
+  return { data, success: res.ok };
+}
 
 export interface OAuthProvider {
   id: string;
@@ -66,7 +77,7 @@ export class OAuthConfigService {
    */
   private async loadConfig(): Promise<OAuthConfig> {
     try {
-      const response = await apiClient.get<OAuthConfig>('/auth/oauth/config');
+      const response = await oauthfetch<OAuthConfig>('GET', '/auth/oauth/config');
       
       logger.info('OAuth configuration loaded successfully', {
         providersCount: response.data.providers.length,
@@ -271,7 +282,7 @@ export class OAuthConfigService {
       // Exchange authorization code for tokens
       let response;
       try {
-        response = await apiClient.post('/auth/oauth/callback', {
+        response = await oauthfetch<{ token?: string; user?: { id: string } }>('POST', '/auth/oauth/callback', {
           provider: providerId,
           code,
           state,
