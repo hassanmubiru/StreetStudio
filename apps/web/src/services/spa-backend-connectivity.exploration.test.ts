@@ -204,3 +204,73 @@ describe('Property 1: Bug Condition — /api/* calls must reach the live backend
     expect(sdkBaseUrlIsSameOriginApi()).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Slice 3 — Root-path correctness assertions
+//
+// These are pure unit assertions (no server required). They verify that the
+// prefix-strip logic is correct: `/api/*` paths are stripped to ROOT paths,
+// non-`/api` paths are left unchanged (idempotent), and the strip is applied
+// uniformly across all generated `/api/*` inputs.
+//
+// **Validates: Requirements 1.3, 2.3**
+// ---------------------------------------------------------------------------
+
+describe('Slice 3: prefix-strip logic — /api/* is stripped to backend ROOT paths', () => {
+  it('concrete: /api/auth/login strips to /auth/login', () => {
+    expect(stripApiPrefix('/api/auth/login')).toBe('/auth/login');
+  });
+
+  it('concrete: /api/videos strips to /videos', () => {
+    expect(stripApiPrefix('/api/videos')).toBe('/videos');
+  });
+
+  it('concrete: /api alone strips to /', () => {
+    expect(stripApiPrefix('/api')).toBe('/');
+  });
+
+  it('property: every /api/* generated path strips to a ROOT path (no /api prefix remaining)', () => {
+    fc.assert(
+      fc.property(apiPathArb, (apiPath) => {
+        const rootPath = stripApiPrefix(apiPath);
+        // Stripped path must not start with /api.
+        expect(rootPath.startsWith('/api')).toBe(false);
+        // Stripped path must start with /.
+        expect(rootPath.startsWith('/')).toBe(true);
+        // The content after /api in the original must appear verbatim in the result.
+        const expectedSuffix = apiPath.slice('/api'.length) || '/';
+        expect(rootPath).toBe(expectedSuffix);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it('idempotent on ROOT paths: /auth/login (already stripped) is unchanged', () => {
+    // Applying stripApiPrefix to a path that has no /api prefix must be a no-op.
+    expect(stripApiPrefix('/auth/login')).toBe('/auth/login');
+  });
+
+  it('idempotent on ROOT paths: /videos (already stripped) is unchanged', () => {
+    expect(stripApiPrefix('/videos')).toBe('/videos');
+  });
+
+  it('idempotent property: paths that do not start with /api are unchanged', () => {
+    const rootPathArb = fc
+      .array(fc.stringMatching(/^[a-z][a-z0-9-]{0,15}$/), { minLength: 1, maxLength: 4 })
+      .map((segs) => `/${segs.join('/')}`);
+
+    fc.assert(
+      fc.property(rootPathArb, (rootPath) => {
+        // A path that doesn't start with /api must survive the strip untouched.
+        expect(stripApiPrefix(rootPath)).toBe(rootPath);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it('both proxies are configured to strip the /api prefix before forwarding', () => {
+    // Confirms the runtime-level strip is wired correctly in both host runtimes.
+    expect(viteDevProxyForwardsApi()).toBe(true);
+    expect(prodServerProxyForwardsApi()).toBe(true);
+  });
+});
