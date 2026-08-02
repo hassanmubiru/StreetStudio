@@ -213,8 +213,8 @@ describe('BillingSettingsPage', () => {
     vi.restoreAllMocks();
     mockFetch.mockReset();
     document.body.innerHTML = '<div id="app"></div>';
-    // Default: successful billing data load
-    mockFetch.mockResolvedValue(jsonResponse(structuredClone(mockBillingData)));
+    // Default: successful billing data load (Once so it doesn't persist across action calls)
+    mockFetch.mockResolvedValueOnce(jsonResponse(structuredClone(mockBillingData)));
   });
 
   afterEach(() => {
