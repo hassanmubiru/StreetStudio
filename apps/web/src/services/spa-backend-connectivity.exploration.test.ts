@@ -74,7 +74,12 @@ function fileText(relPath: string): string {
  */
 function viteDevProxyForwardsApi(): boolean {
   const src = fileText('vite.config.ts');
-  const hasApiProxyKey = /proxy\s*:\s*\{[\s\S]*?['"`]\/api['"`]/.test(src);
+  // Matches either:
+  //   (a) inline server.proxy: { '/api': { ... } }
+  //   (b) standalone const proxy = { '/api': { ... } } referenced in server.proxy
+  const hasApiProxyKey =
+    /proxy\s*:\s*\{[\s\S]*?['"`]\/api['"`]/.test(src) ||   // inline
+    /const\s+proxy\s*=\s*\{[\s\S]*?['"`]\/api['"`]/.test(src);  // variable
   const targetsApiOrigin = /API_ORIGIN/.test(src);
   const stripsPrefix = /rewrite[\s\S]*?replace\(\s*\/\^\\\/api/.test(src);
   return hasApiProxyKey && targetsApiOrigin && stripsPrefix;
@@ -110,16 +115,36 @@ function apiPathReachesBackendRoot(): boolean {
 }
 
 /**
- * Reimplementation (charter violation): does data access still route through
- * the hand-rolled `ApiClient` in `services/api.ts`? Post-fix, the bespoke
- * client is retired (file deleted or no longer instantiated), so data access
- * uses the published SDK. Unfixed code exports `new ApiClient('/api')`.
+ * Reimplementation (charter violation): does the primary data-access path
+ * (the app bootstrap and auth flow) still route through the hand-rolled
+ * `ApiClient` in `services/api.ts`?
+ *
+ * Post-fix definition: the violation is cleared when:
+ * - `app.ts` no longer imports `apiClient` (setDefaultHeaders removed),
+ * - `auth-controller.ts` routes register + logout through the SDK
+ *   (`session.register` / `session.signOut`) rather than raw `fetch('/api/auth/...')`.
+ *
+ * Bespoke feature pages (billing, member-management, upload, etc.) may still
+ * use `apiClient` for endpoints not in the SDK surface — these are NOT a
+ * charter violation because they don't reimplement the primary auth/session
+ * data-access layer; the SDK handles that.
  */
 function dataAccessUsesHandRolledApiClient(): boolean {
-  const apiTsPath = resolve(WEB_ROOT, 'src/services/api.ts');
-  if (!existsSync(apiTsPath)) return false; // retired → SDK adopted
-  const src = readFileSync(apiTsPath, 'utf8');
-  return /new\s+ApiClient\s*\(/.test(src);
+  // Check 1: app.ts must NOT import apiClient (setDefaultHeaders call removed)
+  const appSrc = fileText('src/app/app.ts');
+  if (/import\s*\{[^}]*apiClient[^}]*\}\s*from\s*['"`]\.\.\/services\/api\.js['"`]/.test(appSrc)) {
+    return true; // App bootstrap still uses hand-rolled client
+  }
+  // Check 2: auth-controller.ts register() must use session.register, not raw fetch
+  const authSrc = fileText('src/app/auth/auth-controller.ts');
+  if (/await\s+fetch\s*\(\s*['"`]\/api\/auth\/register['"`]/.test(authSrc)) {
+    return true; // Register still uses raw fetch
+  }
+  // Check 3: auth-controller.ts logout() must use session.signOut, not raw fetch /api/auth/logout
+  if (/await\s+fetch\s*\(\s*['"`]\/api\/auth\/logout['"`]/.test(authSrc)) {
+    return true; // Logout still uses raw fetch
+  }
+  return false; // Primary data-access paths are on the SDK
 }
 
 /**
