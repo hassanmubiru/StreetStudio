@@ -110,7 +110,17 @@ export class ResilientHttpTransport implements HttpTransport {
 
       try {
         const fetchLike = this._getFetch();
-        const init: Parameters<FetchLike>[1] & { signal: AbortSignal } = {
+
+        // Build a plain object with the explicit shape needed.
+        // We cannot use `typeof init` in the cast because TypeScript sees it as
+        // a direct self-reference; an explicit interface avoids the cycle.
+        type FetchInit = {
+          method: string;
+          headers: Record<string, string>;
+          signal: AbortSignal;
+          body?: string;
+        };
+        const init: FetchInit = {
           method: request.method,
           headers: { ...request.headers },
           signal: abortController.signal,
@@ -119,7 +129,7 @@ export class ResilientHttpTransport implements HttpTransport {
           init.body = request.body;
         }
 
-        const res = await (fetchLike as (url: string, init: typeof init) => Promise<Response>)(
+        const res = await (fetchLike as (url: string, init: FetchInit) => Promise<Response>)(
           request.url,
           init,
         );
