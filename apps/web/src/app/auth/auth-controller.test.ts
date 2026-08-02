@@ -623,29 +623,21 @@ describe('AuthController', () => {
   });
 
   describe('Registration and Password Reset', () => {
-    it('should register new user successfully', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true
-      } as Response);
+    it('should register new user successfully via session.register', async () => {
+      const mockMember = { id: 'user-1', email: 'new@example.com', createdAt: '2024-01-01T00:00:00Z' };
+      mockDashboardSession.register.mockResolvedValueOnce(mockMember);
 
       const result = await authController.register('new@example.com', 'password', 'New User');
 
       expect(result.success).toBe(true);
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/register', expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({
-          email: 'new@example.com',
-          password: 'password',
-          displayName: 'New User'
-        })
-      }));
+      // Routes through SDK — register called with email + password (no displayName in SDK contract)
+      expect(mockDashboardSession.register).toHaveBeenCalledWith('new@example.com', 'password');
+      // Raw fetch is NOT called for register
+      expect(mockFetch).not.toHaveBeenCalledWith('/api/auth/register', expect.anything());
     });
 
     it('should handle registration failure', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        text: () => Promise.resolve('Email already exists')
-      } as Response);
+      mockDashboardSession.register.mockRejectedValueOnce(new Error('Email already exists'));
 
       const result = await authController.register('existing@example.com', 'password', 'User');
 
