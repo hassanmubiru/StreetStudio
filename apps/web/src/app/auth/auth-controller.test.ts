@@ -57,6 +57,8 @@ describe('AuthController', () => {
     // Fully reset fetch so queued mockResolvedValueOnce values from a prior
     // test (that were never consumed) don't leak into the next test.
     mockFetch.mockReset();
+    // signOut is called by logout(); default to resolving successfully.
+    mockDashboardSession.signOut.mockResolvedValue(undefined);
     
     mockConfig = {
       tokenStorage: {
