@@ -80,7 +80,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 4. Slice 2 — Prod connectivity (`server.mjs` reverse proxy)
 
-  - [-] 4.1 Add an `/api` reverse-proxy branch to `apps/web/server.mjs` (Node built-ins only)
+  - [x] 4.1 Add an `/api` reverse-proxy branch to `apps/web/server.mjs` (Node built-ins only)
     - Import `node:http` / `node:https` / `node:url` only — no new runtime deps (must survive `npm prune --omit=dev`)
     - Read `API_ORIGIN` from env at startup; parse once into `{ protocol, hostname, port }`. If unset, log a clear warning and continue serving static content (connectivity disabled) so the host still boots
     - Insert the `/api` branch AFTER the `/healthz` check and BEFORE `resolveFile`, keyed strictly on `pathname === '/api' || pathname.startsWith('/api/')`
