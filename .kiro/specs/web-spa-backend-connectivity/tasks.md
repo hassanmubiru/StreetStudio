@@ -139,7 +139,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: existing degradation/error-reporting behavior retained_
     - _Requirements: 1.4, 2.4_
 
-  - [ ] 6.3 Route the login vertical through the SDK; use `useBearerToken` for dynamic tokens
+  - [-] 6.3 Route the login vertical through the SDK; use `useBearerToken` for dynamic tokens
     - Replace raw `fetch('/api/auth/login')`, `/api/auth/register`, `/api/auth/logout`, and session-validation calls in `auth-controller.ts` with the `DashboardSession`/`StreetStudioClient` methods the SPA already holds (`register`, `auth.login`, `auth.logout`, `currentMember`)
     - Use `DashboardSession.useBearerToken` (which rebuilds the client) for dynamic token injection rather than mutating construction-time `auth`
     - Add unit tests: login/register/logout/validation routed through `DashboardSession`, with the token-gap path handled explicitly (see 6.5)
