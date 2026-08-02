@@ -194,7 +194,6 @@ const server = createServer((req, res) => {
   // (has an extension, e.g. /manifest.json, /favicon.png) that doesn't exist
   // must 404 — serving index.html for it makes the browser parse HTML as that
   // asset (e.g. "Manifest: Syntax error").
-  const pathname = urlPath.split("?")[0].split("#")[0];
   const looksLikeAsset = /\.[a-z0-9]+$/i.test(pathname.slice(pathname.lastIndexOf("/") + 1));
   if (!file && looksLikeAsset) {
     res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
