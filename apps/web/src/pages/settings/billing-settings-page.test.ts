@@ -306,9 +306,7 @@ describe('BillingSettingsPage', () => {
         ...mockBillingData,
         subscription: { ...mockBillingData.subscription, cancelAtPeriodEnd: true },
       };
-      (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: canceledData, status: 200, success: true,
-      });
+      mockFetch.mockResolvedValueOnce(jsonResponse(canceledData));
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       const el = await page.getElement();
@@ -336,9 +334,7 @@ describe('BillingSettingsPage', () => {
         ...mockBillingData,
         subscription: { ...mockBillingData.subscription, cancelAtPeriodEnd: true },
       };
-      (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: cancelingData, status: 200, success: true,
-      });
+      mockFetch.mockResolvedValueOnce(jsonResponse(cancelingData));
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       const el = await page.getElement();
@@ -388,9 +384,7 @@ describe('BillingSettingsPage', () => {
 
     it('should handle empty usage data', async () => {
       const emptyData = { ...mockBillingData, usage: [] };
-      (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: emptyData, status: 200, success: true,
-      });
+      mockFetch.mockResolvedValueOnce(jsonResponse(emptyData));
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       const el = await page.getElement();
@@ -475,9 +469,7 @@ describe('BillingSettingsPage', () => {
 
     it('should handle empty payment methods', async () => {
       const emptyData = { ...mockBillingData, paymentMethods: [] };
-      (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: emptyData, status: 200, success: true,
-      });
+      mockFetch.mockResolvedValueOnce(jsonResponse(emptyData));
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       const el = await page.getElement();
@@ -551,9 +543,7 @@ describe('BillingSettingsPage', () => {
 
     it('should handle empty invoice list', async () => {
       const emptyData = { ...mockBillingData, invoices: [] };
-      (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: emptyData, status: 200, success: true,
-      });
+      mockFetch.mockResolvedValueOnce(jsonResponse(emptyData));
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       const el = await page.getElement();
