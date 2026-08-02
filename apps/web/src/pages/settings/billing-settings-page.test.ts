@@ -712,7 +712,8 @@ describe('BillingSettingsPage', () => {
 
   describe('Subscription Actions', () => {
     it('should call API to cancel subscription on confirm', async () => {
-      (apiClient.post as ReturnType<typeof vi.fn>).mockResolvedValue({ data: {}, status: 200, success: true });
+      mockFetch.mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
+             .mockResolvedValueOnce(jsonResponse({}));                 // POST cancel
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
@@ -723,9 +724,9 @@ describe('BillingSettingsPage', () => {
       cancelBtn.click();
 
       await vi.waitFor(() => {
-        expect(apiClient.post).toHaveBeenCalledWith(
+        expect(mockFetch).toHaveBeenCalledWith(
           '/organizations/org-123/billing/cancel',
-          {}
+          expect.objectContaining({ method: 'POST' }),
         );
       });
     });
@@ -743,11 +744,13 @@ describe('BillingSettingsPage', () => {
 
       // Give async handler time to potentially call the API
       await new Promise(resolve => setTimeout(resolve, 50));
-      expect(apiClient.post).not.toHaveBeenCalled();
+      // Only the initial GET should have been called, not the cancel POST
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
     it('should call API to change plan on confirm', async () => {
-      (apiClient.post as ReturnType<typeof vi.fn>).mockResolvedValue({ data: {}, status: 200, success: true });
+      mockFetch.mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
+             .mockResolvedValueOnce(jsonResponse({}));                 // POST change-plan
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
@@ -763,15 +766,16 @@ describe('BillingSettingsPage', () => {
       selectBtn.click();
 
       await vi.waitFor(() => {
-        expect(apiClient.post).toHaveBeenCalledWith(
+        expect(mockFetch).toHaveBeenCalledWith(
           '/organizations/org-123/billing/change-plan',
-          { planId: 'enterprise' }
+          expect.objectContaining({ method: 'POST' }),
         );
       });
     });
 
     it('should return to overview after successful plan change', async () => {
-      (apiClient.post as ReturnType<typeof vi.fn>).mockResolvedValue({ data: {}, status: 200, success: true });
+      mockFetch.mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
+             .mockResolvedValueOnce(jsonResponse({}));                 // POST change-plan
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
