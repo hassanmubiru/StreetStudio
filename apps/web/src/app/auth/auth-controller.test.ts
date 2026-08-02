@@ -12,7 +12,9 @@ import { AuthController, type AuthState, type SessionConfig } from './auth-contr
 const mockDashboardSession = {
   useBearerToken: vi.fn(),
   clearAuthentication: vi.fn(),
-  currentMember: vi.fn()
+  currentMember: vi.fn(),
+  register: vi.fn(),
+  signOut: vi.fn(),
 };
 
 const mockFetch = vi.fn() as MockedFunction<typeof fetch>;
