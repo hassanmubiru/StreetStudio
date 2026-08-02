@@ -24,15 +24,14 @@ import {
   type SubscriptionPlan,
 } from './billing-settings-page.js';
 
-// Mock the API client
-vi.mock('../../services/api.js', () => ({
-  apiClient: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
-  },
-}));
+// Mock the API (billing-settings-page now uses inline fetch via apiFetch helper)
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
+// Helper to build a fetch Response-like for apiFetch (which calls res.json())
+function jsonResponse(data: unknown, ok = true, status = 200) {
+  return { ok, status, json: async () => data } as unknown as Response;
+}
 
 // Mock logger
 vi.mock('../../app/client-logger.js', () => ({
@@ -43,8 +42,6 @@ vi.mock('../../app/client-logger.js', () => ({
     debug: vi.fn(),
   },
 }));
-
-import { apiClient } from '../../services/api.js';
 
 const mockBillingData: BillingData = {
   subscription: {
@@ -214,12 +211,10 @@ describe('BillingSettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.restoreAllMocks();
+    mockFetch.mockReset();
     document.body.innerHTML = '<div id="app"></div>';
-    (apiClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
-      data: structuredClone(mockBillingData),
-      status: 200,
-      success: true,
-    });
+    // Default: successful billing data load
+    mockFetch.mockResolvedValue(jsonResponse(structuredClone(mockBillingData)));
   });
 
   afterEach(() => {
@@ -249,7 +244,10 @@ describe('BillingSettingsPage', () => {
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       await page.getElement();
 
-      expect(apiClient.get).toHaveBeenCalledWith('/organizations/org-123/billing');
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/organizations/org-123/billing',
+        expect.objectContaining({ method: 'GET' }),
+      );
     });
 
     it('should store billing data after successful load', async () => {

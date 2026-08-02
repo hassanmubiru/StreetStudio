@@ -637,9 +637,10 @@ export class BillingSettingsPage {
     if (!confirmed) return;
 
     try {
-      await apiClient.post(
+      await apiFetch(
+        'POST',
         `/organizations/${this.config.organizationId}/billing/cancel`,
-        {}
+        {},
       );
       if (this.billingData) {
         this.billingData.subscription.cancelAtPeriodEnd = true;
@@ -662,9 +663,10 @@ export class BillingSettingsPage {
 
   private async handleSetDefaultPaymentMethod(methodId: string): Promise<void> {
     try {
-      await apiClient.put(
+      await apiFetch(
+        'PUT',
         `/organizations/${this.config.organizationId}/billing/payment-methods/${methodId}/default`,
-        {}
+        {},
       );
       if (this.billingData) {
         this.billingData.paymentMethods.forEach(m => {
@@ -690,8 +692,9 @@ export class BillingSettingsPage {
     if (!confirmed) return;
 
     try {
-      await apiClient.delete(
-        `/organizations/${this.config.organizationId}/billing/payment-methods/${methodId}`
+      await apiFetch(
+        'DELETE',
+        `/organizations/${this.config.organizationId}/billing/payment-methods/${methodId}`,
       );
       if (this.billingData) {
         this.billingData.paymentMethods = this.billingData.paymentMethods.filter(m => m.id !== methodId);
@@ -720,9 +723,11 @@ export class BillingSettingsPage {
     if (!confirmed) return;
 
     try {
-      await apiClient.post(
+      await apiFetch(
+        'POST',
         `/organizations/${this.config.organizationId}/billing/change-plan`,
-        { planId }
+        { planId },
+      );
       );
       if (this.billingData) {
         this.billingData.subscription.planId = plan.id;
