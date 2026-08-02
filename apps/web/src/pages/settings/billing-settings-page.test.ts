@@ -688,8 +688,9 @@ describe('BillingSettingsPage', () => {
       removeBtn.click();
 
       await vi.waitFor(() => {
-        expect(apiClient.delete).toHaveBeenCalledWith(
-          '/organizations/org-123/billing/payment-methods/pm_2'
+        expect(mockFetch).toHaveBeenCalledWith(
+          '/organizations/org-123/billing/payment-methods/pm_2',
+          expect.objectContaining({ method: 'DELETE' }),
         );
       });
     });
