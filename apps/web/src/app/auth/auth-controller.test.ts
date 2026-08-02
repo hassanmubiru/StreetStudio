@@ -321,18 +321,11 @@ describe('AuthController', () => {
     });
 
     it('should logout successfully', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true
-      } as Response);
+      mockDashboardSession.signOut.mockResolvedValueOnce(undefined);
 
       await authController.logout();
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({
-          'Authorization': expect.stringContaining('Bearer')
-        })
-      }));
+      expect(mockDashboardSession.signOut).toHaveBeenCalled();
 
       const state = authController.getState();
       expect(state.isAuthenticated).toBe(false);
@@ -340,7 +333,7 @@ describe('AuthController', () => {
     });
 
     it('should handle logout API failure gracefully', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+      mockDashboardSession.signOut.mockRejectedValueOnce(new Error('Network error'));
 
       await authController.logout();
 
@@ -349,7 +342,7 @@ describe('AuthController', () => {
     });
 
     it('should timeout logout request after 3 seconds', async () => {
-      mockFetch.mockImplementationOnce(
+      mockDashboardSession.signOut.mockImplementationOnce(
         () => new Promise(resolve => setTimeout(resolve, 5000))
       );
 
