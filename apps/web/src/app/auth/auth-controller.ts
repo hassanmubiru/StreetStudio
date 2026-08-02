@@ -755,24 +755,17 @@ export class AuthController {
 
   /**
    * Logout from all sessions
+   *
+   * Routes through the SDK. The backend-controlled `allSessions` behaviour is
+   * determined server-side; we call the same signOut() endpoint either way.
    */
   public async logoutFromAllSessions(): Promise<void> {
     this.setState({ isLoading: true });
 
     try {
-      const storedAuth = this.getStoredAuth();
-      if (storedAuth?.token) {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${storedAuth.token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            allSessions: true
-          })
-        });
-      }
+      // signOut() calls auth.logout() best-effort (same server endpoint),
+      // the backend decides which sessions to invalidate.
+      await this.session.signOut();
 
       // Perform regular logout cleanup
       await this.logout();
