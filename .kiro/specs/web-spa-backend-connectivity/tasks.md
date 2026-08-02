@@ -94,7 +94,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: static assets, SPA fallback, /healthz, missing-asset 404, method guard unchanged (Preservation Requirements)_
     - _Requirements: 1.2, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4_
 
-  - [~] 4.2 Verify Slice 2 via the per-slice verification loop
+  - [-] 4.2 Verify Slice 2 via the per-slice verification loop
     - `get_diagnostics` on `server.mjs` (0 problems); web type-check + `npx tsc -b apps/api` clean
     - Gates: `infra:ratchet`, `streetjs:check`, `boundary:check`, `graph:check`, full `typecheck`
     - Start `server.mjs` serving `dist` with `API_ORIGIN` set, against real infra (Postgres :5435, MinIO :9000, Redis :6379; API on `HTTP_PORT`)
