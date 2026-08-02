@@ -9,8 +9,26 @@
  */
 
 import type { Uuid } from '@streetstudio/shared';
-import { apiClient } from '../../services/api.js';
 import { logger } from '../../app/client-logger.js';
+
+// Lightweight JSON fetch helper for bespoke endpoints (not in @streetstudio/sdk).
+// Requests go through the same /api proxy as all other SPA calls.
+async function apiFetch<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<{ data: T; status: number; success: boolean }> {
+  const init: RequestInit = {
+    method,
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+  };
+  if (body !== undefined) {
+    init.body = JSON.stringify(body);
+  }
+  const res = await fetch(path, init);
+  const data: T = await res.json();
+  return { data, status: res.status, success: res.ok };
+}
 
 // --- Data Models ---
 
@@ -164,8 +182,9 @@ export class BillingSettingsPage {
     this.error = null;
 
     try {
-      const response = await apiClient.get<BillingData>(
-        `/organizations/${this.config.organizationId}/billing`
+      const response = await apiFetch<BillingData>(
+        'GET',
+        `/organizations/${this.config.organizationId}/billing`,
       );
       this.billingData = response.data;
       logger.info('Billing data loaded', {

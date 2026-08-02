@@ -13,7 +13,6 @@ import { NavigationController } from './navigation/navigation-controller.js';
 import { NotificationController } from './notifications/notification-controller.js';
 import { ErrorBoundary } from './error-boundary.js';
 import { KeyboardShortcuts } from './keyboard-shortcuts.js';
-import { apiClient } from '../services/api.js';
 import { initializeCollaborationSocket } from '../services/websocket.js';
 import { ProjectsPage } from '../pages/projects/projects-page.js';
 import { ProjectDetailPage } from '../pages/projects/project-detail-page.js';
@@ -71,12 +70,6 @@ export class StreetStudioApp {
     try {
       // Setup error boundary first
       this.errorBoundary.initialize();
-
-      // Configure API client
-      apiClient.setDefaultHeaders({
-        'X-Application': 'StreetStudio Web',
-        'X-Version': '1.0.0',
-      });
 
       // Initialize collaboration WebSocket
       if (this.config.wsBaseUrl) {
