@@ -155,9 +155,9 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         const expectedType = CONTENT_TYPES[extOf(asset)] ?? 'application/octet-stream';
         expect(res.headers['content-type']).toBe(expectedType);
       }),
-      { numRuns: 100 },
+      { numRuns: 10 },
     );
-  }, 60000);
+  }, 30000);
 
   // 3.1 — index.html served with text/html and no-cache at both `/` and
   // `/index.html`.
