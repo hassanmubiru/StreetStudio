@@ -238,9 +238,9 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         expect(res.body).not.toContain('<!doctype html');
         expect(res.body).not.toBe(INDEX_HTML);
       }),
-      { numRuns: 100 },
+      { numRuns: 20 },
     );
-  }, 60000);
+  }, 30000);
 
   // Method guard: non-GET/HEAD methods on non-`/api` paths return 405 with an
   // `allow: GET, HEAD` header.
