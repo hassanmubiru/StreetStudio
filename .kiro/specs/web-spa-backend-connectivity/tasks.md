@@ -122,7 +122,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 6. Slice 4 — SDK adoption (login vertical first)
 
-  - [-] 6.1 Reconcile the SDK base URL to same-origin `/api`
+  - [x] 6.1 Reconcile the SDK base URL to same-origin `/api`
     - In `apps/web/src/main.ts` / `apps/web/src/app/app.ts`, default `apiBaseUrl` to `/api` (relative), removing the cross-origin `http://localhost:8080` default from the browser bundle
     - `DashboardSession` → `StreetStudioClient.buildUrl` concatenates `/api` + `/auth/login` → `/api/auth/login`, which both proxies strip to `/auth/login`; the backend origin is configured once at the proxy via `API_ORIGIN`
     - _Bug_Condition: isBugCondition(X) where X.layer = DATA_ACCESS AND base URL is cross-origin/inconsistent_
@@ -130,7 +130,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: no change to non-`/api` behavior_
     - _Requirements: 1.4, 2.4_
 
-  - [ ] 6.2 Implement a composable `HttpTransport` and adapt error/degradation
+  - [-] 6.2 Implement a composable `HttpTransport` and adapt error/degradation
     - Implement a composable `HttpTransport` (timeout + retry/exponential-backoff + offline-awareness) injected via `SdkClientOptions.transport` / `DashboardSessionOptions.transport` — the SDK is transport-agnostic and has no built-in retry/backoff/timeout/`NetworkMonitor`
     - Adapt `AppError` (shared taxonomy) into the existing `handleError` / `getDegradationManager` calls at the call sites so error reporting and graceful degradation are retained without the bespoke client
     - Add unit tests for the transport: timeout, retry/backoff, offline-awareness, and `AppError` → `handleError`/degradation adaptation
