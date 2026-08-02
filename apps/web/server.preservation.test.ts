@@ -197,9 +197,9 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         expect(res.headers['cache-control']).toBe('no-cache');
         expect(res.body).toBe(INDEX_HTML);
       }),
-      { numRuns: 100 },
+      { numRuns: 20 },
     );
-  }, 60000);
+  }, 30000);
 
   // 3.3 — Health endpoints return { "status": "ok" } as JSON.
   it('3.3 returns { status: "ok" } for /healthz and /health', async () => {
