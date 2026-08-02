@@ -22,6 +22,24 @@ const INDEX = join(DIST, "index.html");
 const PORT = Number.parseInt(process.env.PORT ?? "3000", 10);
 const HOST = process.env.HOST ?? "0.0.0.0";
 
+// API_ORIGIN — the backend origin to reverse-proxy /api/* to.
+// Parsed once at startup into { protocol, hostname, port } for reuse.
+let apiOrigin = null;
+if (process.env.API_ORIGIN) {
+  try {
+    const parsed = new URL(process.env.API_ORIGIN);
+    apiOrigin = {
+      protocol: parsed.protocol, // "http:" or "https:"
+      hostname: parsed.hostname,
+      port: parsed.port || (parsed.protocol === "https:" ? "443" : "80"),
+    };
+  } catch {
+    console.error(`[web] API_ORIGIN is set but could not be parsed as a URL: ${process.env.API_ORIGIN}`);
+  }
+} else {
+  console.error("[web] API_ORIGIN not set — /api/* requests will not be proxied");
+}
+
 if (!existsSync(INDEX)) {
   // Fail fast with a clear message rather than serving an empty site.
   console.error(
