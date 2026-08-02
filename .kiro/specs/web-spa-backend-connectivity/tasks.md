@@ -59,7 +59,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
   - Mark task complete when tests are written, run, and passing on unfixed code
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 3. Slice 1 — Dev connectivity (Vite proxy)
+- [x] 3. Slice 1 — Dev connectivity (Vite proxy)
 
   - [x] 3.1 Add `server.proxy` for `/api` in `apps/web/vite.config.ts`
     - Add a `server.proxy['/api']` entry: `target` = `process.env.API_ORIGIN` with a sensible dev default (`http://localhost:8080`), `changeOrigin: true`, `rewrite: (path) => path.replace(/^\/api/, '')` so the backend receives ROOT paths, `ws` left unset/false (WebSocket upgrade scoped out)
@@ -70,7 +70,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: non-`/api` dev behavior unchanged (Preservation Requirements)_
     - _Requirements: 1.1, 2.1, 2.3_
 
-  - [-] 3.2 Verify Slice 1 via the per-slice verification loop
+  - [x] 3.2 Verify Slice 1 via the per-slice verification loop
     - `get_diagnostics` on `vite.config.ts` (0 problems); web type-check + `npx tsc -b apps/api` clean
     - Gates: `infra:ratchet`, `streetjs:check`, `boundary:check`, `graph:check`, full `typecheck`
     - Start Vite dev host against real infra (Postgres :5435, MinIO :9000, Redis :6379; API on `HTTP_PORT`)
