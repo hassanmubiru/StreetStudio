@@ -206,22 +206,17 @@ describe('Authentication Flows', () => {
 
       await authController.login('test@example.com', 'password123');
 
-      // Mock logout all sessions API response
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true })
-      });
+      // logoutFromAllSessions() now calls session.signOut() then logout()
+      // (which also calls session.signOut() best-effort). Set up both calls.
+      mockDashboardSession.signOut
+        .mockResolvedValueOnce(undefined) // for logoutFromAllSessions call
+        .mockResolvedValueOnce(undefined); // for internal logout() call
 
       await authController.logoutFromAllSessions();
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer test-token',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ allSessions: true })
-      });
+      // Verify SDK signOut was invoked (replaces the old raw fetch)
+      expect(mockDashboardSession.signOut).toHaveBeenCalled();
+      expect(authController.isAuthenticated()).toBe(false);
     });
 
     test('should handle logout when API fails', async () => {
