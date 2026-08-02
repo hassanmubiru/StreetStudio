@@ -700,37 +700,21 @@ export class AuthController {
         this.refreshTimer = undefined;
       }
 
-      // Notify server of logout
-      const storedAuth = this.getStoredAuth();
-      if (storedAuth?.token) {
-        try {
-          await Promise.race([
-            fetch('/api/auth/logout', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${storedAuth.token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                allSessions: false // Only logout current session
-              })
-            }),
-            // Timeout after 3 seconds
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Logout timeout')), 3000)
-            )
-          ]);
-        } catch (error) {
-          // Ignore logout API errors, still clear local state
-          logger.warn('Logout API call failed', {
-            error: (error as Error).message,
-          });
-        }
-      }
-      
-      // Clear session from dashboard
-      if ((this.session as any).clearAuthentication) {
-        (this.session as any).clearAuthentication();
+      // Notify server of logout via SDK (session.signOut calls auth.logout
+      // best-effort and then clears local credentials).
+      try {
+        await Promise.race([
+          this.session.signOut(),
+          // Timeout after 3 seconds
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Logout timeout')), 3000)
+          )
+        ]);
+      } catch (error) {
+        // Ignore logout API errors, still clear local state
+        logger.warn('Logout API call failed', {
+          error: (error as Error).message,
+        });
       }
 
       // Clear local state
