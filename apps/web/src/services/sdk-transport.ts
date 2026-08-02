@@ -46,7 +46,7 @@ function getFeatureFromUrl(url: string): string {
     try {
       pathname = new URL(url).pathname;
     } catch {
-      pathname = url.split('?')[0];
+      pathname = (url.split('?')[0]) ?? url;
     }
     const parts = pathname.split('/').filter(Boolean);
     if (parts.includes('videos')) return 'video-player';
