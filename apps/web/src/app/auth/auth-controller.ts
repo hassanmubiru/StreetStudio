@@ -836,23 +836,16 @@ export class AuthController {
 
   /**
    * Register new user
+   *
+   * Routes through DashboardSession.register() (which calls
+   * StreetStudioClient.auth.register) so registration goes through the
+   * resilient SDK transport rather than a raw fetch.
    */
-  public async register(email: string, password: string, displayName: string): Promise<{ success: boolean; error?: string }> {
+  public async register(email: string, password: string, _displayName: string): Promise<{ success: boolean; error?: string }> {
     this.setState({ isLoading: true, error: undefined });
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, displayName }),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Registration failed');
-      }
+      await this.session.register(email, password);
 
       this.setState({ isLoading: false });
       
