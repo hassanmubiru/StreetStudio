@@ -130,7 +130,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: no change to non-`/api` behavior_
     - _Requirements: 1.4, 2.4_
 
-  - [-] 6.2 Implement a composable `HttpTransport` and adapt error/degradation
+  - [x] 6.2 Implement a composable `HttpTransport` and adapt error/degradation
     - Implement a composable `HttpTransport` (timeout + retry/exponential-backoff + offline-awareness) injected via `SdkClientOptions.transport` / `DashboardSessionOptions.transport` — the SDK is transport-agnostic and has no built-in retry/backoff/timeout/`NetworkMonitor`
     - Adapt `AppError` (shared taxonomy) into the existing `handleError` / `getDegradationManager` calls at the call sites so error reporting and graceful degradation are retained without the bespoke client
     - Add unit tests for the transport: timeout, retry/backoff, offline-awareness, and `AppError` → `handleError`/degradation adaptation
