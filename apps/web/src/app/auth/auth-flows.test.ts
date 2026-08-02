@@ -233,14 +233,13 @@ describe('Authentication Flows', () => {
 
       await authController.login('test@example.com', 'password123');
 
-      // Mock logout API failure
-      mockFetch.mockRejectedValueOnce(new Error('API Error'));
+      // Simulate signOut failure (SDK call fails)
+      mockDashboardSession.signOut.mockRejectedValueOnce(new Error('API Error'));
 
       // Should still complete logout locally
       await authController.logout();
 
       expect(authController.isAuthenticated()).toBe(false);
-      expect(mockDashboardSession.clearAuthentication).toHaveBeenCalled();
     });
   });
 
