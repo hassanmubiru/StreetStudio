@@ -74,6 +74,9 @@ describe('Authentication Flows', () => {
     localStorage.clear();
     sessionStorage.clear();
     
+    // signOut is called by logout(); default to resolving successfully.
+    mockDashboardSession.signOut.mockResolvedValue(undefined);
+
     // Create fresh instances
     authController = new AuthController(mockDashboardSession);
     sessionManager = new SessionManager(authController);
