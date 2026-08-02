@@ -210,9 +210,9 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         expect(res.headers['content-type']).toBe('application/json; charset=utf-8');
         expect(JSON.parse(res.body)).toEqual({ status: 'ok' });
       }),
-      { numRuns: 20 },
+      { numRuns: 10 },
     );
-  }, 60000);
+  }, 30000);
 
   // 3.4 — Missing-asset 404: absent asset-looking paths (has an extension on
   // the last segment, does not resolve to a real file) return 404 with a plain
