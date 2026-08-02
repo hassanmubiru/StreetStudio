@@ -176,27 +176,15 @@ describe('Authentication Flows', () => {
       await authController.login('test@example.com', 'password123');
       expect(authController.isAuthenticated()).toBe(true);
 
-      // Mock logout API response
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true })
-      });
+      // Mock signOut (used by logout() in place of raw fetch)
+      mockDashboardSession.signOut.mockResolvedValueOnce(undefined);
 
       // Perform logout
       await authController.logout();
 
       expect(authController.isAuthenticated()).toBe(false);
-      expect(mockDashboardSession.clearAuthentication).toHaveBeenCalled();
-      
-      // Verify logout API call
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer test-token',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ allSessions: false })
-      });
+      // Logout now routes through session.signOut(), not a raw fetch.
+      expect(mockDashboardSession.signOut).toHaveBeenCalled();
 
       // Verify state is cleared
       const state = authController.getState();
