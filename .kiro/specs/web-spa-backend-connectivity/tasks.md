@@ -122,7 +122,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 6. Slice 4 — SDK adoption (login vertical first)
 
-  - [ ] 6.1 Reconcile the SDK base URL to same-origin `/api`
+  - [-] 6.1 Reconcile the SDK base URL to same-origin `/api`
     - In `apps/web/src/main.ts` / `apps/web/src/app/app.ts`, default `apiBaseUrl` to `/api` (relative), removing the cross-origin `http://localhost:8080` default from the browser bundle
     - `DashboardSession` → `StreetStudioClient.buildUrl` concatenates `/api` + `/auth/login` → `/api/auth/login`, which both proxies strip to `/auth/login`; the backend origin is configured once at the proxy via `API_ORIGIN`
     - _Bug_Condition: isBugCondition(X) where X.layer = DATA_ACCESS AND base URL is cross-origin/inconsistent_
