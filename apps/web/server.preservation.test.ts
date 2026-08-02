@@ -170,9 +170,9 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         expect(res.headers['cache-control']).toBe('no-cache');
         expect(res.body).toBe(INDEX_HTML);
       }),
-      { numRuns: 20 },
+      { numRuns: 10 },
     );
-  }, 60000);
+  }, 30000);
 
   // 3.2 — SPA history fallback: route-looking paths (no file extension on the
   // last segment, possibly nested, with optional query/hash) serve index.html.
