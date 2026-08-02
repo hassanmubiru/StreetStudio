@@ -656,7 +656,9 @@ describe('BillingSettingsPage', () => {
 
   describe('Payment Method Actions', () => {
     it('should call API to set default payment method', async () => {
-      (apiClient.put as ReturnType<typeof vi.fn>).mockResolvedValue({ data: {}, status: 200, success: true });
+      // Default GET already mocked; add a success response for the PUT action
+      mockFetch.mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
+             .mockResolvedValueOnce(jsonResponse({}));                 // PUT action
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       const el = await page.getElement();
@@ -666,15 +668,16 @@ describe('BillingSettingsPage', () => {
       setDefaultBtn.click();
 
       await vi.waitFor(() => {
-        expect(apiClient.put).toHaveBeenCalledWith(
+        expect(mockFetch).toHaveBeenCalledWith(
           '/organizations/org-123/billing/payment-methods/pm_2/default',
-          {}
+          expect.objectContaining({ method: 'PUT' }),
         );
       });
     });
 
     it('should call API to remove non-default payment method', async () => {
-      (apiClient.delete as ReturnType<typeof vi.fn>).mockResolvedValue({ data: {}, status: 200, success: true });
+      mockFetch.mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
+             .mockResolvedValueOnce(jsonResponse({}));                 // DELETE action
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
