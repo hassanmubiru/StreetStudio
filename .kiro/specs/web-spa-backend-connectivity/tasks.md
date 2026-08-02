@@ -104,7 +104,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 5. Slice 3 — Root-path correctness
 
-  - [-] 5.1 Assert stripped requests hit real backend ROOT paths
+  - [x] 5.1 Assert stripped requests hit real backend ROOT paths
     - No code changes beyond slices 1–2; add explicit assertions (unit + curl) that a stripped `/api`-prefixed request maps to a real backend ROOT route through EACH proxy (dev Vite and prod `server.mjs`)
     - Assert `/api/auth/login` → backend `POST /auth/login` returns 200/401 (not 404), confirming the backend — not the static host — answers
     - _Bug_Condition: isBugCondition(X) where NOT hitsBackendRootPath(X) (unstripped `/api` prefix)_
@@ -112,7 +112,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: prefix strip affects `/api` paths only; non-`/api` paths unchanged_
     - _Requirements: 1.3, 2.3_
 
-  - [ ] 5.2 Verify Slice 3 via the per-slice verification loop
+  - [-] 5.2 Verify Slice 3 via the per-slice verification loop
     - `get_diagnostics` (0 problems); web type-check + `npx tsc -b apps/api` clean
     - Gates: `infra:ratchet`, `streetjs:check`, `boundary:check`, `graph:check`, full `typecheck`
     - Start each host against real infra (Postgres :5435, MinIO :9000, Redis :6379; API on `HTTP_PORT`)
