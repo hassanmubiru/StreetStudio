@@ -270,7 +270,14 @@ describe('Slice 3: prefix-strip logic — /api/* is stripped to backend ROOT pat
 
   it('both proxies are configured to strip the /api prefix before forwarding', () => {
     // Confirms the runtime-level strip is wired correctly in both host runtimes.
-    expect(viteDevProxyForwardsApi()).toBe(true);
+    // Vite: either an inline `server.proxy['/api']` block or a standalone `proxy`
+    // variable assigned with `'/api':` and a rewrite referencing API_ORIGIN.
+    const viteSrc = fileText('vite.config.ts');
+    const viteHasApiProxy =
+      /['"`]\/api['"`]\s*:/.test(viteSrc) &&
+      /API_ORIGIN/.test(viteSrc) &&
+      /rewrite[\s\S]*?replace\(\s*\/\^\\\/api/.test(viteSrc);
+    expect(viteHasApiProxy).toBe(true);
     expect(prodServerProxyForwardsApi()).toBe(true);
   });
 });
