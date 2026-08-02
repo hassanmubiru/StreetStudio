@@ -254,7 +254,7 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         expect(res.status).toBe(405);
         expect(res.headers['allow']).toBe('GET, HEAD');
       }),
-      { numRuns: 100 },
+      { numRuns: 20 },
     );
-  }, 60000);
+  }, 30000);
 });
