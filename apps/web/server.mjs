@@ -10,7 +10,8 @@
 // Config (env):
 //   PORT   — listen port (default 3000)
 //   HOST   — bind address (default 0.0.0.0)
-import { createServer } from "node:http";
+import { createServer, request as httpRequest } from "node:http";
+import { request as httpsRequest } from "node:https";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
