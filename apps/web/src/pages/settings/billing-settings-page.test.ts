@@ -676,8 +676,8 @@ describe('BillingSettingsPage', () => {
     });
 
     it('should call API to remove non-default payment method', async () => {
-      mockFetch.mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
-             .mockResolvedValueOnce(jsonResponse({}));                 // DELETE action
+      // beforeEach sets the default load response; just add the DELETE action response
+      mockFetch.mockResolvedValueOnce(jsonResponse({}));  // DELETE action
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });

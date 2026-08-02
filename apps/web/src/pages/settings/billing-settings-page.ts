@@ -728,7 +728,6 @@ export class BillingSettingsPage {
         `/organizations/${this.config.organizationId}/billing/change-plan`,
         { planId },
       );
-      );
       if (this.billingData) {
         this.billingData.subscription.planId = plan.id;
         this.billingData.subscription.planName = plan.name;
