@@ -732,6 +732,9 @@ describe('BillingSettingsPage', () => {
     });
 
     it('should not call API when cancel is not confirmed', async () => {
+      // Explicit reset + setup to guard against leaked Once mocks from prior tests
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValue(jsonResponse(mockBillingData));
       vi.spyOn(window, 'confirm').mockReturnValue(false);
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
@@ -774,8 +777,11 @@ describe('BillingSettingsPage', () => {
     });
 
     it('should return to overview after successful plan change', async () => {
-      mockFetch.mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
-             .mockResolvedValueOnce(jsonResponse({}));                 // POST change-plan
+      // Explicit reset + setup to guard against leaked Once mocks from prior tests
+      mockFetch.mockReset();
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
+        .mockResolvedValueOnce(jsonResponse({}));               // POST change-plan
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
