@@ -868,9 +868,9 @@ describe('BillingSettingsPage', () => {
     });
 
     it('should retry loading on retry button click', async () => {
-      (apiClient.get as ReturnType<typeof vi.fn>)
+      mockFetch
         .mockRejectedValueOnce(new Error('Fail'))
-        .mockResolvedValueOnce({ data: structuredClone(mockBillingData), status: 200, success: true });
+        .mockResolvedValueOnce(jsonResponse(structuredClone(mockBillingData)));
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       const el = await page.getElement();
@@ -880,7 +880,7 @@ describe('BillingSettingsPage', () => {
       retryBtn.click();
 
       await vi.waitFor(() => {
-        expect(apiClient.get).toHaveBeenCalledTimes(2);
+        expect(mockFetch).toHaveBeenCalledTimes(2);
       }, { timeout: 3000 });
     });
   });
