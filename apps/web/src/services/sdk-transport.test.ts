@@ -9,9 +9,25 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ResilientHttpTransport, adaptSdkError, createResilientTransport } from './sdk-transport.js';
 import { AppError } from '@streetstudio/shared';
 import type { HttpRequest } from '@streetstudio/sdk';
+
+// ── Module-level mocks (must be hoisted before any imports of the tested module) ──
+
+vi.mock('../app/error-handler.js', () => ({
+  handleError: vi.fn(),
+  getDegradationManager: vi.fn(() => ({
+    handleFeatureFailure: vi.fn(),
+  })),
+}));
+
+// Now import the module under test — it will pick up the mocked error-handler.
+import {
+  ResilientHttpTransport,
+  adaptSdkError,
+  createResilientTransport,
+} from './sdk-transport.js';
+import { handleError, getDegradationManager } from '../app/error-handler.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -24,18 +40,6 @@ function makeRequest(overrides: Partial<HttpRequest> = {}): HttpRequest {
   };
 }
 
-/** A mock response factory that plays back an array of response values per call. */
-function buildFetchMock(
-  responses: Array<() => Promise<Response> | never>,
-): jest.Mock {
-  let call = 0;
-  return vi.fn(async () => {
-    const fn = responses[call++];
-    if (!fn) throw new Error('Unexpected extra fetch call');
-    return fn();
-  });
-}
-
 function makeOkResponse(status: number, body = ''): Response {
   return {
     status,
@@ -46,19 +50,23 @@ function makeOkResponse(status: number, body = ''): Response {
 // ── ResilientHttpTransport: timeout ───────────────────────────────────────────
 
 describe('ResilientHttpTransport – timeout', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
   afterEach(() => {
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
   it('throws a clear timeout error when the fetch does not resolve within timeoutMs', async () => {
-    // Fetch that never resolves
+    // A fetch that resolves only after a long delay, simulating a hanging network call.
+    // We give the transport a very short timeoutMs so the AbortController fires first.
     const hangingFetch = vi.fn(
-      () => new Promise<Response>(() => { /* intentionally never resolves */ }),
+      (_url: string, init: { signal?: AbortSignal }) =>
+        new Promise<Response>((_resolve, reject) => {
+          // Reject when the signal aborts.
+          init.signal?.addEventListener('abort', () => {
+            const err = new Error('The operation was aborted.');
+            err.name = 'AbortError';
+            reject(err);
+          });
+        }),
     );
 
     class TestTransport extends ResilientHttpTransport {
@@ -67,28 +75,23 @@ describe('ResilientHttpTransport – timeout', () => {
       }
     }
 
-    const transport = new TestTransport({ timeoutMs: 100, maxRetries: 0 });
-    const sendPromise = transport.send(makeRequest());
-
-    // Advance timers past the timeout threshold to trigger the AbortController.
-    vi.advanceTimersByTime(200);
-
-    await expect(sendPromise).rejects.toThrow(/timed out/i);
-  });
+    // timeoutMs=50 will fire the AbortController after 50ms in real time.
+    const transport = new TestTransport({ timeoutMs: 50, maxRetries: 0 });
+    await expect(transport.send(makeRequest())).rejects.toThrow(/timed out/i);
+  }, 3_000);
 });
 
 // ── ResilientHttpTransport: retry with exponential backoff ────────────────────
 
 describe('ResilientHttpTransport – retry/backoff', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    // Stub navigator.onLine to be online.
     vi.spyOn(globalThis, 'navigator', 'get').mockReturnValue({
       onLine: true,
     } as Navigator);
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -108,34 +111,34 @@ describe('ResilientHttpTransport – retry/backoff', () => {
       }
     }
 
+    // Use very short retry delays so the test doesn't take seconds.
     const transport = new TestTransport({
       timeoutMs: 5_000,
       maxRetries: 2,
-      retryDelayMs: 1_000,
+      retryDelayMs: 5, // 5ms, 10ms — negligible
     });
 
-    const resultPromise = transport.send(makeRequest());
+    const result = await transport.send(makeRequest());
 
-    // Let the first delay (1000ms) elapse.
-    await vi.runAllTimersAsync();
-
-    const result = await resultPromise;
     expect(result.status).toBe(200);
     // fetch should have been called 3 times: initial + 2 retries.
     expect(mockFetch).toHaveBeenCalledTimes(3);
-  });
+  }, 3_000);
 
-  it('applies exponential backoff between retry attempts', async () => {
+  it('applies exponential backoff delays between retry attempts', async () => {
+    // Record delay values passed to setTimeout by wrapping it.
     const delaysSeen: number[] = [];
     const originalSetTimeout = globalThis.setTimeout;
 
-    // Spy on setTimeout to capture delay values used between retries.
-    vi.spyOn(globalThis, 'setTimeout').mockImplementation((fn: TimerHandler, ms?: number) => {
-      if (ms !== undefined && ms > 0) {
-        delaysSeen.push(ms as number);
-      }
-      return originalSetTimeout(fn as TimerHandler, 0);
-    });
+    // Spy on the global setTimeout to record delays *without* breaking the timer behavior.
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation(
+      (fn: TimerHandler, ms?: number, ...args: unknown[]) => {
+        if (ms !== undefined && ms > 0) {
+          delaysSeen.push(ms);
+        }
+        return originalSetTimeout(fn as TimerHandler, ms, ...args) as ReturnType<typeof setTimeout>;
+      },
+    );
 
     let call = 0;
     const mockFetch = vi.fn(async () => {
@@ -150,19 +153,20 @@ describe('ResilientHttpTransport – retry/backoff', () => {
       }
     }
 
+    // retryDelayMs=100; backoff: 100ms, 200ms
     const transport = new TestTransport({
-      timeoutMs: 5_000,
+      timeoutMs: 10_000, // generous to avoid timeout interference
       maxRetries: 2,
-      retryDelayMs: 1_000,
+      retryDelayMs: 100,
     });
 
     await transport.send(makeRequest());
 
-    // We expect: 1000ms for first retry, 2000ms for second retry.
-    // Filter only the retry-related delays (> 100ms to exclude timeout timers).
-    const retryDelays = delaysSeen.filter(d => d >= 1_000);
-    expect(retryDelays).toEqual([1_000, 2_000]);
-  });
+    // Filter out the AbortController timeout (10_000ms) and any timers from
+    // the test setup, keeping only the retry delays (100ms and 200ms).
+    const retryDelays = delaysSeen.filter(d => d >= 100 && d <= 300);
+    expect(retryDelays).toEqual([100, 200]);
+  }, 3_000);
 });
 
 // ── ResilientHttpTransport: offline ───────────────────────────────────────────
@@ -185,71 +189,70 @@ describe('ResilientHttpTransport – offline awareness', () => {
 // ── adaptSdkError ─────────────────────────────────────────────────────────────
 
 describe('adaptSdkError', () => {
-  let mockHandleError: ReturnType<typeof vi.fn>;
-  let mockDegradationManager: { handleFeatureFailure: ReturnType<typeof vi.fn> };
-
-  beforeEach(async () => {
-    mockHandleError = vi.fn();
-    mockDegradationManager = { handleFeatureFailure: vi.fn() };
-
-    // Inject mocks by replacing module-level references via vi.mock.
-    // Because we are in the same test file we use vi.doMock with dynamic import.
-    vi.doMock('../app/error-handler.js', () => ({
-      handleError: mockHandleError,
-      getDegradationManager: () => mockDegradationManager,
-    }));
+  beforeEach(() => {
+    vi.mocked(handleError).mockClear();
+    // Ensure getDegradationManager returns a fresh mock each test.
+    vi.mocked(getDegradationManager).mockReturnValue({
+      handleFeatureFailure: vi.fn(),
+    } as unknown as ReturnType<typeof getDegradationManager>);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    vi.resetModules();
   });
 
-  it('maps AppError with code AUTHENTICATION_FAILED to the "authentication" category via handleError', async () => {
-    // Re-import the module under test so it picks up the mocked error-handler.
-    const { adaptSdkError: adaptFn } = await import('./sdk-transport.js');
-
+  it('maps AppError with AUTHENTICATION_FAILED to the "authentication" category via handleError', () => {
     const error = new AppError('AUTHENTICATION_FAILED');
-    adaptFn(error, '/api/auth/login', 'POST');
+    adaptSdkError(error, '/api/auth/login', 'POST');
 
-    expect(mockHandleError).toHaveBeenCalledOnce();
-    const [passedError, category] = mockHandleError.mock.calls[0] as [Error, string, Record<string, unknown>];
+    expect(handleError).toHaveBeenCalledOnce();
+    const [passedError, category] = vi.mocked(handleError).mock.calls[0] as [Error, string, Record<string, unknown>];
     expect(passedError).toBe(error);
     expect(category).toBe('authentication');
   });
 
-  it('maps AppError with code RATE_LIMITED to the "api" category', async () => {
-    const { adaptSdkError: adaptFn } = await import('./sdk-transport.js');
+  it('maps AppError with AUTHENTICATION_REQUIRED to the "authentication" category', () => {
+    const error = new AppError('AUTHENTICATION_REQUIRED');
+    adaptSdkError(error, '/api/auth/me', 'GET');
 
+    const [, category] = vi.mocked(handleError).mock.calls[0] as [Error, string];
+    expect(category).toBe('authentication');
+  });
+
+  it('maps AppError with RATE_LIMITED to the "api" category', () => {
     const error = new AppError('RATE_LIMITED');
-    adaptFn(error, '/api/videos', 'GET');
+    adaptSdkError(error, '/api/videos', 'GET');
 
-    expect(mockHandleError).toHaveBeenCalledOnce();
-    const [, category] = mockHandleError.mock.calls[0] as [Error, string];
+    expect(handleError).toHaveBeenCalledOnce();
+    const [, category] = vi.mocked(handleError).mock.calls[0] as [Error, string];
     expect(category).toBe('api');
   });
 
-  it('maps a plain network error to the "network" category', async () => {
-    const { adaptSdkError: adaptFn } = await import('./sdk-transport.js');
+  it('maps a 5xx AppError to the "api" category', () => {
+    const error = new AppError('CAPABILITY_UNAVAILABLE'); // status 503
+    adaptSdkError(error, '/api/videos', 'GET');
 
+    const [, category] = vi.mocked(handleError).mock.calls[0] as [Error, string];
+    expect(category).toBe('api');
+  });
+
+  it('maps a plain offline error to the "network" category', () => {
     const error = new Error('Network request failed: device is offline');
-    adaptFn(error, '/api/videos', 'GET');
+    adaptSdkError(error, '/api/videos', 'GET');
 
-    expect(mockHandleError).toHaveBeenCalledOnce();
-    const [, category] = mockHandleError.mock.calls[0] as [Error, string];
+    expect(handleError).toHaveBeenCalledOnce();
+    const [, category] = vi.mocked(handleError).mock.calls[0] as [Error, string];
     expect(category).toBe('network');
   });
 
-  it('extracts the video-player feature from a /videos endpoint', async () => {
-    const { adaptSdkError: adaptFn } = await import('./sdk-transport.js');
+  it('extracts the video-player feature from a /videos endpoint and calls handleFeatureFailure', () => {
+    const degradation = { handleFeatureFailure: vi.fn() };
+    vi.mocked(getDegradationManager).mockReturnValue(degradation as unknown as ReturnType<typeof getDegradationManager>);
 
     const error = new AppError('CAPABILITY_UNAVAILABLE');
-    adaptFn(error, '/api/videos/abc123', 'GET');
+    adaptSdkError(error, '/api/videos/abc123', 'GET');
 
-    expect(mockDegradationManager.handleFeatureFailure).toHaveBeenCalledWith(
-      'video-player',
-      error,
-    );
+    expect(degradation.handleFeatureFailure).toHaveBeenCalledWith('video-player', error);
   });
 });
 
