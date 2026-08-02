@@ -24,7 +24,7 @@ initializeAnalytics();
 
 // Application configuration
 const config = {
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
   wsBaseUrl: import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8080',
   environment: import.meta.env.MODE || 'development',
   enableAnalytics: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
