@@ -258,7 +258,7 @@ describe('BillingSettingsPage', () => {
     });
 
     it('should show error state when API fails', async () => {
-      (apiClient.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
+      mockFetch.mockRejectedValue(new Error('Network error'));
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       const el = await page.getElement();
@@ -861,7 +861,7 @@ describe('BillingSettingsPage', () => {
 
   describe('Error Handling', () => {
     it('should show retry button on error', async () => {
-      (apiClient.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Fail'));
+      mockFetch.mockRejectedValue(new Error('Fail'));
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       const el = await page.getElement();
