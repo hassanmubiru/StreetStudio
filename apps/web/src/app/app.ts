@@ -52,6 +52,7 @@ export class StreetStudioApp {
     // Initialize dashboard session
     this.session = new DashboardSession({
       baseUrl: this.config.apiBaseUrl,
+      transport: createResilientTransport(),
       // TODO: Add realtime transport when websockets are implemented
     });
 
