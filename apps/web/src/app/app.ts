@@ -5,6 +5,7 @@
  */
 
 import { DashboardSession } from '@streetstudio/dashboard';
+import { createResilientTransport } from '../services/sdk-transport.js';
 import { Router } from './router.js';
 import { AuthController } from './auth/auth-controller.js';
 import { LayoutController } from './layout/layout-controller.js';
