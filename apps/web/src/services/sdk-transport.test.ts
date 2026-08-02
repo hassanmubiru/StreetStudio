@@ -136,7 +136,7 @@ describe('ResilientHttpTransport – retry/backoff', () => {
         if (ms !== undefined && ms > 0) {
           delaysSeen.push(ms);
         }
-        return originalSetTimeout(fn as TimerHandler, ms, ...args) as ReturnType<typeof setTimeout>;
+        return originalSetTimeout(fn as TimerHandler, ms, ...args) as unknown as ReturnType<typeof setTimeout>;
       },
     );
 
