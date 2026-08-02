@@ -102,7 +102,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - Clean up any temp files; run `npx vitest run` (keep 5308 passed / 0 failed)
     - _Requirements: 2.2, 2.3, 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 5. Slice 3 — Root-path correctness
+- [x] 5. Slice 3 — Root-path correctness
 
   - [x] 5.1 Assert stripped requests hit real backend ROOT paths
     - No code changes beyond slices 1–2; add explicit assertions (unit + curl) that a stripped `/api`-prefixed request maps to a real backend ROOT route through EACH proxy (dev Vite and prod `server.mjs`)
@@ -112,7 +112,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: prefix strip affects `/api` paths only; non-`/api` paths unchanged_
     - _Requirements: 1.3, 2.3_
 
-  - [-] 5.2 Verify Slice 3 via the per-slice verification loop
+  - [x] 5.2 Verify Slice 3 via the per-slice verification loop
     - `get_diagnostics` (0 problems); web type-check + `npx tsc -b apps/api` clean
     - Gates: `infra:ratchet`, `streetjs:check`, `boundary:check`, `graph:check`, full `typecheck`
     - Start each host against real infra (Postgres :5435, MinIO :9000, Redis :6379; API on `HTTP_PORT`)
