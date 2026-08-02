@@ -5,8 +5,20 @@
  * Requirement 1.7: SSO authentication flow with proper state management
  */
 
-import { apiClient } from './api.js';
 import { logger } from '../app/client-logger.js';
+
+// Lightweight JSON fetch for bespoke SSO endpoints not in @streetstudio/sdk.
+async function ssofetch<T>(method: string, path: string, body?: unknown): Promise<{ data: T }> {
+  const init: RequestInit = {
+    method,
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+  };
+  if (body !== undefined) init.body = JSON.stringify(body);
+  const res = await fetch(path, init);
+  const data: T = await res.json();
+  if (!res.ok) throw Object.assign(new Error(`SSO request failed: ${res.status}`), { status: res.status });
+  return { data };
+}
 
 export interface SSOProvider {
   id: string;
