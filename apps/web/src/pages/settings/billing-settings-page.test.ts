@@ -30,7 +30,9 @@ global.fetch = mockFetch;
 
 // Helper to build a fetch Response-like for apiFetch (which calls res.json())
 function jsonResponse(data: unknown, ok = true, status = 200) {
-  return { ok, status, json: async () => data } as unknown as Response;
+  // Clone so tests don't mutate the shared mock data object
+  const cloned = structuredClone(data);
+  return { ok, status, json: async () => cloned } as unknown as Response;
 }
 
 // Mock logger
@@ -213,8 +215,8 @@ describe('BillingSettingsPage', () => {
     vi.restoreAllMocks();
     mockFetch.mockReset();
     document.body.innerHTML = '<div id="app"></div>';
-    // Default: successful billing data load (Once so it doesn't persist across action calls)
-    mockFetch.mockResolvedValueOnce(jsonResponse(structuredClone(mockBillingData)));
+    // Default: successful billing data load
+    mockFetch.mockResolvedValue(jsonResponse(structuredClone(mockBillingData)));
   });
 
   afterEach(() => {
@@ -657,8 +659,10 @@ describe('BillingSettingsPage', () => {
   describe('Payment Method Actions', () => {
     it('should call API to set default payment method', async () => {
       // Default GET already mocked; add a success response for the PUT action
-      mockFetch.mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
-             .mockResolvedValueOnce(jsonResponse({}));                 // PUT action
+      mockFetch.mockReset();
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
+        .mockResolvedValueOnce(jsonResponse({}));               // PUT action
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
       const el = await page.getElement();
@@ -714,8 +718,10 @@ describe('BillingSettingsPage', () => {
 
   describe('Subscription Actions', () => {
     it('should call API to cancel subscription on confirm', async () => {
-      mockFetch.mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
-             .mockResolvedValueOnce(jsonResponse({}));                 // POST cancel
+      mockFetch.mockReset();
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
+        .mockResolvedValueOnce(jsonResponse({}));               // POST cancel
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
@@ -754,8 +760,10 @@ describe('BillingSettingsPage', () => {
     });
 
     it('should call API to change plan on confirm', async () => {
-      mockFetch.mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
-             .mockResolvedValueOnce(jsonResponse({}));                 // POST change-plan
+      mockFetch.mockReset();
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse(mockBillingData))  // initial load
+        .mockResolvedValueOnce(jsonResponse({}));               // POST change-plan
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       page = new BillingSettingsPage({ organizationId: 'org-123' as any });
