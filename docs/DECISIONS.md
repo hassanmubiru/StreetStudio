@@ -1098,19 +1098,86 @@ line between "consuming the framework" and "reimplementing infrastructure."
 
 ## Framework Gap: SDK login contract missing bearer token (FG-001)
 
-- **Status:** Open
+- **Status:** Open — pending SDK contract extension
+- **Tracking:** FG-001 (internal gap register; see also ADR-0024 consequences)
+- **Reported by:** web-spa-backend-connectivity bugfix spec, task 6.5 and task 8
+  (Requirement 2.4)
 - **Reported:** web-spa-backend-connectivity bugfix, ADR-0024
-- **Gap:** `packages/sdk/src/client.ts` `AuthResource.login` returns
-  `SessionDto = { id, memberId, issuedAt, expiresAt, revokedAt? }`. It does NOT
-  surface a bearer token, refresh token, `expiresIn`, or user profile. The same
-  limitation is documented in `apps/dashboard/src/session.ts`.
-- **Impact:** `apps/web/src/app/auth/auth-controller.ts` `login()` cannot be
-  migrated from raw `fetch('/api/auth/login')` to `session.auth.login()` until
-  the contract is extended.
-- **Required change:** The SDK login contract should surface at minimum:
-  `{ token: string; refreshToken?: string; expiresIn: number; member: MemberDto }`.
-  This is a backend/spec concern; the web layer must NOT deep-import or fabricate
-  a workaround (ADR-0001/0011).
-- **Workaround:** Login remains functional via the proxied `fetch('/api/auth/login')`
-  call (Slice 1–3 connectivity ensures it reaches the backend). Session
-  management and subsequent SDK calls use `session.useBearerToken(token)`.
+
+### Gap description
+
+`packages/sdk/src/client.ts` `AuthResource.login` returns the `SessionDto`
+type (defined in `packages/shared/src/dto.ts`):
+
+```typescript
+// packages/shared/src/dto.ts — SessionDto (full contract as of this filing)
+interface SessionDto {
+  id: Uuid;
+  memberId: Uuid;
+  issuedAt: IsoTimestamp;
+  expiresAt: IsoTimestamp;
+  revokedAt?: IsoTimestamp;
+}
+```
+
+`SessionDto` carries **no bearer token, refresh token, `expiresIn`, or user
+profile**. This is documented in the `DashboardSession` module-level note in
+`apps/dashboard/src/session.ts`:
+
+> "the current public surface returns a `SessionDto` (session record) from
+> `auth.login`, not a bearer token string … Surfacing a login bearer token is a
+> backend/spec concern."
+
+### Impact
+
+`apps/web/src/app/auth/auth-controller.ts` `login()` needs
+`{ token, refreshToken, expiresIn, user }` to attach a bearer token via
+`DashboardSession.useBearerToken(token)` and drive the refresh cycle. Until
+`AuthResource.login` surfaces these fields the login token-exchange path
+**cannot** be migrated from the existing raw `fetch('/api/auth/login')` call to
+the SDK.
+
+### Why NOT force-fit
+
+ADR-0001 and ADR-0011 forbid deep-importing SDK internals and forbid
+reimplementing reusable framework capabilities inside the product. There is no
+published `@streetstudio/sdk` surface that surfaces a bearer token today;
+fabricating one through a deep import or bespoke path would violate both ADRs
+and contradict the production charter.
+
+### Required SDK contract change
+
+The `AuthResource.login` return type should be extended to surface at minimum:
+
+```typescript
+interface LoginResult {
+  token: string;           // bearer access token
+  refreshToken?: string;   // optional refresh token
+  expiresIn: number;       // seconds until the access token expires
+  member: MemberDto;       // authenticated user profile
+}
+```
+
+This is a **backend/spec concern**: the API server must issue and return the
+token on successful login. The web layer's only role is to consume the contract
+once it exists.
+
+### Cross-references
+
+- `packages/shared/src/dto.ts` — `SessionDto` definition (the current, token-
+  free login response type)
+- `apps/dashboard/src/session.ts` — existing `DashboardSession` module note
+  documenting the same limitation (see FG-001 cross-reference comment in that
+  file)
+- `apps/web/src/app/auth/auth-controller.ts` — the `login()` call-site blocked
+  on this gap (uses raw `fetch` until the contract is extended)
+- ADR-0001, ADR-0011 — the boundary rules that prohibit force-fitting this gap
+- ADR-0024 — the broader web SPA connectivity decision that surfaced this gap
+
+### Workaround (until resolved)
+
+Login remains functional via the correctly-proxied raw `fetch('/api/auth/login')`
+call (Slice 1–3 connectivity from ADR-0024 ensures it reaches the backend at the
+ROOT path). Once the response token is extracted, `DashboardSession.useBearerToken(token)`
+wires subsequent SDK calls to the authenticated client. No bespoke token path or
+deep import is introduced.

@@ -13,6 +13,13 @@
  * organization-scoped API key. Surfacing a login bearer token is a backend/spec
  * concern and is intentionally out of scope here (see the governing rule in
  * IMPLEMENTATION-PLAN.md).
+ *
+ * Framework gap FG-001 (tracked in `docs/DECISIONS.md`): `AuthResource.login`
+ * returns `SessionDto = { id, memberId, issuedAt, expiresAt, revokedAt? }` from
+ * `packages/shared/src/dto.ts` — no bearer token, refresh token, `expiresIn`,
+ * or user profile. The web `AuthController.login` cannot be migrated to the SDK
+ * until the contract is extended. Do NOT add a deep-import or bespoke workaround
+ * (ADR-0001/ADR-0011). Status: open / pending SDK contract extension.
  */
 import {
   StreetStudioClient,
