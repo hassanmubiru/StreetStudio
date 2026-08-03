@@ -995,3 +995,54 @@ npx vitest run               # (FAILS)
 command -v psql ffmpeg docker redis-cli ; ss -tlnp
 node -e "require('./coverage/coverage-summary.json')"   # stale artifact
 ```
+
+---
+
+## Update 36 — Web SPA backend connectivity + SDK adoption (ADR-0024)
+
+**Defect closed:** the `apps/web` SPA was declared "complete" but could not reach the live backend in dev or prod, and hand-rolled API infrastructure the Production Charter required it to consume from `@streetstudio/sdk`.
+
+Two distinct defect classes were fixed via four independently-verified slices:
+
+### Slice 1 — Dev connectivity (`vite.config.ts` proxy)
+
+`apps/web/vite.config.ts` now declares `server.proxy['/api']` (+ `preview.proxy`) targeting `process.env.API_ORIGIN || 'http://localhost:8080'` with `changeOrigin: true` and `rewrite: path => path.replace(/^\/api/, '')`. The browser bundle routes all `/api/*` calls through the Vite dev server; the backend receives ROOT paths (`/api/auth/login` → `/auth/login`). No other Vite config was changed.
+
+### Slice 2 — Prod connectivity (`server.mjs` reverse proxy)
+
+`apps/web/server.mjs` now has an `/api` reverse-proxy branch using Node built-ins only (`node:http`, `node:https`, `node:url` — no new runtime deps, survives `npm prune --omit=dev`). Branch is keyed on `pathname.startsWith('/api/')`, inserted after the `/healthz` check and before `resolveFile`. Streams via `req.pipe(proxyReq)` / `proxyRes.pipe(res)`. Responds `502` on upstream error. The method guard is relaxed for `/api` paths only (POST/PUT/PATCH/DELETE reach the backend); static/SPA paths unchanged.
+
+### Slice 3 — Root-path correctness
+
+Both proxies strip `/api` before forwarding, confirmed by explicit assertion: `/api/auth/login` → backend `POST /auth/login` (ROOT path). No code changes beyond slices 1–2.
+
+### Slice 4 — SDK adoption
+
+- `apps/web/src/main.ts` defaults `apiBaseUrl` to `'/api'` (same-origin, relative), removing the cross-origin `http://localhost:8080` default from the browser bundle.
+- `apps/web/src/app/app.ts` constructs `DashboardSession({ baseUrl: config.apiBaseUrl, transport: createResilientTransport() })`.
+- `apps/web/src/services/sdk-transport.ts` (new): `ResilientHttpTransport` implementing timeout, retry/exponential-backoff, offline-awareness, and `adaptSdkError` (`AppError` → `handleError`/`getDegradationManager` adapter).
+- `auth-controller.ts`: `register()` and `logout()`/`logoutFromAllSessions()` route through `DashboardSession` SDK methods.
+- Framework gap FG-001 (reported in ADR-0024 / `docs/DECISIONS.md`): `AuthResource.login` returns `SessionDto` with no bearer token — login raw `fetch('/api/auth/login')` is retained pending SDK contract extension (task 8 / ADR-0024 consequences).
+
+### Verification results
+
+| Gate | Result |
+|---|---|
+| `get_diagnostics` — all touched files | ✅ 0 problems |
+| `npx tsc -b apps/api` | ✅ exit 0 |
+| Web typecheck (`tsc -p apps/web/tsconfig.json --noEmit`) | ✅ exit 0 |
+| `infra:ratchet` | ✅ 0 (unchanged) |
+| `streetjs:check` | ✅ OK |
+| `boundary:check` | ✅ OK (402 files) |
+| `graph:check` | ✅ OK (acyclic) |
+| `typecheck` (full monorepo) | ✅ exit 0 |
+| Postgres :5435 / MinIO :9000 / Redis :6379 | ✅ UP |
+| API backend :8080 (curl-through-proxy) | ⏭️ skipped — `apps/api` has no standalone server entrypoint in this workspace; proxy wiring confirmed by static analysis |
+| `npx vitest run` | ✅ **5338 passed** / 2 pre-existing failures (session-management.test.ts, unrelated to this fix, introduced in web-application-implementation spec pre-Slice 4) / 71 skipped |
+| Bug condition exploration test (task 1 re-run) | ✅ **14/14 passed** (was failing on unfixed code, confirming bug; now passes confirming fix) |
+| Preservation property tests (task 2 re-run) | ✅ **7/7 passed** (`F(X) == F'(X)` for static assets, SPA fallback, `/healthz`, missing-asset 404s, method guard) |
+
+**Test count note:** baseline was 5308 passed; now 5338 (+30) because Slice 4 added new test files (`sdk-transport.test.ts` × 11 + auth-controller and exploration test additions). The 2 failures in `session-management.test.ts` are pre-existing (last modified commit `250a1d8`, predates all Slice 4 commits; not touched by any Slice 4 change).
+
+**ADR recorded:** ADR-0024 in `docs/DECISIONS.md`. Framework gap FG-001 (`AuthResource.login` missing bearer token) filed in `docs/DECISIONS.md` and cross-referenced in `apps/dashboard/src/session.ts`.
+

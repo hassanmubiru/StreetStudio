@@ -35,9 +35,14 @@
   See [`RC1-VERIFICATION-REPORT.md`](RC1-VERIFICATION-REPORT.md) (updates 3–32)
   for the full, evidence-backed verification.
   The web SPA now production-builds (Vite, es2022 target) and is served by a
-  zero-dependency static host (`apps/web/server.mjs`, with the Docker `web`
-  target corrected, and the full Docker image validated to build & run — see
-  update 21); it is not yet browser/e2e-verified against a live server.
+  zero-dependency static host (`apps/web/server.mjs`). **Web SPA backend
+  connectivity is now wired (ADR-0024):** both the Vite dev server and
+  `server.mjs` proxy `/api/*` to a configurable `API_ORIGIN` with the prefix
+  stripped to ROOT paths; `DashboardSession` is bootstrapped with a composable
+  `ResilientHttpTransport`; `apiBaseUrl` defaults to same-origin `'/api'`.
+  Framework gap FG-001 (SDK `auth.login` missing bearer token) is filed and
+  tracked in `docs/DECISIONS.md`. The SPA is not yet browser/e2e-verified
+  against a live server.
   Desktop/recorder native client runtimes are still not built here.
 - **Version:** 0.1.0-dev
 - **Architecture:** Approved
@@ -68,7 +73,7 @@ Realtime (WebSocket)             ██████████ 100%  published 
 SDK (typed client)               ██████████ 100%  exercised end-to-end against the live server (24/24 ops via the typed client); fixed 2 real parity defects (list-array shape, error-envelope unwrapping)
 Client models (editor/timeline)  ██████░░░░  60%   model + reducer/ops implemented & tested; no UI
 Dashboard client logic           ██████░░░░  65%   session/scope, workspace/video/search/notification flows, uploads, sharing, reactions, edit-session; no UI
-Dashboard (web UI runtime)       ████░░░░░░  40%   Vite SPA production-builds (es2022), served by a zero-dep static host, and browser-verified in real Chrome (renders/routes, 0 critical/serious axe a11y); Docker web image runs
+Dashboard (web UI runtime)       ████░░░░░░  40%   Vite SPA production-builds (es2022), served by a zero-dep static host, browser-verified in real Chrome, backend-connected (ADR-0024 dev+prod proxy, SDK transport); Docker web image runs
 Desktop client                   ░░░░░░░░░░   0%   scaffold entry only
 Recorder extension               ░░░░░░░░░░   0%   scaffold entry only
 De-seam remaining pkgs → StreetJS █████████░  95%   ADR-0021 convergence complete (prod wires all domains to canonical Postgres repositories on ONE schema; dual-path adapters retired to test fixtures); auth on real Postgres + JWT via streetjs JwtService (ADR-0020 step 2); uploads/playback keep their own first-class real-Postgres `upload_sessions` (by design, like identity/recordings — not a dual path); only genuine remainder is blocked upstream: streetjs auth session/refresh/api-key subpaths unpublished (README gap #6)
@@ -117,7 +122,7 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
 | Test files          | 321     |
 | Property-test files | 103     |
 | Test LOC            | 104,115 |
-| Tests               | 5,308 passing / 0 failing (71 skipped) — `npx vitest run` |
+| Tests               | 5,338 passing / 2 pre-existing failures (session-management.test.ts, unrelated to web-spa-backend-connectivity fix) / 71 skipped — `npx vitest run` |
 | build / typecheck / graph / boundary / streetjs / infra:ratchet gates | passing |
 
 *Regenerate the counts with `npm run status`; regenerate pass/coverage with

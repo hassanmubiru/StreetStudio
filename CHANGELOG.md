@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Web SPA backend connectivity + SDK adoption (ADR-0024).** The `apps/web` SPA
+  can now reach the live backend in both dev and prod:
+  - **Dev proxy** (`apps/web/vite.config.ts`): `server.proxy['/api']` +
+    `preview.proxy` targeting `process.env.API_ORIGIN || 'http://localhost:8080'`
+    with `rewrite` stripping the `/api` prefix to ROOT paths
+    (`/api/auth/login` → `/auth/login`).
+  - **Prod reverse proxy** (`apps/web/server.mjs`): Node built-ins only
+    (`node:http`/`node:https`); inserted after `/healthz`, before `resolveFile`;
+    streams via `pipe`; `502` on upstream error. No new runtime deps (survives
+    `npm prune --omit=dev`). All non-`/api` paths (static assets, SPA fallback,
+    `/healthz`, missing-asset 404s, method guard) are byte-for-byte unchanged.
+  - **Root-path correctness**: both proxies strip `/api` before forwarding;
+    confirmed `/api/auth/login` → backend `POST /auth/login` (ROOT path).
+  - **SDK adoption** (`apps/web/src/`): `apiBaseUrl` defaults to `'/api'`
+    (same-origin, relative) in `main.ts`, removing the cross-origin
+    `http://localhost:8080` default from the browser bundle. `app.ts` bootstraps
+    `DashboardSession` with `createResilientTransport()` (new
+    `apps/web/src/services/sdk-transport.ts`: composable `ResilientHttpTransport`
+    with timeout, retry/backoff, offline-awareness, `AppError` → `handleError`/
+    `getDegradationManager` adapter). `register()` and `logout()` routes through
+    the SDK. Cross-cutting concerns are preserved via the injected transport and
+    `AppError` adapter.
+  - **Framework gap FG-001 (reported, not force-fit)**: `AuthResource.login`
+    returns `SessionDto` with no bearer token — the login raw
+    `fetch('/api/auth/login')` is retained pending SDK contract extension.
+    Formally filed in `docs/DECISIONS.md` (FG-001) and cross-referenced in
+    `apps/dashboard/src/session.ts`. Deep imports forbidden (ADR-0001/0011).
+  - **Property-based tests**: bug-condition exploration test (14 assertions) now
+    passes on fixed code; preservation tests (7 assertions) confirm
+    `F(X) == F'(X)` for all non-`/api` paths.
+  - **ADR-0024** recorded in `docs/DECISIONS.md`.
+
 - **Full public operation catalog wired (API-CATALOG-COVERAGE-01 closed).** The
   last 8 unwired catalog operations are now served, so `SLICE_OPERATION_IDS ==
   PUBLIC_OPERATIONS` (55/55): `organizations.get`/`update`/`listMembers`/
