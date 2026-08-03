@@ -182,7 +182,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - **EXPECTED OUTCOME**: Test PASSES (confirms the bug is fixed)
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-  - [ ] 7.2 Verify preservation tests still pass
+  - [-] 7.2 Verify preservation tests still pass
     - **Property 2: Preservation** - non-`/api` behavior is unchanged
     - **IMPORTANT**: Re-run the SAME tests from task 2 — do NOT write new tests
     - Confirm static-asset serving, SPA fallback, `/healthz`/`/health`, missing-asset 404s, and the method guard are all unchanged (`F(X) == F'(X)`)
