@@ -167,7 +167,8 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   cross-referenced in `apps/dashboard/src/session.ts`). Bug-condition exploration
   test (14 assertions) and preservation tests (7 assertions) both pass against
   the fixed code.
-- **Recently closed (Update 35):** full public catalog wired; API-CATALOG-COVERAGE-01 closed. — operational
+- **Recently closed (Update 35):** full public catalog wired; API-CATALOG-COVERAGE-01 closed.
+- **Recently closed (Update 33):** **ADR-0022 slice 7 (final)** — operational
   observability moved onto `streetjs`'s built-in `MetricsRegistry` (Prometheus
   `GET /metrics`) and `HealthCheckRegistry` (`GET /health` retained at its path,
   plus `/health/live` + `/health/ready`) — both bare `streetjs` exports, no new
