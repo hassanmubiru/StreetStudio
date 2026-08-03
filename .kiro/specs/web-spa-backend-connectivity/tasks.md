@@ -202,7 +202,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
   - Record an ADR (in `docs/DECISIONS.md` / new ADR file) capturing: `API_ORIGIN` single-origin proxy decision, Node-built-ins-only prod proxy, strangler-fig SDK adoption, and the reported login-token gap
   - _Requirements: 2.4, 3.5_
 
-- [-] 10. Checkpoint - Ensure all tests pass
+- [x] 10. Checkpoint - Ensure all tests pass
   - Confirm every slice passed its per-slice verification loop and both correctness properties hold
   - Ensure the full suite passes at 5308 passed / 0 failed with no regressions; ask the user if questions arise
   - _Requirements: 3.5_
