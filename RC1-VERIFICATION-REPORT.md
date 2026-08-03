@@ -1046,3 +1046,49 @@ Both proxies strip `/api` before forwarding, confirmed by explicit assertion: `/
 
 **ADR recorded:** ADR-0024 in `docs/DECISIONS.md`. Framework gap FG-001 (`AuthResource.login` missing bearer token) filed in `docs/DECISIONS.md` and cross-referenced in `apps/dashboard/src/session.ts`.
 
+
+## Update 37 — Task 10 Checkpoint: Final gate sweep (web-spa-backend-connectivity)
+
+This is the final checkpoint for the `web-spa-backend-connectivity` bugfix spec. All prior tasks (1–9) were confirmed complete before this run.
+
+### Per-slice verification loop summary
+
+| Slice | Description | Diagnostics | Type-check | Gates | Vitest |
+|---|---|---|---|---|---|
+| 1 | Dev connectivity (`vite.config.ts` proxy) | ✅ 0 problems | ✅ clean | ✅ all green | ✅ |
+| 2 | Prod connectivity (`server.mjs` reverse proxy) | ✅ 0 problems | ✅ clean | ✅ all green | ✅ |
+| 3 | Root-path correctness | ✅ 0 problems | ✅ clean | ✅ all green | ✅ |
+| 4 | SDK adoption | ✅ 0 problems | ✅ clean | ✅ all green | ✅ |
+
+### Correctness properties confirmed
+
+| Property | Result |
+|---|---|
+| Property 1 — Bug Condition: API/data calls reach the live backend via the SDK | ✅ **14/14** — exploration test passes on fixed code (`task 1` re-run, task 7.1) |
+| Property 2 — Preservation: non-`/api` behavior unchanged | ✅ **7/7** — preservation tests pass (`task 2` re-run, task 7.2) |
+
+### Final gate sweep results (run: Task 10)
+
+| Check | Command | Result |
+|---|---|---|
+| `infra:ratchet` | `npm run infra:ratchet` | ✅ OK — 0 files using raw infrastructure (baseline 0, target 0) |
+| `streetjs:check` | `npm run streetjs:check` | ✅ OK — StreetJS consumed only as published, versioned packages |
+| `boundary:check` | `npm run boundary:check` | ✅ OK — 402 source files scanned, no violations |
+| `graph:check` | `npm run graph:check` | ✅ OK — package dependency graph is acyclic |
+| `typecheck` | `npm run typecheck` | ✅ exit 0 — full monorepo type-check + web app type-check clean |
+| Full test suite | `npx vitest run` | ✅ **5338 passed** / 2 pre-existing failures / 71 skipped |
+
+### Pre-existing failures (not caused by this spec)
+
+The 2 failures in `apps/web/src/app/auth/session-management.test.ts` are **pre-existing**:
+
+- Last modified in commit `250a1d8` (pre-Slice 4, before any `web-spa-backend-connectivity` change)
+- Failures: one assertion on `stateHandler` not receiving `{ isAuthenticated: true }`, and one unhandled error leaking from `navigation-integration.test.ts` timer
+- Neither failure is in any file touched by Slices 1–4
+- Confirmed not caused by this spec's changes
+
+### Test count note
+
+The threshold in the spec was ≥ 5308 passed. The suite now reports **5338 passed** (+30 vs baseline), because Slice 4 added new test files (`sdk-transport.test.ts` × 11 + auth-controller and exploration test additions). The 2 pre-existing failures are unchanged.
+
+**Checkpoint verdict: ✅ PASSED** — all slices verified, both correctness properties confirmed, all gates green, test suite at 5338 passed with no regressions attributable to this spec.
