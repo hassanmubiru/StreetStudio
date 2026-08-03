@@ -120,7 +120,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - Clean up any temp files; run `npx vitest run` (keep 5308 passed / 0 failed)
     - _Requirements: 2.3, 3.5_
 
-- [ ] 6. Slice 4 — SDK adoption (login vertical first)
+- [x] 6. Slice 4 — SDK adoption (login vertical first)
 
   - [x] 6.1 Reconcile the SDK base URL to same-origin `/api`
     - In `apps/web/src/main.ts` / `apps/web/src/app/app.ts`, default `apiBaseUrl` to `/api` (relative), removing the cross-origin `http://localhost:8080` default from the browser bundle
@@ -165,7 +165,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: no bespoke workaround introduced_
     - _Requirements: 2.4_
 
-  - [ ] 6.6 Verify Slice 4 via the per-slice verification loop
+  - [x] 6.6 Verify Slice 4 via the per-slice verification loop
     - `get_diagnostics` on all touched files (0 problems); web type-check + `npx tsc -b apps/api` clean
     - Gates: `infra:ratchet`, `streetjs:check`, `boundary:check`, `graph:check`, full `typecheck`
     - Start a host against real infra (Postgres :5435, MinIO :9000, Redis :6379; API on `HTTP_PORT`)
@@ -175,7 +175,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 7. Verify correctness properties against the fixed code
 
-  - [ ] 7.1 Verify bug condition exploration test now passes
+  - [-] 7.1 Verify bug condition exploration test now passes
     - **Property 1: Expected Behavior** - API/data calls reach the live backend via the SDK
     - **IMPORTANT**: Re-run the SAME test from task 1 — do NOT write a new test
     - The test from task 1 encodes the expected behavior; passing confirms `/api/*` is forwarded to `API_ORIGIN` stripped to ROOT and data access uses the published SDK
