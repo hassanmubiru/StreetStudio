@@ -155,7 +155,19 @@ Static counts from `npm run status`; gate results from `scripts/check.sh`.
   **every REST + WebSocket catalog operation with backing persistence is now
   served.** The AI write side (transcription/summarization) remains a
   provider-plugin concern (`@streetstudio/ai`); no fake data is produced.
-- **Recently closed (Update 33):** **ADR-0022 slice 7 (final)** — operational
+- **Recently closed (Update 36):** **Web SPA backend connectivity + SDK adoption
+  (ADR-0024)**. Both runtimes now proxy `/api/*` to the live backend: the Vite
+  dev server gains `server.proxy['/api']` (+ `preview.proxy`) and `server.mjs`
+  gains a Node-built-ins-only reverse proxy. The `/api` prefix is stripped to
+  ROOT paths on both proxies. `DashboardSession` is bootstrapped with the new
+  composable `ResilientHttpTransport` (timeout/retry/backoff/offline/`AppError`
+  adapter); `apiBaseUrl` defaults to same-origin `'/api'`. `register()` and
+  `logout()` routes through the SDK. Login remains on raw `fetch` pending SDK
+  contract extension (framework gap FG-001, filed in `docs/DECISIONS.md` and
+  cross-referenced in `apps/dashboard/src/session.ts`). Bug-condition exploration
+  test (14 assertions) and preservation tests (7 assertions) both pass against
+  the fixed code.
+- **Recently closed (Update 35):** full public catalog wired; API-CATALOG-COVERAGE-01 closed. — operational
   observability moved onto `streetjs`'s built-in `MetricsRegistry` (Prometheus
   `GET /metrics`) and `HealthCheckRegistry` (`GET /health` retained at its path,
   plus `/health/live` + `/health/ready`) — both bare `streetjs` exports, no new
