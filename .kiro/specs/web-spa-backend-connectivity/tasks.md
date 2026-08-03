@@ -173,7 +173,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - Clean up any temp files; run `npx vitest run` (keep 5308 passed / 0 failed)
     - _Requirements: 2.4, 3.5_
 
-- [ ] 7. Verify correctness properties against the fixed code
+- [x] 7. Verify correctness properties against the fixed code
 
   - [x] 7.1 Verify bug condition exploration test now passes
     - **Property 1: Expected Behavior** - API/data calls reach the live backend via the SDK
@@ -182,7 +182,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - **EXPECTED OUTCOME**: Test PASSES (confirms the bug is fixed)
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-  - [-] 7.2 Verify preservation tests still pass
+  - [x] 7.2 Verify preservation tests still pass
     - **Property 2: Preservation** - non-`/api` behavior is unchanged
     - **IMPORTANT**: Re-run the SAME tests from task 2 — do NOT write new tests
     - Confirm static-asset serving, SPA fallback, `/healthz`/`/health`, missing-asset 404s, and the method guard are all unchanged (`F(X) == F'(X)`)
