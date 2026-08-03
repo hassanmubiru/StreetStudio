@@ -195,7 +195,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
   - Do NOT implement a deep-import or bespoke workaround (ADR-0001/0011)
   - _Requirements: 2.4_
 
-- [-] 9. Update documentation and record an ADR (final step)
+- [ ] 9. Update documentation and record an ADR (final step)
   - Update `STATUS.md` to reflect web SPA connectivity + SDK adoption status and the outstanding login-token gap
   - Update `RC1-VERIFICATION-REPORT.md` with the curl-through-proxy verification results per slice and the test-suite status (5308 passed / 0 failed)
   - Add a `CHANGELOG.md` entry for the dev proxy, prod reverse proxy, root-path correctness, and SDK adoption
