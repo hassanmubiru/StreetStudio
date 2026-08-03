@@ -189,13 +189,13 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [-] 8. File the reported login-token framework gap
+- [x] 8. File the reported login-token framework gap
   - File a framework gap (issue/ticket + reference in `docs/DECISIONS.md`) requesting the SDK login contract surface a bearer token, refresh token, and expiry so the web login token exchange can adopt the SDK
   - Cross-reference the documented limitation in `apps/dashboard/src/session.ts` and the SDK `SessionDto` contract in `packages/shared/src/dto.ts`
   - Do NOT implement a deep-import or bespoke workaround (ADR-0001/0011)
   - _Requirements: 2.4_
 
-- [ ] 9. Update documentation and record an ADR (final step)
+- [-] 9. Update documentation and record an ADR (final step)
   - Update `STATUS.md` to reflect web SPA connectivity + SDK adoption status and the outstanding login-token gap
   - Update `RC1-VERIFICATION-REPORT.md` with the curl-through-proxy verification results per slice and the test-suite status (5308 passed / 0 failed)
   - Add a `CHANGELOG.md` entry for the dev proxy, prod reverse proxy, root-path correctness, and SDK adoption
