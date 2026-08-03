@@ -148,7 +148,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: login remains functional over the correctly-proxied endpoint_
     - _Requirements: 1.4, 2.4_
 
-  - [ ] 6.4 Migrate already-sufficient data verticals off `ApiClient` and retire `services/api.ts`
+  - [x] 6.4 Migrate already-sufficient data verticals off `ApiClient` and retire `services/api.ts`
     - Migrate verticals whose SDK contract is already sufficient (`videos`, `comments`, `uploads`, `projects`) off the hand-rolled `ApiClient` to `StreetStudioClient` via `DashboardSession`
     - Once every data-access vertical is on the SDK, delete `apps/web/src/services/api.ts` (and its `NetworkMonitor`), leaving the composable transport as the single home for retry/timeout/offline concerns
     - _Bug_Condition: isBugCondition(X) where X.layer = DATA_ACCESS AND usesHandRolledApiClient(X)_
@@ -156,7 +156,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - _Preservation: migrated verticals return real backend responses; degradation/error reporting preserved_
     - _Requirements: 1.4, 2.4_
 
-  - [ ] 6.5 Report the login-token framework gap (do NOT deep-import or force-fit)
+  - [x] 6.5 Report the login-token framework gap (do NOT deep-import or force-fit)
     - The SDK's `AuthResource.login` returns `SessionDto` = `{ id, memberId, issuedAt, expiresAt, revokedAt? }` with no bearer token / refresh token / `expiresIn` / user, while `AuthController.login` needs `{ token, refreshToken, expiresIn, user }`
     - REPORT the gap requesting the login contract surface a bearer token (and refresh/expiry) — do NOT deep-import (forbidden by ADR-0001/0011) or fabricate a bespoke token path
     - Until resolved, connectivity slices 1–3 keep login functional over the correctly-proxied endpoint; the SDK token exchange lands when the contract is extended (tracked by task 8)

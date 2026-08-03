@@ -1038,3 +1038,79 @@ direct `@aws-sdk` import in product source would be a reimplementation and must
 fail the gate. This distinction (product may inject a binary/peer *into* a
 framework component, but may not re-drive the vendor SDK itself) is the operative
 line between "consuming the framework" and "reimplementing infrastructure."
+
+---
+
+## ADR-0024: Web SPA backend connectivity — same-origin `/api` proxy + SDK adoption
+
+- **Status:** Accepted
+- **Context:** The `apps/web` SPA was declared "complete" but could not reach
+  the live backend in dev or prod. The SPA prefixed every API call with `/api`
+  while the backend served at ROOT. Neither the Vite dev server nor the
+  production `server.mjs` static host had an `/api` proxy. Additionally,
+  `apps/web/src/services/api.ts` hand-rolled a full `ApiClient` (fetch, retry,
+  backoff, timeout, `NetworkMonitor`), duplicating `@streetstudio/sdk` — a
+  charter violation (Production Charter: consume published packages; never
+  reimplement reusable infrastructure).
+- **Decision:**
+  1. **Same-origin `/api` base URL**: the browser bundle now defaults to `/api`
+     (relative), routing through the proxy rather than a cross-origin absolute
+     URL baked into the bundle. Backend origin is configured once at the proxy
+     layer via `API_ORIGIN`.
+  2. **Dev proxy** (`vite.config.ts`): `server.proxy['/api']` + `preview.proxy`
+     targeting `API_ORIGIN`, stripping the `/api` prefix via `rewrite`, so the
+     backend receives ROOT paths (`/api/auth/login` → `/auth/login`).
+  3. **Prod reverse proxy** (`server.mjs`): Node built-ins only (`node:http`,
+     `node:https`), inserted after `/healthz` and before `resolveFile`, keyed
+     on `pathname.startsWith('/api/')`. Streams via `pipe`. No new runtime deps
+     (survives `npm prune --omit=dev`). 503 if `API_ORIGIN` unset; 502 on
+     upstream error. Method guard relaxed for `/api` paths only.
+  4. **SDK adoption** (primary paths): `DashboardSession` bootstrapped with
+     `transport: createResilientTransport()` (composable `ResilientHttpTransport`
+     with timeout, retry/backoff, offline-awareness, `AppError` → `handleError`
+     adapter). `register()` → `session.register()`. `logout()` /
+     `logoutFromAllSessions()` → `session.signOut()`. `app.ts` no longer imports
+     `apiClient`. WebSocket upgrade explicitly scoped out of this slice.
+  5. **Login-token framework gap (reported, not force-fit)**: the SDK's
+     `AuthResource.login` returns `SessionDto = { id, memberId, issuedAt,
+     expiresAt, revokedAt? }` with no bearer token / refresh token / `expiresIn`
+     / user. `AuthController.login` requires those fields to drive token storage
+     and refresh. Deep-importing SDK internals is forbidden (ADR-0001/0011). The
+     gap is reported here and tracked as a framework contract enhancement request.
+     Until resolved, connectivity slices 1–3 keep login functional over the
+     correctly-proxied endpoint; the SDK token exchange lands when the contract
+     is extended.
+- **Consequences:**
+  - SPA can now reach the live backend in both dev (`npm run dev`) and prod
+    (`node apps/web/server.mjs`) via the `/api` proxy.
+  - The cross-origin `http://localhost:8080` default is gone from the browser
+    bundle.
+  - `auth-controller.ts` register and logout paths consume the published SDK.
+  - `app.ts` no longer references `apiClient`.
+  - `billing-settings-page.ts` uses inline `apiFetch` (direct `fetch`) for
+    bespoke billing endpoints not in the SDK surface.
+  - The `ResilientHttpTransport` in `apps/web/src/services/sdk-transport.ts` is
+    the single home for retry/timeout/offline concerns going forward.
+  - Framework gap filed: SDK `auth.login` contract must surface a bearer token
+    and expiry before the login token exchange can be fully migrated to the SDK.
+
+---
+
+## Framework Gap: SDK login contract missing bearer token (FG-001)
+
+- **Status:** Open
+- **Reported:** web-spa-backend-connectivity bugfix, ADR-0024
+- **Gap:** `packages/sdk/src/client.ts` `AuthResource.login` returns
+  `SessionDto = { id, memberId, issuedAt, expiresAt, revokedAt? }`. It does NOT
+  surface a bearer token, refresh token, `expiresIn`, or user profile. The same
+  limitation is documented in `apps/dashboard/src/session.ts`.
+- **Impact:** `apps/web/src/app/auth/auth-controller.ts` `login()` cannot be
+  migrated from raw `fetch('/api/auth/login')` to `session.auth.login()` until
+  the contract is extended.
+- **Required change:** The SDK login contract should surface at minimum:
+  `{ token: string; refreshToken?: string; expiresIn: number; member: MemberDto }`.
+  This is a backend/spec concern; the web layer must NOT deep-import or fabricate
+  a workaround (ADR-0001/0011).
+- **Workaround:** Login remains functional via the proxied `fetch('/api/auth/login')`
+  call (Slice 1–3 connectivity ensures it reaches the backend). Session
+  management and subsequent SDK calls use `session.useBearerToken(token)`.
