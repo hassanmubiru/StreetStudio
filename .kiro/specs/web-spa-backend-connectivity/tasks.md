@@ -175,7 +175,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
 
 - [ ] 7. Verify correctness properties against the fixed code
 
-  - [-] 7.1 Verify bug condition exploration test now passes
+  - [x] 7.1 Verify bug condition exploration test now passes
     - **Property 1: Expected Behavior** - API/data calls reach the live backend via the SDK
     - **IMPORTANT**: Re-run the SAME test from task 1 — do NOT write a new test
     - The test from task 1 encodes the expected behavior; passing confirms `/api/*` is forwarded to `API_ORIGIN` stripped to ROOT and data access uses the published SDK
