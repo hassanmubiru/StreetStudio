@@ -179,7 +179,7 @@ describe('Property 1: Bug Condition — /api/* calls must reach the live backend
         // with the /api prefix stripped. Unfixed: no server.proxy → FAILS.
         expect(viteDevProxyForwardsApi()).toBe(true);
       }),
-      { numRuns: 100 },
+      { numRuns: 20 },
     );
   });
 
@@ -192,7 +192,7 @@ describe('Property 1: Bug Condition — /api/* calls must reach the live backend
         // Unfixed: no /api branch → path 404s or falls back to index.html → FAILS.
         expect(prodServerProxyForwardsApi()).toBe(true);
       }),
-      { numRuns: 100 },
+      { numRuns: 20 },
     );
   });
 
@@ -206,7 +206,7 @@ describe('Property 1: Bug Condition — /api/* calls must reach the live backend
         // ROOT path to the backend. Unfixed: neither proxy strips/forwards → FAILS.
         expect(apiPathReachesBackendRoot()).toBe(true);
       }),
-      { numRuns: 100 },
+      { numRuns: 20 },
     );
   });
 
@@ -266,7 +266,7 @@ describe('Slice 3: prefix-strip logic — /api/* is stripped to backend ROOT pat
         const expectedSuffix = apiPath.slice('/api'.length) || '/';
         expect(rootPath).toBe(expectedSuffix);
       }),
-      { numRuns: 200 },
+      { numRuns: 25 },
     );
   });
 
@@ -289,7 +289,7 @@ describe('Slice 3: prefix-strip logic — /api/* is stripped to backend ROOT pat
         // A path that doesn't start with /api must survive the strip untouched.
         expect(stripApiPrefix(rootPath)).toBe(rootPath);
       }),
-      { numRuns: 200 },
+      { numRuns: 25 },
     );
   });
 

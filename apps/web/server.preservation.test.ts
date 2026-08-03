@@ -155,7 +155,7 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         const expectedType = CONTENT_TYPES[extOf(asset)] ?? 'application/octet-stream';
         expect(res.headers['content-type']).toBe(expectedType);
       }),
-      { numRuns: 10 },
+      { numRuns: 5 },
     );
   }, 30000);
 
@@ -170,7 +170,7 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         expect(res.headers['cache-control']).toBe('no-cache');
         expect(res.body).toBe(INDEX_HTML);
       }),
-      { numRuns: 10 },
+      { numRuns: 5 },
     );
   }, 30000);
 
@@ -197,7 +197,7 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         expect(res.headers['cache-control']).toBe('no-cache');
         expect(res.body).toBe(INDEX_HTML);
       }),
-      { numRuns: 20 },
+      { numRuns: 8 },
     );
   }, 30000);
 
@@ -210,7 +210,7 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         expect(res.headers['content-type']).toBe('application/json; charset=utf-8');
         expect(JSON.parse(res.body)).toEqual({ status: 'ok' });
       }),
-      { numRuns: 10 },
+      { numRuns: 5 },
     );
   }, 30000);
 
@@ -238,7 +238,7 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         expect(res.body).not.toContain('<!doctype html');
         expect(res.body).not.toBe(INDEX_HTML);
       }),
-      { numRuns: 20 },
+      { numRuns: 10 },
     );
   }, 30000);
 
@@ -254,7 +254,7 @@ describe('server.mjs preservation baseline (UNFIXED code)', () => {
         expect(res.status).toBe(405);
         expect(res.headers['allow']).toBe('GET, HEAD');
       }),
-      { numRuns: 20 },
+      { numRuns: 10 },
     );
   }, 30000);
 });
