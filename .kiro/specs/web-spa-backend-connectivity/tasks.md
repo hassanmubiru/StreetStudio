@@ -195,14 +195,14 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
   - Do NOT implement a deep-import or bespoke workaround (ADR-0001/0011)
   - _Requirements: 2.4_
 
-- [ ] 9. Update documentation and record an ADR (final step)
+- [x] 9. Update documentation and record an ADR (final step)
   - Update `STATUS.md` to reflect web SPA connectivity + SDK adoption status and the outstanding login-token gap
   - Update `RC1-VERIFICATION-REPORT.md` with the curl-through-proxy verification results per slice and the test-suite status (5308 passed / 0 failed)
   - Add a `CHANGELOG.md` entry for the dev proxy, prod reverse proxy, root-path correctness, and SDK adoption
   - Record an ADR (in `docs/DECISIONS.md` / new ADR file) capturing: `API_ORIGIN` single-origin proxy decision, Node-built-ins-only prod proxy, strangler-fig SDK adoption, and the reported login-token gap
   - _Requirements: 2.4, 3.5_
 
-- [ ] 10. Checkpoint - Ensure all tests pass
+- [-] 10. Checkpoint - Ensure all tests pass
   - Confirm every slice passed its per-slice verification loop and both correctness properties hold
   - Ensure the full suite passes at 5308 passed / 0 failed with no regressions; ask the user if questions arise
   - _Requirements: 3.5_
