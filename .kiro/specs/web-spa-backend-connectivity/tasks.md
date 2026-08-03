@@ -189,7 +189,7 @@ ROOT-serving backend), OR a data-access path routed through the hand-rolled
     - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 8. File the reported login-token framework gap
+- [-] 8. File the reported login-token framework gap
   - File a framework gap (issue/ticket + reference in `docs/DECISIONS.md`) requesting the SDK login contract surface a bearer token, refresh token, and expiry so the web login token exchange can adopt the SDK
   - Cross-reference the documented limitation in `apps/dashboard/src/session.ts` and the SDK `SessionDto` contract in `packages/shared/src/dto.ts`
   - Do NOT implement a deep-import or bespoke workaround (ADR-0001/0011)
